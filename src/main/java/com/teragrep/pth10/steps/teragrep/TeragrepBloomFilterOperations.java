@@ -98,13 +98,11 @@ public class TeragrepBloomFilterOperations {
         Dataset<Row> tokenizedDataset = ds.groupBy("partition")
                 .agg(tokenAggregatorColumn)
                 .withColumnRenamed("TokenAggregator(org.apache.spark.sql.Row)", "tokens");
-        Dataset<Row> tokenizedWithSum = tokenizedDataset.withColumn("sum", functions.size(functions.col("tokens")));
 
         System.out.println("dpf_03.TokenAggregator called");
-        LOGGER.warn("dpf_03.TokenAggregator called");
 
         // Spark writeStream foreachBatch: For all partitions in dataset create a bloom filter and save to DB
-        DataStreamWriter<Row> databaseWriter = tokenizedWithSum
+        DataStreamWriter<Row> databaseWriter = tokenizedDataset
                 .writeStream()
                 .outputMode("update")
                 .foreachBatch((batchDataset, batchId) -> {
@@ -114,10 +112,12 @@ public class TeragrepBloomFilterOperations {
                                     Column currentColumn = functions.col("partition").equalTo(partition);
 
                                     int numItems = batchDataset.where(currentColumn)
-                                            .select("sum").first().getInt(0);
+                                        .select(functions.size(functions.col("tokens")))
+                                        .first().getInt(0);
 
                                     BloomFilter filter = createSizedFilter(batchDataset, currentColumn, numItems);
                                     String databaseTableName;
+
                                     if (numItems < SMALL_EXPECTED_NUM_ITEMS) {
                                         databaseTableName = SMALL_FILTER_TABLE_NAME;
                                     } else if (numItems < MEDIUM_EXPECTED_NUM_ITEMS) {
@@ -196,13 +196,12 @@ public class TeragrepBloomFilterOperations {
         Dataset<Row> tokenizedDataset = ds.groupBy("partition")
                 .agg(tokenAggregatorColumn)
                 .withColumnRenamed("TokenAggregator(org.apache.spark.sql.Row)", "tokens");
-        Dataset<Row> tokenizedWithSum = tokenizedDataset.withColumn("sum", functions.size(functions.col("tokens")));
 
         System.out.println("dpf_03.TokenAggregator called");
         LOGGER.warn("dpf_03.TokenAggregator called");
 
         // Spark writeStream foreachBatch: For all partitions in dataset create a bloom filter and save to DB
-        DataStreamWriter<Row> databaseWriter = tokenizedWithSum
+        DataStreamWriter<Row> databaseWriter = tokenizedDataset
                 .writeStream()
                 .outputMode("update")
                 .foreachBatch((batchDataset, batchId) -> {
@@ -212,7 +211,8 @@ public class TeragrepBloomFilterOperations {
                                     Column currentColumn = functions.col("partition").equalTo(partition);
 
                                     int numItems = batchDataset.where(currentColumn)
-                                            .select("sum").first().getInt(0);
+                                        .select(functions.size(functions.col("tokens")))
+                                        .first().getInt(0);
 
                                     BloomFilter filter = createSizedFilter(batchDataset, currentColumn, numItems);
                                     String databaseTableName;
@@ -305,6 +305,7 @@ public class TeragrepBloomFilterOperations {
      */
     private static Connection getSQLConnection(Config zeppelinConfig) {
 
+        Connection conn = null;
         String username;
         String password;
         String databaseUrl;
@@ -343,8 +344,6 @@ public class TeragrepBloomFilterOperations {
         } else {
             throw new RuntimeException("Missing configuration item: '" + DATABASE_DEFAULT_URL_CONFIG_ITEM + "'.");
         }
-
-        Connection conn = null;
 
         try { // Get SQL connection
             conn = DriverManager.getConnection(databaseUrl, username, password);
