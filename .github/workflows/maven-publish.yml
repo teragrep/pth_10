@@ -1,0 +1,35 @@
+name: Maven Package
+
+on:
+  push:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up JDK 8
+      uses: actions/setup-java@v3
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+        server-id: github
+        settings-path: ${{ github.workspace }}
+
+    - name: Get version
+      run: echo "RELEASE_VERSION=$(git describe --tags)" >> $GITHUB_ENV
+
+    - name: Publish to GitHub Packages Apache Maven
+      run: mvn -Pbuild -B -Drevision=${{ env.RELEASE_VERSION }} -Dsha1= -Dchangelist= deploy -s dependencies.settings.xml
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        SRV_CI_USER: ${{ secrets.SRV_CI_USER }}
+        SRV_CI_TOKEN: ${{ secrets.SRV_CI_TOKEN }}
