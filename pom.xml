@@ -8,6 +8,7 @@
   <version>${revision}${sha1}${changelist}</version>
   <name>pth_10</name>
   <description>pth_10</description>
+  <url>https://teragrep.com</url>
   <groupId>com.teragrep</groupId>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
