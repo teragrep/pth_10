@@ -69,7 +69,7 @@ import org.slf4j.LoggerFactory;
  * <pre>spath input=... output=... path=...|...</pre>
  * Defaults:
  * <pre>spath input=_raw output=path path=...</pre>
- * Path omitted -> auto-extract mode: extracts all fields from the first 5000 characters in
+ * Path omitted -&gt; auto-extract mode: extracts all fields from the first 5000 characters in
  * the input field.
  */
 public class SpathTransformation extends DPLParserBaseVisitor<Node>

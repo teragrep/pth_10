@@ -63,13 +63,13 @@ import java.util.regex.Pattern;
  * Command examples:<br>
  * Original data: "data"
  * <hr>
- * <code>(1) REPLACE "data" WITH "y" -> result: "y"</code>
+ * <code>(1) REPLACE "data" WITH "y" -&gt; result: "y"</code>
  * <hr>
- * <code>(2) REPLACE "dat*" WITH "y" -> result: "y"</code>
+ * <code>(2) REPLACE "dat*" WITH "y" -&gt; result: "y"</code>
  * <hr>
- *  <code>(3) REPLACE "dat*" WITH "y*" -> result: "ya"</code>
+ *  <code>(3) REPLACE "dat*" WITH "y*" -&gt; result: "ya"</code>
  * <hr>
- *  <code>(4) REPLACE "*at*" WITH "*y*" -> result: "dya"</code>
+ *  <code>(4) REPLACE "*at*" WITH "*y*" -&gt; result: "dya"</code>
  */
 public class ReplaceCmd implements UDF3<String, String, String, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReplaceCmd.class);

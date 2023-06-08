@@ -58,6 +58,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -68,6 +69,18 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EvalTest {
+    SparkSession spark = null;
+    DPLParserCatalystContext ctx = null;
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        spark = SparkSession
+                .builder()
+                .appName("Java Spark SQL basic example")
+                .master("local[2]")
+                .getOrCreate();
+        spark.sparkContext().setLogLevel("ERROR");
+        ctx = new DPLParserCatalystContext(spark);
+    }
     @Test
     void testEvalTranslation() throws Exception {
         final String query = "| eval a = abs(-3)";
