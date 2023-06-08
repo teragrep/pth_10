@@ -18,7 +18,7 @@
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
     <junit.jupiter.version>5.7.1</junit.jupiter.version>
-    <teragrep.pth_03.version>2.2.0</teragrep.pth_03.version>
+    <teragrep.pth_03.version>2.2.1</teragrep.pth_03.version>
     <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
     <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
     <teragrep.pth_06.version>1.5.8</teragrep.pth_06.version>
