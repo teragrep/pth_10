@@ -22,10 +22,8 @@
     <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
     <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
     <teragrep.pth_06.version>1.5.8</teragrep.pth_06.version>
-    <!-- FIXME: Not in maven central yet -->
-    <teragrep.dpf_02.version>2.5.1</teragrep.dpf_02.version>
-    <!-- FIXME: Not in maven central yet -->
-    <teragrep.dpf_03.version>1.1.1</teragrep.dpf_03.version>
+    <teragrep.dpf_02.version>2.5.2</teragrep.dpf_02.version>
+    <teragrep.dpf_03.version>1.1.2</teragrep.dpf_03.version>
   </properties>
   <dependencies>
     <!--DPL-dependencies -->
