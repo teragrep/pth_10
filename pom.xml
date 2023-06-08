@@ -18,6 +18,8 @@
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
     <junit.jupiter.version>5.7.1</junit.jupiter.version>
+    <teragrep.rlp_01.version>3.2.0</teragrep.rlp_01.version>
+    <teragrep.rlp_03.version>1.7.6</teragrep.rlp_03.version>
     <teragrep.pth_03.version>2.2.1</teragrep.pth_03.version>
     <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
     <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
@@ -26,6 +28,37 @@
     <teragrep.dpf_03.version>1.1.2</teragrep.dpf_03.version>
     <teragrep.jpr_01.version>3.0.1</teragrep.jpr_01.version>
   </properties>
+  <licenses>
+    <license>
+      <name>Apache License v2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>Mikko Kortelainen</name>
+      <email>1@teragrep.com</email>
+      <organization>Teragrep</organization>
+      <organizationUrl>https://teragrep.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>43</name>
+      <email>43@teragrep.com</email>
+      <organization>Teragrep</organization>
+      <organizationUrl>https://teragrep.com</organizationUrl>
+    </developer>
+    <developer>
+      <name>47</name>
+      <email>47@teragrep.com</email>
+      <organization>Teragrep</organization>
+      <organizationUrl>https://teragrep.com</organizationUrl>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/teragrep/pth_10.git</connection>
+    <developerConnection>scm:git:git@github.com:teragrep/pth_10.git</developerConnection>
+    <url>https://github.com/teragrep/pth_10/tree/master</url>
+  </scm>
   <dependencies>
     <!--DPL-dependencies -->
     <dependency>
@@ -135,7 +168,7 @@
     <dependency>
       <groupId>com.teragrep</groupId>
       <artifactId>rlp_01</artifactId>
-      <version>2.1.0</version>
+      <version>${teragrep.rlp_01.version}</version>
     </dependency>
     <dependency>
       <groupId>com.cloudbees</groupId>
@@ -146,7 +179,7 @@
     <dependency>
       <groupId>com.teragrep</groupId>
       <artifactId>rlp_03</artifactId>
-      <version>1.0.0</version>
+      <version>${teragrep.rlp_03.version}</version>
     </dependency>
     <!-- iplocation command -->
     <!-- DO NOT UPDATE - 2.16.1 final Java8 compatible version -->
