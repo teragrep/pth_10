@@ -262,7 +262,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Doesn't seem to get used, goes through aggregationInstruction->fieldRenameInstruction
+     * Doesn't seem to get used, goes through aggregationInstruction-&gt;fieldRenameInstruction
      * @param ctx
      * @return
      */
