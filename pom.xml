@@ -18,45 +18,13 @@
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
     <junit.jupiter.version>5.7.1</junit.jupiter.version>
+    <teragrep.pth_03.version>2.2.0</teragrep.pth_03.version>
+    <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
+    <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
+    <teragrep.pth_06.version>1.5.8</teragrep.pth_06.version>
+    <teragrep.dpf_02.version>2.5.2</teragrep.dpf_02.version>
+    <teragrep.dpf_03.version>1.1.2</teragrep.dpf_03.version>
   </properties>
-  <profiles>
-    <profile>
-      <id>build</id>
-      <properties>
-        <teragrep.pth_03.version>2.0.2</teragrep.pth_03.version>
-        <teragrep.jue_01.version>0.4.2</teragrep.jue_01.version>
-        <teragrep.rlo_06.version>4.1.0</teragrep.rlo_06.version>
-        <teragrep.pth_06.version>1.5.3</teragrep.pth_06.version>
-        <teragrep.dpf_02.version>2.5.1</teragrep.dpf_02.version>
-        <teragrep.dpf_03.version>1.1.1</teragrep.dpf_03.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>dev</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <teragrep.pth_03.version>0.0.2-SNAPSHOT</teragrep.pth_03.version>
-        <teragrep.jue_01.version>0.0.1-SNAPSHOT</teragrep.jue_01.version>
-        <teragrep.rlo_06.version>0.0.1-SNAPSHOT</teragrep.rlo_06.version>
-        <teragrep.pth_06.version>0.0.2-SNAPSHOT</teragrep.pth_06.version>
-        <teragrep.dpf_02.version>0.0.1-SNAPSHOT</teragrep.dpf_02.version>
-        <teragrep.dpf_03.version>1.1.1</teragrep.dpf_03.version>
-      </properties>
-    </profile>
-    <profile>
-      <id>dev-java-8</id>
-      <properties>
-        <teragrep.pth_03.version>0.0.2-SNAPSHOT</teragrep.pth_03.version>
-        <teragrep.jue_01.version>0.0.1-SNAPSHOT</teragrep.jue_01.version>
-        <teragrep.rlo_06.version>0.0.1-SNAPSHOT</teragrep.rlo_06.version>
-        <teragrep.pth_06.version>0.0.2-SNAPSHOT</teragrep.pth_06.version>
-        <teragrep.dpf_02.version>0.0.1-SNAPSHOT</teragrep.dpf_02.version>
-        <teragrep.dpf_03.version>1.1.1</teragrep.dpf_03.version>
-      </properties>
-    </profile>
-  </profiles>
   <dependencies>
     <!--DPL-dependencies -->
     <dependency>
@@ -64,29 +32,6 @@
       <artifactId>pth_03</artifactId>
       <version>${teragrep.pth_03.version}</version>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-streaming_2.11</artifactId>
-      <version>2.4.5</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql-kafka-0-10_2.11</artifactId>
-      <version>2.4.5</version>
-      <scope>provided</scope>
-    </dependency>
--->
-    <!-- fuzzer -->
-    <!-- disabled for now
-    <dependency>
-      <groupId>com.teragrep</groupId>
-      <artifactId>pth_14</artifactId>
-      <version>1.0.1</version>
-      <scope>test</scope>
-    </dependency>
-    -->
     <!-- Spark filters and queries -->
     <dependency>
       <groupId>org.apache.spark</groupId>
@@ -118,7 +63,6 @@
       <artifactId>jue_01</artifactId>
       <version>${teragrep.jue_01.version}</version>
     </dependency>
-
     <!-- Parameterized Tests -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
@@ -127,41 +71,33 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>org.xmlunit</groupId>
-        <artifactId>xmlunit-core</artifactId>
-        <version>2.0.0</version>
-        <scope>test</scope>
+      <groupId>org.xmlunit</groupId>
+      <artifactId>xmlunit-core</artifactId>
+      <version>2.0.0</version>
+      <scope>test</scope>
     </dependency>
     <dependency>
-        <groupId>org.xmlunit</groupId>
-        <artifactId>xmlunit-matchers</artifactId>
-        <version>2.0.0</version>
-        <scope>test</scope>
+      <groupId>org.xmlunit</groupId>
+      <artifactId>xmlunit-matchers</artifactId>
+      <version>2.0.0</version>
+      <scope>test</scope>
     </dependency>
-    <!--
-      <dependency>
-          <groupId>org.jetbrains</groupId>
-          <artifactId>annotations</artifactId>
-          <version>RELEASE</version>
-          <scope>compile</scope>
-      </dependency>
-      -->
-      <dependency>
-          <groupId>com.teragrep</groupId>
-          <artifactId>pth_06</artifactId>
-          <version>${teragrep.pth_06.version}</version>
-      </dependency>
+    <dependency>
+      <groupId>com.teragrep</groupId>
+      <artifactId>pth_06</artifactId>
+      <version>${teragrep.pth_06.version}</version>
+    </dependency>
     <dependency>
       <groupId>com.teragrep</groupId>
       <artifactId>dpf_02</artifactId>
       <version>${teragrep.dpf_02.version}</version>
-      </dependency>
+    </dependency>
     <dependency>
       <groupId>com.teragrep</groupId>
       <artifactId>dpf_03</artifactId>
       <version>${teragrep.dpf_03.version}</version>
     </dependency>
-<!-- sendemail command -->
+    <!-- sendemail command -->
     <!-- https://mvnrepository.com/artifact/com.icegreen/greenmail-junit5 -->
     <dependency>
       <groupId>com.icegreen</groupId>
@@ -174,20 +110,20 @@
       <artifactId>javax.mail</artifactId>
       <version>1.6.2</version>
     </dependency>
-<!-- sendemail pdf generation (Apache PDFBox wrapper) -->
-	<dependency>
+    <!-- sendemail pdf generation (Apache PDFBox wrapper) -->
+	  <dependency>
 	    <groupId>com.github.dhorions</groupId>
 	    <artifactId>boxable</artifactId>
 	    <version>1.7.0</version>
-	</dependency>
-<!-- avro dataformat for testing -->
-<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-avro -->
-	<dependency>
+	  </dependency>
+    <!-- avro dataformat for testing -->
+    <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-avro -->
+	  <dependency>
 	    <groupId>org.apache.spark</groupId>
 	    <artifactId>spark-avro_2.11</artifactId>
 	    <version>2.4.5</version>
-		<scope>test</scope>
-	</dependency>
+		  <scope>test</scope>
+	  </dependency>
     <!-- string escape -->
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -224,6 +160,35 @@
     <finalName>pth_10</finalName>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-javadoc-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>attach-javadocs</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+            <configuration>
+              <source>8</source>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
         <version>0.15</version>
@@ -256,6 +221,7 @@
             <exclude>.gitmodules</exclude>
             <!-- ci -->
             <exclude>.github/workflows/*.yml</exclude>
+            <exclude>.github/workflows/*.yaml</exclude>
             <exclude>toolchains.xml</exclude>
             <exclude>settings.xml</exclude>
             <exclude>dependencies.settings.xml</exclude>
@@ -362,10 +328,78 @@
       </plugin>
     </plugins>
   </build>
-  <distributionManagement>
-    <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/${env.GITHUB_REPOSITORY}</url>
-    </repository>
-  </distributionManagement>
+  <profiles>
+    <profile>
+      <id>publish-maven-central</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <distributionManagement>
+        <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+          <id>ossrh</id>
+          <name>Central Repository OSSRH</name>
+          <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+    <profile>
+      <id>publish-github-packages</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <distributionManagement>
+        <repository>
+          <id>github</id>
+          <name>GitHub Packages</name>
+          <url>https://maven.pkg.github.com/teragrep/pth_10</url>
+        </repository>
+      </distributionManagement>
+    </profile>
+  </profiles>
 </project>
