@@ -7,7 +7,7 @@
   <artifactId>pth_10</artifactId>
   <version>${revision}${sha1}${changelist}</version>
   <name>pth_10</name>
-  <description>pth_10</description>
+  <description>Data Processing Language (DPL) translator for Apache Spark</description>
   <url>https://teragrep.com</url>
   <groupId>com.teragrep</groupId>
   <properties>
