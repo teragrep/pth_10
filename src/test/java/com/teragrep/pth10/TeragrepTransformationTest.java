@@ -161,7 +161,7 @@ public class TeragrepTransformationTest {
         performStreamingDPLTest(
                 /* DPL Query = */		    "| teragrep exec hdfs list ./",
                 /* Expected result = */    Arrays.asList(".git", "Jenkinsfile", ".project", ".settings", ".classpath", ".gitignore",
-                        "README.md", "src", "spark-warehouse", ".idea", "target", ".flattened-pom.xml", "pom.xml"),
+                        "README.adoc", "src", "spark-warehouse", ".idea", "target", ".flattened-pom.xml", "pom.xml"),
                 /* Expected value col = */ "name"
         );
     }
