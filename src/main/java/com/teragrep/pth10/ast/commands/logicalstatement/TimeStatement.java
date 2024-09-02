@@ -46,13 +46,16 @@
 
 package com.teragrep.pth10.ast.commands.logicalstatement;
 
+import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.EmitMode;
+import com.teragrep.pth10.ast.time.RelativeTimeParser;
+import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
@@ -61,10 +64,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.Stack;
-
-import static com.teragrep.pth10.ast.TimestampToEpochConversion.unixEpochFromString;
-import static com.teragrep.pth10.ast.Util.relativeTimeModifier;
 
 /**
  * <p>A subrule of logicalStatement, used for statements of time such as
@@ -73,13 +74,11 @@ import static com.teragrep.pth10.ast.Util.relativeTimeModifier;
 public class TimeStatement extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimeStatement.class);
 
-    private Document doc;
+    private final Document doc;
     private final EmitMode.mode mode;
-    // Time calculation specifics
-    private Stack<String> timeFormatStack = new Stack<>();
-
     private Long startTime = null;
     private Long endTime = null;
+    private final DPLParserCatalystContext catCtx;
 
     // return query start timestamp or null if not set
     public Long getStartTime() {
@@ -91,13 +90,15 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         return endTime;
     }
 
-    public TimeStatement(Document doc, Stack<String> timeFormatStack) {
+    public TimeStatement(DPLParserCatalystContext catCtx, Document doc) {
         this.doc = doc;
+        this.catCtx = catCtx;
         mode = EmitMode.mode.XML;
     }
 
-    public TimeStatement(Stack<String> timeFormatStack) {
+    public TimeStatement(DPLParserCatalystContext catCtx) {
         this.doc = null;
+        this.catCtx = catCtx;
         this.mode = EmitMode.mode.CATALYST;
     }
 
@@ -106,13 +107,16 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitTimeStatement(DPLParser.TimeStatementContext ctx) {
-        if (ctx.getChildCount() == 2) {
-            // Optional format part. Push it into the stack and use it in the next phase
-            timeFormatStack.push(visit(ctx.getChild(0)).toString());
-            return visit(ctx.getChild(1));
-        } else {
-            return visit(ctx.getChild(0));
+        if (ctx.timeFormatQualifier() != null) {
+            StringNode qualifierNode = (StringNode) visitTimeFormatQualifier(ctx.timeFormatQualifier());
+            catCtx.setTimeFormatString(qualifierNode.toString());
         }
+
+        if (ctx.timeQualifier() != null) {
+            return visitTimeQualifier(ctx.timeQualifier());
+        }
+
+        return new NullNode();
     }
 
     /**
@@ -127,7 +131,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitTimeFormatQualifier(DPLParser.TimeFormatQualifierContext ctx) {
-        LOGGER.info("visitTimeFormatQualifier incoming:"+ctx.getText());
+        LOGGER.info("visitTimeFormatQualifier incoming: text=<{}>", ctx.getText());
         return new StringNode(new Token(Type.TIMEFORMAT_STATEMENT, ctx.getChild(1).getText()));
     }
 
@@ -171,8 +175,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitTimeQualifier(DPLParser.TimeQualifierContext ctx) {
         Node rv = null;
-        //LOGGER.info("Visit timeQualifier mode:"+mode+" incoming:"+ctx.getText());
-        switch(mode){
+        switch (mode) {
             case XML:{
                 rv = timeQualifierEmitXml(ctx);
                 break;
@@ -194,42 +197,31 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
      */
     private ElementNode timeQualifierEmitXml(DPLParser.TimeQualifierContext ctx) {
         String op = null;
-        String timeFormatString = null;
         long timevalue = 0;
         String value = null;
         boolean isRelativeTime = false;
         Token comparisonToken;
-
-        // If defined earlier, get it from stack
-        if (!timeFormatStack.isEmpty()) {
-            timeFormatString = timeFormatStack.pop();
-        }
 
         // Get specifier. We know that 2 first childs are terminals
         // 'earliest = '
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         value = ctx.getChild(1).getText();
         Timestamp now = new Timestamp(System.currentTimeMillis());
+        RelativeTimeParser rtParser = new RelativeTimeParser();
         // Is time given as absolute
-        // Try to check if it is relative and  catch exception
+        // Try to check if it is relative and catch exception
         try {
-            timevalue = relativeTimeModifier(now, value);
-            isRelativeTime = true;
+            // relative time
+            RelativeTimestamp rtTimestamp = rtParser.parse(value); // might throw NFE if not relative timestamp
+            timevalue = rtTimestamp.calculate(now);
         } catch (NumberFormatException ne) {
+            // absolute time
+            timevalue = this.getEpochFromString(value, catCtx.getTimeFormatString());
         }
-//		LOGGER.info("visitTimeQualifier value:"+value+" isRelative:"+isRelativeTime);
-
         // Handle date calculations
         switch (node.getSymbol().getType()) {
             case DPLLexer.EARLIEST: {
                 op = "earliest";
-                if (isRelativeTime) {
-                    // Relational date like -12h from current timestamp
-                    timevalue = relativeTimeModifier(now, value);
-                } else {
-                    // Absolute date given
-                    timevalue = unixEpochFromString(value, timeFormatString);
-                }
                 comparisonToken = new Token(Type.GE);
 
                 startTime = timevalue;
@@ -237,39 +229,18 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
             }
             case DPLLexer.INDEX_EARLIEST: {
                 op = "index_earliest";
-                if (isRelativeTime) {
-                    // Relational date like -12h from current timestamp
-                    timevalue = relativeTimeModifier(now, value);
-                } else {
-                    // Absolute date given
-                    timevalue = unixEpochFromString(value, timeFormatString);
-                }
                 comparisonToken = new Token(Type.GE);
                 startTime = timevalue;
                 break;
             }
             case DPLLexer.LATEST: {
                 op = "latest";
-                if (isRelativeTime) {
-                    // Relational date like -12h from current timestamp
-                    timevalue = relativeTimeModifier(now, value);
-                } else {
-                    // Absolute time
-                    timevalue = unixEpochFromString(value, timeFormatString);
-                }
                 comparisonToken = new Token(Type.LE);
                 endTime = timevalue;
                 break;
             }
             case DPLLexer.INDEX_LATEST: {
                 op = "index_latest";
-                if (isRelativeTime) {
-                    // Relational date like -12h from current timestamp
-                    timevalue = relativeTimeModifier(now, value);
-                } else {
-                    // Absolute time
-                    timevalue = unixEpochFromString(value, timeFormatString);
-                }
                 comparisonToken = new Token(Type.LE);
                 endTime = timevalue;
                 break;
@@ -279,10 +250,6 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        // Instant instant = Instant.ofEpochSecond( timevalue );
-        // Use only date part and forget actual time
-        //LocalDate localDate = LocalDateTime.ofInstant(instant, ZoneOffset.UTC).toLocalDate();
-        // Use only date, not excact time
         Element el = doc.createElement(op);
         el.setAttribute("operation", comparisonToken.toString());
         el.setAttribute("value", Long.toString(timevalue));
@@ -299,28 +266,26 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
     private ColumnNode timeQualifierEmitCatalyst(DPLParser.TimeQualifierContext ctx) {
         String op = null;
         Column rv = null;
-        String timeFormatString = null;
         long timevalue = 0;
         String value = null;
         boolean isRelativeTime = false;
         Token comparisonToken;
-
-        // If defined earlier, get it from stack
-        if (!timeFormatStack.isEmpty()) {
-            timeFormatString = timeFormatStack.pop();
-        }
 
         // Get specifier. We know that 2 first childs are terminals
         // 'earliest = '
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         value = ctx.getChild(1).getText();
         Timestamp now = new Timestamp(System.currentTimeMillis());
+        RelativeTimeParser rtParser = new RelativeTimeParser();
         // Is time given as absolute
         // Try to check if it is relative and  catch exception
         try {
-            timevalue = relativeTimeModifier(now, value);
-            isRelativeTime = true;
+            // relative time
+            RelativeTimestamp rtTimestamp = rtParser.parse(value);
+            timevalue = rtTimestamp.calculate(now);
         } catch (NumberFormatException ne) {
+            // absolute time
+            timevalue = this.getEpochFromString(value, catCtx.getTimeFormatString());
         }
 
         Column col = new Column("`_time`");
@@ -328,13 +293,6 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         switch (node.getSymbol().getType()) {
             case DPLLexer.EARLIEST:
             case DPLLexer.INDEX_EARLIEST: {
-                if (isRelativeTime) {
-                    // Relational date like -12h from current timestamp
-                    timevalue = relativeTimeModifier(now, value);
-                } else {
-                    // Absolute date given
-                    timevalue = unixEpochFromString(value, timeFormatString);
-                }
                 startTime = timevalue;
 
                 //java.sql.Timestamp tt = new Timestamp(timevalue*1000);
@@ -344,15 +302,8 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
             }
             case DPLLexer.LATEST:
             case DPLLexer.INDEX_LATEST: {
-                if (isRelativeTime) {
-                    // Relational date like -12h from current timestamp
-                    timevalue = relativeTimeModifier(now, value);
-                } else {
-                    // Absolute time
-                    timevalue = unixEpochFromString(value, timeFormatString);
-                }
                 endTime = timevalue;
-                rv = col.leq(functions.from_unixtime(functions.lit(timevalue)));
+                rv = col.lt(functions.from_unixtime(functions.lit(timevalue)));
                 break;
             }
             default: {
@@ -360,14 +311,28 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        // Instant instant = Instant.ofEpochSecond( timevalue );
-        // Use only date part and forget actual time
-        //LocalDate localDate = LocalDateTime.ofInstant(instant, ZoneOffset.UTC).toLocalDate();
-        //LOGGER.info("visitTimeQualifier(catalyst) return value:" + rv+ " SQL:"+rv.expr().sql() +" asString:"+rv.toString());
-
         return new ColumnNode(rv);
     }
 
-
+    // Uses defaultTimeFormat if timeformat is null and DPLTimeFormat if timeformat isn't null (which means that the
+    // timeformat= option was used).
+    private long getEpochFromString(String value, String timeFormatString) {
+        value = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
+        long timevalue = 0;
+        if (timeFormatString == null || timeFormatString.equals("")) {
+            timevalue = new DefaultTimeFormat().getEpoch(value);
+        } else {
+            // TODO: should be included in DPLTimeFormat
+            if (timeFormatString.equals("%s")) {
+                return Long.parseLong(value);
+            }
+            try {
+                timevalue = new DPLTimeFormat(timeFormatString).getEpoch(value);
+            } catch (ParseException e) {
+                throw new RuntimeException("TimeQualifier conversion error: <" + value + "> can't be parsed.");
+            }
+        }
+        return timevalue;
+    }
 
 }

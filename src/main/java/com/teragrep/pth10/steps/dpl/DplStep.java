@@ -49,18 +49,17 @@ package com.teragrep.pth10.steps.dpl;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class DplStep extends AbstractDplStep {
-    public DplStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class DplStep extends AbstractDplStep {
+    public DplStep() {
+        super();
     }
-
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        Dataset<Row> rv = this.dataset;
+        Dataset<Row> rv = dataset;
         if (this.lines != null && !this.lines.isEmpty()) {
             try {
                 rv = this.generatedDatasource.constructStream(this.lines, this.explainStr);

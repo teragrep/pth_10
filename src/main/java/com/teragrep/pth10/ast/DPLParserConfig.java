@@ -46,6 +46,8 @@
 
 package com.teragrep.pth10.ast;
 
+import com.teragrep.pth10.ast.time.RelativeTimeParser;
+import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +55,6 @@ import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.teragrep.pth10.ast.Util.relativeTimeModifier;
 import static java.lang.Math.abs;
 
 /**
@@ -102,22 +103,19 @@ public class DPLParserConfig {
      * @param earliest string value like -1h or actual timestamp
      */
     public void setEarliest(String earliest) {
-        boolean relativeTime = false;
         long earliestEpoch =0;
         Timestamp now = new Timestamp(System.currentTimeMillis());
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+
+        // Try to check if it is relative and catch exception
         try {
-            long timevalue = relativeTimeModifier(now, earliest);
-            relativeTime = true;
+            RelativeTimestamp rtTimestamp = rtParser.parse(earliest); // can throw error if not relative timestamp
+            earliestEpoch = rtTimestamp.calculate(now);
         } catch (NumberFormatException ne) {
+            // absolute time
+            earliestEpoch = new DefaultTimeFormat().getEpoch(earliest);
         }
-        // Is time given as absolute
-        // Try to check if it is relative and  catch exception
-        if(relativeTime) {
-            earliestEpoch = relativeTimeModifier(now, earliest);
-        } else {
-            // Absolute time
-            earliestEpoch = TimestampToEpochConversion.unixEpochFromString(earliest, null);
-        }
+
         config.put("earliest", earliest);
         config.put("earliestEpoch", earliestEpoch);
     }
@@ -136,22 +134,19 @@ public class DPLParserConfig {
      * @param latest string value like -1h or actual timestamp
      */
     public void setLatest(String latest) {
-        boolean relativeTime = false;
         long latestEpoch = 0;
         Timestamp now = new Timestamp(System.currentTimeMillis());
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+
+        // Try to check if it is relative and catch exception
         try {
-            long timevalue = relativeTimeModifier(now, latest);
-            relativeTime = true;
+            RelativeTimestamp rtTimestamp = rtParser.parse(latest); // can throw exception if not relative timestamp
+            latestEpoch = rtTimestamp.calculate(now);
         } catch (NumberFormatException ne) {
+            // absolute time
+            latestEpoch = new DefaultTimeFormat().getEpoch(latest);
         }
-        // Is time given as absolute
-        // Try to check if it is relative and  catch exception
-        if(relativeTime) {
-            latestEpoch = relativeTimeModifier(now, latest);
-        } else {
-            // Absolute time
-            latestEpoch = TimestampToEpochConversion.unixEpochFromString(latest, null);
-        }
+
         config.put("latest", latest);
         config.put("latestEpoch", latestEpoch);
     }
@@ -171,12 +166,12 @@ public class DPLParserConfig {
         } else if (config.get("earliest") != null && config.get("latest") != null) {
             // Both set
             // Calculate time range according to latest-earliest
-            LOGGER.info("coonfig="+config);
+            LOGGER.info("config=<[{}]>",config);
             r = (long)config.get("latestEpoch") - (long)config.get("earliestEpoch");
         }
         if(r<0)
             r=abs(r);
-        LOGGER.info("Calculated range="+r);
+        LOGGER.info("Calculated range=<{}>",r);
         if (r <= 15 * 60 ) {
             rv = TimeRange.TEN_SECONDS;
         } else if (r <= 60 * 60 ) {

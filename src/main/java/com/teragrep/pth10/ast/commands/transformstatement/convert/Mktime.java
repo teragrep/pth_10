@@ -46,19 +46,13 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement.convert;
 
-import com.teragrep.pth10.ast.TimestampToEpochConversion;
+import com.teragrep.pth10.ast.DPLTimeFormat;
 import org.apache.spark.sql.api.java.UDF2;
-
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 
 /**
  * UDF for convert command 'mktime'<br>
  * Human readable time to epoch using given timeformat<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Mktime implements UDF2<String, String, String> {
@@ -66,13 +60,10 @@ public class Mktime implements UDF2<String, String, String> {
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public String call(String hrt, String tf) throws Exception {		
-		LocalDateTime time = LocalDateTime.parse(hrt, DateTimeFormatter.ofPattern(TimestampToEpochConversion.convertDplTimeFormatToJava(tf)));
-		
-        final ZonedDateTime zonedtime = ZonedDateTime.of(time, ZoneId.systemDefault());
-        final ZonedDateTime converted = zonedtime.withZoneSameInstant(ZoneOffset.UTC);
-        
-        Long rv = converted.toEpochSecond();
+	public String call(String hrt, String tf) throws Exception {
+		DPLTimeFormat format = new DPLTimeFormat(tf);
+		Long rv = format.getEpoch(hrt);
+
 		return rv.toString();
 	}
 

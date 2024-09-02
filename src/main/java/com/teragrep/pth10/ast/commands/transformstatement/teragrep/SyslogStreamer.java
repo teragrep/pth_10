@@ -135,11 +135,11 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
                 connected = sender.connect(this.relpHostAddress, this.relpPort);
             }
             catch (Exception e) {
-                LOGGER.error("An exception occurred while trying to connect in SyslogStreamer: " + e.getMessage());
+                LOGGER.error("An exception occurred while trying to connect in SyslogStreamer: <{}>", e.getMessage());
             }
 
             if (connected) {
-                LOGGER.info("SyslogStreamer connected to RELP server " + relpHostAddress + ":" + relpPort + " !");
+                LOGGER.info("SyslogStreamer connected to RELP server host=<[{}]> port=<[{}]> !",relpHostAddress, relpPort);
                 failedConnectionAttempts = 0;
                 notConnected = false;
             }
@@ -150,11 +150,11 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
                 }
 
                 try {
-                    LOGGER.warn("Connection to RELP server was unsuccessful, attempting again in " + reconnectInterval + " ms");
+                    LOGGER.warn("Connection to RELP server was unsuccessful, attempting again in <{}> ms", reconnectInterval);
                     Thread.sleep(this.reconnectInterval);
                 }
                 catch (InterruptedException e) {
-                   LOGGER.error("An error occurred while waiting for reconnection: " + e.getMessage());
+                   LOGGER.error("An error occurred while waiting for reconnection: <{}>", e.getMessage());
                 }
             }
         }
@@ -177,7 +177,7 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
             disconnected = sender.disconnect();
         }
         catch (IllegalStateException | IOException | TimeoutException e) {
-            LOGGER.error("An exception occurred while attempting to disconnect from RELP server: " + e.getMessage());
+            LOGGER.error("An exception occurred while attempting to disconnect from RELP server: <{}>", e.getMessage());
         }
         finally {
             this.tearDown();
@@ -293,22 +293,27 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
         // attempt sending message
         boolean notSent = true;
         while (notSent) {
-            LOGGER.info("Attempting to send relpBatch with <id: " + id + ">");
+            LOGGER.debug("Attempting to send relpBatch with <id: {}>", id);
             try {
                 sender.commit(relpBatch);
             }
             catch (IllegalStateException | IOException | java.util.concurrent.TimeoutException e) {
-                LOGGER.error("Error occurred while appending new syslog message: " + e.getMessage());
+                LOGGER.error("Error occurred while appending new syslog message! error=<{}>", e.getMessage());
             }
 
             if (!relpBatch.verifyTransactionAll()) {
                 LOGGER.warn("RELPBatch transaction could not be verified, retrying all failed");
                 relpBatch.retryAllFailed();
                 this.tearDown();
+                try {
+                    Thread.sleep(this.reconnectInterval);
+                } catch (InterruptedException e) {
+                    LOGGER.warn("Reconnect sleep was interrupted", e);
+                }
                 this.connect();
             }
             else {
-                LOGGER.info("RELPBatch was sent successfully.");
+                LOGGER.debug("RELPBatch was sent successfully.");
                 notSent = false;
             }
         }

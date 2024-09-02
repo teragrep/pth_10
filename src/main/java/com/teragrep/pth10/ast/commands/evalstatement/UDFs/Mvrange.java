@@ -46,7 +46,8 @@
 
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.time.RelativeTimeParser;
+import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import org.apache.spark.sql.api.java.UDF3;
 
 import java.io.Serializable;
@@ -63,7 +64,7 @@ import java.util.List;
  * time to increment past the end time, it will not
  * be included in the resulting field.<br>
  * 
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Mvrange implements UDF3<Integer, Integer, Object, List<String>>, Serializable {
@@ -104,10 +105,12 @@ public class Mvrange implements UDF3<Integer, Integer, Object, List<String>>, Se
 			// Add start to mv field
 			long time = start;
 			rv.add(String.valueOf(time));
-						
+
+			RelativeTimeParser rtParser = new RelativeTimeParser();
+			RelativeTimestamp rtTimestamp = rtParser.parse("+" + stepStr);
 			// Go until incremented past end
 			while ( time < end ) {
-				time = Util.relativeTimeModifier(new Timestamp(time*1000L), stepStr);
+				time = rtTimestamp.calculate(new Timestamp(time*1000L));
 				
 				// If time went past end, stop incrementing and don't add to mv field
 				if ( time > end ) {

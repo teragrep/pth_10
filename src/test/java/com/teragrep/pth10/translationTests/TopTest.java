@@ -47,15 +47,14 @@ package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.TopTransformation;
 import com.teragrep.pth10.steps.top.TopStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -66,7 +65,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TopTest {
     @Test
-    void testTopTranslation() throws Exception {
+    void testTopTranslation() {
         final String query = " | top _raw 10";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -75,21 +74,13 @@ public class TopTest {
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            final TopTransformation ct = new TopTransformation(ctx, stack, new ArrayList<>());
-            ct.visitTopTransformation((DPLParser.TopTransformationContext) tree.getChild(0).getChild(1));
-            final TopStep cs = ct.topStep;
+        final TopTransformation ct = new TopTransformation(ctx);
+        ct.visitTopTransformation((DPLParser.TopTransformationContext) tree.getChild(1).getChild(0));
+        final TopStep cs = ct.topStep;
 
-            assertEquals("_raw", cs.getListOfFields().get(0));
-            assertEquals(10, cs.getLimit());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("_raw", cs.getListOfFields().get(0));
+        assertEquals(10, cs.getLimit());
     }
 
 }

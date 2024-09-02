@@ -52,7 +52,7 @@ import java.util.List;
 
 /**
  * An abstract class to be List-based aggregation buffers on
- * @author p000043u
+ * @author eemhu
  *
  * @param <T> Type of data in list
  */

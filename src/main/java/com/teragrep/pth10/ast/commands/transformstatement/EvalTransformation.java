@@ -47,21 +47,18 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.bo.ElementNode;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepListNode;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.ast.commands.evalstatement.EvalStatement;
+import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -70,101 +67,36 @@ import java.util.*;
  */
 public class EvalTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EvalTransformation.class);
+    public EvalStatement evalStatement;
 
-    private boolean debugEnabled = true;
-
-    private List<String> traceBuffer = null;
-    private Document doc = null;
-    private Dataset<Row> ds = null;
-    private ProcessingStack processingPipe = null;
-    private DPLParserCatalystContext catCtx = null;
-    private List<String> dplHosts = new ArrayList<>();
-    private List<String> dplSourceTypes = new ArrayList<>();
-    private boolean aggregatesUsed = false;
-    private String aggregateField = null;
-
-    private Stack<String> timeFormatStack = new Stack<>();
-
-    // Symbol table for mapping DPL default column names
-    private Map<String, Object> symbolTable = new HashMap<>();
-
-    // Eval-statement
-    public EvalStatement evalStatement = null;
-
-
-    public EvalTransformation(DPLParserCatalystContext catCtx, ProcessingStack processingPipe, List<String> buf) {
-        this.doc = null;
-        this.ds = null;
-        this.catCtx = null;
-        this.processingPipe = processingPipe;
-        this.traceBuffer = buf;
+    public EvalTransformation(DPLParserCatalystContext catCtx) {
         // Eval returns Columns so no need to pass Dataset<Row>
-        evalStatement = new EvalStatement(catCtx, processingPipe, buf);
-    }
-
-    // Parameters for Groupmapper queries
-
-    // List of found hosts
-    public List<String> getHosts() {
-        return this.dplHosts;
-    }
-
-    // List of found sourcetypes
-    public List<String> getSourcetypes() {
-        return this.dplSourceTypes;
-    }
-
-    public boolean getAggregatesUsed() {
-        return this.aggregatesUsed;
-    }
-
-    public String getAggregateField() {
-        return this.aggregateField;
+        evalStatement = new EvalStatement(catCtx);
     }
 
     public Node visitEvalTransformation(DPLParser.EvalTransformationContext ctx) {
-        LOGGER.info("VisitEvalTransformations incoming:"+ctx.getText());
-        Node rv = evalTransformationEmitCatalyst(ctx);
-        traceBuffer.add("visitEvalTransformation returns:" + rv.toString());
-
-        return rv;
+        return evalTransformationEmitCatalyst(ctx);
     }
 
     private Node evalTransformationEmitCatalyst(DPLParser.EvalTransformationContext ctx) {
-        if(debugEnabled)
-            LOGGER.info(ctx.getChildCount() + " visitEvalTransformation(Catalyst) " + ctx.getText() + " type="
-                    + ctx.getChild(0).getClass().getName()+" left oper="+ctx.getChild(0).getText() );
-        Node rv = null;
-        // Left=eval, actual operation is on right
-        Node left = visit(ctx.getChild(0));
-        //if(LOGGER.isDebugEnabled())
-        traceBuffer.add(" visitEvalStatement" + ctx.getChildCount() + " incoming logical expression:" + ctx.getText());
-        if (ctx.getChildCount() == 1) {
-            // leaf
-            //traceBuffer.add(" visitEvalStatement Catalyst leaf:" + left + " type:" + left.getClass().getName());
-            rv = left;
-        } else if (ctx.getChildCount() == 2) {
-            Node right = visit(ctx.getChild(1));
-            traceBuffer.add(" visitEvalStatement Catalyst leaf:" + right + " type:" + right.getClass().getName());
-            rv = right;
+        LOGGER.debug("evalTransformation incoming: text=<{}>", ctx.getText());
 
-        } else if (ctx.getChildCount() == 3) {
-            // logical operation xxx AND/OR/XOR xxx
-            TerminalNode operation = (TerminalNode) ctx.getChild(1);
-            Node right = visit(ctx.getChild(2));
-            Element el = doc.createElement(operation.getText().toUpperCase());
-            el.appendChild(((ElementNode) left).getElement());
-            el.appendChild(((ElementNode) right).getElement());
-            ElementNode eln = new ElementNode(el);
-            traceBuffer.add("visitEvalStatement with operation:" + eln.toString());
-            rv = eln;
+        if (ctx.t_eval_evalParameter() == null || ctx.t_eval_evalParameter().isEmpty()) {
+            throw new IllegalStateException("Less than one evalParameter in transformation: " + ctx.getText());
         }
-        return rv;
+
+        final List<AbstractStep> listOfEvalSteps = new ArrayList<>();
+        ctx.t_eval_evalParameter().forEach(evalCtx -> {
+            StepNode sn = (StepNode) visit(evalCtx);
+            listOfEvalSteps.add(sn.get());
+        });
+
+        return new StepListNode(listOfEvalSteps);
     }
 
     public Node visitEvalFunctionStatement(DPLParser.EvalFunctionStatementContext ctx) {
-        LOGGER.info("visitEvalFunctionStatement incoming:"+ctx.getText() );
-        return  evalStatement.visitEvalFunctionStatement(ctx);
+        LOGGER.debug("visitEvalFunctionStatement incoming: text=<{}>", ctx.getText() );
+        return evalStatement.visitEvalFunctionStatement(ctx);
     }
 
     public Node visitL_evalStatement_evalCompareStatement(DPLParser.L_evalStatement_evalCompareStatementContext ctx) {
@@ -222,7 +154,6 @@ public class EvalTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitEvalMethodLen(DPLParser.EvalMethodLenContext ctx) {
-        LOGGER.info("-visitEvalMethodLen");
         return evalStatement.visitEvalMethodLen(ctx);
     }
 
@@ -242,7 +173,7 @@ public class EvalTransformation extends DPLParserBaseVisitor<Node> {
         return evalStatement.visitEvalFieldType(ctx);
     }
 
-    public Node visitEval_integerType(DPLParser.EvalIntegerTypeContext ctx) {
+    public Node visitEvalIntegerType(DPLParser.EvalIntegerTypeContext ctx) {
         return evalStatement.visitEvalIntegerType(ctx);
     }
 

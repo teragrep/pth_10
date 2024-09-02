@@ -47,8 +47,6 @@
 package com.teragrep.pth10.steps.rex4j;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractRex4jStep extends AbstractStep {
     protected String sedMode = null;
@@ -56,8 +54,8 @@ public abstract class AbstractRex4jStep extends AbstractStep {
     protected String field = "_raw";
     protected Integer maxMatch = null;
 
-    public AbstractRex4jStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractRex4jStep() {
+        super();
     }
 
     public void setSedMode(String sedMode) {

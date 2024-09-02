@@ -46,27 +46,24 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.MakeresultsTransformation;
 import com.teragrep.pth10.steps.makeresults.MakeresultsStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.SparkSession;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MakeresultsTest {
 
     @Test
-    void testMakeresultsTranslation() throws Exception {
+    void testMakeresultsTranslation() {
         String query = " | makeresults count=10 annotate=true ";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -76,24 +73,16 @@ public class MakeresultsTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        MakeresultsTransformation ct = new MakeresultsTransformation(ctx);
+        ct.visitMakeresultsTransformation((DPLParser.MakeresultsTransformationContext) tree.getChild(1).getChild(0));
+        MakeresultsStep cs = ct.makeresultsStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            MakeresultsTransformation ct = new MakeresultsTransformation(stack, ctx);
-            ct.visitMakeresultsTransformation((DPLParser.MakeresultsTransformationContext) tree.getChild(0).getChild(1));
-            MakeresultsStep cs = ct.makeresultsStep;
-
-            assertEquals(10, cs.getCount());
-            assertEquals(true, cs.isAnnotate());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(10, cs.getCount());
+        assertTrue(cs.isAnnotate());
     }
 
     @Test
-    void testMakeresultsTranslation2() throws Exception {
+    void testMakeresultsTranslation2()  {
         String query = " | makeresults ";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -103,20 +92,12 @@ public class MakeresultsTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        MakeresultsTransformation ct = new MakeresultsTransformation(ctx);
+        ct.visitMakeresultsTransformation((DPLParser.MakeresultsTransformationContext) tree.getChild(1).getChild(0));
+        MakeresultsStep cs = ct.makeresultsStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            MakeresultsTransformation ct = new MakeresultsTransformation(stack, ctx);
-            ct.visitMakeresultsTransformation((DPLParser.MakeresultsTransformationContext) tree.getChild(0).getChild(1));
-            MakeresultsStep cs = ct.makeresultsStep;
-
-            assertEquals(1, cs.getCount());
-            assertEquals(false, cs.isAnnotate());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(1, cs.getCount());
+        assertFalse(cs.isAnnotate());
     }
 }
 

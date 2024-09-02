@@ -47,7 +47,9 @@
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.google.gson.*;
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.NullValue;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.spark.sql.api.java.UDF4;
 import org.slf4j.Logger;
@@ -75,11 +77,18 @@ import java.util.Map;
  *
  * A separate 'xpath' command can be used for xpath expressions.
  *
- * @author p000043u
+ * @author eemhu
  */
 public class Spath implements UDF4<String, String, String, String, Map<String, String>>, Serializable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(Spath.class);
 	private static final long serialVersionUID = 1L;
+
+	private final NullValue nullValue;
+
+    public Spath(NullValue nullValue) {
+		super();
+		this.nullValue = nullValue;
+	}
 
 	@Override
 	public Map<String, String> call(String input, String spathExpr, String nameOfInputCol, String nameOfOutputCol) throws Exception {
@@ -95,18 +104,20 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
 				// expect topmost element to be an object
 				for (Map.Entry<String, JsonElement> sub : jsonElem.getAsJsonObject().entrySet()) {
 					// put key:value to map - unescaping result in case was a nested json string
-					result.put(sub.getKey(), Util.stripQuotes(StringEscapeUtils.unescapeJson(sub.getValue().toString())));
+					result.put(sub.getKey(), new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))).read());
 				}
 			}
 			// Manual extraction via spath expression (JSON)
 			else {
-				final JsonElement jsonSubElem = getJsonElement(jsonElem, Util.stripQuotes(spathExpr));
+				final JsonElement jsonSubElem = getJsonElement(jsonElem, new UnquotedText(new TextString(spathExpr)).read());
 				// put key:value to map - unescaping result in case was a nested json string
-				result.put(spathExpr, jsonSubElem != null ? Util.stripQuotes(StringEscapeUtils.unescapeJson(jsonSubElem.toString())) : "null");
+				result.put(spathExpr, jsonSubElem != null ?
+						new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))).read() :
+						nullValue.value());
 			}
 			return result;
 		} catch (JsonSyntaxException | ClassCastException json_fail) {
-			LOGGER.info("Processing failed as JSON, trying XML parsing - " + json_fail.getMessage());
+			LOGGER.warn("Processing failed as JSON, trying XML parsing. Error: <{}>", json_fail.getMessage());
 			// try xml
 			try {
 				Document doc = getXmlDocFromString(input);
@@ -130,22 +141,22 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
 					final XPath xPath = XPathFactory.newInstance().newXPath();
 
 					// spath is of type main.sub.item, convert to /main/sub/item
-					String spathAsXpath = "/".concat(Util.stripQuotes(spathExpr)).replaceAll("\\.","/");
-					LOGGER.info("spath->xpath: " + spathAsXpath);
+					String spathAsXpath = "/".concat(new UnquotedText(new TextString(spathExpr)).read()).replaceAll("\\.","/");
+					LOGGER.debug("spath->xpath conversion: <[{}]>", spathAsXpath);
 
 					String rv = (String) xPath.compile(spathAsXpath).evaluate(doc, XPathConstants.STRING);
 					result.put(spathExpr, rv.trim());
 				}
 				return result;
 			} catch (Exception e) {
-				LOGGER.info("spath: The content couldn't be parsed as JSON or XML. Details: " + e.getMessage());
+				LOGGER.warn("spath: The content couldn't be parsed as JSON or XML. Details: <{}>", e.getMessage());
 				// return pre-existing content if output is the same as input
 				if (nameOfInputCol.equals(nameOfOutputCol)) {
 					result.put(spathExpr, input);
 				}
 				// otherwise output will be empty on error
 				else {
-					result.put(spathExpr, "");
+					result.put(spathExpr, nullValue.value());
 				}
 				return result;
 			}
@@ -165,7 +176,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
 		for (String key : parts) {
 			key = key.trim();
 
-			LOGGER.debug("Got key: " + key);
+			LOGGER.debug("Got key: <{}>", key);
 
 			if (key.isEmpty()) {
 				LOGGER.debug("Key was empty");
@@ -208,7 +219,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
 			docBuilder = docBuilderFactory.newDocumentBuilder();
 			return docBuilder.parse(new InputSource(new StringReader(xmlStr)));
 		} catch (Exception e) {
-			LOGGER.warn("Failed to parse XML: " + e);
+			LOGGER.warn("Failed to parse XML: <{}>", e);
 			return null;
 		}
 	}

@@ -46,15 +46,12 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.steps.table.TableStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,23 +65,11 @@ import java.util.List;
  */
 public class TableTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TableTransformation.class);
-    private DPLParserCatalystContext catCtx = null;
-    private ProcessingStack processingStack = null;
-    private boolean aggregatesUsed = false;
     List<String> fieldList = null;
     public TableStep tableStep = null;
 
-    public TableTransformation(ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.catCtx = catCtx;
-        this.processingStack = stack;
-    }
+    public TableTransformation() {
 
-    public void setAggregatesUsed(boolean aggregatesUsed) {
-        this.aggregatesUsed = aggregatesUsed;
-    }
-
-    public boolean getAggregatesUsed() {
-        return this.aggregatesUsed;
     }
 
     @Override
@@ -96,17 +81,9 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     private Node tableTransformationEmitCatalyst(DPLParser.TableTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!processingStack.isEmpty()) {
-            ds = processingStack.pop();
-        }
-
-        tableStep = new TableStep(ds);
+        tableStep = new TableStep();
         tableStep.setListOfFields(this.fieldList);
-        ds = tableStep.get();
-
-        processingStack.push(ds);
-        return new CatalystNode(ds);
+        return new StepNode(tableStep);
     }
 
     @Override
@@ -129,7 +106,7 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
         String fieldName = "";
 
         if (ctx.t_table_stringType() != null) {
-            fieldName = Util.stripQuotes(ctx.t_table_stringType().getText());
+            fieldName = new UnquotedText(new TextString(ctx.t_table_stringType().getText())).read();
         }
 
         return new StringNode(new Token(Token.Type.STRING, fieldName));

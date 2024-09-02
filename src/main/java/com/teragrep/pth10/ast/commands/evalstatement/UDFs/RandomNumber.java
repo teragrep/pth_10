@@ -54,7 +54,7 @@ import java.io.Serializable;
  * UDF used for command random()<br>
  * Returns a pseudo-random integer between zero (0) and 2^31 - 1.
  *
- * @author p000043u
+ * @author eemhu
  */
 public class RandomNumber implements UDF0<Integer>, Serializable {
 	private static final long serialVersionUID = 1L;

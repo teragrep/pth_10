@@ -58,11 +58,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ConvertStep extends AbstractConvertStep{
+public final class ConvertStep extends AbstractConvertStep{
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertStep.class);
     private SparkSession sparkSession;
-    public ConvertStep(Dataset<Row> dataset) {
-        super(dataset);
+    public ConvertStep() {
+        super();
     }
 
     /**
@@ -70,19 +70,18 @@ public class ConvertStep extends AbstractConvertStep{
      * @return resulting dataset after command
      */
     @Override
-    public Dataset<Row> get() {
+    public Dataset<Row> get(Dataset<Row> dataset) {
         // Do not process if dataset null or no convert commands
-        if (this.dataset == null || this.listOfCommands.isEmpty()) {
+        if (dataset == null || this.listOfCommands.isEmpty()) {
             return null;
         }
 
         sparkSession = SparkSession.builder().getOrCreate();
-        Dataset<Row> rv = this.dataset;
+        Dataset<Row> rv = dataset;
 
         // Process all of the convert commands
         for (ConvertCommand cmd : this.listOfCommands) {
-            LOGGER.info("Processing convert command " + cmd.getCommandType() +
-                    " using field " + cmd.getFieldParam() + " renamed as " + cmd.getRenameField());
+            LOGGER.info("Processing convert command <[{}]> using field <[{}]> renamed as <[{}]>",cmd.getCommandType(),cmd.getFieldParam(),cmd.getRenameField());
 
             // Get wildcarded fields
             List<String> fields = getWildcardFields(cmd.getFieldParam(),
@@ -143,7 +142,7 @@ public class ConvertStep extends AbstractConvertStep{
         for (String column : cols) {
             m = p.matcher(column);
             if (m.matches()) {
-                LOGGER.debug("Field '" + column + "' matches the wild card rule: '" + wc + "'");
+                LOGGER.debug("Field <[{}]> matches the wildcard rule: <[{}]>", column, wc);
                 if (!omitList.contains(column)) {
                     matchedFields.add(column);
                 }

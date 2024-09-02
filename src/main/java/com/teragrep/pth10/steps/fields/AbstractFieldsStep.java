@@ -47,8 +47,6 @@
 package com.teragrep.pth10.steps.fields;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,8 +59,8 @@ public abstract class AbstractFieldsStep extends AbstractStep {
     protected List<String> listOfFields = new ArrayList<>();
     public FieldMode mode = FieldMode.KEEP_FIELDS;
 
-    public AbstractFieldsStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractFieldsStep() {
+        super();
     }
 
     public void setListOfFields(List<String> listOfFields) {

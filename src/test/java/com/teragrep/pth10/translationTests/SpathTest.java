@@ -46,16 +46,14 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.SpathTransformation;
 import com.teragrep.pth10.steps.spath.SpathStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -64,7 +62,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SpathTest {
     @Test
-    void testSpathTranslation() throws Exception {
+    void testSpathTranslation() {
         final String query = "| spath input=_raw output=out path=this.is.a.path";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -74,28 +72,18 @@ public class SpathTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final SpathTransformation ct = new SpathTransformation(ctx);
+        ct.visitSpathTransformation((DPLParser.SpathTransformationContext) tree.getChild(1).getChild(0));
+        final SpathStep cs = ct.spathStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        stack.setStackMode(ProcessingStack.StackMode.SEQUENTIAL);
-        try {
-            final SpathTransformation ct = new SpathTransformation(stack, ctx);
-            ct.visitSpathTransformation((DPLParser.SpathTransformationContext) tree.getChild(0).getChild(1));
-            final SpathStep cs = ct.spathStep;
-
-           assertEquals("this.is.a.path",cs.getPath());
-           assertEquals("_raw", cs.getInputColumn());
-           assertFalse(cs.getAutoExtractionMode());
-           assertEquals("out", cs.getOutputColumn());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+       assertEquals("this.is.a.path",cs.getPath());
+       assertEquals("_raw", cs.getInputColumn());
+       assertFalse(cs.getAutoExtractionMode());
+       assertEquals("out", cs.getOutputColumn());
     }
 
     @Test
-    void testSpathTranslation2() throws Exception {
+    void testSpathTranslation2() {
         final String query = "| spath";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -105,26 +93,16 @@ public class SpathTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final SpathTransformation ct = new SpathTransformation(ctx);
+        ct.visitSpathTransformation((DPLParser.SpathTransformationContext) tree.getChild(1).getChild(0));
+        final SpathStep cs = ct.spathStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        stack.setStackMode(ProcessingStack.StackMode.SEQUENTIAL);
-        try {
-            final SpathTransformation ct = new SpathTransformation(stack, ctx);
-            ct.visitSpathTransformation((DPLParser.SpathTransformationContext) tree.getChild(0).getChild(1));
-            final SpathStep cs = ct.spathStep;
+        assertNull(cs.getPath());
+        assertEquals("_raw", cs.getInputColumn());
+        assertTrue(cs.getAutoExtractionMode());
 
-            assertNull(cs.getPath());
-            assertEquals("_raw", cs.getInputColumn());
-            assertTrue(cs.getAutoExtractionMode());
-
-            // internal column name used for auto-extraction
-            assertEquals("$$dpl_pth10_internal_column_spath_output$$", cs.getOutputColumn());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        // internal column name used for auto-extraction
+        assertEquals("$$dpl_pth10_internal_column_spath_output$$", cs.getOutputColumn());
     }
 }
 

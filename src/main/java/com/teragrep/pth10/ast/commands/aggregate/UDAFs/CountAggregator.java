@@ -46,6 +46,7 @@
 
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
+import com.teragrep.pth10.ast.NullValue;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
@@ -53,9 +54,11 @@ import org.apache.spark.sql.expressions.Aggregator;
 
 public class CountAggregator extends Aggregator<Row, Long, Long> {
 
-    private String colName = "";
-    public CountAggregator(String colName) {
+    private final String colName;
+    private final NullValue nullValue;
+    public CountAggregator(String colName, NullValue nullValue) {
         this.colName = colName;
+        this.nullValue = nullValue;
     }
     @Override
     public Long zero() {
@@ -72,7 +75,7 @@ public class CountAggregator extends Aggregator<Row, Long, Long> {
             o = input.get(0);
         }
 
-        if (o != null) {
+        if (o != nullValue.value()) {
             current++;
         }
         return current;

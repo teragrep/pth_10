@@ -48,19 +48,43 @@ package com.teragrep.pth10.steps;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.streaming.StreamingQueryException;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class AbstractStep {
+    public enum CommandProperty {
+        USES_INTERNAL_BATCHCOLLECT, // Command has an internal batch collect, e.g. sort
+        IGNORE_DEFAULT_SORTING, // Command applies a certain order to the rows
+        SEQUENTIAL_ONLY, // Works only in Sequential mode (forEachBatch)
+        AGGREGATE, // If there are multiple aggregate commands, switch to sequential mode is necessary
+        REQUIRE_PRECEDING_AGGREGATE // this command requires an aggregate command before it
+    }
 
-    protected final Dataset<Row> dataset;
+    protected final Set<CommandProperty> properties = new HashSet<>();
+    protected boolean aggregatesUsedBefore = false;
 
-    public AbstractStep(Dataset<Row> dataset) {
-        this.dataset = dataset;
+    public boolean hasProperty(CommandProperty prop) {
+        return properties.contains(prop);
+    }
+
+    private boolean addProperty(CommandProperty prop) {
+        return properties.add(prop);
+    }
+
+    public void setAggregatesUsedBefore(boolean aggregatesUsedBefore) {
+        this.aggregatesUsedBefore = aggregatesUsedBefore;
+    }
+
+    public AbstractStep() {
+
     }
 
     /**
      * Perform the necessary dataframe operations for the implemented command
+     * @param dataset Dataset to operate on
      * @return Dataframe, which has the operations applied
      */
-    public abstract Dataset<Row> get();
-
+    public abstract Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException;
 }

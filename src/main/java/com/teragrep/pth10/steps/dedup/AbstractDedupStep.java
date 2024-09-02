@@ -46,9 +46,10 @@
 
 package com.teragrep.pth10.steps.dedup;
 
+import com.teragrep.functions.dpf_02.BatchCollect;
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+
 import java.util.List;
 import java.util.Map;
 
@@ -59,56 +60,43 @@ public abstract class AbstractDedupStep extends AbstractStep {
     protected boolean keepEmpty;
     protected boolean keepEvents;
     protected boolean consecutive;
+    protected boolean completeOutputMode;
+    protected DPLParserCatalystContext catCtx;
+    protected BatchCollect intBc;
 
-    public AbstractDedupStep(Dataset<Row> dataset) {
-        super(dataset);
-    }
-
-    public void setListOfFields(List<String> lof) {
-        listOfFields = lof;
+    public AbstractDedupStep() {
+        super();
     }
 
     public List<String> getListOfFields() {
         return listOfFields;
     }
 
-    public void setFieldsProcessed(Map<String, Map<String, Long>> fp) {
-        fieldsProcessed = fp;
-    }
-
     public Map<String, Map<String, Long>> getFieldsProcessed() {
         return fieldsProcessed;
-    }
-
-    public void setMaxDuplicates(int maxDuplicates) {
-        this.maxDuplicates = maxDuplicates;
     }
 
     public int getMaxDuplicates() {
         return maxDuplicates;
     }
 
-    public void setKeepEmpty(boolean keepEmpty) {
-        this.keepEmpty = keepEmpty;
-    }
-
     public boolean getKeepEmpty() {
         return this.keepEmpty;
-    }
-
-    public void setKeepEvents(boolean keepEvents) {
-        this.keepEvents = keepEvents;
     }
 
     public boolean getKeepEvents() {
         return this.keepEvents;
     }
 
-    public void setConsecutive(boolean consecutive) {
-        this.consecutive = consecutive;
-    }
-
     public boolean getConsecutive() {
         return this.consecutive;
+    }
+
+    public DPLParserCatalystContext getCatCtx() {
+        return catCtx;
+    }
+
+    public boolean isCompleteOutputMode() {
+        return completeOutputMode;
     }
 }

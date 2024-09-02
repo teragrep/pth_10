@@ -19,15 +19,15 @@
     <changelist>-SNAPSHOT</changelist>
     <sha1/>
     <junit.jupiter.version>5.7.1</junit.jupiter.version>
-    <teragrep.rlp_01.version>3.2.0</teragrep.rlp_01.version>
+    <teragrep.rlp_01.version>4.0.1</teragrep.rlp_01.version>
     <teragrep.rlp_03.version>1.7.6</teragrep.rlp_03.version>
-    <teragrep.pth_03.version>2.2.1</teragrep.pth_03.version>
+    <teragrep.pth_03.version>6.1.4</teragrep.pth_03.version>
     <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
     <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
-    <teragrep.pth_06.version>1.5.8</teragrep.pth_06.version>
-    <teragrep.dpf_02.version>2.5.2</teragrep.dpf_02.version>
-    <teragrep.dpf_03.version>1.1.2</teragrep.dpf_03.version>
-    <teragrep.jpr_01.version>3.0.1</teragrep.jpr_01.version>
+    <teragrep.pth_06.version>3.1.2</teragrep.pth_06.version>
+    <teragrep.dpf_02.version>3.0.0</teragrep.dpf_02.version>
+    <teragrep.dpf_03.version>10.0.1</teragrep.dpf_03.version>
+    <teragrep.jpr_01.version>3.1.1</teragrep.jpr_01.version>
   </properties>
   <licenses>
     <license>
@@ -67,17 +67,23 @@
       <artifactId>pth_03</artifactId>
       <version>${teragrep.pth_03.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
+      <version>3.4.0</version>
+      <scope>provided</scope>
+    </dependency>
     <!-- Spark filters and queries -->
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-sql_2.11</artifactId>
-      <version>2.4.5</version>
+      <artifactId>spark-sql_2.12</artifactId>
+      <version>3.4.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
-      <artifactId>spark-mllib_2.11</artifactId>
-      <version>2.4.5</version>
+      <artifactId>spark-mllib_2.12</artifactId>
+      <version>3.4.0</version>
       <scope>provided</scope>
     </dependency>
     <!-- Configuration lib -->
@@ -97,6 +103,12 @@
       <groupId>com.teragrep</groupId>
       <artifactId>jue_01</artifactId>
       <version>${teragrep.jue_01.version}</version>
+    </dependency>
+    <!-- connection pooling -->
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-dbcp2</artifactId>
+      <version>2.9.0</version>
     </dependency>
     <!-- Parameterized Tests -->
     <dependency>
@@ -132,6 +144,13 @@
       <artifactId>dpf_03</artifactId>
       <version>${teragrep.dpf_03.version}</version>
     </dependency>
+    <!-- Database Tests -->
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>2.2.224</version>
+      <scope>test</scope>
+    </dependency>
     <!-- sendemail command -->
     <!-- https://mvnrepository.com/artifact/com.icegreen/greenmail-junit5 -->
     <dependency>
@@ -153,12 +172,12 @@
 	  </dependency>
     <!-- avro dataformat for testing -->
     <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-avro -->
-	  <dependency>
-	    <groupId>org.apache.spark</groupId>
-	    <artifactId>spark-avro_2.11</artifactId>
-	    <version>2.4.5</version>
-		  <scope>test</scope>
-	  </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-avro_2.12</artifactId>
+      <version>3.4.0</version>
+      <scope>test</scope>
+    </dependency>
     <!-- string escape -->
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -194,6 +213,45 @@
       <groupId>com.teragrep</groupId>
       <artifactId>jpr_01</artifactId>
       <version>${teragrep.jpr_01.version}</version>
+    </dependency>
+    <!-- for testing teragrep exec kafka save command -->
+    <dependency>
+      <groupId>com.salesforce.kafka.test</groupId>
+      <artifactId>kafka-junit5</artifactId>
+      <version>3.2.3</version>
+      <scope>test</scope>
+    </dependency>
+    <!-- kafka junit needs kafka dependency -->
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.12</artifactId>
+      <version>3.4.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <!-- jackson-module-scala_2.12 needs to be excluded, otherwise breaks everything -->
+        <exclusion>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-scala_2.12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>3.4.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.mock-server</groupId>
+      <artifactId>mockserver-netty-no-dependencies</artifactId>
+      <version>5.15.0</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>1.7.36</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
   <build>
@@ -270,6 +328,9 @@
             <!-- readme -->
             <exclude>README.adoc</exclude>
             <exclude>README.md</exclude>
+            <!-- dummy files -->
+            <exclude>src/test/resources/hdfslist/**</exclude>
+            <exclude>src/test/resources/csv/**</exclude>
           </excludes>
         </configuration>
       </plugin>

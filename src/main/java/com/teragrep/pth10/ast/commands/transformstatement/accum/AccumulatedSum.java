@@ -53,7 +53,7 @@ import java.util.List;
 /***
  * A class that provides functionality to collect numeric values of type Long and
  * calculate the sum from the current pool of numbers.
- * @author p000043u
+ * @author eemhu
  *
  */
 public class AccumulatedSum implements Serializable {

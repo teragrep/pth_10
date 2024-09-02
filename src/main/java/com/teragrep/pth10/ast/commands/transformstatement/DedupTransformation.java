@@ -46,61 +46,42 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.functions.dpf_02.SortByClause;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.*;
+import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepListNode;
+import com.teragrep.pth10.ast.bo.StepNode;
+import com.teragrep.pth10.ast.bo.StringListNode;
 import com.teragrep.pth10.steps.dedup.DedupStep;
 import com.teragrep.pth10.steps.sort.SortStep;
-import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class DedupTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupTransformation.class);
-    private final ProcessingStack STACK;
-    private final DPLParserCatalystContext CAT_CTX;
-
-    private boolean aggregatesUsed = false;
-    private boolean isSorted = false;
+    private final DPLParserCatalystContext catCtx;
 
     public DedupStep dedupStep = null;
 
-    public void setAggregatesUsed(boolean aggregatesUsed) {
-        this.aggregatesUsed = aggregatesUsed;
-    }
-
-    private boolean isSorted() {
-        return isSorted;
-    }
-
-    public DedupTransformation(ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.STACK = stack;
-        this.CAT_CTX = catCtx;
+    public DedupTransformation(DPLParserCatalystContext catCtx) {
+        this.catCtx = catCtx;
     }
 
     @Override
     public Node visitDedupTransformation(DPLParser.DedupTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!this.STACK.isEmpty()) {
-            ds = this.STACK.pop();
-        }
+        SortStep sortStep = null;
 
-        int maxDuplicates = 0;  //0;
-        boolean keepEmpty = false;  //false;
-        boolean keepEvents = false; //false;
-        boolean consecutive = false; //false;
+        int maxDuplicates = 0;
+        boolean keepEmpty = false;
+        boolean keepEvents = false;
+        boolean consecutive = false;
 
         final List<String> listOfFields = visitT_dedup_fieldListParameter(ctx.t_dedup_fieldListParameter()).asList();
 
@@ -175,58 +156,25 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
             // as they get added only when a next one is started to be processed in the loop above
             listOfSortByClauses.add(sbc);
 
-            SortStep sortStep = new SortStep(ds);
-            sortStep.setListOfSortByClauses(listOfSortByClauses);
-            sortStep.setLimit(this.STACK.getCatVisitor().getDPLRecallSize());
-            sortStep.setDesc(false); // no support for desc in dedup
-            sortStep.setAggregatesUsed(this.aggregatesUsed);
+            sortStep = new SortStep(catCtx, listOfSortByClauses, this.catCtx.getDplRecallSize(), false); // no support for desc in dedup
 
-            final String sortBcId = Util.getObjectIdentifier(ctx.t_dedup_sortbyInstruction());
-            LOGGER.info("sortCtxId:" + sortBcId);
-            sortStep.setSortingBatchCollect((BatchCollect) this.CAT_CTX.getObjectStore().get(sortBcId));
+            LOGGER.info("Processing sortByClauses in dedup with params: sbc={}, limit={}, desc={}",
+                            Arrays.toString(sortStep.getListOfSortByClauses().toArray()), sortStep.getLimit(), sortStep.isDesc());
 
-            LOGGER.info(String.format("Processing sortByClauses in dedup with params: sbc=%s, limit=%s, desc=%s, aggsUsed=%s",
-                            Arrays.toString(sortStep.getListOfSortByClauses().toArray()), sortStep.getLimit(), sortStep.isDesc(), sortStep.isAggregatesUsed()));
-
-            ds = sortStep.get();
-
-            this.isSorted = true; // Sort uses batchCollect internally
-            this.CAT_CTX.getObjectStore().add(sortBcId, sortStep.getSortingBatchCollect());
         }
 
         // initialize dedupStep here, so the sorted ds will be used if it was set
-        this.dedupStep = new DedupStep(ds);
+        this.dedupStep = new DedupStep(listOfFields, maxDuplicates, keepEmpty, keepEvents, consecutive, catCtx, sortStep!=null);
 
-        //convert to objectStore:
-        final String id = Util.getObjectIdentifier(ctx);
-        LOGGER.info("dedupId= " + id);
-        if (!this.CAT_CTX.getObjectStore().has(id) || isSorted()) {
-            LOGGER.info("Such id not found - init dedup map");
-            this.CAT_CTX.getObjectStore().add(id, Collections.synchronizedMap(new ConcurrentHashMap<>()));
+        LOGGER.info("Processing dedup with params: limit={}, keepempty={}, keepevents={}, consecutive={}, cols={}",
+                maxDuplicates, keepEmpty, keepEvents, consecutive, Arrays.toString(listOfFields.toArray()));
+
+        // only return StepListNode if sort is used as they're two separate step objects (dedup & sort)
+        if (sortStep != null) {
+            return new StepListNode(Arrays.asList(sortStep, this.dedupStep));
+        } else {
+            return new StepNode(this.dedupStep);
         }
-
-       /* if (this.CAT_CTX.getDedupFieldsProcessed() == null) {
-            this.CAT_CTX.setDedupFieldsProcessed(Collections.synchronizedMap(new ConcurrentHashMap<>()));
-        }*/
-
-        this.dedupStep.setListOfFields(listOfFields);
-        //this.dedupStep.setFieldsProcessed(this.CAT_CTX.getDedupFieldsProcessed());
-
-        this.dedupStep.setFieldsProcessed((Map<String, Map<String, Long>>) this.CAT_CTX.getObjectStore().get(id));
-        this.dedupStep.setMaxDuplicates(maxDuplicates);
-        this.dedupStep.setKeepEmpty(keepEmpty);
-        this.dedupStep.setKeepEvents(keepEvents);
-        this.dedupStep.setConsecutive(consecutive);
-
-        LOGGER.info(String.format("Processing dedup with params: limit=%s, keepempty=%s, keepevents=%s, consecutive=%s, cols=%s",
-                maxDuplicates, keepEmpty, keepEvents, consecutive, Arrays.toString(listOfFields.toArray())));
-
-        ds = this.dedupStep.get();
-        //this.CAT_CTX.setDedupFieldsProcessed(this.dedupStep.getFieldsProcessed());
-        this.CAT_CTX.getObjectStore().add(id, this.dedupStep.getFieldsProcessed());
-        this.STACK.setSorted(this.isSorted());
-        this.STACK.push(ds);
-        return new CatalystNode(ds);
     }
 
     public StringListNode visitT_dedup_fieldListParameter(DPLParser.T_dedup_fieldListParameterContext ctx) {

@@ -47,22 +47,17 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.bo.CatalystNode;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.datasources.GeneratedDatasource;
 import com.teragrep.pth10.steps.explain.AbstractExplainStep;
 import com.teragrep.pth10.steps.explain.ExplainStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Base transformation class for explain command.
@@ -70,28 +65,19 @@ import java.util.Map;
  */
 public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplainTransformation.class);
-
-    private List<String> traceBuffer = null;
     DPLParserCatalystContext catCtx = null;
-    private Map<String, String> symbolTable = new HashMap<>();
-    ProcessingStack processingPipe = null;
 
     public ExplainStep explainStep = null;
 
-    public ExplainTransformation(DPLParserCatalystContext catCtx, ProcessingStack processingPipe, List<String> buf)
+    public ExplainTransformation(DPLParserCatalystContext catCtx)
     {
-        this.processingPipe = processingPipe;
-        this.traceBuffer = buf;
         this.catCtx = catCtx;
     }
 
     public Node visitExplainTransformation(DPLParser.ExplainTransformationContext ctx) {
-        traceBuffer.add(ctx.getChildCount() + " ExplainTransformation:" + ctx.getText());
-        LOGGER.info(ctx.getChildCount() + " ExplainTransformation:" + ctx.getText());
-        Node rv = explainTransformationEmitCatalyst(ctx);
-        traceBuffer.add("visitExplainTransformation returns:" + rv.toString());
+        LOGGER.info("ExplainTransformation incoming: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
 
-        return rv;
+        return explainTransformationEmitCatalyst(ctx);
     }
 
     /**
@@ -100,13 +86,7 @@ public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
      * @return catalystnode containing result dataset
      */
     public Node explainTransformationEmitCatalyst(DPLParser.ExplainTransformationContext ctx) {
-        Dataset<Row> rv = null;
-        if (!this.processingPipe.isEmpty()) {
-            rv = this.processingPipe.pop();
-        }
-        this.explainStep = new ExplainStep(rv);
-
-        traceBuffer.add(ctx.getChildCount() + " explainTransformation:" + ctx.getText());
+        this.explainStep = new ExplainStep();
 
         // Default mode is brief
         // just physical plan
@@ -133,11 +113,8 @@ public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
         // step
         this.explainStep.setMode(explainMode);
         this.explainStep.setGeneratedDatasource(datasource);
-        rv = this.explainStep.get();
 
-        // Put back result
-        processingPipe.push(rv);
-        return new CatalystNode( rv);
+        return new StepNode(explainStep);
     }
 
 }

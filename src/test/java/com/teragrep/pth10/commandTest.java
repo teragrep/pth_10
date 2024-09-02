@@ -46,25 +46,17 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.DPLAuditInformation;
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,406 +66,176 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class commandTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(commandTest.class);
 
-    DPLParserCatalystContext ctx = null;
-    DPLParserCatalystVisitor catalystVisitor;
     // Use this file for  dataset initialization
-    String testFile = "src/test/resources/xmlWalkerTestData.json";
-    SparkSession spark = null;
+    String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
+
+    private StreamingTestUtil streamingTestUtil;
 
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-        spark = SparkSession
-                .builder()
-                .appName("Java Spark SQL basic example")
-                .master("local[2]")
-                .config("spark.driver.extraJavaOptions", "-Duser.timezone=EET")
-                .config("spark.executor.extraJavaOptions", "-Duser.timezone=EET")
-                .config("spark.sql.session.timeZone", "UTC")
-                .getOrCreate();
-        spark.sparkContext().setLogLevel("ERROR");
-        ctx = new DPLParserCatalystContext(spark);
+        this.streamingTestUtil = new StreamingTestUtil();
+        this.streamingTestUtil.setEnv();
     }
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        // initialize test dataset
-        SparkSession curSession = spark.newSession();
-        Dataset<Row> df = curSession.read().json(testFile);
-        ctx.setDs(df);
+        this.streamingTestUtil.setUp();
     }
-
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        catalystVisitor = null;
+        this.streamingTestUtil.tearDown();
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void explainTest() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain ";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
+        String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain ";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        System.currentTimeMillis();
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
-    }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            StructType expectedSchema = new StructType(new StructField[]{
+                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            List<Row> resAsList = res.collectAsList();
 
-   // @Test
-    void syslogStreamTest() {
-        String q;
-        q = "index=index_A | teragrep exec syslog stream";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        System.currentTimeMillis();
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+            assertEquals(expectedSchema, res.schema());
+            assertEquals(1, resAsList.size());
+            assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
+        });
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void explain1Test() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain extended";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
+        String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain extended";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        System.currentTimeMillis();
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            LOGGER.info("result");
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            StructType expectedSchema = new StructType(new StructField[]{
+                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            List<Row> resAsList = res.collectAsList();
+
+            assertEquals(expectedSchema, res.schema());
+            assertEquals(1, resAsList.size());
+            assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
+            assertTrue(resAsList.get(0).toString().contains("Optimized Logical Plan"));
+        });
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void explain2Test() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|explain extended";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|explain extended";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        System.currentTimeMillis();
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            StructType expectedSchema = new StructType(new StructField[]{
+                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            List<Row> resAsList = res.collectAsList();
+
+            assertEquals(expectedSchema, res.schema());
+            assertEquals(1, resAsList.size());
+            assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
+            assertTrue(resAsList.get(0).toString().contains("Optimized Logical Plan"));
+        });
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void auditTest() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host] | explain extended";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-        LOGGER.debug(tree.toStringTree(parser));
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host] | explain extended";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        DPLAuditInformation auditInfo = new DPLAuditInformation();
-        auditInfo.setQuery(q);
-        auditInfo.setUser("TestUser");
-        auditInfo.setReason("Testing audit log");
-        ctx.setAuditInformation(auditInfo);
-        System.currentTimeMillis();
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-            DPLAuditInformation ainf = visitor.getCatalystContext().getAuditInformation();
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            DPLAuditInformation ainf = this.streamingTestUtil.getCtx().getAuditInformation();
             // Check auditInformation
             assertEquals("TestUser",ainf.getUser());
             assertEquals(q,ainf.getQuery());
             assertEquals("Testing audit log",ainf.getReason());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        });
+
     }
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void teragrepTest() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host | teragrep get system version";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
+        String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host | teragrep get system version";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        System.currentTimeMillis();
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
+            for (Row r : sourcetypeCol) {
+                assertTrue(r.getString(0).contains("teragrep version"));
+            }
+
+            List<Row> rawCol = res.select("_raw").collectAsList();
+
+            for (Row r : rawCol) {
+                // _ raw should contain TG version information
+                // teragrep.XXX_XX.version: X.X.X
+                // Teragrep version: X.X.X
+                assertTrue(r.getAs(0).toString().contains("version:"));
+            }
+        });
     }
     
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void teragrep_Issue149_Test() {
         String q = " | teragrep get system version";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-        // dataset commented out to test fake stream
-        //String testFile = "src/test/resources/subsearchData.json";
-        //Dataset<Row> inDs = spark.read().json(testFile);
-        //ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        //System.currentTimeMillis();
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-            
-            List<Row> rawCol = res.select("_raw").collectAsList();
-            
-            for (Row r : rawCol) {
-            	// _ raw should contain TG version information
-            	// teragrep.XXX_XX.version: X.X.X
-            	// Teragrep version: X.X.X
-            	assertTrue(r.getAs(0).toString().contains("version:"));
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
+            for (Row r : sourcetypeCol) {
+                assertTrue(r.getString(0).contains("teragrep version"));
             }
-            
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+
+            List<Row> rawCol = res.select("_raw").collectAsList();
+
+            for (Row r : rawCol) {
+                // _ raw should contain TG version information
+                // teragrep.XXX_XX.version: X.X.X
+                // Teragrep version: X.X.X
+                assertTrue(r.getAs(0).toString().contains("version:"));
+            }
+        });
     }
 
+    // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void dplTest() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=true";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-        String[] ruleNames=parser.getRuleNames();
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=true";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-
-        List<String> ruleNamesList = Arrays.asList(parser.getRuleNames());
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        ctx.setRuleNames(ruleNames);
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+        });
     }
 
+    // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void dpl2Test() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=false";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-        String[] ruleNames=parser.getRuleNames();
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=false";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-
-        List<String> ruleNamesList = Arrays.asList(parser.getRuleNames());
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        ctx.setRuleNames(ruleNames);
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+        });
     }
 
+    // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void dpl3Test() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-        String[] ruleNames=parser.getRuleNames();
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-
-        List<String> ruleNamesList = Arrays.asList(parser.getRuleNames());
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        ctx.setRuleNames(ruleNames);
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+        });
     }
 
+    // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     void dpl4Test() {
-        String q;
-        // First parse incoming DPL
-        // check that timechart returns also aggregatesUsed=true
-        q="index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]  [ search sourcetype= c:X:0| top limit=1 host | fields + host] |dpl debug=parsetree subsearch=true";
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-        String[] ruleNames=parser.getRuleNames();
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]  [ search sourcetype= c:X:0| top limit=1 host | fields + host] |dpl debug=parsetree subsearch=true";
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-
-        List<String> ruleNamesList = Arrays.asList(parser.getRuleNames());
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/subsearchData.json";
-        Dataset<Row> inDs = spark.read().json(testFile);
-        ctx.setDs(inDs);
-        ctx.setEarliest("-1Y");
-        ctx.setRuleNames(ruleNames);
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        try {
-            CatalystNode n = (CatalystNode) visitor.visit(tree);
-            LOGGER.info("Logical part ="+visitor.getLogicalPart());
-            Dataset<Row> res = n.getDataset();
-            res.show(false);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+        });
     }
 
 }

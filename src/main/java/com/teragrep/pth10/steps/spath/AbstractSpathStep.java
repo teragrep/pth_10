@@ -46,11 +46,8 @@
 
 package com.teragrep.pth10.steps.spath;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractSpathStep extends AbstractStep {
     protected String inputColumn = null;
@@ -59,8 +56,8 @@ public abstract class AbstractSpathStep extends AbstractStep {
     protected Boolean autoExtractionMode = null;
     protected DPLParserCatalystContext catCtx = null;
 
-    public AbstractSpathStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractSpathStep() {
+        super();
     }
 
     public void setInputColumn(String inputColumn) {

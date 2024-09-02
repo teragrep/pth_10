@@ -52,7 +52,7 @@ import java.util.Map;
 /**
  * Java Bean compliant class to enclose the map with helper methods
  * used in DistinctCountAggregator
- * @author p000043u
+ * @author eemhu
  *
  */
 public class CountBuffer extends MapBuffer<String, Long> implements Serializable {

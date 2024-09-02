@@ -67,7 +67,7 @@ import java.time.format.DateTimeFormatter;
  * 
  * Aggregator types: IN=Row, BUF=TimestampMapBuffer, OUT=String
  * Serializable
- * @author p000043u
+ * @author eemhu
  *
  */
 public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, TimestampMapBuffer, OUT> implements Serializable {
@@ -77,7 +77,9 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Time
 	private String colName = null;
 	private static final boolean debugEnabled = false;
 	
-	/** Constructor used to feed in the column name */
+	/** Constructor used to feed in the column name
+	 * @param colName column name for source field
+	 * */
 	public EarliestLatestAggregator(String colName) {
 		super();
 		this.colName = colName;
@@ -89,7 +91,7 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Time
 		if (debugEnabled) LOGGER.info("Buffer encoder");
 		
 		// TODO using kryo should speed this up
-		return Encoders.bean(TimestampMapBuffer.class);
+		return Encoders.javaSerialization(TimestampMapBuffer.class);
 	}
 
 	/** Abstract implementation for output encoder */

@@ -50,23 +50,19 @@ import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
 import com.teragrep.pth10.ast.bo.CatalystNode;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.*;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 
@@ -104,35 +100,18 @@ public class utils {
 			UUID id = UUID.fromString(uuid.replace("_", "-"));
 		} catch (IllegalArgumentException ex) {
 			// Not uuid,
-			LOGGER.info("NOT UUID:<" + uuid + ">");
+			LOGGER.debug("NOT UUID: <{}>", uuid);
 			return false;
 		}
 		return true;
 	}
 	public static void printDebug(String e, String result){
-		LOGGER.info("Spark SQL='" + result + "'");
-		LOGGER.info("Spark EXP='" + e + "'");
-		LOGGER.info("----------------------");
+		LOGGER.debug("Spark SQL=<{}>", result);
+		LOGGER.debug("Spark EXP=<{}>", e);
+		LOGGER.debug("----------------------");
 	}
 
-	public static void printXMLDebug(String e, String result){
-		LOGGER.info("XML result='" + result + "'");
-		LOGGER.info("  Expected='" + e + "'");
-		LOGGER.info("----------------------");
-	}
-
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-	public void testGetQueryAnalysis() throws AnalysisException {
-		String e = "00 Aggregate [none#4], [none#4, count(none#1) AS #0L]\n" +
-				"01 +- Filter none#2 RLIKE (?i)^test_index\n" +
-				"02    +- LocalRelation [none#0, none#1, none#2, none#3, none#4, none#5, none#6, none#7L, none#8]";
-		String q = getQueryAnalysis("index=test_index | chart count(_raw) by host");
-		Assertions.assertEquals(e, q);
-	}
-
-
-	public static String getQueryAnalysis(String str) throws AnalysisException {
+	public static String getQueryAnalysis(String str) {
 		StructType exampleSchema = new StructType(
 				new StructField[]{
 						new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),

@@ -48,8 +48,6 @@ package com.teragrep.pth10.steps.explain;
 
 import com.teragrep.pth10.datasources.GeneratedDatasource;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractExplainStep extends AbstractStep {
     protected ExplainMode mode = ExplainMode.BRIEF;
@@ -58,8 +56,8 @@ public abstract class AbstractExplainStep extends AbstractStep {
         BRIEF, EXTENDED
     }
 
-    public AbstractExplainStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractExplainStep() {
+        super();
     }
 
     public void setMode(ExplainMode mode) {

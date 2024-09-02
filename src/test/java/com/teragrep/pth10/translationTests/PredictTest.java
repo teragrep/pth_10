@@ -47,16 +47,14 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.PredictTransformation;
 import com.teragrep.pth10.steps.predict.PredictStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -73,21 +71,13 @@ public class PredictTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        PredictTransformation pt = new PredictTransformation();
+        pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
+        PredictStep ps = pt.predictStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            PredictTransformation pt = new PredictTransformation(stack, ctx);
-            pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(0).getChild(1));
-            PredictStep ps = pt.predictStep;
-
-            assertEquals(5, ps.getFutureTimespan());
-            assertEquals(1, ps.getListOfColumnsToPredict().size());
-            assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(5, ps.getFutureTimespan());
+        assertEquals(1, ps.getListOfColumnsToPredict().size());
+        assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
     }
 
     @Test
@@ -101,21 +91,13 @@ public class PredictTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        PredictTransformation pt = new PredictTransformation();
+        pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
+        PredictStep ps = pt.predictStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            PredictTransformation pt = new PredictTransformation(stack, ctx);
-            pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(0).getChild(1));
-            PredictStep ps = pt.predictStep;
-
-            assertEquals(5, ps.getFutureTimespan());
-            assertEquals(1, ps.getListOfColumnsToPredict().size());
-            assertEquals("field AS `xyz`", ps.getListOfColumnsToPredict().get(0).toString());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(5, ps.getFutureTimespan());
+        assertEquals(1, ps.getListOfColumnsToPredict().size());
+        assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
     }
 
     @Test
@@ -129,21 +111,13 @@ public class PredictTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        PredictTransformation pt = new PredictTransformation();
+        pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
+        PredictStep ps = pt.predictStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            PredictTransformation pt = new PredictTransformation(stack, ctx);
-            pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(0).getChild(1));
-            PredictStep ps = pt.predictStep;
-
-            assertEquals(20, ps.getFutureTimespan());
-            assertEquals(1, ps.getListOfColumnsToPredict().size());
-            assertEquals("field AS `xyz`", ps.getListOfColumnsToPredict().get(0).toString());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(20, ps.getFutureTimespan());
+        assertEquals(1, ps.getListOfColumnsToPredict().size());
+        assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
     }
 
     @Test
@@ -157,25 +131,17 @@ public class PredictTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        PredictTransformation pt = new PredictTransformation();
+        pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
+        PredictStep ps = pt.predictStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            PredictTransformation pt = new PredictTransformation(stack, ctx);
-            pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(0).getChild(1));
-            PredictStep ps = pt.predictStep;
-
-            assertEquals(5, ps.getFutureTimespan());
-            assertEquals(1, ps.getListOfColumnsToPredict().size());
-            assertEquals("field AS `xyz`", ps.getListOfColumnsToPredict().get(0).toString());
-            assertEquals(70, ps.getLower());
-            assertEquals("a", ps.getUpperField());
-            assertEquals(69, ps.getUpper());
-            assertEquals("b", ps.getLowerField());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(5, ps.getFutureTimespan());
+        assertEquals(1, ps.getListOfColumnsToPredict().size());
+        assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
+        assertEquals(70, ps.getLower());
+        assertEquals("a", ps.getUpperField());
+        assertEquals(69, ps.getUpper());
+        assertEquals("b", ps.getLowerField());
     }
 
     @Test
@@ -189,23 +155,16 @@ public class PredictTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        PredictTransformation pt = new PredictTransformation();
+        pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
+        PredictStep ps = pt.predictStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            PredictTransformation pt = new PredictTransformation(stack, ctx);
-            pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(0).getChild(1));
-            PredictStep ps = pt.predictStep;
-
-            assertEquals(5, ps.getFutureTimespan());
-            assertEquals(1, ps.getListOfColumnsToPredict().size());
-            assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
-            assertEquals("LL", ps.getAlgorithm().name());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(5, ps.getFutureTimespan());
+        assertEquals(1, ps.getListOfColumnsToPredict().size());
+        assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
+        assertEquals("LL", ps.getAlgorithm().name());
     }
+
     @Test
     void testPredictTranslation_algoLLT() {
         String query = " | predict field algorithm=LLT";
@@ -217,21 +176,13 @@ public class PredictTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        PredictTransformation pt = new PredictTransformation();
+        pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
+        PredictStep ps = pt.predictStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            PredictTransformation pt = new PredictTransformation(stack, ctx);
-            pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(0).getChild(1));
-            PredictStep ps = pt.predictStep;
-
-            assertEquals(5, ps.getFutureTimespan());
-            assertEquals(1, ps.getListOfColumnsToPredict().size());
-            assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
-            assertEquals("LLT", ps.getAlgorithm().name());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(5, ps.getFutureTimespan());
+        assertEquals(1, ps.getListOfColumnsToPredict().size());
+        assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
+        assertEquals("LLT", ps.getAlgorithm().name());
     }
 }

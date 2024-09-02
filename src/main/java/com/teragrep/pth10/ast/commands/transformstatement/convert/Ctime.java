@@ -46,18 +46,17 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement.convert;
 
-import com.teragrep.pth10.ast.TimestampToEpochConversion;
+import com.teragrep.pth10.ast.DPLTimeFormat;
 import org.apache.spark.sql.api.java.UDF2;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
 
 /**
  * UDF for convert command 'ctime'<br>
  * Converts epoch time into given timeformat<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Ctime implements UDF2<String, String, String>{
@@ -69,10 +68,10 @@ public class Ctime implements UDF2<String, String, String>{
 		Long e = Long.valueOf(epoch);
 		
 		Date date = new Date(e * 1000L);
-		DateFormat format = new SimpleDateFormat(TimestampToEpochConversion.convertDplTimeFormatToJava(tf));
+		DateFormat format = new DPLTimeFormat(tf).createSimpleDateFormat();
 		format.setTimeZone(TimeZone.getTimeZone("Etc/UTC"));
 		String formatted = format.format(date);
-		
+
 		return formatted;
 	}
 

@@ -46,7 +46,9 @@
 
 package com.teragrep.pth10.steps.strcat;
 
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.NullValue;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -59,25 +61,27 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class StrcatStep extends AbstractStrcatStep {
-    public StrcatStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class StrcatStep extends AbstractStrcatStep {
+    private final NullValue nullValue;
+    public StrcatStep(NullValue nullValue) {
+        super();
+        this.nullValue = nullValue;
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
         // remove non-existing columns from list of fields
-        List<String> listOfFieldsWithNonExistingRemoved = removeNonExistingColumns(this.listOfFields);
+        List<String> listOfFieldsWithNonExistingRemoved = removeNonExistingColumns(this.listOfFields, dataset);
 
         // Check for literals and fields
         Seq<Column> seqOfCols = JavaConversions.asScalaBuffer(listOfFieldsWithNonExistingRemoved.stream().map(s -> {
             if (s.startsWith("\"") && s.endsWith("\"")) {
                 // Enclosed in double-quotes is a literal
-                return functions.lit(Util.stripQuotes(s));
+                return functions.lit(new UnquotedText(new TextString(s)).read());
             }
             else {
                 // Column
@@ -89,16 +93,16 @@ public class StrcatStep extends AbstractStrcatStep {
         if (allRequired) {
             if (seqOfCols.size() != this.numberOfSrcFieldsOriginally) {
                 // A column was dropped -> return all null
-                return this.dataset.withColumn(this.destField, functions.lit(null).cast("string"));
+                return dataset.withColumn(this.destField, functions.lit(nullValue.value()));
             }
             else {
                 // A column was not dropped -> return all cols
-                return this.dataset.withColumn(this.destField, functions.concat_ws("", seqOfCols));
+                return dataset.withColumn(this.destField, functions.concat_ws("", seqOfCols));
             }
         }
         else {
             // AllRequired=false, no need to care for dropped columns, if any
-            return this.dataset.withColumn(destField, functions.concat_ws("", seqOfCols));
+            return dataset.withColumn(destField, functions.concat_ws("", seqOfCols));
         }
     }
 
@@ -107,10 +111,10 @@ public class StrcatStep extends AbstractStrcatStep {
      * @param fields list of fields
      * @return list of fields without non-existing fields
      */
-    private List<String> removeNonExistingColumns(List<String> fields) {
+    private List<String> removeNonExistingColumns(List<String> fields, Dataset<Row> dataset) {
         List<String> fieldsRemoved = new ArrayList<>();
         fields.forEach(field -> {
-            if (Arrays.toString(this.dataset.columns()).contains(field) ||
+            if (Arrays.toString(dataset.columns()).contains(field) ||
                     (field.startsWith("\"") && field.endsWith("\""))) {
                 fieldsRemoved.add(field);
             }

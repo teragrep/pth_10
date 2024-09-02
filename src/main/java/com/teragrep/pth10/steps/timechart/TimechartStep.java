@@ -47,30 +47,22 @@
 package com.teragrep.pth10.steps.timechart;
 
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.*;
-import org.apache.spark.sql.types.StructType;
-import scala.collection.Iterator;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public class TimechartStep extends AbstractTimechartStep {
-    public TimechartStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class TimechartStep extends AbstractTimechartStep {
+    public TimechartStep() {
+        super();
+        this.properties.add(CommandProperty.AGGREGATE);
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
@@ -91,7 +83,7 @@ public class TimechartStep extends AbstractTimechartStep {
 
         Seq<Column> seqOfAllGroupBys = JavaConversions.asScalaBuffer(allGroupBys);
 
-        return this.dataset
+        return dataset
                 .groupBy(seqOfAllGroupBys)
                 .agg(firstAggCol, seqOfAggColsExceptFirst)
                 .drop("_time")

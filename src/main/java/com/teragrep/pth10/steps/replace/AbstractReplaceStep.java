@@ -47,42 +47,25 @@
 package com.teragrep.pth10.steps.replace;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractReplaceStep extends AbstractStep {
-    protected List<String> listOfFields = new ArrayList<>();
-    protected String contentToReplace = null;
-    protected String replaceWith = null;
+    protected final List<String> listOfFields;
+    protected final Map<String, String> replacements;
 
-    public AbstractReplaceStep(Dataset<Row> dataset) {
-        super(dataset);
-    }
-
-    public void setListOfFields(List<String> listOfFields) {
+    public AbstractReplaceStep(List<String> listOfFields, Map<String, String> replacements) {
+        super();
         this.listOfFields = listOfFields;
+        this.replacements = replacements;
     }
 
-    public void setContentToReplace(String contentToReplace) {
-        this.contentToReplace = contentToReplace;
-    }
-
-    public void setReplaceWith(String replaceWith) {
-        this.replaceWith = replaceWith;
-    }
-
-    public List<String> getListOfFields() {
+    public List<String> listOfFields() {
         return listOfFields;
     }
 
-    public String getContentToReplace() {
-        return contentToReplace;
-    }
-
-    public String getReplaceWith() {
-        return replaceWith;
+    public Map<String, String> replacements() {
+        return replacements;
     }
 }

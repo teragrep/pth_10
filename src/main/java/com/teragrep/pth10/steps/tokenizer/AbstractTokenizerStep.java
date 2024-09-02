@@ -47,28 +47,65 @@
 package com.teragrep.pth10.steps.tokenizer;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractTokenizerStep extends AbstractStep {
-    protected String field = "_raw";
-    public AbstractTokenizerStep(Dataset<Row> dataset) {
-        super(dataset);
+    public enum TokenizerFormat {
+        STRING, BYTES
+    }
+
+    protected String inputCol = "_raw";
+    protected String outputCol = "tokens";
+
+    protected TokenizerFormat tokenizerFormat = TokenizerFormat.STRING;
+    public AbstractTokenizerStep() {
+        super();
     }
 
     /**
      * Sets the field for the tokenizer to run on
-     * @param field field name, defaults to '_raw'
+     * @param inputCol field name, defaults to '_raw'
      */
-    public void setField(String field) {
-        this.field = field;
+    public void setInputCol(String inputCol) {
+        this.inputCol = inputCol;
+    }
+
+    /**
+     * Set Tokenizer output column
+     * @param outputCol output column
+     */
+    public void setOutputCol(String outputCol) {
+        this.outputCol = outputCol;
+    }
+
+    /**
+     * Set whether to return byte array or string
+     * @param tokenizerFormat format enum; string or bytes
+     */
+    public void setTokenizerFormat(TokenizerFormat tokenizerFormat) {
+        this.tokenizerFormat = tokenizerFormat;
     }
 
     /**
      * Gets the field set for the tokenizer
      * @return field name used in the tokenizer, default '_raw'
      */
-    public String getField() {
-        return field;
+    public String getInputCol() {
+        return inputCol;
+    }
+
+    /**
+     * Get tokenizer output column
+     * @return output column
+     */
+    public String getOutputCol() {
+        return outputCol;
+    }
+
+    /**
+     * Get Tokenizer return type; bytes or string
+     * @return bytes or string enum
+     */
+    public TokenizerFormat getTokenizerFormat() {
+        return tokenizerFormat;
     }
 }

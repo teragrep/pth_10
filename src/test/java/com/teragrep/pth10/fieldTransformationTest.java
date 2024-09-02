@@ -45,25 +45,18 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -71,177 +64,137 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class fieldTransformationTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(fieldTransformationTest.class);
 
-	DPLParserCatalystContext ctx = null;
-	DPLParserCatalystVisitor catalystVisitor;
 	// Use this file for  dataset initialization
-	String testFile = "src/test/resources/xmlWalkerTestData.json";
-	SparkSession spark = null;
+	String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
+	private StreamingTestUtil streamingTestUtil;
 
 	@org.junit.jupiter.api.BeforeAll
 	void setEnv() {
-		spark = SparkSession
-				.builder()
-				.appName("Java Spark SQL basic example")
-				.master("local[2]")
-				.getOrCreate();
-        spark.sparkContext().setLogLevel("ERROR");
-		ctx = new DPLParserCatalystContext(spark);
+		this.streamingTestUtil = new StreamingTestUtil();
+		this.streamingTestUtil.setEnv();
 	}
 
 	@org.junit.jupiter.api.BeforeEach
 	void setUp() {
-		// initialize test dataset
-		SparkSession curSession = spark.newSession();
-		Dataset<Row> df = curSession.read().json(testFile);
-		ctx.setDs(df);
+		this.streamingTestUtil.setUp();
 	}
-
 
 	@org.junit.jupiter.api.AfterEach
 	void tearDown() {
-		catalystVisitor = null;
+		this.streamingTestUtil.tearDown();
 	}
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransformTest() throws Exception {		
-		String q = "index=voyager | fields meta.*";
-		String e = "SELECT meta.* FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"voyager\" )";
-		String result = utils.getQueryAnalysis(q);
-		LOGGER.info("DPL      =<" + q + ">");
+	public void parseFieldsTransformTest() {
+		String q = "index=cinnamon | fields meta.*";
+		String e = "SELECT meta.* FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" )";
+		String result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void parseFieldsTransformCatTest() {
 		String q = "index=index_B | fields _time";
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
-		CatalystNode n = (CatalystNode) visitor.visit(tree);
-		Dataset<Row> res = n.getDataset();
-		LOGGER.info("Results after query" + res.toString());
-		LOGGER.info("-------------------");
-		// check that we ger only _time-column
-		res.show();
-		assertEquals("[_time: string]", res.toString(), visitor.getTraceBuffer().toString());
+		this.streamingTestUtil.performDPLTest(q, this.testFile, ds -> {
+			List<String> expectedValues = new ArrayList<>();
+			expectedValues.add("2006-06-06T06:06:06.060+03:00");
+			expectedValues.add("2007-07-07T07:07:07.070+03:00");
+			expectedValues.add("2008-08-08T08:08:08.080+03:00");
+			expectedValues.add("2009-09-09T09:09:09.090+03:00");
+			expectedValues.add("2010-10-10T10:10:10.100+03:00");
+
+			List<String> dsAsList = ds.collectAsList().stream().map(r -> r.getString(0)).sorted().collect(Collectors.toList());
+			Collections.sort(expectedValues);
+
+			assertEquals(5, dsAsList.size());
+			for (int i = 0; i < expectedValues.size(); i++) {
+				assertEquals(expectedValues.get(i), dsAsList.get(i));
+			}
+
+			assertEquals("[_time: string]", ds.toString());
+		});
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void parseFieldsTransformCat2Test() {
 		String q = "index=index_B | fields _time host";
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
-		CatalystNode n = (CatalystNode) visitor.visit(tree);
-		Dataset<Row> res = n.getDataset();
-		LOGGER.info("Results after query" + res.toString());
-		LOGGER.info("-------------------");
-		// check that we ger only _time-column
-		res.show();
-		assertEquals("[_time: string, host: string]", res.toString(), visitor.getTraceBuffer().toString());
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			assertEquals(5, res.count());
+			assertEquals("[_time: string, host: string]", res.toString());
+		});
 	}
 
 	/*
 	  _raw, _time, host, index, offset, partition, source, sourcetype
 	 */
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void parseFieldsTransformCatDropTest() {
-		String q = "index=index_B | fields - host";
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
-		CatalystNode n = (CatalystNode) visitor.visit(tree);
-		Dataset<Row> res = n.getDataset();
-		LOGGER.info("Results after query" + res.toString());
-		LOGGER.info("-------------------");
-		// check that we drop only host-column
-		res.show();
-		String schema = res.schema().toString();
-		assertEquals("StructType(StructField(_raw,StringType,true), StructField(_time,StringType,true), StructField(index,StringType,true), StructField(offset,LongType,true), StructField(partition,StringType,true), StructField(source,StringType,true), StructField(sourcetype,StringType,true))", schema, visitor.getTraceBuffer().toString());
+		this.streamingTestUtil.performDPLTest("index=index_B | fields - host", this.testFile, res -> {
+			assertEquals(5, res.count());
+			// check that we drop only host-column
+			String schema = res.schema().toString();
+			assertEquals("StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))", schema);
+		});
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void parseFieldsTransformCatDropSeveralTest() {
-		String q = "index=index_B | fields - host index partition";
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
-		CatalystNode n = (CatalystNode) visitor.visit(tree);
-		Dataset<Row> res = n.getDataset();
-		LOGGER.info("Results after query" + res.toString());
-		LOGGER.info("-------------------");
-		// check that we get _raw,_time, offset,source, sourcetype
-		res.show();
-		String schema = res.schema().toString();
-		assertEquals("StructType(StructField(_raw,StringType,true), StructField(_time,StringType,true), StructField(offset,LongType,true), StructField(source,StringType,true), StructField(sourcetype,StringType,true))", schema, visitor.getTraceBuffer().toString());
+		this.streamingTestUtil.performDPLTest("index=index_B | fields - host index partition", this.testFile, res -> {
+			assertEquals(5, res.count());
+			String schema = res.schema().toString();
+			assertEquals("StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))", schema);
+		});
 	}
 
-	@Disabled
+	@Disabled(value="Should be converteed to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransform1Test() throws Exception {		
+	public void parseFieldsTransform1Test() {
 		String q,e,result;
-		q = "index=voyager Denied | fields meta.*,_raw";
-		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND _raw LIKE '%Denied%' )";
-		result = utils.getQueryAnalysis(q);
-		LOGGER.info("DPL      =<" + q + ">");
+		q = "index=cinnamon Denied | fields meta.*,_raw";
+		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' )";
+		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
 
-	@Disabled
+	@Disabled(value="Should be converteed to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransform2Test() throws Exception {		
+	public void parseFieldsTransform2Test() {
 		String q,e,result;
 
-		q = "index=voyager Denied Port | fields meta.*,_raw";
-		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-		result = utils.getQueryAnalysis(q);
-		LOGGER.info("DPL      =<" + q + ">");
+		q = "index=cinnamon Denied Port | fields meta.*,_raw";
+		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
+		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
 
-	@Disabled
+	@Disabled(value="Should be converteed to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransformAddTest() throws Exception {		
+	public void parseFieldsTransformAddTest() {
 		String q,e,result;
 
-		q = "index=voyager Denied Port | fields + meta.*,_raw";
-		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-		result = utils.getQueryAnalysis(q);
-		LOGGER.info("DPL      =<" + q + ">");
+		q = "index=cinnamon Denied Port | fields + meta.*,_raw";
+		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
+		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
 
-	@Disabled
+	@Disabled(value="Should be converteed to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransformDropTest() throws Exception {		
+	public void parseFieldsTransformDropTest() {
 		String q,e,result;
-		q = "index=voyager Denied Port | fields - meta.*, _raw";
-		e = "SELECT DROPFIELDS(meta.*,_raw) FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-		result = utils.getQueryAnalysis(q);
-		LOGGER.info("DPL      =<" + q + ">");
+		q = "index=cinnamon Denied Port | fields - meta.*, _raw";
+		e = "SELECT DROPFIELDS(meta.*,_raw) FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
+		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
-
 }

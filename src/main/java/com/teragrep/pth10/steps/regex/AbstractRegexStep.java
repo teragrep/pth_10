@@ -47,16 +47,14 @@
 package com.teragrep.pth10.steps.regex;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractRegexStep extends AbstractStep {
     protected String fromField = null;
     protected String regexString = null;
     protected boolean equals = true;
 
-    public AbstractRegexStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractRegexStep() {
+        super();
     }
 
     public void setEquals(boolean equals) {

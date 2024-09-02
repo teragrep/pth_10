@@ -46,21 +46,17 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.ConvertTransformation;
-import com.teragrep.pth10.steps.convert.AbstractConvertStep;
+import com.teragrep.pth10.steps.convert.ConvertCommand;
 import com.teragrep.pth10.steps.convert.ConvertStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -68,7 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ConvertTest {
 
     @Test
-    void testConvertTranslation() throws Exception {
+    void testConvertTranslation() {
         String query = "| convert dur2sec(duration) AS result";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -78,30 +74,21 @@ public class ConvertTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ConvertTransformation ct = new ConvertTransformation();
+        ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(1).getChild(0));
+        ConvertStep cs = ct.convertStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ConvertTransformation ct = new ConvertTransformation(new ArrayList<>(), stack, ctx);
-            ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(0).getChild(1));
-            ConvertStep cs = ct.convertStep;
+        ConvertCommand cmd = cs.getListOfCommands().get(0);
 
-            AbstractConvertStep.ConvertCommand cmd = cs.getListOfCommands().get(0);
-
-            assertEquals(AbstractConvertStep.ConvertCommand.ConvertCommandType.DUR2SEC, cmd.getCommandType());
-            assertEquals("duration", cmd.getFieldParam());
-            assertEquals("result", cmd.getRenameField());
-            assertEquals(0, cs.getListOfFieldsToOmit().size());
-            assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(ConvertCommand.ConvertCommandType.DUR2SEC, cmd.getCommandType());
+        assertEquals("duration", cmd.getFieldParam());
+        assertEquals("result", cmd.getRenameField());
+        assertEquals(0, cs.getListOfFieldsToOmit().size());
+        assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
     }
 
     @Test
-    void testConvertTranslation2() throws Exception {
+    void testConvertTranslation2() {
         String query = "| convert memk(field) AS result";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -111,30 +98,22 @@ public class ConvertTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ConvertTransformation ct = new ConvertTransformation();
+        ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(1).getChild(0));
+        ConvertStep cs = ct.convertStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ConvertTransformation ct = new ConvertTransformation(new ArrayList<>(), stack, ctx);
-            ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(0).getChild(1));
-            ConvertStep cs = ct.convertStep;
+        ConvertCommand cmd = cs.getListOfCommands().get(0);
 
-            AbstractConvertStep.ConvertCommand cmd = cs.getListOfCommands().get(0);
+        assertEquals(ConvertCommand.ConvertCommandType.MEMK, cmd.getCommandType());
+        assertEquals("field", cmd.getFieldParam());
+        assertEquals("result", cmd.getRenameField());
+        assertEquals(0, cs.getListOfFieldsToOmit().size());
+        assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
 
-            assertEquals(AbstractConvertStep.ConvertCommand.ConvertCommandType.MEMK, cmd.getCommandType());
-            assertEquals("field", cmd.getFieldParam());
-            assertEquals("result", cmd.getRenameField());
-            assertEquals(0, cs.getListOfFieldsToOmit().size());
-            assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
     @Test
-    void testConvertTranslation3() throws Exception {
+    void testConvertTranslation3() {
         String query = "| convert timeformat=\"%H:%M:%s %Y-%m-%d\" auto(duration) AS result";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -144,26 +123,18 @@ public class ConvertTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ConvertTransformation ct = new ConvertTransformation();
+        ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(1).getChild(0));
+        ConvertStep cs = ct.convertStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ConvertTransformation ct = new ConvertTransformation(new ArrayList<>(), stack, ctx);
-            ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(0).getChild(1));
-            ConvertStep cs = ct.convertStep;
+        ConvertCommand cmd = cs.getListOfCommands().get(0);
 
-            AbstractConvertStep.ConvertCommand cmd = cs.getListOfCommands().get(0);
+        assertEquals(ConvertCommand.ConvertCommandType.AUTO, cmd.getCommandType());
+        assertEquals("duration", cmd.getFieldParam());
+        assertEquals("result", cmd.getRenameField());
+        assertEquals(0, cs.getListOfFieldsToOmit().size());
+        assertEquals("%H:%M:%s %Y-%m-%d", cs.getTimeformat());
 
-            assertEquals(AbstractConvertStep.ConvertCommand.ConvertCommandType.AUTO, cmd.getCommandType());
-            assertEquals("duration", cmd.getFieldParam());
-            assertEquals("result", cmd.getRenameField());
-            assertEquals(0, cs.getListOfFieldsToOmit().size());
-            assertEquals("%H:%M:%s %Y-%m-%d", cs.getTimeformat());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 }
 

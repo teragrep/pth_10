@@ -48,6 +48,7 @@ package com.teragrep.pth10.steps.join;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.pth10.steps.subsearch.SubsearchStep;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
@@ -65,9 +66,10 @@ public abstract class AbstractJoinStep extends AbstractStep {
     protected List<String> listOfFields = null;
 
     protected DPLParserCatalystContext catCtx = null;
+    protected SubsearchStep subsearchStep = null;
 
-    public AbstractJoinStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractJoinStep() {
+        super();
     }
 
     public void setEarlier(Boolean earlier) {
@@ -106,6 +108,10 @@ public abstract class AbstractJoinStep extends AbstractStep {
         this.catCtx = catCtx;
     }
 
+    public void setSubsearchStep(SubsearchStep subsearchStep) {
+        this.subsearchStep = subsearchStep;
+    }
+
     public Boolean getEarlier() {
         return earlier;
     }
@@ -140,5 +146,9 @@ public abstract class AbstractJoinStep extends AbstractStep {
 
     public DPLParserCatalystContext getCatCtx() {
         return catCtx;
+    }
+
+    public SubsearchStep getSubsearchStep() {
+        return subsearchStep;
     }
 }

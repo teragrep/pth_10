@@ -46,7 +46,9 @@
 
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.NullValue;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import org.apache.spark.sql.api.java.UDF2;
 import scala.collection.Iterator;
 import scala.collection.mutable.WrappedArray;
@@ -61,22 +63,25 @@ import java.util.regex.PatternSyntaxException;
  * Returns true if regex matches subject, otherwise false.<br>
  * "isMultivalue=false" Goes through a normal field, and returns whether or not there was a match<br>
  * "isMultivalue=true" Goes through a multi-value field, and returns index of first match<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
 
 	private static final long serialVersionUID = 1L;
-	private boolean isMultiValue = false;
+	private final boolean isMultiValue;
+	private final NullValue nullValue;
 	
-	public RegexMatch() {
+	public RegexMatch(NullValue nullValue) {
 		super();
 		this.isMultiValue = false;
+		this.nullValue = nullValue;
 	}
 	
-	public RegexMatch(boolean isMultiValue) {
+	public RegexMatch(boolean isMultiValue, NullValue nullValue) {
 		super();
 		this.isMultiValue = isMultiValue;
+		this.nullValue = nullValue;
 	}
 
 	@Override
@@ -119,13 +124,13 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
 	// This gets called if isMultiValue=false
 	// Goes through a normal field, and returns whether or not there was a match
 	private Boolean performForNormalField(String subjectStr, String regexString) {
-		regexString = Util.stripQuotes(regexString);
+		regexString = new UnquotedText(new TextString(regexString)).read();
 		boolean isMatch = false;
 		
 		try {
 			Pattern p = Pattern.compile(regexString);
 			Matcher m = p.matcher(subjectStr);
-			isMatch = m.matches();
+			isMatch = m.find();
 		}
 		catch (PatternSyntaxException pse) {
 			throw new RuntimeException("Match command encountered an error compiling the regex pattern: " + pse.getMessage());
@@ -136,7 +141,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
 	
 	// This gets called if isMultiValue=true
 	// Goes through a multi-value field, and returns index of first match
-	private Integer performForMultiValueField(WrappedArray<String> subjectLst, String regexString) {
+	private Object performForMultiValueField(WrappedArray<String> subjectLst, String regexString) {
 		Pattern p;
 
 		try {
@@ -150,7 +155,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
 		int i = 0;
 		while (it.hasNext()) {
 			Matcher m = p.matcher(it.next());
-			boolean isMatch = m.matches();
+			boolean isMatch = m.find();
 			
 			if (isMatch) {
 				return i;
@@ -159,7 +164,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
 			i++;
 		}
 		
-		return null;
+		return nullValue.value();
 	}
 
 }

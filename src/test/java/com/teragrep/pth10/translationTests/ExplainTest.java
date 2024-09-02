@@ -46,21 +46,17 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.ExplainTransformation;
 import com.teragrep.pth10.steps.explain.AbstractExplainStep;
 import com.teragrep.pth10.steps.explain.ExplainStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -68,7 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ExplainTest {
 
     @Test
-    void testExplainTranslation() throws Exception {
+    void testExplainTranslation() {
         String query = "| explain ";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -78,24 +74,15 @@ public class ExplainTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ExplainTransformation ct = new ExplainTransformation(ctx);
+        ct.visitExplainTransformation((DPLParser.ExplainTransformationContext) tree.getChild(1).getChild(0));
+        ExplainStep cs = ct.explainStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ExplainTransformation ct = new ExplainTransformation(ctx, stack, new ArrayList<>());
-            ct.visitExplainTransformation((DPLParser.ExplainTransformationContext) tree.getChild(0).getChild(1));
-            ExplainStep cs = ct.explainStep;
-
-            assertEquals(AbstractExplainStep.ExplainMode.BRIEF, cs.getMode());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(AbstractExplainStep.ExplainMode.BRIEF, cs.getMode());
     }
 
     @Test
-    void testExplainTranslation2() throws Exception {
+    void testExplainTranslation2() {
         String query = "| explain extended";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -105,20 +92,11 @@ public class ExplainTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ExplainTransformation ct = new ExplainTransformation(ctx);
+        ct.visitExplainTransformation((DPLParser.ExplainTransformationContext) tree.getChild(1).getChild(0));
+        ExplainStep cs = ct.explainStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ExplainTransformation ct = new ExplainTransformation(ctx, stack, new ArrayList<>());
-            ct.visitExplainTransformation((DPLParser.ExplainTransformationContext) tree.getChild(0).getChild(1));
-            ExplainStep cs = ct.explainStep;
-
-            assertEquals(AbstractExplainStep.ExplainMode.EXTENDED, cs.getMode());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(AbstractExplainStep.ExplainMode.EXTENDED, cs.getMode());
     }
 }
 

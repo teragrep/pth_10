@@ -47,30 +47,26 @@ package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.TimechartTransformation;
 import com.teragrep.pth10.steps.timechart.TimechartStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TimechartTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTest.class);
     @Test
-    void testTimeChartTranslation() throws Exception {
+    void testTimeChartTranslation() {
         String query = "| timechart span=5min sum(sales) as sales by product";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -85,23 +81,17 @@ public class TimechartTest {
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            TimechartTransformation tct = new TimechartTransformation(ctx, stack, new ArrayList<>());
-            tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(0).getChild(1));
-            TimechartStep tcs = tct.timechartStep;
+        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
+        tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
+        TimechartStep tcs = tct.timechartStep;
 
-            assertEquals("timewindow(_time, 300000000, 300000000, 0) AS `window`", tcs.getSpan().toString());
-            assertEquals("sum(sales) AS `sales`", tcs.getAggCols().get(0).toString());
-            assertEquals("product", tcs.getDivByInsts().get(0));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
+        assertEquals("sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales", tcs.getAggCols().get(0).toString());
+        assertEquals("product", tcs.getDivByInsts().get(0));
     }
 
     @Test
-    void testTimeChartTranslation_NoByClause() throws Exception {
+    void testTimeChartTranslation_NoByClause() {
         String query = "| timechart span=5min sum(sales) as sales";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -112,25 +102,18 @@ public class TimechartTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        ProcessingStack stack = new ProcessingStack(visitor);
 
+        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
+        tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
+        TimechartStep tcs = tct.timechartStep;
 
-        try {
-            TimechartTransformation tct = new TimechartTransformation(ctx, stack, new ArrayList<>());
-            tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(0).getChild(1));
-            TimechartStep tcs = tct.timechartStep;
-
-            assertEquals("timewindow(_time, 300000000, 300000000, 0) AS `window`", tcs.getSpan().toString());
-            assertEquals("sum(sales) AS `sales`", tcs.getAggCols().get(0).toString());
-            assertEquals(0, tcs.getDivByInsts().size());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
+        assertEquals("sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales", tcs.getAggCols().get(0).toString());
+        assertEquals(0, tcs.getDivByInsts().size());
     }
 
     @Test
-    void testTimeChartTranslationBasic() throws Exception {
+    void testTimeChartTranslationBasic() {
         String query = "| timechart count";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -141,20 +124,14 @@ public class TimechartTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            TimechartTransformation tct = new TimechartTransformation(ctx, stack, new ArrayList<>());
-            tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(0).getChild(1));
-            TimechartStep tcs = tct.timechartStep;
+        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
+        tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
+        TimechartStep tcs = tct.timechartStep;
 
-            assertEquals("timewindow(_time, 86400000000, 86400000000, 0) AS `window`", tcs.getSpan().toString());
-            assertEquals("countaggregator() AS `count`", tcs.getAggCols().get(0).toString());
-            assertEquals(0, tcs.getDivByInsts().size());
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("window(_time, 86400000000, 86400000000, 0) AS window", tcs.getSpan().toString());
+        assertEquals("countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS count", tcs.getAggCols().get(0).toString());
+        assertEquals(0, tcs.getDivByInsts().size());
     }
 }
 

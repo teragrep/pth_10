@@ -46,10 +46,9 @@
 
 package com.teragrep.pth10.ast;
 
-import com.teragrep.pth10.ast.bo.Node;
-import com.teragrep.pth10.ast.commands.transformstatement.sendemail.SendemailResultsProcessor;
+import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.pth10.steps.Flushable;
 import com.typesafe.config.Config;
-import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -58,8 +57,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Encapsulates parameters for Catalyst code generator. In addition to that offers access to sparkcontext and incoming datasource
@@ -67,15 +65,66 @@ import java.util.List;
 public class DPLParserCatalystContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLParserCatalystContext.class);
 
-    SparkSession sparkSession = null;
+    SparkSession sparkSession;
     // If not set, create empty default
     private DPLParserConfig parserConfig = new DPLParserConfig();
 
+    // extremely important for tests using config
+    private boolean testingMode = false;
     private Dataset<Row> inDs = null;
     private Config config = null;
 
-    // list of individual sub searches
-    private List<Node> subSearch = new LinkedList<>();
+    // String consumer for log messages
+    private Consumer<String> messageLogger = null;
+
+    // Dataset consumer for datasource metrics
+    private Consumer<Dataset<Row>> metricsLogger = null;
+
+    // stored timeformat string
+    private String timeFormatString = "";
+
+    public void setTimeFormatString(String timeFormatString) {
+        this.timeFormatString = timeFormatString;
+    }
+
+    public String getTimeFormatString() {
+        return timeFormatString;
+    }
+
+    // wildcard used in search? e.g. index=xyz "*abc*"
+    private boolean wildcardSearchUsed = false;
+
+    public void setWildcardSearchUsed(boolean wildcardSearchUsed) {
+        this.wildcardSearchUsed = wildcardSearchUsed;
+    }
+
+    public boolean isWildcardSearchUsed() {
+        return wildcardSearchUsed;
+    }
+
+    public void setMessageLogger(Consumer<String> messageLogger) {
+        this.messageLogger = messageLogger;
+    }
+
+    public void logMessageToUI(String msg) {
+        if (this.messageLogger != null) {
+            this.messageLogger.accept(msg);
+        } else {
+            LOGGER.warn("Tried to log message <{}> to UI, but messageLogger was not set!", msg);
+        }
+    }
+
+    public void setMetricsLogger(Consumer<Dataset<Row>> metricsLogger) {
+        this.metricsLogger = metricsLogger;
+    }
+
+    public void sendMetrics(Dataset<Row> metricsDs) {
+        if (this.metricsLogger != null) {
+            this.metricsLogger.accept(metricsDs);
+        } else {
+            LOGGER.warn("Tried to send metrics via MetricsLogger, but it was not set.");
+        }
+    }
 
     // earliest and latest used by DPL for default value injection
     private long dplDefaultEarliest = 0L;
@@ -128,49 +177,34 @@ public class DPLParserCatalystContext {
     }
 
     // DPLInternalStreamingQueryListener
-    private DPLInternalStreamingQueryListener internalStreamingQueryListener = null;
+    private final DPLInternalStreamingQueryListener internalStreamingQueryListener;
     public DPLInternalStreamingQueryListener getInternalStreamingQueryListener() {
         return internalStreamingQueryListener;
     }
 
 
     /**
-     * Used to flush the remaining rows to be sent as an email (sendemail command)
+     * Used to flush the remaining rows to from commands (e.g. sendemail and kafka save)
      */
-    @SuppressWarnings("unchecked")
     public void flush() {
-        this.objectStore.forEach(o -> {
-           if (o instanceof SendemailResultsProcessor) {
-               try {
-                   ((SendemailResultsProcessor)o).flush();
-               } catch (Exception e) {
-                   throw new RuntimeException("Error flushing sendemail: " + e);
-               }
-           }
-           else if (o instanceof DataFrameWriter) {
-               // teragrep exec for non-streaming data, e.g. sequential mode
-               try {
-                   DataFrameWriter<Row> dfw = (DataFrameWriter<Row>) o;
-                   dfw.save();
-               }
-               catch (Exception e) {
-                   throw new RuntimeException("Error saving dataframe: " + e);
-               }
-           }
-        });
+        for (AbstractStep step : this.stepList.asList()) {
+            if (step instanceof Flushable) {
+                ((Flushable) step).flush();
+            }
+        }
     }
 
+    // Recall-size
+    private Integer dplRecallSize = 10000;
 
-    // Stores objects, such as SendemailResultsProcessor, that need to be preserved in the context
-    private final ObjectStore objectStore = new ObjectStore();
-
-    public ObjectStore getObjectStore() {
-        return objectStore;
+    public void setDplRecallSize(Integer dplRecallSize) {
+        this.dplRecallSize = dplRecallSize;
     }
 
-    // Fields for building url for email
-    // Builds url on top of urlBase with string formatting
-    private final String urlBase = "%s/#/notebook/%s/paragraph/%s";
+    public Integer getDplRecallSize() {
+        return dplRecallSize;
+    }
+
     private String baseUrl = null;
     private String paragraphUrl = null;
     private String notebookUrl = null;
@@ -200,12 +234,23 @@ public class DPLParserCatalystContext {
     }
 
     /**
+     * Get the notebook id
+     * @return notebook id
+     */
+    public String getNotebookUrl() {
+        return notebookUrl;
+    }
+
+    /**
      * Builds the full link to the search results to be inserted to the sent emails.<br>
      * Based on data from {@link #baseUrl}, {@link #notebookUrl} and {@link #paragraphUrl}
      * @return full URL
      */
     public String getUrl() {
         if (baseUrl != null && notebookUrl != null && paragraphUrl != null) {
+            // Fields for building url for email
+            // Builds url on top of urlBase with string formatting
+            final String urlBase = "%s/#/notebook/%s/paragraph/%s";
             return String.format(urlBase, baseUrl, notebookUrl, paragraphUrl);
         }
         else {
@@ -224,6 +269,7 @@ public class DPLParserCatalystContext {
     // used for capturing archive query string, only for testing at this moment
     private String archiveQuery = null;
     private String sparkQuery = null;
+    private String dplQuery = "";
 
     public String getArchiveQuery() {
         return archiveQuery;
@@ -239,6 +285,14 @@ public class DPLParserCatalystContext {
 
     public void setSparkQuery(String sparkQuery) {
         this.sparkQuery = sparkQuery;
+    }
+
+    public String getDplQuery() {
+        return dplQuery;
+    }
+
+    public void setDplQuery(String dplQuery) {
+        this.dplQuery = dplQuery;
     }
 
     public DPLAuditInformation getAuditInformation() {
@@ -262,12 +316,28 @@ public class DPLParserCatalystContext {
     }
 
     private String[] ruleNames;
+
+    // Step "tree" or list
+    private StepList stepList;
+
+    public void setStepList(StepList stepList) {
+        this.stepList = stepList;
+    }
+
+    public StepList getStepList() {
+        return stepList;
+    }
+
+    // Null value definition
+    public final NullValue nullValue;
+
     /**
      * Initialize context with spark session
      * @param sparkSession active session
      */
     public DPLParserCatalystContext(SparkSession sparkSession) {
         this.sparkSession = sparkSession;
+        this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
     }
@@ -280,6 +350,7 @@ public class DPLParserCatalystContext {
     public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds) {
         this.sparkSession = sparkSession;
         this.inDs = ds;
+        this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
     }
@@ -294,6 +365,7 @@ public class DPLParserCatalystContext {
     public DPLParserCatalystContext(SparkSession sparkSession, Config config) {
         this.sparkSession = sparkSession;
         this.config = config;
+        this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
         if (config != null) {
@@ -301,15 +373,6 @@ public class DPLParserCatalystContext {
             this.dplDefaultEarliest = Instant.now().truncatedTo(ChronoUnit.DAYS).getEpochSecond() - 24*60*60L;
             this.dplMinimumEarliest = this.dplDefaultEarliest;
         }
-    }
-
-
-    public List<Node> getSubSearch() {
-        return subSearch;
-    }
-
-    public void setSubSearch(List<Node> subSearch) {
-        this.subSearch = subSearch;
     }
 
     /**
@@ -364,26 +427,29 @@ public class DPLParserCatalystContext {
         parserConfig.setLatest(latest);
     }
 
-    public TimeRange getTimeRange() {
-        return parserConfig.getTimeRange();
-    }
-
     public DPLParserConfig getParserConfig() {
         return parserConfig;
     }
-
 
     public void setParserConfig(DPLParserConfig parserConfig) {
         this.parserConfig = parserConfig;
     }
 
+    public boolean getTestingMode() {
+        return this.testingMode;
+    }
+
+    public void setTestingMode(boolean testingMode) {
+        this.testingMode = testingMode;
+    }
+
     @Override
     public  DPLParserCatalystContext clone() {
-        DPLParserCatalystContext ctx = null;
+        DPLParserCatalystContext ctx;
         try {
             ctx = (DPLParserCatalystContext)super.clone();
         } catch (CloneNotSupportedException e) {
-            LOGGER.info("Clone not supported, create object copy");
+            LOGGER.debug("Clone not supported, create object copy");
             ctx = new DPLParserCatalystContext(this.sparkSession);
             ctx.setParserConfig(parserConfig);
             ctx.setDs(inDs);

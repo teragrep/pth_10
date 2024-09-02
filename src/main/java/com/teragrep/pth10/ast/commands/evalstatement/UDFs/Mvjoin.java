@@ -55,7 +55,7 @@ import java.io.Serializable;
 /**
  * UDF for command mvjoin(mvfield, str)<br>
  * Joins the mvfield's values with str delimiter into a new mv field<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Mvjoin implements UDF2<WrappedArray<String>, String, String>, Serializable {

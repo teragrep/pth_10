@@ -46,18 +46,15 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.steps.rename.RenameStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,23 +67,16 @@ import java.util.Map;
  */
 public class RenameTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RenameTransformation.class);
-    private DPLParserCatalystContext catCtx = null;
-    private ProcessingStack processingStack = null;
 
     public RenameStep renameStep = null;
-    public RenameTransformation(ProcessingStack processingStack, DPLParserCatalystContext catCtx) {
-        this.processingStack = processingStack;
-        this.catCtx = catCtx;
+    public RenameTransformation() {
+
     }
 
     @Override
     public Node visitRenameTransformation(DPLParser.RenameTransformationContext ctx) {
         // rename field AS field , field AS field , ...
-        Dataset<Row> ds = null;
-        if (!this.processingStack.isEmpty()) {
-            ds = this.processingStack.pop();
-        }
-        this.renameStep = new RenameStep(ds);
+        this.renameStep = new RenameStep();
 
         String originalName = null;
         String newName = null;
@@ -117,7 +107,7 @@ public class RenameTransformation extends DPLParserBaseVisitor<Node> {
 
             if (originalName != null && newName != null) {
                 // rename the column based on original and new name
-                mapOfRenamedFields.put(Util.stripQuotes(originalName), Util.stripQuotes(newName));
+                mapOfRenamedFields.put(new UnquotedText(new TextString(originalName)).read(), new UnquotedText(new TextString(newName)).read());
                 originalName = null;
                 newName = null;
             }
@@ -125,9 +115,7 @@ public class RenameTransformation extends DPLParserBaseVisitor<Node> {
 
         // step
         this.renameStep.setMapOfRenamedFields(mapOfRenamedFields);
-        ds = this.renameStep.get();
 
-        processingStack.push(ds);
-        return new CatalystNode(ds);
+        return new StepNode(renameStep);
     }
 }

@@ -46,18 +46,13 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.*;
+import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.steps.iplocation.IplocationStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,69 +65,23 @@ import org.slf4j.LoggerFactory;
 public class IplocationTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(IplocationTransformation.class);
     private static final String DATABASE_PATH_CONFIG_ITEM = "dpl.pth_10.transform.iplocation.db.path";
-    private final ProcessingStack stack;
     private final DPLParserCatalystContext catCtx;
+    private final DPLParserCatalystVisitor catVisitor;
 
     public IplocationStep iplocationStep = null;
-    public IplocationTransformation(ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.stack = stack;
+    public IplocationTransformation(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
         this.catCtx = catCtx;
+        this.catVisitor = catVisitor;
     }
 
     @Override
     public Node visitIplocationTransformation(DPLParser.IplocationTransformationContext ctx) {
-        // variables for command parameters
-        String lang = "en";
-        String field = null; // required
-        boolean allFields = false;
-        String prefix = "";
+        // init step object
+        this.iplocationStep = new IplocationStep();
 
-        // pop from stack; init step object
-        Dataset<Row> ds = null;
-        if (!this.stack.isEmpty()) {
-            ds = this.stack.pop();
-        }
-        this.iplocationStep = new IplocationStep(ds);
+        // go through command parameters, and set them into iplocationStep
+        visitChildren(ctx);
 
-        // go through command parameters, and place them into variables
-        // <field-type>, lang, allfields, prefix
-        if (ctx.fieldType() != null) {
-            field = Util.stripQuotes(ctx.fieldType().getText());
-        }
-        else {
-            throw new IllegalArgumentException("The field parameter cannot be empty!");
-        }
-
-        if (ctx.t_iplocation_langParameter() != null) {
-            lang = Util.stripQuotes(ctx.t_iplocation_langParameter().stringType().getText());
-        }
-
-        if (ctx.t_iplocation_allFieldsParameter() != null) {
-            final TerminalNode boolNode = ((TerminalNode) ctx.t_iplocation_allFieldsParameter().booleanType().getChild(0));
-            final int boolType = boolNode.getSymbol().getType();
-
-            switch (boolType) {
-                case DPLLexer.GET_BOOLEAN_TRUE:
-                    allFields = true;
-                    break;
-                case DPLLexer.GET_BOOLEAN_FALSE:
-                    allFields = false;
-                    break;
-                default:
-                    throw new RuntimeException("Invalid boolean type provided for 'allfields' parameter!\nMake sure that" +
-                            " the parameter is followed by 'true' or 'false'.");
-            }
-        }
-
-        if (ctx.t_iplocation_prefixParameter() != null) {
-            prefix = Util.stripQuotes(ctx.t_iplocation_prefixParameter().stringType().getText());
-        }
-
-        // set params to step object and perform actual ds ops
-        this.iplocationStep.setLang(lang);
-        this.iplocationStep.setField(field);
-        this.iplocationStep.setAllFields(allFields);
-        this.iplocationStep.setPrefix(prefix);
         this.iplocationStep.setCatCtx(catCtx);
 
         // get mmdb filepath
@@ -141,12 +90,52 @@ public class IplocationTransformation extends DPLParserBaseVisitor<Node> {
         }
         else {
             // no config item, get backup path from visitor (mostly for testing purposes)
-            this.iplocationStep.setPathToDb(this.stack.getCatVisitor().getIplocationMmdbPath());
+            this.iplocationStep.setPathToDb(this.catVisitor.getIplocationMmdbPath());
         }
 
-        ds = this.iplocationStep.get();
+        return new StepNode(iplocationStep);
+    }
 
-        this.stack.push(ds);
-        return new CatalystNode(ds);
+    @Override
+    public Node visitFieldType(DPLParser.FieldTypeContext ctx) {
+        String field = new UnquotedText(new TextString(ctx.getText())).read();
+        this.iplocationStep.setField(field);
+        return new StringNode(new Token(Token.Type.STRING, field));
+    }
+
+    @Override
+    public Node visitT_iplocation_langParameter(DPLParser.T_iplocation_langParameterContext ctx) {
+        String lang = new UnquotedText(new TextString(ctx.stringType().getText())).read();
+        this.iplocationStep.setLang(lang);
+        return new StringNode(new Token(Token.Type.STRING, lang));
+    }
+
+    @Override
+    public Node visitT_iplocation_allFieldsParameter(DPLParser.T_iplocation_allFieldsParameterContext ctx) {
+        boolean allFields;
+        final TerminalNode boolNode = ((TerminalNode) ctx.booleanType().getChild(0));
+        final int boolType = boolNode.getSymbol().getType();
+
+        switch (boolType) {
+            case DPLLexer.GET_BOOLEAN_TRUE:
+                allFields = true;
+                break;
+            case DPLLexer.GET_BOOLEAN_FALSE:
+                allFields = false;
+                break;
+            default:
+                throw new RuntimeException("Invalid boolean type provided for 'allfields' parameter!\nMake sure that" +
+                        " the parameter is followed by 'true' or 'false'.");
+        }
+
+        this.iplocationStep.setAllFields(allFields);
+        return new StringNode(new Token(Token.Type.STRING, boolNode.getText()));
+    }
+
+    @Override
+    public Node visitT_iplocation_prefixParameter(DPLParser.T_iplocation_prefixParameterContext ctx) {
+        String prefix = new UnquotedText(new TextString(ctx.stringType().getText())).read();
+        this.iplocationStep.setPrefix(prefix);
+        return new StringNode(new Token(Token.Type.STRING, prefix));
     }
 }

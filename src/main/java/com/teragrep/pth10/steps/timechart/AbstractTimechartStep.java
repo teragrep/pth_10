@@ -49,8 +49,6 @@ package com.teragrep.pth10.steps.timechart;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.List;
 
@@ -62,8 +60,8 @@ public abstract class AbstractTimechartStep extends AbstractStep {
     protected DPLParserCatalystContext catCtx = null;
     protected String hdfsPath = null;
 
-    public AbstractTimechartStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractTimechartStep() {
+        super();
     }
 
     public void setAggCols(List<Column> aggCols) {

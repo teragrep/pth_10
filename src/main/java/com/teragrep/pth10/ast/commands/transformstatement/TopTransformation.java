@@ -47,14 +47,11 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.steps.top.TopStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,41 +67,26 @@ import java.util.Map;
 public class TopTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TopTransformation.class);
 
-    private List<String> traceBuffer = null;
     DPLParserCatalystContext catCtx = null;
-    private Map<String, String> symbolTable = new HashMap<>();
-    ProcessingStack processingPipe = null;
 
     public TopStep topStep = null;
 
-    public TopTransformation(DPLParserCatalystContext catCtx, ProcessingStack processingPipe, List<String> buf)
+    public TopTransformation(DPLParserCatalystContext catCtx)
     {
-        this.symbolTable = symbolTable;
-        this.processingPipe = processingPipe;
-        this.traceBuffer = buf;
         this.catCtx = catCtx;
     }
 
     public Node visitTopTransformation(DPLParser.TopTransformationContext ctx) {
-        traceBuffer.add(ctx.getChildCount() + " TopTransformation:" + ctx.getText());
-        LOGGER.info(ctx.getChildCount() + " TopTransformation:" + ctx.getText());
-        Node rv = topTransformationEmitCatalyst(ctx);
-        traceBuffer.add("visitTopTransformation returns:" + rv.toString());
-
-        return rv;
+        LOGGER.info("TopTransformation incoming: children=<{}> text=<{}>",ctx.getChildCount(), ctx.getText());
+        return topTransformationEmitCatalyst(ctx);
     }
 
 
     public Node topTransformationEmitCatalyst(DPLParser.TopTransformationContext ctx) {
-        Dataset<Row> rv = null;
         int limit = 10; // Default limit
 
-        if (!this.processingPipe.isEmpty()) {
-            rv = processingPipe.pop();
-        }
-        this.topStep = new TopStep(rv);
+        this.topStep = new TopStep();
 
-        traceBuffer.add(ctx.getChildCount() + " topTransformation:" + ctx.getText());
         // Check limit
         if (ctx.integerType() != null) {
             limit = Integer.parseInt(ctx.integerType().getText());
@@ -113,7 +95,7 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
         List<DPLParser.T_top_topOptParameterContext> opts = ctx.t_top_topOptParameter();
         for (DPLParser.T_top_topOptParameterContext o : opts) {
             if (o.t_top_limitParameter() != null) {
-                LOGGER.info("param= " + o.t_top_limitParameter().getChild(1).getText());
+                LOGGER.info("param= <{}>", o.t_top_limitParameter().getChild(1).getText());
                 limit = Integer.parseInt(o.t_top_limitParameter().integerType().getText());
             }
         };
@@ -127,11 +109,8 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
         // step
         this.topStep.setLimit(limit);
         this.topStep.setListOfFields(fields); //TODO not used
-        rv = this.topStep.get();
 
-        // Put back result
-        processingPipe.push(rv);
-        return new CatalystNode(rv);
+        return new StepNode(topStep);
     }
 
 
@@ -142,18 +121,11 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
             String fieldType =visit(f).toString();
             fields.add(fieldType);
         });
-        traceBuffer.add("visitFieldListType:" + fields);
         return new StringListNode(fields);
     }
 
     public Node visitFieldType(DPLParser.FieldTypeContext ctx) {
-        traceBuffer.add("Visit fieldtype:" + ctx.getChild(0).getText());
-        // Check if symbol-table has it
         String sql = ctx.getChild(0).getText();
-        if (symbolTable != null && symbolTable.containsKey(sql)) {
-            sql = symbolTable.get(sql);
-        }
-        traceBuffer.add("return fieldtype:" + sql);
         return new StringNode(new Token(Type.STRING, sql));
     }
 }

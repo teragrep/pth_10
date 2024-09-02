@@ -45,104 +45,40 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * @author p000043u
+ * @author eemhu
  *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MakeresultsTransformationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JoinTransformationTest.class);
-
-    DPLParserCatalystContext ctx = null;
-    DPLParserCatalystVisitor visitor = null;
-
-    SparkSession sparkSession = null;
-    SQLContext sqlContext = null;
-
-    ExpressionEncoder<Row> encoder = null;
-    MemoryStream<Row> rowMemoryStream = null;
-    Dataset<Row> rowDataset = null;
-
-    private static final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
-
+    private StreamingTestUtil streamingTestUtil;
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-
+        this.streamingTestUtil = new StreamingTestUtil();
+        this.streamingTestUtil.setEnv();
     }
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        sparkSession = SparkSession.builder()
-                .master("local[*]")
-                .config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                .config("checkpointLocation","/tmp/pth_10/test/makeresults/checkpoints/" + UUID.randomUUID() + "/")
-                .getOrCreate();
-
-        sqlContext = sparkSession.sqlContext();
-        ctx = new DPLParserCatalystContext(sparkSession);
-
-        //sparkSession.sparkContext().setLogLevel("ERROR");
-
-        encoder = RowEncoder.apply(testSchema);
-        rowMemoryStream =
-                new MemoryStream<>(1, sqlContext, encoder);
-
-        // Create a spark structured streaming dataset and start writing the stream
-        rowDataset = rowMemoryStream.toDS();
-        ctx.setDs(rowDataset);	// for stream ds
+        this.streamingTestUtil.setUp();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        visitor = null;
+        this.streamingTestUtil.tearDown();
     }
 
 
@@ -152,125 +88,80 @@ public class MakeresultsTransformationTest {
 
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void makeresults_test_1() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "| makeresults",
-                "[_time]",
-                ds -> {
-                    assertEquals(1, ds.count());
-                }
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void makeresults_BasicQuery_Test() {
+        this.streamingTestUtil.performDPLTest(
+            "| makeresults", "",
+            ds -> {
+                assertEquals(new StructType(new StructField[]{
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build())
+                }), ds.schema());
+                assertEquals(1, ds.count());
+            }
         );
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void makeresults_test_2() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "| makeresults annotate=true",
-                "[_time, _raw, host, source, sourcetype, struck_server, struck_server_group]",
-                ds -> {
-                    assertEquals(1, ds.count());
-                }
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void makeresults_Annotate_Test() {
+        this.streamingTestUtil.performDPLTest(
+            "| makeresults annotate=true", "",
+            ds -> {
+                assertEquals(new StructType(
+                    new StructField[] {
+                        new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                        new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                        new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                        new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                        new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                        new StructField("struck_server", DataTypes.StringType, true, new MetadataBuilder().build()),
+                        new StructField("struck_server_group", DataTypes.StringType, true, new MetadataBuilder().build())
+                    }
+                ),ds.schema());
+                assertEquals(1, ds.count());
+
+                // get all rows except '_time'
+                List<Row> rows = ds.drop("_time").collectAsList();
+                assertEquals(1, rows.size());
+                // assert all of them to be null
+                rows.forEach(row -> {
+                    assertEquals(6, row.length());
+                    for (int i = 0; i < row.length(); i++) {
+                        assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
+                    }
+                });
+            }
         );
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void makeresults_test_3() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "| makeresults count=100",
-                "[_time]",
-                ds -> {
-                    assertEquals(100, ds.count());
-                }
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void makeresults_Count100_Test() {
+        this.streamingTestUtil.performDPLTest(
+            "| makeresults count=100","",
+            ds -> {
+                assertEquals(new StructType(
+                    new StructField[] {
+                        new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    }
+                ), ds.schema());
+                assertEquals(100, ds.count());
+            }
         );
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void makeresults_test_4() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "| makeresults | eval a = 1",
-                "[_time, a]",
-                ds -> {
-                    assertEquals(1, ds.count());
-                }
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void makeresults_WithEval_Test()  {
+        this.streamingTestUtil.performDPLTest(
+            "| makeresults | eval a = 1", "",
+            ds -> {
+                assertEquals(new StructType(new StructField[]{
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, false, new MetadataBuilder().build())
+                }), ds.schema());
+                assertEquals(1, ds.count());
+            }
         );
     }
-
-
-    // ----------------------------------------
-    // Helper methods
-    // ----------------------------------------
-
-
-    private void performStreamingDPLTest(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer) throws StreamingQueryException, InterruptedException {
-        // no input data
-
-        // Start performing the dpl query
-        performDPLQuery(query, expectedColumns, assertConsumer);
-
-    }
-
-    // Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-    private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-        return rowDataset
-                .writeStream()
-                .outputMode(outputMode)
-                .format("memory")
-                .queryName(queryName)
-                .start();
-    }
-
-    // Performs given DPL query and returns result dataset<row>
-    private void performDPLQuery(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer) {
-        LOGGER.info("-> Got DPL query: " + query);
-
-        ctx.setEarliest("-1Y");
-
-        // Visit the parse tree
-        visitor = new DPLParserCatalystVisitor(ctx);
-        CharStream inputStream = CharStreams.fromString(query);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-
-        // set path for join cmd
-        visitor.setHdfsPath("/tmp/pth_10/" + UUID.randomUUID());
-
-        // Set consumer for testing
-        visitor.setConsumer(ds -> {
-            LOGGER.info("Batch handler consumer called for ds with schema: " + ds.schema());
-            ds.show(50, false);
-            if (expectedColumns != null) assertEquals(expectedColumns, Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-            if (assertConsumer != null) assertConsumer.accept(ds); // more assertions, if any
-        });
-
-        assertNotNull(visitor.getConsumer(), "Consumer was not properly registered to visitor !");
-        CatalystNode n = (CatalystNode) visitor.visit(tree);
-        DataStreamWriter<Row> dsw = n.getDataStreamWriter();
-
-        assertNotNull(dsw, "DataStreamWriter was not returned from visitor !");
-
-        // process forEachBatch
-        StreamingQuery sq = dsw.start();
-        sq.processAllAvailable();
-
-    }
-
-    // Make rows of given amount
-    private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host, String source, String partition, Long offset, long amount) {
-        ArrayList<Row> rowArrayList = new ArrayList<>();
-        Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
-
-        while (amount > 0) {
-            rowArrayList.add(row);
-            amount--;
-        }
-
-        Seq<Row> rowSeq = JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
-        return rowSeq;
-    }
-
 }

@@ -46,16 +46,14 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.TableTransformation;
 import com.teragrep.pth10.steps.table.TableStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -65,12 +63,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TableTest {
-    
-
-    
 
     @Test
-    void testTableTranslation() throws Exception {
+    void testTableTranslation() {
         final String query = "| table a, b, c, d";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -79,21 +74,12 @@ public class TableTest {
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
+        final TableTransformation ct = new TableTransformation();
+        ct.visitTableTransformation((DPLParser.TableTransformationContext) tree.getChild(1).getChild(0));
+        final TableStep cs = ct.tableStep;
 
-        try {
-            final TableTransformation ct = new TableTransformation(stack, ctx);
-            ct.visitTableTransformation((DPLParser.TableTransformationContext) tree.getChild(0).getChild(1));
-            final TableStep cs = ct.tableStep;
-
-            assertEquals("[a, b, c, d]", Arrays.toString(cs.getListOfFields().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("[a, b, c, d]", Arrays.toString(cs.getListOfFields().toArray()));
     }
 }
 

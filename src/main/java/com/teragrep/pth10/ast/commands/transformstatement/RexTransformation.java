@@ -47,37 +47,29 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.steps.rex.RexStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class RexTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RexTransformation.class);
-    private ProcessingStack stack;
     private DPLParserCatalystContext catCtx;
 
     public RexStep rexStep = null;
 
-    public RexTransformation(ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.stack = stack;
+    public RexTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
     }
 
     @Override
     public Node visitRexTransformation(DPLParser.RexTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!this.stack.isEmpty()) {
-            ds = this.stack.pop();
-        }
-        this.rexStep = new RexStep(ds);
+        this.rexStep = new RexStep();
 
         String regexStr;
         String fieldParam = "_raw";
@@ -86,14 +78,14 @@ public class RexTransformation extends DPLParserBaseVisitor<Node> {
         String offsetFieldParam = null;
 
         if (ctx.regexStringType() != null) {
-            regexStr = Util.stripQuotes(ctx.regexStringType().getText());
+            regexStr = new UnquotedText(new TextString(ctx.regexStringType().getText())).read();
         }
         else {
             throw new IllegalArgumentException("Either a sed-style string or a regex extraction string is required to be provided in the command, depending on the selected mode.");
         }
 
         if (ctx.t_rex_fieldParameter() != null) {
-            fieldParam = Util.stripQuotes(ctx.t_rex_fieldParameter().fieldType().getText());
+            fieldParam = new UnquotedText(new TextString(ctx.t_rex_fieldParameter().fieldType().getText())).read();
         }
 
         if (ctx.t_rex_modeSedParameter() != null) {
@@ -107,14 +99,14 @@ public class RexTransformation extends DPLParserBaseVisitor<Node> {
         }
 
         if (ctx.t_rex_offsetFieldParameter() != null) {
-            offsetFieldParam = Util.stripQuotes(ctx.t_rex_offsetFieldParameter().stringType().getText());
+            offsetFieldParam = new UnquotedText(new TextString(ctx.t_rex_offsetFieldParameter().stringType().getText())).read();
         }
 
-        LOGGER.info("regexStr= " + regexStr);
-        LOGGER.info("field= " + fieldParam);
-        LOGGER.info("offsetField= " + offsetFieldParam);
-        LOGGER.info("maxMatch= " + maxMatch);
-        LOGGER.info("sedMode= " + sedMode);
+        LOGGER.debug("regexStr= <{}>", regexStr);
+        LOGGER.debug("field= <{}>", fieldParam);
+        LOGGER.debug("offsetField= <{}>", offsetFieldParam);
+        LOGGER.debug("maxMatch= <{}>", maxMatch);
+        LOGGER.debug("sedMode= <{}>", sedMode);
 
         this.rexStep.setField(fieldParam);
         this.rexStep.setMaxMatch(maxMatch);
@@ -122,10 +114,8 @@ public class RexTransformation extends DPLParserBaseVisitor<Node> {
         this.rexStep.setRegexStr(regexStr);
         this.rexStep.setSedMode(sedMode);
         this.rexStep.setCatCtx(catCtx);
-        ds = this.rexStep.get();
 
-        this.stack.push(ds);
-        return new CatalystNode(ds);
+        return new StepNode(rexStep);
     }
 
 

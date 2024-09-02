@@ -51,18 +51,18 @@ import org.apache.spark.sql.Row;
 
 import java.util.Map;
 
-public class RenameStep extends AbstractRenameStep{
-    public RenameStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class RenameStep extends AbstractRenameStep{
+    public RenameStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        Dataset<Row> res = this.dataset;
+        Dataset<Row> res = dataset;
         // Rename columns with the use of the map
         // Key is the original field name, and value is the new name
         for (Map.Entry<String, String> fieldRenamePair : this.mapOfRenamedFields.entrySet()) {

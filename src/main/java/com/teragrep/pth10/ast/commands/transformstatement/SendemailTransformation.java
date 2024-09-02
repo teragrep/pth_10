@@ -47,28 +47,19 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.ProcessingStack.StackMode;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth10.ast.bo.Node;
-import com.teragrep.pth10.ast.bo.StringNode;
-import com.teragrep.pth10.ast.bo.Token;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
+import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.commands.transformstatement.sendemail.SendemailResultsProcessor;
 import com.teragrep.pth10.steps.sendemail.SendemailStep;
 import com.typesafe.config.Config;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-
-import java.util.List;
 
 /**
  * Base transformation class for the 'sendemail' command
@@ -76,31 +67,12 @@ import java.util.List;
  */
 public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 	private static final Logger LOGGER = LoggerFactory.getLogger(SendemailTransformation.class);
-
-	private List<String> traceBuffer = null;
-	
-	private Dataset<Row> ds = null;
-	private ProcessingStack processingPipe = null;
-	private Document doc = null;
-	private boolean aggregatesUsed = false;
-	
 	private DPLParserCatalystContext catCtx = null;
-
 	public SendemailStep sendemailStep = null;
 
 	
-	public SendemailTransformation(List<String> buf, ProcessingStack stack, DPLParserCatalystContext catCtx) {
-		this.processingPipe = stack;
-		this.traceBuffer = buf;
+	public SendemailTransformation(DPLParserCatalystContext catCtx) {
 		this.catCtx = catCtx;
-	}
-	
-	public boolean getAggregatesUsed() {
-		return this.aggregatesUsed; 
-	}
-	
-	public void setAggregatesUsed(boolean newValue) {
-		this.aggregatesUsed = newValue;
 	}
 	
 	/**<pre>
@@ -177,14 +149,8 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 		boolean restrictedMode = false; // issue #231 restricted mode
 
 		boolean smtpDebug = false; // enable smtp debugging
-		
-		// Pop dataset from stack
-		Dataset<Row> ds = null;
-		if (!this.processingPipe.isEmpty()) {
-			ds = this.processingPipe.pop();
-		}
-		this.sendemailStep = new SendemailStep(ds);
-		processingPipe.setStackMode(StackMode.SEQUENTIAL); // set to sequential mode
+
+		this.sendemailStep = new SendemailStep();
 
 		// Go through zeppelin config here, so parameters given in command can overwrite these if needed
 		// credentials for smtp server
@@ -204,12 +170,12 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
 		if (zplnConfig != null && zplnConfig.hasPath(usernameCfgItem))  {
 			username = zplnConfig.getString(usernameCfgItem);
-			LOGGER.info("Sendemail config: Username: " + username);
+			LOGGER.debug("Sendemail config: username=<[{}]>", username);
 		}
 
 		if (zplnConfig != null && zplnConfig.hasPath(passwordCfgItem)) {
 			password = zplnConfig.getString(passwordCfgItem);
-			LOGGER.info("Sendemail config: Password: " + (password != null ? "***" : "<NULL>"));
+			LOGGER.debug("Sendemail config: password=<[{}]>", (password != null ? "***" : "null"));
 		}
 
 		if (zplnConfig != null && zplnConfig.hasPath(smtpEncryptionParameterCfgItem)) {
@@ -241,29 +207,29 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 			if (hostAndPort.length > 1) {
 				server = hostAndPort[0];
 				port = Integer.parseInt(hostAndPort[1]);
-				LOGGER.info("Sendemail config: Server host and port: " + server + " " + port);
+				LOGGER.debug("Sendemail config: server host=<[{}]> port=<[{}]>", server, port);
 			}
 			// One item (or less), just server
 			else {
 				server = hostAndPort[0];
-				LOGGER.info("Sendemail config: Server host: " + server + " " + port);
+				LOGGER.debug("Sendemail config: server host=<[{}]> (default port <{}>)",server,port);
 			}
 		}
 
 		// issue #231 and #232 parameters from zeppelin config (restrictedMode and fromEmail)
 		if (zplnConfig != null && zplnConfig.hasPath(restrictedModeCfgItem)) {
 			restrictedMode = zplnConfig.getBoolean(restrictedModeCfgItem);
-			LOGGER.info("Sendemail config: Restricted config " + restrictedMode);
+			LOGGER.debug("Sendemail config: Restricted config=<[{}]>", restrictedMode);
 		}
 
 		if (zplnConfig != null && zplnConfig.hasPath(globalFromParameterCfgItem)) {
 			fromEmail = zplnConfig.getString(globalFromParameterCfgItem);
-			LOGGER.info("Sendemail config: Global from parameter " + fromEmail);
+			LOGGER.debug("Sendemail config: Global from parameter=<[{}]>", fromEmail);
 		}
 
 		if (zplnConfig != null && zplnConfig.hasPath(smtpDebugParameterCfgItem)) {
 			smtpDebug = zplnConfig.getBoolean(smtpDebugParameterCfgItem);
-			LOGGER.info("Sendemail config: SMTP Debug parameter " + smtpDebug);
+			LOGGER.debug("Sendemail config: SMTP Debug parameter=<[{}]>", smtpDebug);
 		}
 
 		boolean hasForbiddenConfig = false; // set to true if other parameters than email subject and to is found
@@ -338,7 +304,6 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 			else if (child instanceof DPLParser.T_sendemail_pdfviewOptionParameterContext) {
 				// t_sendemail_pdfviewOptionParameter
 				throw new UnsupportedOperationException("Sendemail does not support 'pdfview' parameter yet.");
-				//pdfView = ((StringNode) visit(child)).toString();
 			}
 			else if (child instanceof DPLParser.T_sendemail_paperorientationOptionParameterContext) {
 				// t_sendemail_paperorientationOptionParameter
@@ -353,7 +318,6 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 			else if (child instanceof DPLParser.T_sendemail_priorityOptionParameterContext) {
 				// t_sendemail_priorityOptionParameter
 				throw new UnsupportedOperationException("Sendemail does not support 'priority' parameter yet.");
-				//priority = Integer.parseInt(((StringNode) visit(child)).toString());
 			}
 			else if (child instanceof DPLParser.T_sendemail_serverOptionParameterContext) {
 				// t_sendemail_serverOptionParameter
@@ -361,7 +325,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 				// if <port> is missing, use default
 				String serverString = ((StringNode) visit(child)).toString();
 
-				LOGGER.info("server string (should be host:port) = " + serverString);
+				LOGGER.debug("server string (should be host:port) = <[{}]>", serverString);
 
 				String[] hostAndPort = serverString.split(":");
 				// more than one item, means port must be present
@@ -412,7 +376,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 				
 				throw new UnsupportedOperationException("Sendemail does not support 'maxtime' parameter yet.");
 				/*String maxTimeString = ((StringNode) visit(child)).toString();
-				LOGGER.info("max time string= " + maxTimeString);
+				LOGGER.info("max time string= {}", maxTimeString);
 				Pattern pattern = Pattern.compile("\\d+");
 				Matcher matcher = pattern.matcher(maxTimeString);
 				if (matcher.find()) {
@@ -437,27 +401,14 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 		}
 
 		// initialize results processor
-		final SendemailResultsProcessor resultsProcessor;
-		final String id = Util.getObjectIdentifier(ctx);
-		LOGGER.info("ctx id= " + id);
-		if (!this.catCtx.getObjectStore().has(id)) {
-			resultsProcessor = new SendemailResultsProcessor(use_tls, server, port, use_ssl, username, password, fromEmail, toEmails, ccEmails, bccEmails, subject, customMessageContent,
-					inlineFormat, sendResults, inline, sendCsv, sendPdf, customFooterContent, paperSize, paperOrientation, content_type, maxInputs, catCtx.getUrl(), smtpDebug);
-
-			// set in context
-			this.catCtx.getObjectStore().add(id, resultsProcessor);
-		}
-		else {
-			resultsProcessor = (SendemailResultsProcessor) this.catCtx.getObjectStore().get(id);
-		}
+		final SendemailResultsProcessor resultsProcessor = new SendemailResultsProcessor(use_tls, server, port, use_ssl, username, password, fromEmail, toEmails, ccEmails, bccEmails, subject, customMessageContent,
+				inlineFormat, sendResults, inline, sendCsv, sendPdf, customFooterContent, paperSize, paperOrientation, content_type, maxInputs, catCtx.getUrl(), smtpDebug);
 
 		// step
 		this.sendemailStep.setSendemailResultsProcessor(resultsProcessor);
 		this.sendemailStep.setSendResults(sendResults);
-		ds = this.sendemailStep.get();
 
-		processingPipe.push(ds);
-		return new CatalystNode(ds);
+		return new StepNode(sendemailStep);
 	}
 	
 	
@@ -510,7 +461,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 		Node rv = null;
 		
 		// skip keyword and return subject
-		rv = new StringNode(new Token(Token.Type.STRING, Util.stripQuotes(ctx.getChild(1).getText())));
+		rv = new StringNode(new Token(Token.Type.STRING, new UnquotedText(new TextString(ctx.getChild(1).getText())).read()));
 		
 		return rv;
 	}
@@ -520,7 +471,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 		Node rv = null;
 		
 		// skip keyword and return message
-		rv = new StringNode(new Token(Token.Type.STRING, Util.stripQuotes(ctx.getChild(1).getText())));
+		rv = new StringNode(new Token(Token.Type.STRING, new UnquotedText(new TextString(ctx.getChild(1).getText())).read()));
 		
 		return rv;
 	}
@@ -530,7 +481,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 		Node rv = null;
 		
 		// skip keyword and return footer
-		rv = new StringNode(new Token(Token.Type.STRING, Util.stripQuotes(ctx.getChild(1).getText())));
+		rv = new StringNode(new Token(Token.Type.STRING, new UnquotedText(new TextString(ctx.getChild(1).getText())).read()));
 		
 		return rv;
 	}
@@ -872,7 +823,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 	// stringType (COMMA stringType)*?
 	@Override
 	public Node visitT_sendemail_emailListParameter(DPLParser.T_sendemail_emailListParameterContext ctx) {
-		return new StringNode(new Token(Token.Type.STRING, Util.stripQuotes(ctx.getText())));
+		return new StringNode(new Token(Token.Type.STRING, new UnquotedText(new TextString(ctx.getText())).read()));
 	}
 	
 }

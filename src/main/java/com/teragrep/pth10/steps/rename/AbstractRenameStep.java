@@ -47,15 +47,13 @@
 package com.teragrep.pth10.steps.rename;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.Map;
 
 public abstract class AbstractRenameStep extends AbstractStep {
     protected Map<String, String> mapOfRenamedFields = null;
-    public AbstractRenameStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractRenameStep() {
+        super();
     }
 
     public void setMapOfRenamedFields(Map<String, String> mapOfRenamedFields) {

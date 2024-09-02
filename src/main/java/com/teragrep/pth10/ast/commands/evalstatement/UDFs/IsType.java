@@ -54,7 +54,7 @@ import java.io.Serializable;
  * UDF used for evals isBool, isInt, isNum and isStr<br>
  * Checks the type of the input against Java types and
  * returns true if it matches or false otherwise
- * @author p000043u
+ * @author eemhu
  *
  */
 public class IsType implements UDF1<Object, Boolean>, Serializable {

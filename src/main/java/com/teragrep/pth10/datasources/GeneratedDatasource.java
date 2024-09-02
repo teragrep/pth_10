@@ -46,19 +46,24 @@
 
 package com.teragrep.pth10.datasources;
 
-import com.teragrep.pth06.ArchiveSourceProvider;
+import com.teragrep.pth_06.TeragrepDatasource;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLInternalStreamingQuery;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.execution.streaming.MemoryStream;
 import org.apache.spark.sql.streaming.DataStreamWriter;
+import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
@@ -69,6 +74,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -81,10 +87,57 @@ public class GeneratedDatasource {
     private SparkSession sparkSession;
     private DPLParserCatalystContext catCtx;
 
+    private final StructType schema = new StructType(
+            new StructField[]{
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, false, new MetadataBuilder().build()),
+            }
+    );
+
     public GeneratedDatasource(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
         this.config = catCtx.getConfig();
         this.sparkSession = catCtx.getSparkSession();
+    }
+
+    public Dataset<Row> constructEmptyStream() throws StreamingQueryException {
+        SQLContext sqlContext = sparkSession.sqlContext();
+        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
+
+        Dataset<Row> rowDataset = rowMemoryStream.toDF();
+        final String queryName = "construct_empty_" + ((int)(Math.random() * 100000));
+
+        DataStreamWriter<Row> writer = rowDataset.writeStream().format("memory").outputMode(OutputMode.Append());
+
+        // generate one row with practically no data
+        // TODO: Not generating any rows stops any progress. Figure out a way to generate a empty *streaming* dataset!
+        rowMemoryStream.addData(makeRows(
+                new java.sql.Timestamp(0L),
+                Collections.singletonList(""),
+                "",
+                "",
+                "",
+                "",
+                "",
+                -1L,
+                ""
+        ));
+
+        StreamingQuery sq = this.catCtx.getInternalStreamingQueryListener().registerQuery(queryName, writer);
+        sq.awaitTermination();
+
+        // filter the one generated row out to have a truly empty dataset
+        return rowDataset
+                .where(functions.col("offset")
+                        .geq(functions.lit(0)));
     }
 
     public Dataset<Row> constructStream(String status, String explainStr) throws StreamingQueryException, InterruptedException, UnknownHostException {
@@ -96,9 +149,9 @@ public class GeneratedDatasource {
     public Dataset<Row> constructStream(List<String> strings, String commandStr) throws StreamingQueryException, InterruptedException, UnknownHostException {
         SQLContext sqlContext = sparkSession.sqlContext();
 
-        ExpressionEncoder<Row> encoder = RowEncoder.apply(ArchiveSourceProvider.Schema);
+        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
         MemoryStream<Row> rowMemoryStream =
-                new MemoryStream<>(1, sqlContext, encoder);
+                new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
 
         if (commandStr == null) {
             commandStr = "Unspecified";

@@ -80,7 +80,7 @@ public class ExactPercentileAggregator extends Aggregator<Row, PercentileBuffer,
 	@Override
 	public Encoder<PercentileBuffer> bufferEncoder() {
 		// TODO using kryo should speed this up
-		return Encoders.bean(PercentileBuffer.class);
+		return Encoders.javaSerialization(PercentileBuffer.class);
 	}
 
 	/**

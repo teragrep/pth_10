@@ -52,35 +52,36 @@ import org.apache.spark.sql.Row;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
-public class StatsStep extends AbstractStatsStep{
-    public StatsStep(Dataset<Row> dataset) {
-        super(dataset);
+import java.util.List;
+
+public final class StatsStep extends AbstractStatsStep{
+    public StatsStep(List<Column> listOfAggregationExpressions, List<Column> listOfGroupBys) {
+        super(listOfAggregationExpressions, listOfGroupBys);
+        this.properties.add(CommandProperty.AGGREGATE);
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        // Check that at least one aggregation expression is present
-        if (this.listOfAggregationExpressions != null && !this.listOfAggregationExpressions.isEmpty()) {
-            Column mainExpr = this.listOfAggregationExpressions.get(0);
-            Seq<Column> seqOfAggs = JavaConversions.asScalaBuffer(
-                    this.listOfAggregationExpressions.subList(1, this.listOfAggregationExpressions.size()));
-
-            // Check for any group by expressions
-            if (this.listOfGroupBys != null && !this.listOfGroupBys.isEmpty()) {
-                Seq<Column> seqOfGroupBys = JavaConversions.asScalaBuffer(this.listOfGroupBys);
-                return this.dataset.groupBy(seqOfGroupBys).agg(mainExpr, seqOfAggs);
-            }
-            else {
-                // No group by, just perform a direct aggregation
-                return this.dataset.agg(mainExpr, seqOfAggs);
-            }
+        if (this.listOfAggregationExpressions.isEmpty()) {
+            // throw exception if there were no aggregations
+            throw new RuntimeException("StatsStep did not receive the necessary aggregation columns!");
         }
 
-        // throw exception if everything was null
-        throw new RuntimeException("StatsStep did not receive the necessary aggregation columns!");
+        Column mainExpr = this.listOfAggregationExpressions.get(0);
+        Seq<Column> seqOfAggs = JavaConversions.asScalaBuffer(
+                this.listOfAggregationExpressions.subList(1, this.listOfAggregationExpressions.size()));
+
+        // Check for any group by expressions
+        if (!this.listOfGroupBys.isEmpty()) {
+            Seq<Column> seqOfGroupBys = JavaConversions.asScalaBuffer(this.listOfGroupBys);
+            return dataset.groupBy(seqOfGroupBys).agg(mainExpr, seqOfAggs);
+        } else {
+            // No group by, just perform a direct aggregation
+            return dataset.agg(mainExpr, seqOfAggs);
+        }
     }
 }

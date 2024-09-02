@@ -56,52 +56,20 @@ public class RexSedModeUDF implements UDF2<String, String, String> {
     public String call(String inputStr, String sedStr) throws Exception {
         JavaPcre pcre = new JavaPcre();
 
-        String regexStr; // regex string, original phrase to look for
-        String replacementStr; // what to replace it with
-        Integer replaceOccurrencesAmount = null; // if flag has a number for nth occurrence
-        boolean globalMode = false; // if flag is 'g'
-
-        // regex string is now "s/original/replacement/g"
+        // regex string is now "s/original/replacement/[g|Ng|N]", n>0
         // check for correct form
-        final String[] sedComponents = sedStr.split("/");
-        if (sedComponents.length != 4) {
-            throw new IllegalStateException("Invalid sed mode string was given: '" + sedStr + "', but expected " +
-                    "'s/original/replacement/g'");
-        }
-
-        if (!sedComponents[0].equals("s")) {
-            throw new IllegalArgumentException("Only 's' (substitute) mode is supported, but was: '" + sedComponents[0] + "'");
-        }
-
-        if (sedComponents[3].endsWith("g") && !sedComponents[3].equals("g")) {
-            replaceOccurrencesAmount = Integer.parseUnsignedInt(sedComponents[3].substring(0, sedComponents[3].length()-1));
-            globalMode = true;
-        }
-        else if (!sedComponents[3].equals("g")) {
-            replaceOccurrencesAmount = Integer.parseUnsignedInt(sedComponents[3]);
-        }
-        else {
-            globalMode = true;
-        }
-
-        regexStr = sedComponents[1]; // set regexStr to be 's/<this>/.../g'
-        replacementStr = sedComponents[2]; // set replacementStr to be 's/.../<this>/g'
+        CheckedSedString checkedSedString = new CheckedSedString(sedStr);
 
         // compile match pattern
-        pcre.compile_java(regexStr);
+        pcre.compile_java(checkedSedString.toRegexString());
 
         List<int[]> offsets;
-        if (globalMode && replaceOccurrencesAmount == null) {
-            // global mode, no number prefix
-            offsets = getAllOccurrences(pcre, inputStr, -1);
-        }
-        else if (globalMode) {
-            // global mode, with number prefix
-            offsets = getAllOccurrences(pcre, inputStr, replaceOccurrencesAmount);
-        }
-        else {
+        if (checkedSedString.globalMode()) {
+            // global mode
+            offsets = getAllOccurrences(pcre, inputStr, checkedSedString.replaceOccurrencesAmount());
+        } else {
             // replace nth occurrence mode
-            offsets = getUpToNthOccurrence(pcre, inputStr, replaceOccurrencesAmount);
+            offsets = getUpToNthOccurrence(pcre, inputStr, checkedSedString.replaceOccurrencesAmount());
             // only need the last nth occurrence
             offsets = offsets.subList(offsets.size()-1, offsets.size());
         }
@@ -117,7 +85,7 @@ public class RexSedModeUDF implements UDF2<String, String, String> {
             for (int j = processedUntilInd; j < inputStr.length(); ++j) {
                 if (j == beginInd) {
                     // add replacement on beginning index
-                    resultStrBuilder.append(replacementStr);
+                    resultStrBuilder.append(checkedSedString.toReplacementString());
                 }
                 else if (j > beginInd && j < endInd) {
                     // part-to-be-replaced, skip chars

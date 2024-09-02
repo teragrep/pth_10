@@ -140,12 +140,14 @@ public class SendemailResultsProcessor implements Serializable {
 	 * @param paperSize		custom paperSize if needed (e.g. "a4")
 	 * @param paperOrientation	custom paper orientation (e.g. "landscape" or "portrait")
 	 * @param content_type	 "plain" text or "html"
+	 * @param maxInputs		maximum batch size to send at a time
+	 * @param smtpDebug 	enable additional SMTP debug logging
+	 * @param urlToParagraph URL address to paragraph containing the results
 	 */
 	public SendemailResultsProcessor(boolean use_tls, String server, int port, boolean use_ssl, String username, String password, String fromEmail, String toEmails, String ccEmails, String bccEmails, String subject, String customMessageContent,
 			String format, boolean sendResults, boolean inline, boolean sendCsv, boolean sendPdf, String customFooterContent, String paperSize, String paperOrientation, String content_type, int maxInputs, String urlToParagraph, boolean smtpDebug) {
 		super();
-		//listOfRows = new ArrayList<>();
-		
+
 		this.use_tls = use_tls;
 		this.server = server;
 		this.port = port;
@@ -225,7 +227,7 @@ public class SendemailResultsProcessor implements Serializable {
 	/**
 	 * Builds email on maxInputs batches using a list of rows given
 	 * @param rows List of rows
-	 * @throws Exception
+	 * @throws Exception Any exception that occurred during building and sending the email
 	 */
 	public void call(List<Row> rows) throws Exception {
 		this.isCalledBefore = true;
@@ -260,7 +262,7 @@ public class SendemailResultsProcessor implements Serializable {
 
 	/**
 	 * Send email without rows (sendresults=false)
-	 * @throws Exception
+	 * @throws Exception Any exception that occurred during building and sending the email
 	 */
 	public void call() throws Exception {
 		this.isCalledBefore = true;
@@ -269,7 +271,7 @@ public class SendemailResultsProcessor implements Serializable {
 	
 	/**
 	 * flushes the remaining rows that were not processed as they did not reach the target count
-	 * @throws Exception
+	 * @throws Exception Any error that occurred during the flush()
 	 */
 	public void flush() throws Exception {
 		LOGGER.info("Flushing email processor!");
@@ -294,10 +296,8 @@ public class SendemailResultsProcessor implements Serializable {
 		emailProp.put("mail.smtp.host", server);
 		emailProp.put("mail.smtp.port", port);
 		emailProp.put("mail.smtp.ssl.enable", use_ssl);
-		// emailProp.put("mail.smtp.socketFactory.class","javax.net.ssl.SSLSocketFactory");
-		// emailProp.put("mail.smtp.ssl.trust", "smtp.example.test");
 
-		LOGGER.info("Sendemail properties: " + emailProp.entrySet());
+		LOGGER.info("Sendemail properties: <{}>", emailProp.entrySet());
 			
 	// user and pass from zeppelin config
 	final Session session = Session.getInstance(emailProp, new Authenticator() {
@@ -380,7 +380,7 @@ public class SendemailResultsProcessor implements Serializable {
 		
 		// Footer (again, custom footer will be applied if it was given in the command)
 		MimeBodyPart footerBodyPart = new MimeBodyPart();
-		String footerContent = "If you believe you've received this email in error, please see your Teragrep administrator." + lineBreak + "Teragrep - See the forest for the trees";
+		String footerContent = "This email was generated via the sendemail command. Not the correct recipient? Contact your Teragrep administrator." + lineBreak + "Teragrep - Know Everything";
 		if (customFooterContent != null) {
 			footerContent = customFooterContent;
 		}
@@ -552,7 +552,7 @@ public class SendemailResultsProcessor implements Serializable {
 				multipart.addBodyPart(attachmentBodyPart); // attachment
 				
 			} catch (IOException e) {
-				LOGGER.error("sendPdf IOException: " + e.getMessage());
+				LOGGER.error("sendPdf IOException: <{}>", e.getMessage());
 				e.printStackTrace();
 			}
 			
@@ -578,7 +578,7 @@ public class SendemailResultsProcessor implements Serializable {
 		LOGGER.error("An error occurred trying to send email using the sendemail command. Details:");
 		me.printStackTrace();
 		
-		// Throw an exception if not in graceful mode
+		// FIXME: Implement: Throw an exception if not in graceful mode
 		//if (!graceful) {
 			throw new RuntimeException("Error sending email using sendemail command! Details: " + me.getMessage());
 		//}

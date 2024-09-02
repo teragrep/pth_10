@@ -45,55 +45,34 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.SourceProgress;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryListener;
+import com.teragrep.pth10.ast.commands.transformstatement.iplocation.IplocationGeoIPDataMapper;
+import com.teragrep.pth10.ast.commands.transformstatement.iplocation.IplocationRirDataMapper;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
-@TestInstance(TestInstance.Lifecycle.PER_METHOD)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class IplocationTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(IplocationTransformationTest.class);
+    private final String testFile = "src/test/resources/IplocationTransformationTest_data*.json"; // * to make the path into a directory path
 
-    DPLParserCatalystContext ctx = null;
-    DPLParserCatalystVisitor visitor = null;
-    SparkSession sparkSession = null;
-    SQLContext sqlContext = null;
-    ExpressionEncoder<Row> encoder = null;
-    MemoryStream<Row> rowMemoryStream = null;
-    Dataset<Row> rowDataset = null;
-
-    private static final StructType testSchema = new StructType(
+    private final StructType testSchema = new StructType(
             new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
                     new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
@@ -103,40 +82,32 @@ public class IplocationTransformationTest {
                     new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build()),
+                    new StructField("otherIP", DataTypes.StringType, true, new MetadataBuilder().build())
             }
     );
 
+    private final String[] GEOIP_MINIMAL_COLUMNS = new String[]{"country", "region", "city", "lat", "lon"};
+    private final String[] GEOIP_FULL_COLUMNS = new String[]{"country", "region", "city", "metroCode", "continent", "lat", "lon"};
+    private final String[] RIR_COLUMNS = new String[]{"operator", "country"};
+    private final String[] COUNTRY_COLUMNS = new String[]{"country", "continent"};
+
+    private StreamingTestUtil streamingTestUtil;
+
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
+    }
+
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        sparkSession = SparkSession.builder()
-                .master("local[*]")
-                .config("spark.jars.packages", "org.apache.spark:spark-avro_2.11:2.4.5") // here
-                .config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                .config("checkpointLocation","/tmp/pth_10/test/iplocation_cmd/checkpoints/" + UUID.randomUUID() + "/")
-                .getOrCreate();
-
-        sqlContext = sparkSession.sqlContext();
-        ctx = new DPLParserCatalystContext(sparkSession);
-
-        sparkSession.sparkContext().setLogLevel("ERROR");
-
-        encoder = RowEncoder.apply(testSchema);
-        rowMemoryStream =
-                new MemoryStream<>(1, sqlContext, encoder);
-
-        // Create a spark structured streaming dataset and start writing the stream
-        rowDataset = rowMemoryStream.toDS();
-        ctx.setDs(rowDataset);	// for stream ds
+        this.streamingTestUtil.setUp();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        visitor = null;
-    }
-
-    enum ExpectedColumns {
-        GEOIP_MINIMAL, GEOIP_FULL, RIR, COUNTRY
+        this.streamingTestUtil.tearDown();
     }
 
 
@@ -145,291 +116,228 @@ public class IplocationTransformationTest {
     // ----------------------------------------
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void iplocationTest1() {
-        performStreamingDPLTest(
-                /* DPL Query = */		   "index=index_A | iplocation source",
-                /* Expected result = */    Arrays.asList(
-                        ";;;;",
-                        "France;48.8582;2.3387;;",
-                        "United States;47.6348;-122.3451;Washington;Seattle",
-                        "United States;37.751;-97.822;;",
-                        "Australia;-33.494;143.2104;;"),
-                /* mmdb path = */ "/usr/share/GeoIP/GeoLite2-City.mmdb",
-                /* cols = */ ExpectedColumns.GEOIP_MINIMAL
-        );
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(named="skipGeoLiteTest", matches="true")
+    public void iplocationTest_GeoLite2City_1() {
+        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
+        String ipColumn = "source";
+
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+        this.streamingTestUtil.performDPLTest("index=index_A | iplocation source", this.testFile, ds -> {
+            LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
+
+            // GEO DB type, get db mapper
+            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(mmdbPath, this.streamingTestUtil.getCtx().nullValue,
+                    extractMapFromHadoopCfg(this.streamingTestUtil.getCtx().getSparkSession().sparkContext().hadoopConfiguration()));
+
+            // run mapper on ip to assert expected
+            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            for (Row ip : ips) {
+                Map<String, String> result = assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
+
+                for (String col : expectedCols) {
+                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                }
+            }
+        });
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void iplocationTest2() {
-        performStreamingDPLTest(
-                /* DPL Query = */		   "index=index_A | iplocation source",
-                /* Expected result = */    Arrays.asList(
-                        "FIRST_OP;FIRST_CN",
-                        "SECOND_OP;SECOND_CN",
-                        "THIRD_OP;THIRD_CN",
-                        "FOURTH_OP;FOURTH_CN",
-                        ";"), //0.0.0.0 not in mmdb
-                /* mmdb path = */ "src/test/resources/rir-data.sample.mmdb", // sample of rir-data with around 16k IPs
-                /* cols = */ ExpectedColumns.RIR
-        );
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void iplocationTest_RirDataSample_2() {
+        String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
+        String[] expectedCols = RIR_COLUMNS;
+        String ipColumn = "source";
+
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+        this.streamingTestUtil.performDPLTest("index=index_A | iplocation source", this.testFile, ds -> {
+            LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
+
+            // RIR DB type
+            IplocationRirDataMapper mapper = new IplocationRirDataMapper(mmdbPath, this.streamingTestUtil.getCtx().nullValue,
+                    extractMapFromHadoopCfg(this.streamingTestUtil.getCtx().getSparkSession().sparkContext().hadoopConfiguration()));
+
+            // run mapper on ip to assert expected
+            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            for (Row ip : ips) {
+                Map<String, String> result = assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
+
+                for (String col : expectedCols) {
+                    String expected = result.get(col);
+                    assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
+                }
+            }
+        });
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void iplocationTest3() {
-        performStreamingDPLTest(
-                /* DPL Query = */		   "index=index_A | iplocation source",
-                /* Expected result = */    Arrays.asList(
-                        "United States;North America",
-                        "United States;North America",
-                        ";",
-                        "France;Europe",
-                        "Australia;Oceania"),
-                /* mmdb path = */ "/usr/share/GeoIP/GeoLite2-Country.mmdb", // country + continent
-                /* cols = */ ExpectedColumns.COUNTRY
-        );
-    }
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(named="skipGeoLiteTest", matches="true")
+    public void iplocationTest_GeoLite2Country_3() {
+        String mmdbPath = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
+        String[] expectedCols = COUNTRY_COLUMNS;
+        String ipColumn = "source";
 
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+        this.streamingTestUtil.performDPLTest("index=index_A | iplocation source", this.testFile, ds -> {
+            LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
+
+            // GEO DB type, get db mapper
+            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(mmdbPath, this.streamingTestUtil.getCtx().nullValue,
+                    extractMapFromHadoopCfg(this.streamingTestUtil.getCtx().getSparkSession().sparkContext().hadoopConfiguration()));
+
+            // run mapper on ip to assert expected
+            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            for (Row ip : ips) {
+                Map<String, String> result = assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
+
+                for (String col : expectedCols) {
+                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                }
+            }
+        });
+    }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void iplocationTest4() {
-        performStreamingDPLTest(
-                /* DPL Query = */		   "index=index_A | iplocation allfields=true source",
-                /* Expected result = */    Arrays.asList(
-                        "France;48.8582;2.3387;;;;Europe",
-                        "United States;47.6348;-122.3451;Washington;Seattle;819;North America",
-                        ";;;;;;",
-                        "United States;37.751;-97.822;;;;North America",
-                        "Australia;-33.494;143.2104;;;;Oceania"),
-                /* mmdb path = */ "/usr/share/GeoIP/GeoLite2-City.mmdb",
-                /* cols = */ ExpectedColumns.GEOIP_FULL
-        );
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(named="skipGeoLiteTest", matches="true")
+    public void iplocationTest_GeoLite2City_4() {
+        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        String[] expectedCols = GEOIP_FULL_COLUMNS;
+        String ipColumn = "source";
+
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+        this.streamingTestUtil.performDPLTest("index=index_A | iplocation allfields=true source", this.testFile, ds -> {
+            LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
+
+            // GEO DB type, get db mapper
+            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(mmdbPath, this.streamingTestUtil.getCtx().nullValue,
+                    extractMapFromHadoopCfg(this.streamingTestUtil.getCtx().getSparkSession().sparkContext().hadoopConfiguration()));
+
+            // run mapper on ip to assert expected
+            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            for (Row ip : ips) {
+                Map<String, String> result = assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
+
+                for (String col : expectedCols) {
+                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                }
+            }
+        });
     }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(named="skipGeoLiteTest", matches="true")
+    public void iplocationTest_GeoLite2City_InvalidIPAddress_5() {
+        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        String[] expectedCols = GEOIP_FULL_COLUMNS;
+        String ipColumn = "otherIP";
+
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+        this.streamingTestUtil.performDPLTest("index=index_A | iplocation allfields=true otherIP", this.testFile, ds -> {
+            LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
+
+            // GEO DB type, get db mapper
+            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(mmdbPath, this.streamingTestUtil.getCtx().nullValue,
+                    extractMapFromHadoopCfg(this.streamingTestUtil.getCtx().getSparkSession().sparkContext().hadoopConfiguration()));
+
+            // run mapper on ip to assert expected
+            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            for (Row ip : ips) {
+                Map<String, String> result = assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
+
+                for (String col : expectedCols) {
+                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                }
+            }
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(named="skipGeoLiteTest", matches="true")
+    public void iplocationTest_GeoLite2City_InvalidIPAddress_6() {
+        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
+        String ipColumn = "otherIP";
+
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+        this.streamingTestUtil.performDPLTest("index=index_A | iplocation otherIP allfields=false", this.testFile, ds -> {
+            LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
+
+            // GEO DB type, get db mapper
+            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(mmdbPath, this.streamingTestUtil.getCtx().nullValue,
+                    extractMapFromHadoopCfg(this.streamingTestUtil.getCtx().getSparkSession().sparkContext().hadoopConfiguration()));
+
+            // run mapper on ip to assert expected
+            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            for (Row ip : ips) {
+                Map<String, String> result = assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
+
+                for (String col : expectedCols) {
+                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                }
+            }
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(named="skipGeoLiteTest", matches="true")
+    public void iplocationTest_RirData_InvalidIPAddress_7() {
+        String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
+        String[] expectedCols = RIR_COLUMNS;
+        String ipColumn = "otherIP";
+
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+        this.streamingTestUtil.performDPLTest("index=index_A | iplocation otherIP allfields=false", this.testFile, ds -> {
+            LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
+
+            // RIR DB type
+            IplocationRirDataMapper mapper = new IplocationRirDataMapper(mmdbPath, this.streamingTestUtil.getCtx().nullValue,
+                    extractMapFromHadoopCfg(this.streamingTestUtil.getCtx().getSparkSession().sparkContext().hadoopConfiguration()));
+
+            // run mapper on ip to assert expected
+            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            for (Row ip : ips) {
+                Map<String, String> result = assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
+
+                for (String col : expectedCols) {
+                    String expected = result.get(col);
+                    assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
+                }
+            }
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void iplocationTest_InvalidMmdbPath_8() {
+        String mmdbPath = "/tmp/this-path-is-invalid/fake.mmdb";
+        this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
+
+        StreamingQueryException sqe = this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, "index=index_A | iplocation allfields=true source",this.testFile, (ds) -> {
+        });
+
+        assertEquals("Caused by: java.lang.RuntimeException: Invalid database file path given for iplocation command.",
+                this.streamingTestUtil.getInternalCauseString(sqe.cause(), RuntimeException.class));
+    }
+
     // ----------------------------------------
     // Helper methods
     // ----------------------------------------
 
-    private long lastBatchId = -1;
-    public boolean checkCompletionOfStreamingQuery(StreamingQuery sq) {
-        if (sq.lastProgress() == null || sq.status().message().equals("Initializing sources")) {
-            // Query has not started yet
-            return false;
+    private Map<String, String> extractMapFromHadoopCfg(Configuration hadoopCfg) {
+        final Map<String, String> hadoopCfgAsMap = new HashMap<>();
+
+        for (Map.Entry<String, String> me : hadoopCfg) {
+            hadoopCfgAsMap.put(me.getKey(), me.getValue());
         }
 
-        boolean shouldStop = false;
-
-        if (sq.lastProgress().batchId() != lastBatchId) {
-            if (sq.lastProgress().sources().length != 0) {
-                shouldStop = isMemoryStreamDone(sq);
-            }
-        }
-        lastBatchId = sq.lastProgress().batchId();
-
-        return shouldStop;
+        return hadoopCfgAsMap;
     }
-
-    private boolean isMemoryStreamDone(StreamingQuery sq) {
-        boolean isMemoryStreamDone = true;
-        for (int i = 0; i < sq.lastProgress().sources().length; i++) {
-            SourceProgress progress = sq.lastProgress().sources()[i];
-
-            if (progress.description() != null && !progress.description().startsWith("MemoryStream[")) {
-                // ignore others than MemoryStream
-                continue;
-            }
-
-            if (progress.startOffset() != null) {
-                if (!progress.startOffset().equalsIgnoreCase(progress.endOffset())) {
-                    isMemoryStreamDone = false;
-                }
-            }
-            else {
-                isMemoryStreamDone = false;
-            }
-        }
-
-        return isMemoryStreamDone;
-    }
-
-    private void performStreamingDPLTest(final String query, List<String> expectedValues, final String mmdbPath,
-                                         ExpectedColumns expCols) {
-        // the names of the queries for source
-        final String nameOfSourceStream = "test_source_data";
-
-        // start streams for rowDataset (source)
-        StreamingQuery sourceStreamingQuery = startStream(rowDataset, "append", nameOfSourceStream);
-
-        // listener for source stream, this allows stopping the stream when all processing is done
-        // without the use of thread.sleep()
-        sparkSession.streams().addListener(new StreamingQueryListener() {
-            @Override
-            public void onQueryStarted(QueryStartedEvent queryStarted) {
-                LOGGER.info("Query started: " + queryStarted.id());
-            }
-            @Override
-            public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-                LOGGER.info("Query terminated: " + queryTerminated.id());
-            }
-            @Override
-            public void onQueryProgress(QueryProgressEvent queryProgress) {
-                String nameOfStream = queryProgress.progress().name();
-
-                if (nameOfSourceStream.equals(nameOfStream)) {
-                    if (checkCompletionOfStreamingQuery(sourceStreamingQuery)) {
-                        sourceStreamingQuery.stop();
-                        sparkSession.streams().removeListener(this);
-                    }
-                }
-            }
-        }); // end listener
-
-
-        // Keep adding data to stream until enough runs are done
-        long run = 0L, counter = 0L, id = 0L;
-        long maxCounter = 5L, maxRuns = 1L; /* You can use these two variables to customize the amount of data */
-
-        while (sourceStreamingQuery.isActive()) {
-            Timestamp time = Timestamp.from(Instant.ofEpochSecond(rng(1300091969, 1665391969)));
-
-            if (run < maxRuns) {
-                rowMemoryStream.addData(
-                        makeRows(
-                                time, 					// _time
-                                ++id, 					// id
-                                (counter%2==0? "1": "2"),// _raw
-                                "index_A", 				// index
-                                (counter%2==0 ? "stream2" : "stream1"), // sourcetype
-                                "host", 				// host
-                                counter + "." + counter + "." + counter + "." + counter, // source
-                                String.valueOf(run), 	// partition
-                                ++counter, 				// offset
-                                1 						// make n amount of rows
-                        )
-                );
-            }
-
-            // Run $run times, each with $counter makeRows()
-            if (counter == maxCounter) {
-                run++;
-                counter = 0;
-            }
-
-        }
-
-
-
-        // Got streamed data
-        boolean truncateFields = false;
-        int numRowsToPreview = 50;
-
-        // Print previews of dataframes
-        LOGGER.info(" -- Source data -- ");
-        Dataset<Row> df = sqlContext.sql("SELECT * FROM test_source_data");
-        df.show(numRowsToPreview, truncateFields);
-
-        // Start performing the dpl query
-        performDPLQuery(query, expectedValues, mmdbPath, expCols);
-
-    }
-
-    // Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-    private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-        return rowDataset
-                .writeStream()
-                .outputMode(outputMode)
-                .format("memory")
-                .queryName(queryName)
-                .start();
-    }
-
-    private int rng(int a, int b) {
-        return new Random().nextInt(b-a) + a;
-    }
-
-    // Performs given DPL query and returns result dataset<row>
-    private void performDPLQuery(String query, List<String> expectedValues, String mmdbPath, ExpectedColumns expCols) {
-        LOGGER.info("-> Got DPL query: " + query);
-
-        ctx.setEarliest("-1Y");
-
-        visitor = new DPLParserCatalystVisitor(ctx);
-        CharStream inputStream = CharStreams.fromString(query);
-        DPLLexer lexer = new DPLLexer(inputStream);
-
-        CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-        DPLParser parser = new DPLParser(tokenStream);
-        ParseTree tree = parser.root();
-
-        LOGGER.debug(tree.toStringTree(parser));
-
-        //LOGGER.debug(TreeUtils.toPrettyTree(tree, Arrays.asList(parser.getRuleNames())));
-
-        visitor.setIplocationMmdbPath(mmdbPath);
-        visitor.setConsumer(ds -> {
-            LOGGER.info("Consumer dataset : " + ds.schema());
-            ds.show(false);
-
-            // get different columns for different database types
-            String[] cols = null;
-            if (expCols == ExpectedColumns.GEOIP_MINIMAL) {
-                cols = new String[]{"country", "lat", "lon", "region", "city"};
-            }
-            else if (expCols == ExpectedColumns.GEOIP_FULL) {
-                cols = new String[]{"country", "lat", "lon", "region", "city", "metrocode", "continent"};
-            }
-            else if (expCols == ExpectedColumns.RIR) {
-                cols = new String[]{"operator", "country"};
-            }
-            else if (expCols == ExpectedColumns.COUNTRY) {
-                cols = new String[]{"country", "continent"};
-            }
-            else {
-                fail("Invalid expected columns type set: " + expCols);
-            }
-
-            List<String> listOfResult = ds.select(cols[0],
-                    Arrays.copyOfRange(cols, 1, cols.length)).collectAsList().stream()
-                    .map(r -> r.mkString(";")).collect(Collectors.toList());
-
-            for (String expValue : expectedValues) {
-                if (!listOfResult.contains(expValue)) {
-                    fail("Result set did not contain an expected value of " + expValue);
-                }
-            }
-        });
-
-        CatalystNode n = (CatalystNode) visitor.visit(tree);
-
-        DataStreamWriter<Row> dsw = n.getDataStreamWriter();
-
-        if (dsw != null) {
-            LOGGER.info("! Data stream writer was found !");
-
-            StreamingQuery sq = dsw.start();
-            sq.processAllAvailable();
-        }
-        else {
-            fail("DataStreamWriter was null! Streaming dataset was not generated like it should be");
-        }
-    }
-
-    // Make rows of given amount
-    private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host, String source, String partition, Long offset, long amount) {
-        ArrayList<Row> rowArrayList = new ArrayList<>();
-        Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
-
-        while (amount > 0) {
-            rowArrayList.add(row);
-            amount--;
-        }
-
-        Seq<Row> rowSeq = JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
-        return rowSeq;
-    }
-
 }
 
 

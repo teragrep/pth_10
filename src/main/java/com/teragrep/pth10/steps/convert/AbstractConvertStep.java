@@ -47,8 +47,6 @@
 package com.teragrep.pth10.steps.convert;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,8 +55,8 @@ public abstract class AbstractConvertStep extends AbstractStep {
     protected List<ConvertCommand> listOfCommands = new ArrayList<>();
     protected List<String> listOfFieldsToOmit = new ArrayList<>();
     protected String timeformat = "%m/%d/%Y %H:%M:%S";
-    public AbstractConvertStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractConvertStep() {
+        super();
     }
 
     public List<ConvertCommand> getListOfCommands() {
@@ -87,40 +85,5 @@ public abstract class AbstractConvertStep extends AbstractStep {
 
     public void setTimeformat(String timeformat) {
         this.timeformat = timeformat;
-    }
-
-    public static class ConvertCommand {
-        public ConvertCommand() { }
-        public enum ConvertCommandType {
-            AUTO, NUM, MKTIME, CTIME, DUR2SEC, MEMK, MSTIME, RMCOMMA, RMUNIT
-        }
-
-        ConvertCommandType commandType = null; // function
-        String fieldParam = null; // function(field-parameter)
-        String renameField = null; // AS <new-field-name>
-
-        public ConvertCommandType getCommandType() {
-            return commandType;
-        }
-
-        public void setCommandType(ConvertCommandType commandType) {
-            this.commandType = commandType;
-        }
-
-        public String getFieldParam() {
-            return fieldParam;
-        }
-
-        public void setFieldParam(String fieldParam) {
-            this.fieldParam = fieldParam;
-        }
-
-        public void setRenameField(String renameField) {
-            this.renameField = renameField;
-        }
-
-        public String getRenameField() {
-            return renameField;
-        }
     }
 }

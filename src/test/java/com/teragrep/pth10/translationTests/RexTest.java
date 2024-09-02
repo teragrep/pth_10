@@ -46,21 +46,18 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.RexTransformation;
 import com.teragrep.pth10.steps.rex.RexStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RexTest {
@@ -76,23 +73,15 @@ public class RexTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        ProcessingStack stack = new ProcessingStack(visitor);
+        RexTransformation rexTf = new RexTransformation(ctx);
+        rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
+        RexStep rs = rexTf.rexStep;
 
-        try {
-            RexTransformation rexTf = new RexTransformation(stack, ctx);
-            rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(0).getChild(1));
-            RexStep rs = rexTf.rexStep;
-
-            assertEquals("abc", rs.getRegexStr());
-            assertEquals("host", rs.getField());
-            assertEquals(false, rs.isSedMode());
-            assertEquals(-1, rs.getMaxMatch());
-            assertEquals(null, rs.getOffsetField());
-        }
-        catch (Exception ex) {
-            fail(">> An exception occurred during testing: " + ex.getMessage());
-        }
+        assertEquals("abc", rs.getRegexStr());
+        assertEquals("host", rs.getField());
+        assertFalse(rs.isSedMode());
+        assertEquals(-1, rs.getMaxMatch());
+        assertNull(rs.getOffsetField());
     }
 
     @Test
@@ -106,23 +95,15 @@ public class RexTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        ProcessingStack stack = new ProcessingStack(visitor);
+        RexTransformation rexTf = new RexTransformation(ctx);
+        rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
+        RexStep rs = rexTf.rexStep;
 
-        try {
-            RexTransformation rexTf = new RexTransformation(stack, ctx);
-            rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(0).getChild(1));
-            RexStep rs = rexTf.rexStep;
-
-            assertEquals("abc", rs.getRegexStr());
-            assertEquals("_raw", rs.getField());
-            assertEquals(false, rs.isSedMode());
-            assertEquals(-1, rs.getMaxMatch());
-            assertEquals(null, rs.getOffsetField());
-        }
-        catch (Exception ex) {
-            fail(">> An exception occurred during testing: " + ex.getMessage());
-        }
+        assertEquals("abc", rs.getRegexStr());
+        assertEquals("_raw", rs.getField());
+        assertFalse(rs.isSedMode());
+        assertEquals(-1, rs.getMaxMatch());
+        assertNull(rs.getOffsetField());
     }
 
     @Test
@@ -136,24 +117,17 @@ public class RexTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        ProcessingStack stack = new ProcessingStack(visitor);
+        RexTransformation rexTf = new RexTransformation(ctx);
+        rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
+        RexStep rs = rexTf.rexStep;
 
-        try {
-            RexTransformation rexTf = new RexTransformation(stack, ctx);
-            rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(0).getChild(1));
-            RexStep rs = rexTf.rexStep;
-
-            assertEquals("s/old/new/g", rs.getRegexStr());
-            assertEquals("_raw", rs.getField());
-            assertEquals(true, rs.isSedMode());
-            assertEquals(-1, rs.getMaxMatch());
-            assertEquals(null, rs.getOffsetField());
-        }
-        catch (Exception ex) {
-            fail(">> An exception occurred during testing: " + ex.getMessage());
-        }
+        assertEquals("s/old/new/g", rs.getRegexStr());
+        assertEquals("_raw", rs.getField());
+        assertTrue(rs.isSedMode());
+        assertEquals(-1, rs.getMaxMatch());
+        assertNull(rs.getOffsetField());
     }
+
     @Test
     void testRexTranslationMaxMatchOffsetField() {
         final String query = "| rex field=def \"string\" max_match=10 offset_field=abc";
@@ -165,22 +139,14 @@ public class RexTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        ProcessingStack stack = new ProcessingStack(visitor);
+        RexTransformation rexTf = new RexTransformation(ctx);
+        rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
+        RexStep rs = rexTf.rexStep;
 
-        try {
-            RexTransformation rexTf = new RexTransformation(stack, ctx);
-            rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(0).getChild(1));
-            RexStep rs = rexTf.rexStep;
-
-            assertEquals("string", rs.getRegexStr());
-            assertEquals("def", rs.getField());
-            assertEquals(false, rs.isSedMode());
-            assertEquals(10, rs.getMaxMatch());
-            assertEquals("abc", rs.getOffsetField());
-        }
-        catch (Exception ex) {
-            fail(">> An exception occurred during testing: " + ex.getMessage());
-        }
+        assertEquals("string", rs.getRegexStr());
+        assertEquals("def", rs.getField());
+        assertFalse(rs.isSedMode());
+        assertEquals(10, rs.getMaxMatch());
+        assertEquals("abc", rs.getOffsetField());
     }
 }

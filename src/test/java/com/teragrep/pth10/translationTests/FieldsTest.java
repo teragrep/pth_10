@@ -46,25 +46,21 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.FieldsTransformation;
 import com.teragrep.pth10.steps.fields.AbstractFieldsStep;
 import com.teragrep.pth10.steps.fields.FieldsStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -72,7 +68,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class FieldsTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldsTest.class);
     @Test
-    void testFieldsTranslation() throws Exception {
+    void testFieldsTranslation() {
         String query = "| fields + _raw, _time, offset ";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -84,25 +80,16 @@ public class FieldsTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        FieldsTransformation ct = new FieldsTransformation(ctx);
+        ct.visitFieldsTransformation((DPLParser.FieldsTransformationContext) tree.getChild(1).getChild(0));
+        FieldsStep cs = ct.fieldsStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            FieldsTransformation ct = new FieldsTransformation(ctx, new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitFieldsTransformation((DPLParser.FieldsTransformationContext) tree.getChild(0).getChild(1));
-            FieldsStep cs = ct.fieldsStep;
-
-            assertEquals(AbstractFieldsStep.FieldMode.KEEP_FIELDS, cs.getMode());
-            assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(AbstractFieldsStep.FieldMode.KEEP_FIELDS, cs.getMode());
+        assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
     }
 
     @Test
-    void testFieldsTranslation2() throws Exception {
+    void testFieldsTranslation2() {
         String query = "| fields - _raw, _time, offset ";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -114,21 +101,12 @@ public class FieldsTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        FieldsTransformation ct = new FieldsTransformation(ctx);
+        ct.visitFieldsTransformation((DPLParser.FieldsTransformationContext) tree.getChild(1).getChild(0));
+        FieldsStep cs = ct.fieldsStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            FieldsTransformation ct = new FieldsTransformation(ctx, new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitFieldsTransformation((DPLParser.FieldsTransformationContext) tree.getChild(0).getChild(1));
-            FieldsStep cs = ct.fieldsStep;
-
-            assertEquals(AbstractFieldsStep.FieldMode.REMOVE_FIELDS, cs.getMode());
-            assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(AbstractFieldsStep.FieldMode.REMOVE_FIELDS, cs.getMode());
+        assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
     }
 }
 

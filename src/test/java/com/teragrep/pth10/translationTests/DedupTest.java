@@ -47,22 +47,19 @@ package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.DedupTransformation;
 import com.teragrep.pth10.steps.dedup.DedupStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Disabled;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,28 +75,18 @@ public class DedupTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        LOGGER.debug("Query: '" + query + "'");
+        LOGGER.debug("Query: '{}'", query);
         LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        DedupTransformation dt = new DedupTransformation(ctx);
+        dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
+        DedupStep ds = dt.dedupStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            DedupTransformation dt = new DedupTransformation(stack, ctx);
-            dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(0).getChild(1));
-            DedupStep ds = dt.dedupStep;
-
-            assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-            assertEquals(0, ds.getMaxDuplicates());
-            assertNotNull(ds.getFieldsProcessed());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        assertEquals(0, ds.getMaxDuplicates());
     }
 
     @Test
@@ -110,133 +97,89 @@ public class DedupTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        LOGGER.debug("Query: '" + query + "'");
+        LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        DedupTransformation dt = new DedupTransformation(ctx);
+        dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
+        DedupStep ds = dt.dedupStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            DedupTransformation dt = new DedupTransformation(stack, ctx);
-            dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(0).getChild(1));
-            DedupStep ds = dt.dedupStep;
+        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        assertEquals(3, ds.getMaxDuplicates());
 
-            assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-            assertEquals(3, ds.getMaxDuplicates());
-            assertNotNull(ds.getFieldsProcessed());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
-    // FIXME enable when fixed in parser
-    @Disabled
 	@Test
     void testDedupTranslationWithConsecutiveParam() {
-        String query = "| dedup consecutive=true fieldOne, fieldTwo";
+        String query = "| dedup fieldOne, fieldTwo consecutive=true";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        LOGGER.debug("Query: '" + query + "'");
+        LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        DedupTransformation dt = new DedupTransformation(ctx);
+        dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
+        DedupStep ds = dt.dedupStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            DedupTransformation dt = new DedupTransformation(stack, ctx);
-            dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(0).getChild(1));
-            DedupStep ds = dt.dedupStep;
-
-            assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-            assertEquals(0, ds.getMaxDuplicates());
-            assertTrue(ds.getConsecutive());
-            assertNotNull(ds.getFieldsProcessed());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        assertEquals(0, ds.getMaxDuplicates());
+        assertTrue(ds.getConsecutive());
     }
 
-    // pth_03 multiple fields broken
-    @Disabled
 	@Test
     void testDedupTranslationWithKeepEmptyParam() {
-        String query = "| dedup keepempty=true fieldOne, fieldTwo";
+        String query = "| dedup fieldOne, fieldTwo keepempty=true";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        LOGGER.debug("Query: '" + query + "'");
+        LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        DedupTransformation dt = new DedupTransformation(ctx);
+        dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
+        DedupStep ds = dt.dedupStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            DedupTransformation dt = new DedupTransformation(stack, ctx);
-            dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(0).getChild(1));
-            DedupStep ds = dt.dedupStep;
+        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        assertEquals(0, ds.getMaxDuplicates());
+        assertTrue(ds.getKeepEmpty());
 
-            assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-            assertEquals(0, ds.getMaxDuplicates());
-            assertTrue(ds.getKeepEmpty());
-            assertNotNull(ds.getFieldsProcessed());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
-    // pth_03 multiple fields broken
-    @Disabled
 	@Test
     void testDedupTranslationWithKeepEventsParam() {
-        String query = "| dedup keepevents=true fieldOne, fieldTwo";
+        String query = "| dedup fieldOne, fieldTwo keepevents=true";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        LOGGER.debug("Query: '" + query + "'");
+        LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        DedupTransformation dt = new DedupTransformation(ctx);
+        dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
+        DedupStep ds = dt.dedupStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            DedupTransformation dt = new DedupTransformation(stack, ctx);
-            dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(0).getChild(1));
-            DedupStep ds = dt.dedupStep;
-
-            assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-            assertEquals(0, ds.getMaxDuplicates());
-            assertTrue(ds.getKeepEvents());
-            assertNotNull(ds.getFieldsProcessed());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        assertEquals(0, ds.getMaxDuplicates());
+        assertTrue(ds.getKeepEvents());
     }
 
     @Test
@@ -247,29 +190,19 @@ public class DedupTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        System.out.println("Query: '" + query + "'");
-        System.out.println(tree.toStringTree(parser));
+        LOGGER.debug("Query: <[{}]>", query);
+        LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        DedupTransformation dt = new DedupTransformation(ctx);
+        dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
+        DedupStep ds = dt.dedupStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            DedupTransformation dt = new DedupTransformation(stack, ctx);
-            dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(0).getChild(1));
-            DedupStep ds = dt.dedupStep;
-
-            assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-            assertEquals(0, ds.getMaxDuplicates());
-            // TODO add assertion for sort by clause
-            assertNotNull(ds.getFieldsProcessed());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        assertEquals(0, ds.getMaxDuplicates());
+        // TODO add assertion for sort by clause
     }
 }
 

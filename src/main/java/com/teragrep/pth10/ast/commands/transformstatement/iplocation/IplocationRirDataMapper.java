@@ -47,6 +47,7 @@
 package com.teragrep.pth10.ast.commands.transformstatement.iplocation;
 
 import com.maxmind.db.Reader;
+import com.teragrep.pth10.ast.NullValue;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -73,9 +75,11 @@ public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Ma
     private final String path;
     private final Map<String, String> hadoopCfgMap;
     private Reader reader;
+    private final NullValue nullValue;
 
-    public IplocationRirDataMapper(String path, Map<String, String> hadoopCfgMap) {
+    public IplocationRirDataMapper(String path, NullValue nullValue, Map<String, String> hadoopCfgMap) {
         this.path = path;
+        this.nullValue = nullValue;
         this.hadoopCfgMap = hadoopCfgMap;
     }
 
@@ -89,8 +93,17 @@ public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Ma
         }
 
         final String dbType = reader.getMetadata().getDatabaseType();
-        InetAddress inetAddress = InetAddress.getByName(ipString);
         final Map<String, String> result = new HashMap<>();
+
+        InetAddress inetAddress;
+        try {
+             inetAddress = InetAddress.getByName(ipString);
+        } catch (UnknownHostException uhe) {
+            LOGGER.warn("Unknown host exception: <{}>. Returning null result.", uhe);
+            result.put("country", nullValue.value());
+            result.put("operator", nullValue.value());
+            return result;
+        }
 
         // Check for correct database type, otherwise throw exception
         if (dbType.equals("rir-data")) {
@@ -128,7 +141,7 @@ public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Ma
         try {
             FileSystem fs = FileSystem.get(hadoopConf);
             Path fsPath = new Path(path);
-            LOGGER.info("Attempting to open database file: " + fsPath.toUri());
+            LOGGER.info("Attempting to open database file: <[{}]>", fsPath.toUri());
             if (fs.exists(fsPath) && fs.isFile(fsPath)) {
                 LOGGER.info("Path exists and is a file");
                 FSDataInputStream fsIn = fs.open(fsPath);

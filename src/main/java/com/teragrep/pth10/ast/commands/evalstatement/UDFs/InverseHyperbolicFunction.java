@@ -53,7 +53,7 @@ import java.io.Serializable;
 /**
  * UDF for acosh(x), asinh(x) and atanh(x)<br>
  * Spark built-in functions exist in version {@literal >=3.1.0}
- * @author p000043u
+ * @author eemhu
  *
  */
 public class InverseHyperbolicFunction implements UDF1<Object, Double>, Serializable {

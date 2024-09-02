@@ -46,20 +46,17 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.SendemailTransformation;
 import com.teragrep.pth10.steps.sendemail.SendemailStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SendemailTest {
 
     @Test
-    void testSendemailTranslation() throws Exception {
+    void testSendemailTranslation() {
         String query = " | sendemail to=hello@world sendresults=true inline=true";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -79,37 +76,27 @@ public class SendemailTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        SendemailTransformation ct = new SendemailTransformation(ctx);
+        ct.visitSendemailTransformation((DPLParser.SendemailTransformationContext) tree.getChild(1).getChild(0));
+        SendemailStep cs = ct.sendemailStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            SendemailTransformation ct = new SendemailTransformation(new ArrayList<>(), stack, ctx);
-            ct.visitSendemailTransformation((DPLParser.SendemailTransformationContext) tree.getChild(0).getChild(1));
-            SendemailStep cs = ct.sendemailStep;
+        assertNotNull(cs.getSendemailResultsProcessor());
 
-            assertNotNull(cs.getSendemailResultsProcessor());
+        Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
+        Map<String,String> expected = buildParamMap(new Object() {}.getClass().getEnclosingMethod().getName());
+        assertEquals(expected.size(), params.size());
 
-            Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
-            Map<String,String> expected = buildParamMap(new Object() {}.getClass().getEnclosingMethod().getName());
-            assertEquals(expected.size(), params.size());
+        for (Map.Entry<String, String> ent : params.entrySet()) {
+            String currentKey = ent.getKey();
+            String currentValue = ent.getValue();
 
-            for (Map.Entry<String, String> ent : params.entrySet()) {
-                String currentKey = ent.getKey();
-                String currentValue = ent.getValue();
-
-                String expectedValue = expected.get(currentKey);
-                assertEquals(expectedValue, currentValue);
-
-            }
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
+            String expectedValue = expected.get(currentKey);
+            assertEquals(expectedValue, currentValue);
         }
     }
 
     @Test
-    void testSendemailTranslation2() throws Exception {
+    void testSendemailTranslation2() {
         String query = " | sendemail to=hello@world sendresults=true inline=true use_ssl=true format=raw content_type=plain cc=world@hello";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -119,32 +106,22 @@ public class SendemailTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        SendemailTransformation ct = new SendemailTransformation(ctx);
+        ct.visitSendemailTransformation((DPLParser.SendemailTransformationContext) tree.getChild(1).getChild(0));
+        SendemailStep cs = ct.sendemailStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            SendemailTransformation ct = new SendemailTransformation(new ArrayList<>(), stack, ctx);
-            ct.visitSendemailTransformation((DPLParser.SendemailTransformationContext) tree.getChild(0).getChild(1));
-            SendemailStep cs = ct.sendemailStep;
+        assertNotNull(cs.getSendemailResultsProcessor());
 
-            assertNotNull(cs.getSendemailResultsProcessor());
+        Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
+        Map<String,String> expected = buildParamMap(new Object() {}.getClass().getEnclosingMethod().getName());
+        assertEquals(expected.size(), params.size());
 
-            Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
-            Map<String,String> expected = buildParamMap(new Object() {}.getClass().getEnclosingMethod().getName());
-            assertEquals(expected.size(), params.size());
+        for (Map.Entry<String, String> ent : params.entrySet()) {
+            String currentKey = ent.getKey();
+            String currentValue = ent.getValue();
 
-            for (Map.Entry<String, String> ent : params.entrySet()) {
-                String currentKey = ent.getKey();
-                String currentValue = ent.getValue();
-
-                String expectedValue = expected.get(currentKey);
-                assertEquals(expectedValue, currentValue);
-
-            }
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
+            String expectedValue = expected.get(currentKey);
+            assertEquals(expectedValue, currentValue);
         }
     }
 

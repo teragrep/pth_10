@@ -45,54 +45,42 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.TimestampToEpochConversion;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth10.ast.DefaultTimeFormat;
 import org.apache.spark.sql.*;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.teragrep.pth10.ast.TimestampToEpochConversion.unixEpochFromString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class logicalOperationTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(logicalOperationTest.class);
 
-	SparkSession spark = null;
-	DPLParserCatalystContext ctx = null;
 	// Use this file for  dataset initialization
-	String testFile = "src/test/resources/xmlWalkerTestData.json";
+	String testFile = "src/test/resources/xmlWalkerTestData*.json"; // * to make the path into a directory path
+	private StreamingTestUtil streamingTestUtil;
 
 	@org.junit.jupiter.api.BeforeAll
 	void setEnv() {
-		spark = SparkSession
-				.builder()
-				.appName("Teragrep")
-				.master("local[2]")
-				.config("spark.driver.extraJavaOptions", "-Duser.timezone=EET")
-				.config("spark.executor.extraJavaOptions", "-Duser.timezone=EET")
-				.config("spark.sql.session.timeZone", "UTC")
-				.getOrCreate();
-        spark.sparkContext().setLogLevel("ERROR");
-		ctx = new DPLParserCatalystContext(spark);
-		// initialize test dataset
-		SparkSession curSession = spark.newSession();
-		Dataset<Row> df = curSession.read().json(testFile);
-		ctx.setDs(df);
+		this.streamingTestUtil = new StreamingTestUtil();
+		this.streamingTestUtil.setEnv();
+	}
+
+	@org.junit.jupiter.api.BeforeEach
+	void setUp() {
+		this.streamingTestUtil.setUp();
+	}
+
+	@org.junit.jupiter.api.AfterEach
+	void tearDown() {
+		this.streamingTestUtil.tearDown();
 	}
 
     @Disabled
@@ -100,32 +88,21 @@ public class logicalOperationTest {
 	public void parseDPLTest() throws AnalysisException {
 		String q = "index=kafka_topic conn error eka OR toka kolmas";
 		String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%' AND _raw LIKE '%error%' AND _raw LIKE '%eka%' OR _raw LIKE '%toka%' AND _raw LIKE '%kolmas%'";
-		LOGGER.info("Complex query<" + q + ">");
 		String result = utils.getQueryAnalysis(q);
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	public void parseDPLCatalystTest() {
 		String q = "index=kafka_topic *conn* *error* *eka* OR *toka* *kolmas*";
-		String e = "(`index` RLIKE '(?i)^kafka_topic' AND (((`_raw` RLIKE '(?i)^.*\\\\Q*conn*\\\\E.*' AND `_raw` RLIKE '(?i)^.*\\\\Q*error*\\\\E.*') AND (`_raw` RLIKE '(?i)^.*\\\\Q*eka*\\\\E.*' OR `_raw` RLIKE '(?i)^.*\\\\Q*toka*\\\\E.*')) AND `_raw` RLIKE '(?i)^.*\\\\Q*kolmas*\\\\E.*'))";
-		Column result;
-		try {
-			DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-			CharStream inputStream = CharStreams.fromString(q);
-			DPLLexer lexer = new DPLLexer(inputStream);
-			DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-			ParseTree tree = parser.root();
-			visitor.visit(tree);
 
-			result = visitor.getLogicalPartAsColumn();
-			LOGGER.info("Complex query<" + q + ">");
-			assertEquals(e, result.expr().sql(),visitor.getTraceBuffer().toString());
-		} catch (Exception ex){
-			ex.printStackTrace();
-		}
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			String e = "(RLIKE(index, (?i)^kafka_topic$) AND (((RLIKE(_raw, (?i)^.*\\Qconn\\E.*) AND RLIKE(_raw, (?i)^.*\\Qerror\\E.*)) AND (RLIKE(_raw, (?i)^.*\\Qeka\\E.*) OR RLIKE(_raw, (?i)^.*\\Qtoka\\E.*))) AND RLIKE(_raw, (?i)^.*\\Qkolmas\\E.*)))";
+			String result = this.streamingTestUtil.getCtx().getSparkQuery();
+			assertEquals(e, result);
+		});
 	}
 
 	@Disabled
@@ -133,52 +110,55 @@ public class logicalOperationTest {
 	public void parseOrTest() throws AnalysisException {
 		String q = "index=kafka_topic a1 OR a2";
 		String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%a1%' OR _raw LIKE '%a2%'";
-		LOGGER.info("Test OR query<" + q + ">");
 		String result = utils.getQueryAnalysis(q);
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	public void parseOrCatalystTest() {
 		String q = "index=kafka_topic a1 OR a2";
-		String e = "(`index` RLIKE '(?i)^kafka_topic' AND (`_raw` RLIKE '(?i)^.*\\\\Qa1\\\\E.*' OR `_raw` RLIKE '(?i)^.*\\\\Qa2\\\\E.*'))";
-		Column result;
-		try {
-			DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-			CharStream inputStream = CharStreams.fromString(q);
-			DPLLexer lexer = new DPLLexer(inputStream);
-			DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-			ParseTree tree = parser.root();
-			visitor.visit(tree);
 
-			result = visitor.getLogicalPartAsColumn();
-			assertEquals(e, result.expr().sql(),visitor.getTraceBuffer().toString());
-		} catch (Exception ex){
-			ex.printStackTrace();
-		}
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			String e = "(RLIKE(index, (?i)^kafka_topic$) AND (RLIKE(_raw, (?i)^.*\\Qa1\\E.*) OR RLIKE(_raw, (?i)^.*\\Qa2\\E.*)))";
+
+			String result = this.streamingTestUtil.getCtx().getSparkQuery();
+			assertEquals(e, result);
+		});
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void wildcardBloomCheckTest() {
+		String q = "index=xyz ab*";
+
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			assertTrue(this.streamingTestUtil.getCtx().isWildcardSearchUsed());
+		});
+	}
+
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void wildcardBloomCheckTest2() {
+		String q = "index=xyz ab";
+
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			assertFalse(this.streamingTestUtil.getCtx().isWildcardSearchUsed());
+		});
+	}
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	public void parseIndexInCatalystTest() {
 		String q = "index IN ( index_A index_B )";
-		String e = "(`index` RLIKE '(?i)^index_a' OR `index` RLIKE '(?i)^index_b')";
-		Column result;
-		try {
-			DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-			CharStream inputStream = CharStreams.fromString(q);
-			DPLLexer lexer = new DPLLexer(inputStream);
-			DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-			ParseTree tree = parser.root();
-			visitor.visit(tree);
 
-			result = visitor.getLogicalPartAsColumn();
-			assertEquals(e, result.expr().sql(),visitor.getTraceBuffer().toString());
-		} catch (Exception ex){
-			ex.printStackTrace();
-		}
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			String e = "(RLIKE(index, (?i)^index_a) OR RLIKE(index, (?i)^index_b))";
+
+			String result = this.streamingTestUtil.getCtx().getSparkQuery();
+			assertEquals(e, result);
+		});
 	}
 
 	@Disabled
@@ -191,103 +171,63 @@ public class logicalOperationTest {
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	public void parseAndCatalystTest() {
 		String q = "index=kafka_topic a1 AND a2";
-		String e = "(`index` RLIKE '(?i)^kafka_topic' AND (`_raw` RLIKE '(?i)^.*\\\\Qa1\\\\E.*' AND `_raw` RLIKE '(?i)^.*\\\\Qa2\\\\E.*'))";
-		Column result;
-		try {
-			DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-			CharStream inputStream = CharStreams.fromString(q);
-			DPLLexer lexer = new DPLLexer(inputStream);
-			DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-			ParseTree tree = parser.root();
-			visitor.visit(tree);
 
-			result = visitor.getLogicalPartAsColumn();
-			assertEquals(e, result.expr().sql(),visitor.getTraceBuffer().toString());
-		} catch (Exception ex){
-			ex.printStackTrace();
-		}
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			String e = "(RLIKE(index, (?i)^kafka_topic$) AND (RLIKE(_raw, (?i)^.*\\Qa1\\E.*) AND RLIKE(_raw, (?i)^.*\\Qa2\\E.*)))";
+
+			String result = this.streamingTestUtil.getCtx().getSparkQuery();
+			assertEquals(e, result);
+		});
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	public void parseRawUUIDCatalystTest() {
 		String q = "index=abc sourcetype=\"cd:ef:gh:0\"  \"1848c85bfe2c4323955dd5469f18baf6\"";
-		String e = "(`index` RLIKE '(?i)^abc' AND (`sourcetype` RLIKE '(?i)^cd:ef:gh:0' AND `_raw` RLIKE '(?i)^.*\\\\Q1848c85bfe2c4323955dd5469f18baf6\\\\E.*'))";
-		Column result;
-		try {
-			CharStream inputStream = CharStreams.fromString(q);
-			DPLLexer lexer = new DPLLexer(inputStream);
-			DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-			ParseTree tree = parser.root();
-			LOGGER.debug(tree.toStringTree(parser));
-			// Use this file for  dataset initialization
-			String testFile = "src/test/resources/uuidTestData.json";
-			Dataset<Row> inDs = spark.read().json(testFile);
-			ctx.setDs(inDs);
-			ctx.setEarliest("-1Y");
-			DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			result = visitor.getLogicalPartAsColumn();
-			LOGGER.info("logicalStatement="+result.expr().sql());
-			assertEquals(e, result.expr().sql(),visitor.getTraceBuffer().toString());
-			Dataset<Row> res = n.getDataset();
+		String testFile = "src/test/resources/uuidTestData*.json"; // * to make the path into a directory path
+
+		this.streamingTestUtil.performDPLTest(q, testFile, res -> {
+			String e = "(RLIKE(index, (?i)^abc$) AND (RLIKE(sourcetype, (?i)^cd:ef:gh:0) AND RLIKE(_raw, (?i)^.*\\Q1848c85bfe2c4323955dd5469f18baf6\\E.*)))";
+			String result = this.streamingTestUtil.getCtx().getSparkQuery();
+			assertEquals(e, result);
+
+			// Get raw field and check results. Should be only 1 match
+			Dataset<Row> selected = res.select("_raw");
+			//selected.show(false);
+			List<String> lst = selected.collectAsList().stream().map(r->r.getString(0)).sorted().collect(Collectors.toList());
+			// check result count
+			assertEquals(3,lst.size());
+			// Compare values
+			assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6  computer01.example.com",lst.get(1));
+			assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6666  computer01.example.com",lst.get(2));
+			assertEquals("uuid=*!<1848c85bFE2c4323955dd5469f18baf6<  computer01.example.com",lst.get(0));
+		});
+	}
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void parseWithQuotesInsideQuotesCatalystTest() {
+		String q = "index=abc \"\\\"latitude\\\": -89.875, \\\"longitude\\\": 24.125\"";
+		String testFile = "src/test/resources/latitudeTestData*.json"; // * to make the path into a directory path
+
+		this.streamingTestUtil.performDPLTest(q, testFile, res -> {
+			String e = "(RLIKE(index, (?i)^abc$) AND RLIKE(_raw, (?i)^.*\\Q\"latitude\": -89.875, \"longitude\": 24.125\\E.*))";
+			String result = this.streamingTestUtil.getCtx().getSparkQuery();
+			assertEquals(e, result);
+
 			// Get raw field and check results. Should be only 1 match
 			Dataset<Row> selected = res.select("_raw");
 			//selected.show(false);
 			List<Row> lst = selected.collectAsList();
 			// check result count
-			assertEquals(3,lst.size(),visitor.getTraceBuffer().toString());
+			assertEquals(2, lst.size());
 			// Compare values
-			assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6  computer01.example.com",lst.get(0).getString(0),visitor.getTraceBuffer().toString());
-			assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6666  computer01.example.com",lst.get(1).getString(0),visitor.getTraceBuffer().toString());
-			assertEquals("uuid=*!<1848c85bFE2c4323955dd5469f18baf6<  computer01.example.com",lst.get(2).getString(0),visitor.getTraceBuffer().toString());
-		} catch (Exception ex){
-			ex.printStackTrace();
-		}
-	}
-
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-	public void parseWithQuotesInsideQuotesCatalystTest() {
-		String q = "index=abc \"\\\"latitude\\\": -89.875, \\\"longitude\\\": 24.125\"";
-		String e = "(`index` RLIKE '(?i)^abc' AND `_raw` RLIKE '(?i)^.*\\\\Q\"latitude\": -89.875, \"longitude\": 24.125\\\\E.*')";
-		Column result;
-		try {
-			CharStream inputStream = CharStreams.fromString(q);
-			DPLLexer lexer = new DPLLexer(inputStream);
-			DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-			ParseTree tree = parser.root();
-
-			//LOGGER.debug(TreeUtils.toPrettyTree(tree, Arrays.asList(parser.getRuleNames())));
-			//LOGGER.debug(tree.toStringTree(parser));
-
-			// Use this file for  dataset initialization
-			String testFile = "src/test/resources/latitudeTestData.json";
-			Dataset<Row> inDs = spark.read().json(testFile);
-			//inDs.show(false);
-			ctx.setDs(inDs);
-			ctx.setEarliest("-5Y");
-			DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
- 			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			result = visitor.getLogicalPartAsColumn();
-			LOGGER.info("logicalStatement="+result.expr().sql());
-			assertEquals(e, result.expr().sql(),visitor.getTraceBuffer().toString());
-            Dataset<Row> res = n.getDataset();
-			// Get raw field and check results. Should be only 1 match
-			Dataset<Row> selected = res.select("_raw");
-            //selected.show(false);
-			List<Row> lst = selected.collectAsList();
-			// check result count
-			assertEquals(2, lst.size(), visitor.getTraceBuffer().toString());
-			// Compare values
-			assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(0).getString(0), visitor.getTraceBuffer().toString());
-			assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(1).getString(0), visitor.getTraceBuffer().toString());
-		} catch (Exception ex){
-			ex.printStackTrace();
-		}
+			assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(0).getString(0));
+			assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(1).getString(0));
+		});
 	}
 
 	@Disabled
@@ -354,7 +294,6 @@ public class logicalOperationTest {
 		q = "index = archive_memory host = \"localhost\" host = \"test\" host = \"test1\" Deny";
 		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"archive_memory\" AND host LIKE \"localhost\" AND host LIKE \"test\" AND host LIKE \"test1\" AND _raw LIKE '%Deny%'";
 		result = utils.getQueryAnalysis(q);
-		LOGGER.info("DPL      =<" + q + ">");
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
@@ -396,7 +335,7 @@ public class logicalOperationTest {
 	public void streamListWithoutQuotesTest() throws AnalysisException  {
 		String q,e,result;
 		q = "index = memory-test latest=\"05/10/2022:09:11:40\" host= sc-99-99-14-25 sourcetype= log:f17:0 Latitude";
-		long latestEpoch = unixEpochFromString("05/10/2022:09:11:40", null);
+		long latestEpoch = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
 		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"memory-test\" AND _time <= from_unixtime("+latestEpoch+") AND host LIKE \"sc-99-99-14-25\" AND sourcetype LIKE \"log:f17:0\" AND _raw LIKE '%Latitude%'";
 		result = utils.getQueryAnalysis(q);
 		assertEquals(e,result);
@@ -408,7 +347,7 @@ public class logicalOperationTest {
 		String q,e,result;
 		// Test to_lower() for inex,host,sourcetyype
 		q = "index = MEMORY-test latest=\"05/10/2022:09:11:40\" host= SC-99-99-14-20 sourcetype= LOG:F17:0 Latitude";
-		long latestEpoch2 = unixEpochFromString("05/10/2022:09:11:40", null);
+		long latestEpoch2 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
 		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"memory-test\" AND _time <= from_unixtime("+latestEpoch2+") AND host LIKE \"sc-99-99-14-20\" AND sourcetype LIKE \"log:f17:0\" AND _raw LIKE '%Latitude%'";
 		result = utils.getQueryAnalysis(q);
 		assertEquals(e,result);
@@ -420,8 +359,8 @@ public class logicalOperationTest {
 		String q,e,result;
 		// Test to_lower() for inex,host,sourcetyype
 		q = "index=f17 sourcetype=log:f17:0 _index_earliest=\"12/31/1970:10:15:30\" _index_latest=\"12/31/2022:10:15:30\" NOT rainfall_rate";
-		long earliestEpoch = unixEpochFromString("12/31/1970:10:15:30", null);
-		long latestEpoch = unixEpochFromString("12/31/2022:10:15:30", null);
+		long earliestEpoch = new DefaultTimeFormat().getEpoch("12/31/1970:10:15:30");
+		long latestEpoch = new DefaultTimeFormat().getEpoch("12/31/2022:10:15:30");
 		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND sourcetype LIKE \"log:f17:0\" AND _time >= from_unixtime("+earliestEpoch+") AND _time <= from_unixtime("+latestEpoch+") AND NOT _raw LIKE '%rainfall_rate%'";
 		result = utils.getQueryAnalysis(q);
 		assertEquals(e,result);
@@ -494,31 +433,20 @@ public class logicalOperationTest {
 		q = "index=f17 1.2";
 		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND _raw LIKE '%1.2%'";
 		result = utils.getQueryAnalysis(q);
-		//LOGGER.info("DPL      =<" + q + ">");
 		utils.printDebug(e,result);
 		assertEquals(e,result);
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	public void parseLikeWithParenthesisCatalystTest() {
-		String q = "index=access_log earliest=\"01/21/2022:10:00:00\" latest=\"01/21/2022:11:59:59\" \"*(3)www(9)microsoft(3)com(0)*\" OR \"*(4)mail(6)google(3)com(0)*\"";
-		//long indexEarliestEpoch = TimestampToEpochConversion.unixEpochFromString("01/21/2022:10:00:00", null);
-		//long indexLatestEpoch = TimestampToEpochConversion.unixEpochFromString("01/21/2022:11:59:59", null);
-		String e = "(`index` RLIKE '(?i)^access_log' AND (((`_time` >= from_unixtime(1642752000, 'yyyy-MM-dd HH:mm:ss')) AND (`_time` <= from_unixtime(1642759199, 'yyyy-MM-dd HH:mm:ss'))) AND (`_raw` RLIKE '(?i)^.*\\\\Q*(3)www(9)microsoft(3)com(0)*\\\\E.*' OR `_raw` RLIKE '(?i)^.*\\\\Q*(4)mail(6)google(3)com(0)*\\\\E.*')))";
-		Column result;
-		try {
-			DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-			CharStream inputStream = CharStreams.fromString(q);
-			DPLLexer lexer = new DPLLexer(inputStream);
-			DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-			ParseTree tree = parser.root();
-			visitor.visit(tree);
+		String q = "index=access_log earliest=\"01/21/2022:10:00:00\" latest=\"01/21/2022:11:59:59\" \"*(3)www(7)example(3)com(0)*\" OR \"*(4)mail(7)example(3)com(0)*\"";
 
-			result = visitor.getLogicalPartAsColumn();
-			assertEquals(e, result.expr().sql(),visitor.getTraceBuffer().toString());
-		} catch (Exception ex){
-			ex.printStackTrace();
-		}
+		this.streamingTestUtil.performDPLTest(q, testFile, res -> {
+			String e = "(RLIKE(index, (?i)^access_log$) AND (((_time >= from_unixtime(1642752000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1642759199, yyyy-MM-dd HH:mm:ss))) AND (RLIKE(_raw, (?i)^.*\\Q(3)www(7)example(3)com(0)\\E.*) OR RLIKE(_raw, (?i)^.*\\Q(4)mail(7)example(3)com(0)\\E.*))))";
+
+			String result = this.streamingTestUtil.getCtx().getSparkQuery();
+			assertEquals(e, result);
+		});
 	}
 }

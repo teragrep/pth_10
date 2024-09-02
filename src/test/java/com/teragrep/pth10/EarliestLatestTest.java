@@ -45,111 +45,62 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.TreeUtils;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQuery;
+import com.teragrep.pth10.ast.time.RelativeTimeParser;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.functions;
 import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.StreamingQueryListener;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.MetadataBuilder;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
-import java.util.function.Consumer;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the new ProcessingStack implementation
+ * Tests time-related aspects of the project,
+ * such as TimeStatement.
  * Uses streaming datasets
- * @author p000043u
  *
+ * @author eemhu
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EarliestLatestTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(EarliestLatestTest.class);
 
-    DPLParserCatalystContext ctx = null;
-    DPLParserCatalystVisitor visitor = null;
-
-    SparkSession sparkSession = null;
-    SQLContext sqlContext = null;
-
-    ExpressionEncoder<Row> encoder = null;
-    MemoryStream<Row> rowMemoryStream = null;
-    Dataset<Row> rowDataset = null;
-
-    private static final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    // Use this file for dataset initialization
+    private final String testFile = "src/test/resources/earliestLatestTest_data*.json"; // * to make the path into a directory path
+    private final String epochTestFile = "src/test/resources/earliestLatestTest_epoch_data*.json";
+    private StreamingTestUtil streamingTestUtil;
 
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-
+        this.streamingTestUtil = new StreamingTestUtil();
+        this.streamingTestUtil.setEnv();
     }
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        sparkSession = SparkSession.builder()
-                .master("local[*]")
-                .config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                .config("checkpointLocation","/tmp/pth_10/test/earliestlatest/checkpoints/" + UUID.randomUUID() + "/")
-                .getOrCreate();
-
-        sqlContext = sparkSession.sqlContext();
-        ctx = new DPLParserCatalystContext(sparkSession);
-
-        //sparkSession.sparkContext().setLogLevel("ERROR");
-
-        encoder = RowEncoder.apply(testSchema);
-        rowMemoryStream =
-                new MemoryStream<>(1, sqlContext, encoder);
-
-        // Create a spark structured streaming dataset and start writing the stream
-        rowDataset = rowMemoryStream.toDS();
-        ctx.setDs(rowDataset);	// for stream ds
+        this.streamingTestUtil.setUp();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        visitor = null;
+        this.streamingTestUtil.tearDown();
     }
 
 
@@ -157,578 +108,723 @@ public class EarliestLatestTest {
     // Tests
     // ----------------------------------------
 
-    /*
-        Generated data:
-        +-------------------+---+---------+--------+----------+------------+-------+---------+------+
-        |_time              |id |_raw     |index   |sourcetype|host        |source |partition|offset|
-        +-------------------+---+---------+--------+----------+------------+-------+---------+------+
-        |2013-07-15 10:01:50|1  |data data|haproxy |stream1   |webserver.example.com|127.0.0.0|0        |1     |
-        |2013-07-15 10:01:50|2  |data data|rsyslogd|stream2   |webserver.example.com|127.1.1.1|0        |2     |
-        |2014-07-15 10:01:50|3  |data data|haproxy |stream1   |webserver.example.com|127.2.2.2|0        |3     |
-        |2014-07-15 10:01:50|4  |data data|rsyslogd|stream2   |webserver.example.com|127.3.3.3|0        |4     |
-        |2015-07-15 10:01:50|5  |data data|haproxy |stream1   |webserver.example.com|127.4.4.4|0        |5     |
-        |2015-07-15 10:01:50|6  |data data|rsyslogd|stream2   |webserver.example.com|127.5.5.5|0        |6     |
-        |2016-07-14 10:01:50|7  |data data|haproxy |stream1   |webserver.example.com|127.6.6.6|0        |7     |
-        |2016-07-14 10:01:50|8  |data data|rsyslogd|stream2   |webserver.example.com|127.7.7.7|0        |8     |
-        |2017-07-14 10:01:50|9  |data data|haproxy |stream1   |webserver.example.com|127.8.8.8|0        |9     |
-        |2017-07-14 10:01:50|10 |data data|rsyslogd|stream2   |webserver.example.com|127.9.9.9|0        |10    |
-        +-------------------+---+---------+--------+----------+------------+-------+---------+------+
-     */
+    // FIXME: earliest-latest defaulting removed and default tests set to Disabled to fix issue #351
 
-    // Remove '' to run the tests.
-    // TODO Make sure the assertions are correct.
-    // FIXME: earliest-latest defaulting removed to fix issue #351
-    
 	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest1() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "index=haproxy earliest=-10y OR index=rsyslogd",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest1() {
+        String query = "index=strawberry earliest=-10y OR index=seagull";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"),
+                res -> {
+                    List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
-                    assertTrue(indexAsList.contains("haproxy"));
-                    assertFalse(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest2() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "index=haproxy OR index=rsyslogd | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertTrue(indexAsList.contains("haproxy"));
-                    assertTrue(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest3() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "index=haproxy OR index=rsyslogd earliest=-10y | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertTrue(indexAsList.contains("haproxy"));
-                    assertTrue(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest4() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "earliest=-10y index=haproxy OR index=rsyslogd | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertTrue(indexAsList.contains("haproxy"));
-                    assertTrue(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest5() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "earliest=-10y index=haproxy OR (index=rsyslogd latest=-10y) | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertTrue(indexAsList.contains("haproxy"));
-                    assertFalse(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest6() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "earliest=-10y index=haproxy OR index=rsyslogd latest=-10y | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertFalse(indexAsList.contains("haproxy"));
-                    assertFalse(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest7() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "earliest=-10y index=haproxy OR index=rsyslogd latest=-1y | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertTrue(indexAsList.contains("haproxy"));
-                    assertTrue(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest8() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "earliest=-20y index=haproxy OR index=rsyslogd earliest=-1d | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertFalse(indexAsList.contains("haproxy"));
-                    assertFalse(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest9() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "earliest=-20y index=haproxy OR index=rsyslogd earliest=now | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertFalse(indexAsList.contains("haproxy"));
-                    assertFalse(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-    
-	@Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void earliestLatestTest10() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
-                "earliest=-20y index=haproxy OR index=rsyslogd latest=now | stats count(_raw) by index",
-                null, //"[_time, _time2]",
-                ds -> {
-                    List<String> indexAsList = ds.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertTrue(indexAsList.contains("haproxy"));
-                    assertTrue(indexAsList.contains("rsyslogd"));
-                }
-        );
-    }
-
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultFormatTest() throws StreamingQueryException, InterruptedException{ // MM/dd/yyyy:HH:mm:ss
-        performStreamingDPLTest("(index=haproxy OR index=rsyslogd) AND earliest=03/15/2014:00:00:00",
-                null,
-                ds -> {
-                    List<String> time = ds.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-                    assertEquals("2014-04-15 08:23:17.0", time.get(0));
-                    assertEquals("2014-03-15 21:54:14.0", time.get(1));
-
+                    assertTrue(indexAsList.contains("strawberry"));
+                    assertFalse(indexAsList.contains("seagull"));
                 });
     }
 
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void ISO8601FormatTest() throws StreamingQueryException, InterruptedException{ // '2011-12-03T10:15:30+01:00'
-        performStreamingDPLTest("(index=haproxy OR index=rsyslogd) AND earliest=2014-03-15T00:00:00+03:00",
-                null,
-                ds -> {
-                    List<String> time = ds.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest2( ) {
+        String query = "index=strawberry OR index=seagull | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
-                    assertEquals("2014-04-15 08:23:17.0", time.get(0));
-                    assertEquals("2014-03-15 21:54:14.0", time.get(1));
+            assertTrue(indexAsList.contains("strawberry"));
+            assertTrue(indexAsList.contains("seagull"));
+        });
+    }
 
-                });
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest3( ) {
+        String query = "index=strawberry OR index=seagull earliest=-10y | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertTrue(indexAsList.contains("strawberry"));
+            assertTrue(indexAsList.contains("seagull"));
+        });
+    }
+
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest4( ) {
+        String query = "earliest=-10y index=strawberry OR index=seagull | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertTrue(indexAsList.contains("strawberry"));
+            assertTrue(indexAsList.contains("seagull"));
+        });
+    }
+
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest5( ) {
+        String query = "earliest=-10y index=strawberry OR (index=seagull latest=-10y) | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertTrue(indexAsList.contains("strawberry"));
+            assertFalse(indexAsList.contains("seagull"));
+        });
+    }
+
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest6( ) {
+        String query = "earliest=-10y index=strawberry OR index=seagull latest=-10y | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertFalse(indexAsList.contains("strawberry"));
+            assertFalse(indexAsList.contains("seagull"));
+        });
+    }
+
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest7( ) {
+        String query = "earliest=-10y index=strawberry OR index=seagull latest=-1y | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertTrue(indexAsList.contains("strawberry"));
+            assertTrue(indexAsList.contains("seagull"));
+        });
+    }
+
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest8( ) {
+        String query = "earliest=-20y index=strawberry OR index=seagull earliest=-1d | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertFalse(indexAsList.contains("strawberry"));
+            assertFalse(indexAsList.contains("seagull"));
+        });
+    }
+
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest9( ) {
+        String query = "earliest=-20y index=strawberry OR index=seagull earliest=now | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertFalse(indexAsList.contains("strawberry"));
+            assertFalse(indexAsList.contains("seagull"));
+        });
+    }
+    
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void earliestLatestTest10( ) {
+        String query = "earliest=-20y index=strawberry OR index=seagull latest=now | stats count(_raw) by index";
+        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertTrue(indexAsList.contains("strawberry"));
+            assertTrue(indexAsList.contains("seagull"));
+        });
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultEarliestLatestTest1() throws StreamingQueryException, InterruptedException{ // '2011-12-03T10:15:30+01:00'
-        ctx.setDplDefaultEarliest(-1L);
-        ctx.setDplDefaultLatest(1L);
-        performStreamingDPLTest("(index=haproxy OR index=rsyslogd)",
-                null,
-                ds -> {
-                    // empty
-                });
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultFormatTest() { // MM/dd/yyyy:HH:mm:ss 2013-07-15 10:01:50
+        String query = "(index=strawberry OR index=seagull) AND earliest=03/15/2014:00:00:00";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
-        final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"haproxy\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"rsyslogd\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND></OR>";
-        final String expSpark = "(((index RLIKE (?i)^haproxy AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^rsyslogd AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))))";
-
-
-
-        assertEquals(expXml, ctx.getArchiveQuery());
-        assertEquals(expSpark, ctx.getSparkQuery());
+            assertEquals("2014-04-15 08:23:17", time.get(0));
+            assertEquals("2014-03-15 21:54:14", time.get(1));
+        });
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultEarliestLatestTest2() throws StreamingQueryException, InterruptedException{ // '2011-12-03T10:15:30+01:00'
-        ctx.setDplDefaultEarliest(-1L);
-        ctx.setDplDefaultLatest(1L);
-        performStreamingDPLTest("(index=haproxy earliest=2014-03-15T21:54:14+02:00) OR index=rsyslogd)",
-                null,
-                ds -> {
-                    // empty
-                });
-
-        final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"haproxy\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1394913254\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"rsyslogd\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND></OR>";
-        final String expSpark = "(((index RLIKE (?i)^haproxy AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1394913254, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^rsyslogd AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))))";
-
-        assertEquals(expXml, ctx.getArchiveQuery());
-        assertEquals(expSpark, ctx.getSparkQuery());
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultFormatInvalidInputTest() { // MM/dd/yyyy:HH:mm:ss 2013-07-15 10:01:50
+        String query = "(index=strawberry OR index=seagull) AND earliest=31/31/2014:00:00:00";
+        RuntimeException sqe = this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {});
+        assertEquals("TimeQualifier conversion error: <31/31/2014:00:00:00> can't be parsed.", sqe.getMessage());
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultEarliestLatestTest3() throws StreamingQueryException, InterruptedException{ // '2011-12-03T10:15:30+01:00'
-        ctx.setDplDefaultEarliest(0L);
-        ctx.setDplDefaultLatest(1678713103L);
-        performStreamingDPLTest("(index=haproxy earliest=2014-03-15T21:54:14+02:00) OR (index=rsyslogd earliest=2014-04-15T08:23:17+02:00))",
-                null,
-                ds -> {
-                    List<String> time = ds.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void ISO8601ZonedFormatTest() { // '2011-12-03T10:15:30+01:00'
+        String query = "(index=strawberry OR index=seagull) AND earliest=2014-03-15T00:00:00+03:00";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
-                    assertEquals(2, time.size());
-                    assertEquals("2014-04-15 08:23:17.0", time.get(0));
-                    assertEquals("2014-03-15 21:54:14.0", time.get(1));
-
-                });
-
-        final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"haproxy\"/><latest operation=\"LE\" value=\"1678713103\"/></AND><earliest operation=\"GE\" value=\"1394913254\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"rsyslogd\"/><latest operation=\"LE\" value=\"1678713103\"/></AND><earliest operation=\"GE\" value=\"1397539397\"/></AND></OR>";
-        final String expSpark = "(((index RLIKE (?i)^haproxy AND (_time <= from_unixtime(1678713103, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1394913254, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^rsyslogd AND (_time <= from_unixtime(1678713103, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1397539397, yyyy-MM-dd HH:mm:ss))))";
-
-        assertEquals(expXml, ctx.getArchiveQuery());
-        assertEquals(expSpark, ctx.getSparkQuery());
+            assertEquals("2014-04-15 08:23:17", time.get(0));
+            assertEquals("2014-03-15 21:54:14", time.get(1));
+        });
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-   public void defaultEarliestLatestTest4() throws StreamingQueryException, InterruptedException {
-        // set defaults
-        ctx.setDplDefaultEarliest(0L);
-        ctx.setDplDefaultLatest(1678711652L);
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void ISO8601WithoutZoneFormatTest() { // '2011-12-03T10:15:30+01:00'
+        String query = "(index=strawberry OR index=seagull) AND earliest=2014-03-15T00:00:00";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
-        // query, assertions
-        performStreamingDPLTest("(earliest=1900-01-01T00:00:00Z latest=1960-01-01T00:00:00Z) OR ((index=rsyslogd earliest=1970-01-01T00:00:00Z latest=2100-01-01T00:00:00Z)) OR index=haproxy earliest=1950-01-01T00:00:00Z",
-                null,
-                ds -> {
-                    //empty
-                });
+            assertEquals("2014-04-15 08:23:17", time.get(0));
+            assertEquals("2014-03-15 21:54:14", time.get(1));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void OverflowTest( ) {
+        String query = "index=strawberry latest=-3644444444444444d";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            assertTrue(time.isEmpty());
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void OverflowTest2( ) {
+        String query = "index=strawberry earliest=-1000y@y latest=+3644444444444444d";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            String maxTime = res.agg(functions.max("_time")).first().getString(0);
+            String minTime = res.agg(functions.min("_time")).first().getString(0);
+
+            assertEquals("2014-03-15 21:54:14", maxTime);
+            assertEquals("2013-07-15 10:01:50", minTime);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void TimeformatTest1( ) {
+        String query = "index=strawberry timeformat=%s earliest=0";
+        this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
+            // epoch test data contains values from 1970-01-01 till 2050-03-15
+            String maxTime = res.agg(functions.max("_time")).first().getString(0);
+            String minTime = res.agg(functions.min("_time")).first().getString(0);
+
+            assertEquals("2050-03-15 21:54:14", maxTime);
+            assertEquals("1970-01-01 00:00:00", minTime);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void TimeformatTest2( ) {
+        String query = "index=strawberry timeformat=\"%Y-%m-%d-%H-%M-%S\" earliest=2030-01-01-00-00-00 latest=2040-01-01-00-00-00";
+        this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
+            // epoch test data contains values from 1970-01-01 till 2050-03-15
+            String maxTime = res.agg(functions.max("_time")).first().getString(0);
+            String minTime = res.agg(functions.min("_time")).first().getString(0);
+
+            assertEquals("2030-01-14 00:56:08", maxTime);
+            assertEquals("2030-01-14 00:56:08", minTime);
+        });
+    }
+
+    @Test
+    public void RelativeTimestampSecondsTest() {
+        // Initial values
+        // Various possible unit strings
+        final List<String> units = Arrays.asList("s", "sec", "secs", "second", "seconds");
+
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        final Instant i = ts.toInstant();
+
+        // Amount to add
+        final int amount = 100;
+        // Expected result
+        final long expected = i.plus(amount, ChronoUnit.SECONDS).getEpochSecond();
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        units.forEach(unit -> {
+            String relativeTimestamp = "+" + amount + unit; //+100sec etc.
+            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        });
+    }
+
+    @Test
+    public void RelativeTimestampMinutesTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        // Various possible unit strings
+        final List<String> units = Arrays.asList("m", "min", "minute", "minutes");
+        final Instant i = ts.toInstant();
+
+        // Amount to add
+        final int amount = 100;
+        // Expected result
+        final long expected = i.plus(amount, ChronoUnit.MINUTES).getEpochSecond();
+
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        units.forEach(unit -> {
+            String relativeTimestamp = "+" + amount + unit; //+100min etc.
+            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        });
+    }
+
+    @Test
+    public void RelativeTimestampHoursTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        // Various possible unit strings
+        final List<String> units = Arrays.asList("h", "hr", "hrs", "hour", "hours");
+        final Instant i = ts.toInstant();
+
+        // Amount to add
+        final int amount = 100;
+        // Expected result
+        final long expected = i.plus(amount, ChronoUnit.HOURS).getEpochSecond();
+
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        units.forEach(unit -> {
+            String relativeTimestamp = "+" + amount + unit; //+100hour etc.
+            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        });
+    }
+
+    @Test
+    public void RelativeTimestampDaysTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        // Various possible unit strings
+        final List<String> units = Arrays.asList("d", "day", "days");
+        final Instant i = ts.toInstant();
+
+        // Amount to add
+        final int amount = 100;
+        // Expected result
+        final long expected = i.plus(amount, ChronoUnit.DAYS).getEpochSecond();
+
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        units.forEach(unit -> {
+            String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        });
+    }
+
+    @Test
+    public void RelativeTimestampWeeksTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        // Various possible unit strings
+        final List<String> units = Arrays.asList("w", "week", "weeks");
+        final LocalDateTime now = ts.toLocalDateTime();
+
+        // Amount to add
+        final int amount = 100;
+        // Expected result
+        final long expected = now.plusWeeks(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        units.forEach(unit -> {
+            String relativeTimestamp = "+" + amount + unit; //+100min etc.
+            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        });
+    }
+
+    @Test
+    public void RelativeTimestampMonthsTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        // Various possible unit strings
+        final List<String> units = Arrays.asList("mon", "month", "months");
+        final LocalDateTime now = ts.toLocalDateTime();
+
+        // Amount to add
+        final int amount = 100;
+        // Expected result
+        final long expected = now.plusMonths(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        units.forEach(unit -> {
+            String relativeTimestamp = "+" + amount + unit; //+100min etc.
+            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        });
+    }
+
+    @Test
+    public void RelativeTimestampYearsTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        // Various possible unit strings
+        final List<String> units = Arrays.asList("y", "yr", "yrs", "year", "years");
+        final LocalDateTime now = ts.toLocalDateTime();
+
+        // Amount to add
+        final long amount = 100;
+        // Expected result
+        final long expected = now.plusYears(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        units.forEach(unit -> {
+            String relativeTimestamp = "+" + amount + unit; //+100min etc.
+            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        });
+    }
+
+    @Test
+    public void RelativeTimestampOver9999YearTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        final String relativeTimestamp = "+10000y";
+
+        // Expected result
+        final long expected = Timestamp.valueOf("9999-10-10 15:15:30.00").toInstant().getEpochSecond();
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+    }
+
+    @Test
+    public void RelativeTimestampLessThan1000YearTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+        final String relativeTimestamp = "-1100y";
+        final LocalDateTime now = ts.toLocalDateTime();
+
+        // Expected result
+        final long expected = now.minusYears(1010).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+    }
+
+    @Test
+    public void RelativeTimestampInvalidUnitTest() {
+        // Initial values
+        final String relativeTimestamp = "xyz";
+
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        assertThrows(RuntimeException.class, () -> {
+            rtParser.parse(relativeTimestamp);
+        }, "Relative timestamp contained an invalid time unit");
+    }
+
+    @Test
+    public void RelativeTimestampOverflowPositiveTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+
+        // Amount to add
+        final long v = Long.MAX_VALUE;
+        final long expected = Instant.ofEpochMilli(v).atZone(ZoneId.systemDefault()).withYear(9999).toInstant().getEpochSecond();
+
+        // positive overflow epoch should be long max value
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        long result = rtParser.parse("+" + v + "h").calculate(ts);
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void RelativeTimestampOverflowNegativeTest() {
+        // Initial values
+        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
+
+        // Amount to add
+        final long v = Long.MIN_VALUE;
+
+        // negative overflow epoch should be epoch=0
+        RelativeTimeParser rtParser = new RelativeTimeParser();
+        long result = rtParser.parse(v + "h").calculate(ts);
+        assertEquals(0, result);
+    }
+
+    @Test
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest1( ) { // '2011-12-03T10:15:30+01:00'
+        String query = "(index=strawberry OR index=seagull)";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(-1L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+
+        });
+
+        final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND></OR>";
+        final String expSpark = "(((index RLIKE (?i)^strawberry AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^seagull AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))))";
+
+        assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+    }
+
+    @Test
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest2() { // '2011-12-03T10:15:30+01:00'
+        String query = "(index=strawberry earliest=2014-03-15T21:54:14+02:00) OR index=seagull)";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(-1L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+
+        });
+
+        final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1394913254\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND></OR>";
+        final String expSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1394913254, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^seagull AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))))";
+
+        assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+    }
+
+    @Test
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest3() { // '2011-12-03T10:15:30+01:00'
+        String query = "(index=strawberry earliest=2014-03-15T21:54:14+02:00) OR (index=seagull earliest=2014-04-15T08:23:17+02:00))";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1678713103L);
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+
+            assertEquals(2, time.size());
+            assertEquals("2014-04-15 08:23:17", time.get(0));
+            assertEquals("2014-03-15 21:54:14", time.get(1));
+        });
+
+        final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1678713103\"/></AND><earliest operation=\"GE\" value=\"1394913254\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><latest operation=\"LE\" value=\"1678713103\"/></AND><earliest operation=\"GE\" value=\"1397539397\"/></AND></OR>";
+        final String expSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1678713103, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1394913254, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^seagull AND (_time <= from_unixtime(1678713103, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1397539397, yyyy-MM-dd HH:mm:ss))))";
+
+        assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+    }
+
+    @Test
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest4( ) {
+        String query = "(earliest=1900-01-01T00:00:00Z latest=1960-01-01T00:00:00Z) OR ((index=seagull earliest=1970-01-01T00:00:00Z latest=2100-01-01T00:00:00Z)) OR index=strawberry earliest=1950-01-01T00:00:00Z";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1678711652L);
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+
+        });
 
         final String expectedXml = "<AND>" +
                 "<OR>" +
-                    "<OR>" +
-                     "<AND>" +
-                         "<earliest operation=\"GE\" value=\"-2208994789\"/>" +
-                         "<latest operation=\"LE\" value=\"-315626400\"/>" +
-                     "</AND>" +
-                    "<AND>" +
-                    "<AND>" +
-                        "<comparisonstatement field=\"index\" operation=\"=\" value=\"rsyslogd\"/>" +
-                         "<earliest operation=\"GE\" value=\"-7200\"/>" +
-                     "</AND>" +
-                     "<latest operation=\"LE\" value=\"4102437600\"/>" +
-                    "</AND>" +
-                    "</OR>" +
-                    "<AND>" +
-                     "<comparisonstatement field=\"index\" operation=\"=\" value=\"haproxy\"/>" +
-                     "<latest operation=\"LE\" value=\"1678711652\"/>" +
-                    "</AND>" +
+                "<OR>" +
+                "<AND>" +
+                "<earliest operation=\"GE\" value=\"-2208994789\"/>" +
+                "<latest operation=\"LE\" value=\"-315626400\"/>" +
+                "</AND>" +
+                "<AND>" +
+                "<AND>" +
+                "<comparisonstatement field=\"index\" operation=\"=\" value=\"seagull\"/>" +
+                "<earliest operation=\"GE\" value=\"-7200\"/>" +
+                "</AND>" +
+                "<latest operation=\"LE\" value=\"4102437600\"/>" +
+                "</AND>" +
+                "</OR>" +
+                "<AND>" +
+                "<comparisonstatement field=\"index\" operation=\"=\" value=\"strawberry\"/>" +
+                "<latest operation=\"LE\" value=\"1678711652\"/>" +
+                "</AND>" +
                 "</OR>" +
                 "<earliest operation=\"GE\" value=\"-631159200\"/>" +
                 "</AND>";
         final String expectedSpark = "(((((_time >= from_unixtime(-2208994789, yyyy-MM-dd HH:mm:ss)) AND (_time <= from_unixtime(-315626400, yyyy-MM-dd HH:mm:ss)))" +
-                " OR ((index RLIKE ^rsyslogd$ AND (_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(4102437600, yyyy-MM-dd HH:mm:ss))))" +
-                " OR (index RLIKE ^haproxy$ AND (_time <= from_unixtime(1678711652, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(-631159200, yyyy-MM-dd HH:mm:ss)))";
+                " OR ((index RLIKE ^seagull$ AND (_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(4102437600, yyyy-MM-dd HH:mm:ss))))" +
+                " OR (index RLIKE ^strawberry$ AND (_time <= from_unixtime(1678711652, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(-631159200, yyyy-MM-dd HH:mm:ss)))";
 
-        assertEquals(expectedSpark, this.visitor.getCatalystContext().getSparkQuery());
-        assertEquals(expectedXml, this.visitor.getCatalystContext().getArchiveQuery());
+        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultEarliestLatestTest5() throws StreamingQueryException, InterruptedException {
-        // set defaults
-        ctx.setDplDefaultEarliest(0L);
-        ctx.setDplDefaultLatest(1L);
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest5( ) {
+        String query = "index=strawberry OR index=seagull earliest=2020-01-01T00:00:00Z";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
 
-        // query, assertions
-        performStreamingDPLTest("index=haproxy OR index=rsyslogd earliest=2020-01-01T00:00:00Z",
-                null,
-                ds -> {
-                    //empty
-                });
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
 
-
-        final String expectedXml = "<AND><OR><AND><index operation=\"EQUALS\" value=\"haproxy\"/><latest operation=\"LE\" value=\"1\"/></AND><AND><index operation=\"EQUALS\" value=\"rsyslogd\"/><latest operation=\"LE\" value=\"1\"/></AND></OR><earliest operation=\"GE\" value=\"1577829600\"/></AND>";
-        final String expectedSpark = "(((index RLIKE (?i)^haproxy AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) OR (index RLIKE (?i)^rsyslogd AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(1577829600, yyyy-MM-dd HH:mm:ss)))";
-
-        assertEquals(expectedSpark, this.visitor.getCatalystContext().getSparkQuery());
-        assertEquals(expectedXml, this.visitor.getCatalystContext().getArchiveQuery());
-    }
-
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultEarliestLatestTest6() throws StreamingQueryException, InterruptedException {
-        // set defaults
-        ctx.setDplDefaultEarliest(0L);
-        ctx.setDplDefaultLatest(1L);
-
-        // query, assertions
-        performStreamingDPLTest("index=rsyslogd earliest=1970-01-01T00:00:00.000+02:00 OR " +
-                        "index=haproxy earliest=2010-12-31T00:00:00.000+02:00",
-                null,
-                ds -> {
-                    //empty
-                });
-
-       final String expectedXml = "<AND><AND><index operation=\"EQUALS\" value=\"rsyslogd\"/><latest operation=\"LE\" value=\"1\"/></AND><AND><OR><earliest operation=\"GE\" value=\"-7200\"/><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"haproxy\"/><latest operation=\"LE\" value=\"1\"/></AND></OR><earliest operation=\"GE\" value=\"1293746400\"/></AND></AND>";
-       final String expectedSpark = "((index RLIKE (?i)^rsyslogd AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (((_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss)) OR (index RLIKE ^haproxy$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(1293746400, yyyy-MM-dd HH:mm:ss))))";
-
-        assertEquals(expectedSpark, this.visitor.getCatalystContext().getSparkQuery());
-        assertEquals(expectedXml, this.visitor.getCatalystContext().getArchiveQuery());
-    }
-
-
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultEarliestLatestTest7() throws StreamingQueryException, InterruptedException {
-        // set defaults
-        ctx.setDplDefaultEarliest(0L);
-        ctx.setDplDefaultLatest(1L);
-
-        // query, assertions
-        performStreamingDPLTest("(index=haproxy earliest=2019-01-01T00:00:00Z) AND (index=rsyslogd) earliest=2009-01-01T00:00:00Z",
-                null,
-                ds -> {
-                    //empty
-                });
-
-        final String expectedXml = "<AND><AND><AND><index operation=\"EQUALS\" value=\"haproxy\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1546293600\"/></AND><AND><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"rsyslogd\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1230760800\"/></AND></AND>";
-        final String expectedSpark = "(((index RLIKE (?i)^haproxy AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1546293600, yyyy-MM-dd HH:mm:ss))) AND ((index RLIKE ^rsyslogd$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1230760800, yyyy-MM-dd HH:mm:ss))))";
-
-        assertEquals(expectedSpark, this.visitor.getCatalystContext().getSparkQuery());
-        assertEquals(expectedXml, this.visitor.getCatalystContext().getArchiveQuery());
-    }
-
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void defaultEarliestLatestTest8() throws StreamingQueryException, InterruptedException {
-        // set defaults
-        ctx.setDplDefaultEarliest(0L);
-        ctx.setDplDefaultLatest(1L);
-
-        // query, assertions
-        performStreamingDPLTest("(index=haproxy earliest=2019-01-01T00:00:00Z) AND (index=rsyslogd) earliest=2009-01-01T00:00:00Z",
-                null,
-                ds -> {
-                    //empty
-                });
-
-        final String expectedXml = "<AND><AND><AND><index operation=\"EQUALS\" value=\"haproxy\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1546293600\"/></AND><AND><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"rsyslogd\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1230760800\"/></AND></AND>";
-        final String expectedSpark = "(((index RLIKE (?i)^haproxy AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1546293600, yyyy-MM-dd HH:mm:ss))) AND ((index RLIKE ^rsyslogd$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1230760800, yyyy-MM-dd HH:mm:ss))))";
-
-        assertEquals(expectedSpark, this.visitor.getCatalystContext().getSparkQuery());
-        assertEquals(expectedXml, this.visitor.getCatalystContext().getArchiveQuery());
-    }
-
-
-
-    // ----------------------------------------
-    // Helper methods
-    // ----------------------------------------
-
-
-    private void performStreamingDPLTest(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer) throws StreamingQueryException, InterruptedException {
-
-        // the names of the queries for source and result
-        final String nameOfSourceStream = "pth10_earliestlatest_test_src";
-
-        // start streams for rowDataset (source)
-        StreamingQuery sourceStreamingQuery = startStream(rowDataset, "append", nameOfSourceStream);
-        sourceStreamingQuery.processAllAvailable();
-
-
-        // listener for source stream, this allows stopping the stream when all processing is done
-        // without the use of thread.sleep()
-        sparkSession.streams().addListener(new StreamingQueryListener() {
-            int noProgress = 0;
-            @Override
-            public void onQueryStarted(QueryStartedEvent queryStarted) {
-                LOGGER.info("Query started: " + queryStarted.id());
-            }
-            @Override
-            public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-                LOGGER.info("Query terminated: " + queryTerminated.id());
-            }
-            @Override
-            public void onQueryProgress(QueryProgressEvent queryProgress) {
-                Double progress = queryProgress.progress().processedRowsPerSecond();
-                String nameOfStream = queryProgress.progress().name();
-
-                LOGGER.info("Processed rows/sec: " + progress);
-                // Check if progress has stopped (progress becomes NaN at the end)
-                // and end the query if that is the case
-                if (Double.isNaN(progress) && nameOfStream == nameOfSourceStream) {
-                    noProgress++;
-                    if (noProgress > 1) {
-                        LOGGER.info("No progress on source stream");
-
-                        sourceStreamingQuery.processAllAvailable();
-                        sourceStreamingQuery.stop();
-                        sparkSession.streams().removeListener(this);
-                    }
-
-                }
-
-            }
-        }); // end listener
-
-
-        // Keep adding data to stream until enough runs are done
-        long run = 0L, counter = 0L, id = 0L;
-        long maxCounter = 10L, maxRuns = 1L; /* You can use these two variables to customize the amount of data */
-        long timeEpoch = 1_373_882_510L;
-        final long monthEpoch = 2_629_743L;
-        boolean evenRun = false;
-        while (sourceStreamingQuery.isActive()) {
-
-            if (run < maxRuns) {
-                rowMemoryStream.addData(
-                        makeRows(
-                                Timestamp.valueOf(LocalDateTime.ofInstant(Instant.ofEpochSecond(timeEpoch), ZoneOffset.UTC)),    // _time
-                                ++id, 					                            // id
-                                "data data", 			                            // _raw
-                                (evenRun ? "rsyslogd" : "haproxy"), 		        // index
-                                "stream" + (counter % 2 == 0 ? 1 : 2), 				// sourcetype
-                                "webserver.example.com", 		                            // host
-                                counter + "." + counter + "." + counter + "." + counter,	// source
-                                String.valueOf(run), 	                            // partition
-                                ++counter, 				                            // offset
-                                1 //500 				                            // make n amount of rows
-                        )
-                );
-                timeEpoch += monthEpoch; // add 1 month
-                evenRun = !evenRun;
-            }
-
-            // Run $run times, each with $counter makeRows()
-            if (counter == maxCounter) {
-                run++;
-                counter = 0;
-            }
-
-        }
-
-        sourceStreamingQuery.awaitTermination(); // wait for query to be over
-
-        // Got streamed data
-        boolean truncateFields = false;
-        int numRowsToPreview = 25;
-
-        // Print previews of dataframes
-        LOGGER.info(" -- Source data -- ");
-        Dataset<Row> df = sqlContext.sql("SELECT * FROM " + nameOfSourceStream);
-        df.show(numRowsToPreview, truncateFields);
-
-        // Start performing the dpl query
-        performDPLQuery(query, expectedColumns, assertConsumer);
-
-    }
-
-    // Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-    private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-        return rowDataset
-                .writeStream()
-                .outputMode(outputMode)
-                .format("memory")
-                .queryName(queryName)
-                .start();
-    }
-
-    // Performs given DPL query and returns result dataset<row>
-    private Dataset<Row> performDPLQuery(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer) {
-        LOGGER.info("-> Got DPL query: " + query);
-
-        ctx.setEarliest("-1Y");
-
-        // Visit the parse tree
-        visitor = new DPLParserCatalystVisitor(ctx);
-        CharStream inputStream = CharStreams.fromString(query);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-
-        System.out.println("Parse tree for this query --- " + query);
-        System.out.println(TreeUtils.toPrettyTree(tree, Arrays.asList(parser.getRuleNames())));
-
-        // set path for join cmd
-        visitor.setHdfsPath("/tmp/pth_10/" + UUID.randomUUID());
-
-        // Set consumer for testing
-        visitor.setConsumer(ds -> {
-            LOGGER.info("Batch handler consumer called for ds with schema: " + ds.schema());
-            ds.show(50, false);
-            if (expectedColumns != null) assertEquals(expectedColumns, Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-            if (assertConsumer != null) assertConsumer.accept(ds); // more assertions, if any
         });
 
-        assertTrue(visitor.getConsumer() != null, "Consumer was not properly registered to visitor !");
-        CatalystNode n = (CatalystNode) visitor.visit(tree);
-        DataStreamWriter<Row> dsw = n.getDataStreamWriter();
+        final String expectedXml = "<AND><OR><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND></OR><earliest operation=\"GE\" value=\"1577829600\"/></AND>";
+        final String expectedSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) OR (index RLIKE (?i)^seagull AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(1577829600, yyyy-MM-dd HH:mm:ss)))";
 
-        assertTrue(dsw != null || !n.getDataset().isStreaming(), "DataStreamWriter was not returned from visitor !");
-        if (dsw != null) {
-            // process forEachBatch
-            StreamingQuery sq = dsw.start();
-            sq.processAllAvailable();
-        }
-
-        return n.getDataset();
+        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
-    // Make rows of given amount
-    private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host, String source, String partition, Long offset, long amount) {
-        ArrayList<Row> rowArrayList = new ArrayList<>();
-        Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
+    @Test
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest6( ) {
+        String query = "index=seagull earliest=1970-01-01T00:00:00.000+02:00 OR " +
+                "index=strawberry earliest=2010-12-31T00:00:00.000+02:00";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
 
-        while (amount > 0) {
-            rowArrayList.add(row);
-            amount--;
-        }
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
 
-        Seq<Row> rowSeq = JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
-        return rowSeq;
+        });
+
+        final String expectedXml = "<AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND><AND><OR><earliest operation=\"GE\" value=\"-7200\"/><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND></OR><earliest operation=\"GE\" value=\"1293746400\"/></AND></AND>";
+        final String expectedSpark = "((index RLIKE (?i)^seagull AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (((_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss)) OR (index RLIKE ^strawberry$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(1293746400, yyyy-MM-dd HH:mm:ss))))";
+
+        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
-    // generate number between a - b
-    private int rng(int a, int b) {
-        return new Random().nextInt(b-a) + a;
+
+    @Test
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest7( ) {
+        String query = "(index=strawberry earliest=2019-01-01T00:00:00Z) AND (index=seagull) earliest=2009-01-01T00:00:00Z";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            final String expectedXml = "<AND><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1546293600\"/></AND><AND><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1230760800\"/></AND></AND>";
+            final String expectedSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1546293600, yyyy-MM-dd HH:mm:ss))) AND ((index RLIKE ^seagull$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1230760800, yyyy-MM-dd HH:mm:ss))))";
+
+            assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+            assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        });
     }
 
+    @Test
+    @Disabled(value="Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void defaultEarliestLatestTest8( ) {
+        String query = "(index=strawberry earliest=2019-01-01T00:00:00Z) AND (index=seagull) earliest=2009-01-01T00:00:00Z";
+        this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
+        this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            final String expectedXml = "<AND><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1546293600\"/></AND><AND><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1230760800\"/></AND></AND>";
+            final String expectedSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1546293600, yyyy-MM-dd HH:mm:ss))) AND ((index RLIKE ^seagull$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1230760800, yyyy-MM-dd HH:mm:ss))))";
+
+            assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+            assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void searchIssue383Test( ) {
+        // test issue 383
+        // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
+        String query = " index=abc earliest=\"01/01/2022:00:00:00\" latest=\"01/02/2022:00:00:00\" \"XYZ=\\\"yes asd\\\"\" ";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND (((_time >= from_unixtime(1640988000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1641074400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
+            assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void searchIssue383_2Test( ) {
+        // test issue 383
+        // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
+        String query = " index=abc \"XYZ=\\\"yes asd\\\"\" ";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+
+        });
+
+        final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*))";
+        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+    }
+
+    @Test
+    @Disabled(value="Broken on pth-03")
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void searchIssue384Test( ) {
+        // test issue 384
+        // FIXME: Parser error: line 1:35 token recognition error at: '"[17/Aug/2023:08:03:55.441546368 +0300] conn='
+        // |makeresultscount=1|eval_raw=917818
+        String query = " | makeresults count=1 | eval _raw=\"[10/Jan/2020:05:03:55.441546368 +0300] xyz=654321 ab=2 DEF pid=\\\"1.23.456.7.899999.1.2.34\\\" key=\\\"random-words-here\\\"\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            Row r = res.select("_raw").first();
+            String s = r.getAs(0).toString();
+
+            assertEquals("[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"", s);
+        });
+    }
+
+    @Disabled(value="Broken on pth-03") /* FIXME: Parser can't handle = symbol inside quotes */
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void searchIssue384_2Test( ) {
+        // test issue 384
+        // works with escaping '=' symbols
+        String query = " | makeresults count=1 | eval _raw=\"[10/Jan/2020:05:03:55.441546368 +0300] xyz\\=654321 ab\\=2 DEF pid\\=\\\"1.23.456.7.899999.1.2.34\\\" key\\=\\\"random-words-here\\\"\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            Row r = res.select("_raw").first();
+            String s = r.getAs(0).toString();
+
+            assertEquals("[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"", s);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void searchIssue382Test( ) {
+        // test issue 382
+        // case: index=* earliest=x latest=y abcdef and index=*abc* earliest=x latest=y abcdef match differently (data/no data)
+        this.streamingTestUtil.performDPLTest("index=*g*", this.testFile,res -> {
+            if (res.count() == 0){
+                fail("(index=*g*) Expected result rows, instead got 0");
+            }
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void searchIssue382Test2( ) {
+        // test issue 382
+        // index=* case
+        this.streamingTestUtil.performDPLTest("index=*", this.testFile, res -> {
+            if (res.count() == 0) {
+                fail("(index=*) Expected result rows, instead got 0");
+            }
+        });
+    }
+
+    // Util function: Set _time column in data to be the same as if $date is current time
+    private Function<Dataset<Row>, Dataset<Row>> setTimeDifferenceToSameAsDate(final String date) {
+        return rowDataset -> {
+            // Calculate the time difference between time in data and intended time.
+            // Use that difference to update the test data, so the tests will function the same regardless
+            // of the current time.
+
+            // Current time as unix epoch
+            Column currentTimeAsUnixEpoch = functions.unix_timestamp(functions.current_timestamp());
+            // Intended time as unix epoch
+            Column defaultTimeAsUnixEpoch = functions.unix_timestamp(functions.lit(date));
+            // Time in data as unix epoch
+            Column timeInDataAsUnixEpoch = functions.unix_timestamp(functions.col("_time"));
+
+            // Calculate new _time column using the time difference between intended time and old _time column
+            Column defaultTimeMinusTimeInData = defaultTimeAsUnixEpoch.minus(timeInDataAsUnixEpoch);
+            Column currentTimeMinusTimeDifference = currentTimeAsUnixEpoch.minus(defaultTimeMinusTimeInData);
+            Column newTimeColumn = currentTimeMinusTimeDifference.cast(DataTypes.TimestampType);
+
+            return rowDataset.withColumn("_time", newTimeColumn);
+        };
+    }
 }

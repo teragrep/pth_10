@@ -1,0 +1,6 @@
+_time,_raw,offset
+2023-01-01T00:00:00z,stuff,1
+2023-01-02T00:00:00z,other stuff,2
+2023-01-03T00:00:00z,more other stuff,3
+2023-01-04T00:00:00z,even more stuff,4
+2023-01-05T00:00:00z,more otherer stuff,5

@@ -50,12 +50,23 @@ import org.apache.spark.sql.types.StructType;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.Map;
 
 /**
  * Object used to save metadata regarding the HDFS saved dataset.
  * Contains the schema, save timestamp and retention timespan.
  */
 public class HdfsSaveMetadata implements Serializable {
+    // stub object?
+    private final boolean isStub;
+    public HdfsSaveMetadata() {
+        this.isStub = false;
+    }
+
+    public HdfsSaveMetadata(boolean isStub) {
+        this.isStub = isStub;
+    }
+    private static final long serialVersionUID = 1L;
 
     // schema that is used when saving to hdfs
     private StructType schema;
@@ -73,6 +84,10 @@ public class HdfsSaveMetadata implements Serializable {
     private boolean wasStreamingDataset;
     private String applicationId;
     private String paragraphId;
+
+    // workaround for limited avro name rules, only alphanumeric and underscore '_' are allowed.
+    // cannot begin with a number, refer to java naming conventions
+    private Map<String, String> mapOfAvroColumnNames;
 
     public void setRetentionSpan(String retentionSpan) {
         this.retentionSpan = retentionSpan;
@@ -102,6 +117,10 @@ public class HdfsSaveMetadata implements Serializable {
         this.paragraphId = paragraphId;
     }
 
+    public void setMapOfAvroColumnNames(Map<String, String> mapOfAvroColumnNames) {
+        this.mapOfAvroColumnNames = mapOfAvroColumnNames;
+    }
+
     public String getRetentionSpan() {
         return retentionSpan;
     }
@@ -128,5 +147,13 @@ public class HdfsSaveMetadata implements Serializable {
 
     public String getParagraphId() {
         return paragraphId;
+    }
+
+    public Map<String, String> getMapOfAvroColumnNames() {
+        return mapOfAvroColumnNames;
+    }
+
+    public boolean isStub() {
+        return isStub;
     }
 }

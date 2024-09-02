@@ -54,7 +54,7 @@ import java.io.Serializable;
 
 /**
  * Takes in an multivalue field and returns a multivalue field without duplicates.<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Mvdedup implements UDF1<WrappedArray<String>, scala.collection.immutable.List<String>>, Serializable {

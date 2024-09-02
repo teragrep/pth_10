@@ -49,17 +49,17 @@ package com.teragrep.pth10.steps.where;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class WhereStep extends AbstractWhereStep{
-    public WhereStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class WhereStep extends AbstractWhereStep{
+    public WhereStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null || this.whereColumn == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null || this.whereColumn == null) {
             return null;
         }
 
-        return this.dataset.where(this.whereColumn);
+        return dataset.where(this.whereColumn);
     }
 }

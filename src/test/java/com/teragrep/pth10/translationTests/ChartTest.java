@@ -46,20 +46,17 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.ChartTransformation;
 import com.teragrep.pth10.steps.chart.ChartStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -67,7 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ChartTest {
     @Test
-    void testChartTranslation() throws Exception {
+    void testChartTranslation() {
         String query = "| chart count(_raw) by _time";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -77,25 +74,17 @@ public class ChartTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ChartTransformation ct = new ChartTransformation(ctx);
+        ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
+        ChartStep cs = ct.chartStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ChartTransformation ct = new ChartTransformation(ctx, stack, new ArrayList<>());
-            ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(0).getChild(1));
-            ChartStep cs = ct.chartStep;
+        assertEquals("[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
+        assertEquals("[_time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
 
-            assertEquals("[countaggregator() AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
-            assertEquals("[_time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
     @Test
-    void testChartTranslation_multiGroupBy() throws Exception {
+    void testChartTranslation_multiGroupBy() {
         String query = "| chart count(_raw) by _time, fieldTwo";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -105,25 +94,16 @@ public class ChartTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ChartTransformation ct = new ChartTransformation(ctx);
+        ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
+        ChartStep cs = ct.chartStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ChartTransformation ct = new ChartTransformation(ctx, stack, new ArrayList<>());
-            ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(0).getChild(1));
-            ChartStep cs = ct.chartStep;
-
-            assertEquals("[countaggregator() AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
-            assertEquals("[_time, fieldTwo]", Arrays.toString(cs.getListOfGroupBy().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
+        assertEquals("[_time, fieldTwo]", Arrays.toString(cs.getListOfGroupBy().toArray()));
     }
 
     @Test
-    void testChartTranslation_multiGroupByNoComma() throws Exception {
+    void testChartTranslation_multiGroupByNoComma() {
         String query = "| chart count(_raw) by _time fieldTwo";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -133,21 +113,13 @@ public class ChartTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ChartTransformation ct = new ChartTransformation(ctx);
+        ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
+        ChartStep cs = ct.chartStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ChartTransformation ct = new ChartTransformation(ctx, stack, new ArrayList<>());
-            ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(0).getChild(1));
-            ChartStep cs = ct.chartStep;
+        assertEquals("[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
+        assertEquals("[fieldTwo, _time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
 
-            assertEquals("[countaggregator() AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
-            assertEquals("[fieldTwo, _time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 }
 

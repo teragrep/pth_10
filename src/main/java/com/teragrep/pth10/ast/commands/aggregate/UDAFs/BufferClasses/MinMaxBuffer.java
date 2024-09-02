@@ -49,9 +49,6 @@ package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * The buffer class that is used for the MinMaxAggregator.
@@ -60,44 +57,50 @@ import java.util.List;
 public class MinMaxBuffer implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    protected List<Double> numericList = null;
-    protected List<String> stringList = null;
+    protected Double minNumber = null;
+    protected Double maxNumber = null;
+    protected String minString = null;
+    protected String maxString = null;
+
+    public Double getMinNumber() {
+        return minNumber;
+    }
+
+    public void setMinNumber(Double minNumber) {
+        this.minNumber = minNumber;
+    }
+
+    public Double getMaxNumber() {
+        return maxNumber;
+    }
+
+    public void setMaxNumber(Double maxNumber) {
+        this.maxNumber = maxNumber;
+    }
+
+    public String getMinString() {
+        return minString;
+    }
+
+    public void setMinString(String minString) {
+        this.minString = minString;
+    }
+
+    public String getMaxString() {
+        return maxString;
+    }
+
+    public void setMaxString(String maxString) {
+        this.maxString = maxString;
+    }
 
     // default IntegerType, set to DoubleType if any input is float, can't reset back to IntegerType
     private String outputFormatType = DataTypes.IntegerType.typeName();
 
     /**
-     * Initializes the minMaxBuffer with arraylists
+     * Initializes the minMaxBuffer
      */
     public MinMaxBuffer() {
-        this.numericList = new ArrayList<>();
-        this.stringList = new ArrayList<>();
-    }
-
-    /**
-     * Initializes the minMaxBuffer with pre-existing lists
-     * @param numericList list for numeric values
-     * @param stringList list for non-numeric values
-     */
-    public MinMaxBuffer(List<Double> numericList, List<String> stringList) {
-        this.numericList = numericList;
-        this.stringList = stringList;
-    }
-
-    public void setNumericList(List<Double> numericList) {
-        this.numericList = numericList;
-    }
-
-    public void setStringList(List<String> stringList) {
-        this.stringList = stringList;
-    }
-
-    public List<Double> getNumericList() {
-        return numericList;
-    }
-
-    public List<String> getStringList() {
-        return stringList;
     }
 
     /**
@@ -123,70 +126,33 @@ public class MinMaxBuffer implements Serializable {
     }
 
     /**
-     * Returns the minimum value of the numbers, if numbers are present.
-     * If only strings are present, use lexicographical sorting.
-     * If both are non-existing, return null
-     * @return minimum value as String
+     * Checks given number against current max and min values, and sets it as them if it is
+     * the new minimum and/or maximum
+     * @param value to add
      */
-    public String min() {
-        if (this.numericList.size() > 0) {
-            if (this.outputFormatType.equals(DataTypes.DoubleType.typeName())) {
-                return Collections.min(this.numericList).toString();
-            }
-            else {
-                return String.valueOf(Collections.min(this.numericList).intValue());
-            }
+    public void addNumber(double value) {
+        if (this.maxNumber == null || this.maxNumber <= value) {
+            this.maxNumber = value;
         }
-        else if (this.stringList.size() > 0) {
-            return Collections.min(this.stringList);
-        }
-        else {
-            // both empty
-            return null;
-        }
-    }
 
-    /**
-     * Returns the maximum value of the numbers, if numbers are present.
-     * If only strings are present, use lexicographical sorting.
-     * If both are non-existing, return null
-     * @return maximum value as String
-     */
-    public String max() {
-        if (this.numericList.size() > 0) {
-            if (this.outputFormatType.equals(DataTypes.DoubleType.typeName())) {
-                return Collections.max(this.numericList).toString();
-            }
-            else {
-                return String.valueOf(Collections.max(this.numericList).intValue());
-            }
-        }
-        else if (this.stringList.size() > 0) {
-            return Collections.max(this.stringList);
-        }
-        else {
-            // both empty
-            return null;
+        if (this.minNumber == null || this.minNumber > value) {
+            this.minNumber = value;
         }
 
     }
 
     /**
-     * Returns the range of the numbers (max - min).
-     * String values are not accepted.
-     * @return range of the numeric values
+     * Checks given string against current max and min values, and sets it as them if it is
+     * the new minimum and/or maximum
+     * @param value to add
      */
-    public String range() {
-        if (this.numericList.size() > 0) {
-            if (this.outputFormatType.equals(DataTypes.DoubleType.typeName())) {
-                return String.valueOf(Double.parseDouble(max()) - Double.parseDouble(min()));
-            }
-            else {
-                return String.valueOf(Integer.parseInt(max()) - Integer.parseInt(min()));
-            }
+    public void addString(String value) {
+        if (this.maxString == null || value.compareTo(this.maxString) >= 0) {
+            this.maxString = value;
         }
-        else {
-            return null;
+
+        if (this.minString == null || value.compareTo(this.maxString) < 0) {
+            this.minString = value;
         }
     }
 }

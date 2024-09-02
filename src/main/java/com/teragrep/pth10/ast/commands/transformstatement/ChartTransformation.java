@@ -46,18 +46,17 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
+import com.teragrep.functions.dpf_02.SortByClause;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.aggregate.AggregateFunction;
+import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.chart.ChartStep;
+import com.teragrep.pth10.steps.sort.SortStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.RuleContext;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,37 +70,21 @@ import java.util.stream.Collectors;
  */
 public class ChartTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChartTransformation.class);
-    private final List<String> traceBuffer;
     DPLParserCatalystContext catCtx;
-
-    ProcessingStack processingPipe;
 
     EvalTransformation evalTransformation;
     AggregateFunction aggregateFunction;
-    private boolean aggregatesUsed = false;
     private String aggregateField = null;
-    public ChartStep chartStep = null;
+    public ChartStep chartStep;
 
     /**
      * Initialize the class to use in TransformStatement
      * @param catCtx catalyst context
-     * @param processingPipe processing stack
-     * @param buf tracebuffer, for debugging
      */
-    public ChartTransformation(DPLParserCatalystContext catCtx, ProcessingStack processingPipe, List<String> buf) {
-        this.traceBuffer = buf;
+    public ChartTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
-        this.processingPipe = processingPipe;
-        this.evalTransformation = new EvalTransformation(catCtx, processingPipe, buf);
-        this.aggregateFunction = new AggregateFunction(processingPipe, buf);
-        traceBuffer.add("Init chartTransformation stack:" + processingPipe);
-    }
-    public boolean getAggregatesUsed() {
-        return this.aggregatesUsed;
-    }
-    
-    public void setAggregatesUsed(boolean newValue) {
-    	this.aggregatesUsed = newValue;
+        this.evalTransformation = new EvalTransformation(catCtx);
+        this.aggregateFunction = new AggregateFunction(catCtx);
     }
 
     public String getAggregateField() {return this.aggregateField;}
@@ -118,8 +101,6 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
         Node rv;
 
         rv = visitChartTransformationEmitCatalyst(ctx);
-        traceBuffer.add("visitChartTransformation returns");
-
         return rv;
     }
 
@@ -129,18 +110,9 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
      * @return
      */
     private Node visitChartTransformationEmitCatalyst(DPLParser.ChartTransformationContext ctx) {
-    	Node rv;
-    	String divByInst;
+    	LOGGER.info("ChartTransformation incoming: text=<{}>", ctx.getText());
 
-        Dataset<Row> ds = null;
-        if (!this.processingPipe.isEmpty()) {
-            ds = processingPipe.pop();
-        }
-        this.chartStep = new ChartStep(ds);
-    	
-    	LOGGER.info("::::: ChartTransformation incoming: " + ctx.getText());
-
-    	
+    	ArrayList<Column> listOfExpr = new ArrayList<>();
     	// aggregate function and its field renaming instruction
     	for (DPLParser.T_chart_aggregationInstructionContext c : ctx.t_chart_aggregationInstruction()) {    		
     		// Visit aggregation function
@@ -154,36 +126,33 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
     		}
     		
     		// add to list of expressions
-    		chartStep.addAggregateExpressionOperation(aggCol);
+    		listOfExpr.add(aggCol);
     	}
-    	
+
+        final List<Column> listOfGroupBys = new ArrayList<>();
+        ArrayList<SortByClause> listOfSbc = new ArrayList<>();
     	// groupBy given column
     	if (ctx.t_chart_by_column_rowOptions() != null && !ctx.t_chart_by_column_rowOptions().isEmpty()) {
-            final List<String> listOfGroupBys = new ArrayList<>();
             ctx.t_chart_by_column_rowOptions().forEach(opt -> {
                 if (opt.t_column_Parameter() != null && opt.t_column_Parameter().fieldType() != null) {
-                    listOfGroupBys.add(opt.t_column_Parameter().fieldType().getText());
+                    listOfGroupBys.add(functions.col(opt.t_column_Parameter().fieldType().getText()));
                 }
 
                 if (opt.t_row_Parameter() != null && !opt.t_row_Parameter().fieldType().isEmpty()) {
-                    listOfGroupBys.addAll(opt.t_row_Parameter().fieldType().stream().map(RuleContext::getText).collect(Collectors.toList()));
+                    listOfGroupBys.addAll(opt.t_row_Parameter().fieldType().stream().map(field -> functions.col(field.getText())).collect(Collectors.toList()));
+                    listOfSbc.addAll(opt.t_row_Parameter().fieldType().stream().map(this::createSbc).collect(Collectors.toList()));
                 }
             });
-
-            listOfGroupBys.forEach(gb -> this.chartStep.addGroupByOperation(functions.col(gb)));
     	}
 
-    	this.aggregatesUsed = true;
-    	
+        chartStep = new ChartStep(listOfExpr, listOfGroupBys);
+        SortStep sortStep = new SortStep(catCtx, listOfSbc, this.catCtx.getDplRecallSize(), false);
 
-    	ds = chartStep.get();
-    	
-    	// push to stack, where the actual aggregation will occur
-    	processingPipe.push(ds, processingPipe.getStackMode(),
-                this.aggregatesUsed);
+        List<AbstractStep> steps = new ArrayList<>();
+        steps.add(chartStep);
+        steps.add(sortStep);
 
-    	rv = new CatalystNode(ds);
-    	return rv;
+    	return new StepListNode(steps);
     }
 
     @Override
@@ -191,20 +160,17 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
         Node rv = aggregateFunction.visitAggregateFunction(ctx);
         if(aggregateField == null)
             aggregateField = aggregateFunction.getAggregateField();
-        traceBuffer.add("---AggregateFunc="+ctx.getText()+ " AggregateField="+aggregateField+"\n");
         return rv;
     }
 
     @Override public Node visitT_row_Parameter(DPLParser.T_row_ParameterContext ctx) {
         String target = ctx.getText();
-        traceBuffer.add("-- visitT_row_parameter:" + target);
 
         return new StringNode(new Token(Type.STRING, target));
     }
 
     @Override public Node visitT_column_Parameter(DPLParser.T_column_ParameterContext ctx) {
         String target = ctx.getText();
-        traceBuffer.add("-- visitT_column_parameter:" + target);
         return new StringNode(new Token(Type.STRING, target));
     }
 
@@ -231,18 +197,14 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
                     divInsts.add(f);
                 }
             }
-            traceBuffer.add("field-list:" + f);
         });
 
 
         if (divInsts.size() != 0) {
 
             String divCmd = String.join(",", divInsts);
-            traceBuffer.add("--visitT_chart_divideByInstruction fields=" + divCmd);
             return new StringNode(new Token(Type.STRING, divCmd));
 
-        } else {
-            traceBuffer.add("--visitT_chart_divideByInstruction list=:" + ctxList);
         }
         return null;
     }
@@ -252,8 +214,16 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_chart_fieldRenameInstruction(DPLParser.T_chart_fieldRenameInstructionContext ctx) {
         String field = ctx.getChild(1).getText();
-        traceBuffer.add("fieldRename:" + field);
         return new StringNode(new Token(Type.STRING, field));
 
+    }
+
+    private SortByClause createSbc(DPLParser.FieldTypeContext field) {
+        SortByClause sbc = new SortByClause();
+        sbc.setFieldName(field.getText());
+        sbc.setLimit(this.catCtx.getDplRecallSize());
+        sbc.setDescending(false); // from oldest to newest / from a to z
+        sbc.setSortAsType(SortByClause.Type.AUTOMATIC);
+        return sbc;
     }
 }

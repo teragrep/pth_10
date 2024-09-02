@@ -50,26 +50,25 @@ import com.teragrep.pth10.ast.commands.transformstatement.replace.ReplaceCmd;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 
-import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
-public class ReplaceStep extends AbstractReplaceStep{
-    public ReplaceStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class ReplaceStep extends AbstractReplaceStep {
+    public ReplaceStep(List<String> listOfFields, Map<String, String> replacements) {
+        super(listOfFields, replacements);
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
         // If list of fields are not given (empty IN clause), replace in all
         // except the "_time" column. If the "_time" column needs to be replaced, the
         // user must use the IN clause to include it manually.
-        if (this.listOfFields == null || this.listOfFields.size() == 0) {
-            this.listOfFields = new ArrayList<>();
-
-            for (String fieldName : this.dataset.schema().fieldNames()) {
+        if (this.listOfFields.isEmpty()) {
+            for (String fieldName : dataset.schema().fieldNames()) {
                 if (!fieldName.equalsIgnoreCase("_time")) {
                     this.listOfFields.add(fieldName);
                 }
@@ -80,20 +79,16 @@ public class ReplaceStep extends AbstractReplaceStep{
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("UDF_Replace", new ReplaceCmd(), DataTypes.StringType);
 
-        Dataset<Row> finalDs = null;
         // Apply the replace function to all given fields
         for (String field : this.listOfFields) {
-            Column res = functions.callUDF("UDF_Replace",
-                    functions.col(field), functions.lit(contentToReplace), functions.lit(replaceWith));
+            for (String contentToReplace : this.replacements.keySet()) {
+                Column res = functions.callUDF("UDF_Replace",
+                        functions.col(field), functions.lit(contentToReplace), functions.lit(this.replacements.get(contentToReplace)));
 
-            if (finalDs == null) {
-                finalDs = this.dataset.withColumn(field, res);
-            }
-            else {
-                finalDs = finalDs.withColumn(field, res);
+                dataset = dataset.withColumn(field, res);
             }
         }
 
-        return finalDs;
+        return dataset;
     }
 }

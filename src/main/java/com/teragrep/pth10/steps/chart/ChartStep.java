@@ -52,23 +52,22 @@ import org.apache.spark.sql.Row;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
-public class ChartStep extends AbstractChartStep {
+import java.util.List;
 
-    public ChartStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class ChartStep extends AbstractChartStep {
+
+    public ChartStep(List<Column> listOfExpr, List<Column> listOfGroupBy) {
+        super(listOfExpr, listOfGroupBy);
+        this.properties.add(CommandProperty.AGGREGATE);
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        if (listOfExpr == null || listOfExpr.isEmpty()) {
-            return null;
-        }
-
-        if (listOfGroupBy == null) {
+        if (listOfExpr.isEmpty()) {
             return null;
         }
 

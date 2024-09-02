@@ -46,18 +46,14 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.ProcessingStack;
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.bo.*;
-import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatement;
+import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst;
+import com.teragrep.pth10.steps.search.SearchStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * Base transformation for the 'search' command
@@ -65,48 +61,41 @@ import java.util.Map;
  */
 public class SearchTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchTransformation.class);
+    public final SearchStep searchStep;
+    private final DPLParserCatalystContext catCtx;
 
-    private List<String> traceBuffer = null;
-    private Map<String, Object> symbolTable;
-    ProcessingStack processingPipe = null;
-
-    public SearchTransformation(Map<String, Object> symbolTable, List<String> buf, ProcessingStack stack)
+    public SearchTransformation(DPLParserCatalystContext catCtx)
     {
-        this.symbolTable = symbolTable;
-        this.processingPipe = stack;
-        this.traceBuffer = buf;
+        this.searchStep = new SearchStep();
+        this.catCtx = catCtx;
     }
 
     public Node visitSearchTransformation(DPLParser.SearchTransformationContext ctx) {
-        traceBuffer.add(ctx.getChildCount() + " SearchTransformation: " + ctx.getText());
+        LOGGER.info("SearchTransformation incoming: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
 
         Node rv = searchTransformationEmitCatalyst(ctx);
 
-        LOGGER.info("searchTransformation rvType: " + rv.getClass().getName());
-        traceBuffer.add("visitSearchTransformation returns: " + rv);
+        LOGGER.info("searchTransformation return: class=<{}>", rv.getClass().getName());
         return rv;
     }
 
     public Node searchTransformationEmitCatalyst(DPLParser.SearchTransformationContext ctx) {
-        LOGGER.info(">> Entering searchTransformation with: " + ctx.getText());
-        Dataset<Row> rv;
-
         // '| search <searchTransformationStatement> | ...'
         DPLParser.SearchTransformationRootContext searchRootCtx = ctx.searchTransformationRoot();
 
         if (searchRootCtx != null) {
             // isSearchCommand=true is used to skip generating archiveQuery as 'search' is used to filter existing dataset
             // rather than getting a new one and filtering it
-            LogicalStatement logiStat = new LogicalStatement(this.processingPipe, this.processingPipe.getCatVisitor().getCatalystContext(), true);
-            logiStat.visitSearchTransformationRoot(searchRootCtx);
+            LogicalStatementCatalyst logiStat = new LogicalStatementCatalyst(this.catCtx);
+            LOGGER.info("SearchTransformationRoot - skipping xml generation");
+            ColumnNode filter = (ColumnNode) logiStat.visitSearchTransformationRoot(searchRootCtx);
+            searchStep.setFilteringColumn(filter.getColumn());
+
         }
         else {
             throw new IllegalStateException("Invalid search command. Expected SearchTransformationRoot, instead got '" + ctx.getText() + "'");
         }
 
-        // pop & push stack to make catalystNode
-        rv = processingPipe.pop();
-        processingPipe.push(rv);
-        return new CatalystNode(rv);
+        return new StepNode(this.searchStep);
     }
 }

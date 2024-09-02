@@ -47,15 +47,12 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.steps.fields.AbstractFieldsStep;
 import com.teragrep.pth10.steps.fields.FieldsStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -72,68 +69,35 @@ import java.util.Map;
  */
 public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldsTransformation.class);
-
-    private List<String> traceBuffer = null;
     DPLParserCatalystContext catCtx = null;
-    private Map<String, Object> symbolTable = new HashMap<>();
-    ProcessingStack processingPipe = null;
     public FieldsStep fieldsStep = null;
 
-    public FieldsTransformation(DPLParserCatalystContext catCtx, Map<String, Object> symbolTable, List<String> buf,  ProcessingStack stack)
+    public FieldsTransformation(DPLParserCatalystContext catCtx)
     {
-        this.symbolTable = symbolTable;
-        this.processingPipe = stack;
-        this.traceBuffer = buf;
-        this.catCtx = catCtx;
-    }
-
-    public FieldsTransformation( Map<String, Object> symbolTable, List<String> buf, Document doc)
-    {
-        this.symbolTable = symbolTable;
-        this.traceBuffer = buf;
         this.catCtx = catCtx;
     }
 
     public Node visitFieldsTransformation(DPLParser.FieldsTransformationContext ctx) {
-        traceBuffer.add(ctx.getChildCount() + " FieldsTransformation:" + ctx.getText());
-        Node rv = fieldsTransformationEmitCatalyst(ctx);
-        traceBuffer.add("visitfieldsTransformation returns:" + rv.toString());
-
-        return rv;
+        return fieldsTransformationEmitCatalyst(ctx);
     }
 
     public Node fieldsTransformationEmitCatalyst(DPLParser.FieldsTransformationContext ctx) {
-        Dataset<Row> rv = null;
-        if (!this.processingPipe.isEmpty()) {
-            rv = this.processingPipe.pop();
-        }
-        this.fieldsStep = new FieldsStep(rv);
-
-        traceBuffer.add(ctx.getChildCount() + " FieldsTransformation:" + ctx.getText());
+        this.fieldsStep = new FieldsStep();
 
         String oper = ctx.getChild(1).getText();
-        traceBuffer.add("OPER=" + oper);
 
         if ("-".equals(oper)) {
             StringListNode sln = (StringListNode)visit(ctx.fieldListType());
-            LOGGER.info("Drop fields: " + sln);
+            LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
 
             this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
             this.fieldsStep.setListOfFields(sln.asList());
-            rv = this.fieldsStep.get();
-
-            processingPipe.push(rv);
-            traceBuffer.add("Generate fieldsTransformation:" + sln.asList().toString());
         } else {
             StringListNode sln = (StringListNode)visit(ctx.fieldListType());
             this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
             this.fieldsStep.setListOfFields(sln.asList());
-            rv = this.fieldsStep.get();
-
-            processingPipe.push(rv);
-            traceBuffer.add("Generate fieldsTransformation: " + sln);
         }
-        return new CatalystNode(rv);
+        return new StepNode(fieldsStep);
     }
 
 
@@ -147,18 +111,11 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
                 fields.add(fieldType);
             }
         });
-        traceBuffer.add("visitFieldListType:" + fields);
         return new StringListNode(fields);
     }
 
     public Node visitFieldType(DPLParser.FieldTypeContext ctx) {
-        traceBuffer.add("Visit fieldtype:" + ctx.getChild(0).getText());
-        // Check if symbol-table has it
         String sql = ctx.getChild(0).getText();
-        if (symbolTable != null && symbolTable.containsKey(sql)) {
-            sql =(String)symbolTable.get(sql);
-        }
-        traceBuffer.add("return fieldtype:" + sql);
         return new StringNode(new Token(Type.STRING, sql));
     }
 }

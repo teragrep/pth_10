@@ -61,7 +61,7 @@ import java.io.Serializable;
  * 
  * Aggregator types: IN=Row, BUF=CountBuffer, OUT=String
  * Serializable
- * @author p000043u
+ * @author eemhu
  *
  */
 public class DistinctCountAggregator extends Aggregator<Row, CountBuffer, Integer> implements Serializable {
@@ -71,7 +71,10 @@ public class DistinctCountAggregator extends Aggregator<Row, CountBuffer, Intege
 	private String colName = null;
 	private static final boolean debugEnabled = false;
 	
-	/** Constructor used to feed in the column name */
+	/**
+	 * Constructor used to feed in the column name
+	 * @param colName Column name for source field
+	 * */
 	public DistinctCountAggregator(String colName) {
 		super();
 		this.colName = colName;
@@ -83,7 +86,7 @@ public class DistinctCountAggregator extends Aggregator<Row, CountBuffer, Intege
 		if (debugEnabled) LOGGER.info("Buffer encoder");
 		
 		// TODO using kryo should speed this up
-		return Encoders.bean(CountBuffer.class);
+		return Encoders.javaSerialization(CountBuffer.class);
 	}
 
 	/** Encoder for the output (String of all the values in column, lexicographically sorted)*/

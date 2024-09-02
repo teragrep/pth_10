@@ -48,41 +48,47 @@ package com.teragrep.pth10.steps.explain;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.RowFactory;
 
-public class ExplainStep extends AbstractExplainStep {
-    public ExplainStep(Dataset<Row> dataset) {
-        super(dataset);
+import java.util.Collections;
+import java.util.List;
+
+public final class ExplainStep extends AbstractExplainStep {
+    public ExplainStep() {
+        super();
+        // Has to be in Sequential_Only for queryExecution() (doesn't work with a streaming dataset)
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        // Build strings for explain
-        String explainStr = null;
-        String status = null;
+        // Build static datasets with queryExecution().simpleString() and .stringWithStats()
+        Dataset<Row> rv = null;
         if (this.mode == ExplainMode.BRIEF) {
-            explainStr = "explain brief";
-            status = this.dataset.queryExecution().simpleString();
+            List<Row> rowList = Collections.singletonList(RowFactory.create(dataset.queryExecution().simpleString()));
+            StructType schema = new StructType(new StructField[]{
+                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            rv = SparkSession.builder().getOrCreate().createDataFrame(rowList, schema);
         }
         else if (this.mode == ExplainMode.EXTENDED) {
-            explainStr = "explain extended";
-            status = this.dataset.queryExecution().stringWithStats();
+            List<Row> rowList = Collections.singletonList(RowFactory.create(dataset.queryExecution().stringWithStats()));
+            StructType schema = new StructType(new StructField[]{
+                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            rv = SparkSession.builder().getOrCreate().createDataFrame(rowList, schema);
         }
         else {
             throw new UnsupportedOperationException("Invalid explain mode provided: " + this.mode);
-        }
-
-        // Build dataset with containing explain strings
-        Dataset<Row> rv = this.dataset;
-        try {
-            Dataset<Row> res = this.generatedDatasource.constructStream(status, explainStr);
-            rv = res;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
         }
 
         return rv;

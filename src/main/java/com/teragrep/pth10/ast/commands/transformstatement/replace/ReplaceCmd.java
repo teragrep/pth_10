@@ -85,11 +85,6 @@ public class ReplaceCmd implements UDF3<String, String, String, String> {
         LOGGER.debug(String.format("[ReplaceCmd.call] Wildcard: %s | Regex: %s | CurrentContent: %s | WithClause: %s",
                 wildcard, regex, currentContent, replaceWith));
 
-        // Split original wildcard statement (field after REPLACE keyword) into parts based on wildcards
-        String[] partsOfWildcard = wildcard.split("\\*");
-
-        LOGGER.debug("Wildcard split: " + Arrays.toString(partsOfWildcard));
-
         // Is there a match for replacing?
         boolean isMatch = matcher.matches();
 
@@ -98,13 +93,15 @@ public class ReplaceCmd implements UDF3<String, String, String, String> {
         String subSeq = null;
         boolean isFirst = true;
 
-        if (partsOfWildcard.length > 0) {
-            for (int i = 0; i < partsOfWildcard.length; i++) {
-             //   if (partsOfWildcard[i].length() > 0) {
-                //LOGGER.debug("parts of wildcard= " + partsOfWildcard[i] + " || len = " + partsOfWildcard[i].length());
-                //LOGGER.debug("Current content: " + currentContent);
+        if (wildcard.contains("*")) {
+            // Split original wildcard statement (field after REPLACE keyword) into parts based on wildcards
+            String[] partsOfWildcard = wildcard.split("\\*");
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Got split wildcard <{}>", Arrays.toString(partsOfWildcard));
+            }
 
-                    String contentWithinWildcard = null;
+            for (int i = 0; i < partsOfWildcard.length; i++) {
+                    String contentWithinWildcard;
                     if (isFirst && partsOfWildcard.length > 1) {
                         if (partsOfWildcard[i].length() < 1) {
                             // Leading wildcard, without trailing present
@@ -128,24 +125,19 @@ public class ReplaceCmd implements UDF3<String, String, String, String> {
 
                     }
 
-                    //LOGGER.debug("content within= " + contentWithinWildcard);
+                    LOGGER.debug("The content within wildcard: <{}> ", contentWithinWildcard);
 
                     if (subSeq == null) {
                         // First wildcard to be processed -> subsequence does not yet exist
                         subSeq = wildcardMatcher.replaceFirst(Matcher.quoteReplacement(contentWithinWildcard));
-                       // LOGGER.debug("s= " + subSeq);
                     }
                     else {
                         // Subsequence exists, generate a new matcher for the subsequence and continue building it
                         wildcardMatcher = Pattern.compile("\\*").matcher(subSeq);
                         subSeq = wildcardMatcher.replaceFirst(Matcher.quoteReplacement(contentWithinWildcard));
-                       // LOGGER.debug("s= " + subSeq);
                     }
-
-              //  }
-
+                LOGGER.debug("Subsequent wildcard: <{}>", subSeq);
             }
-
         }
 
         // Return the replacement if no wildcards in WITH clause, otherwise return the subsequence

@@ -52,7 +52,7 @@ import java.util.Map;
 
 /**
  * An abstract class to base Map-based Aggregation buffers on
- * @author p000043u
+ * @author eemhu
  *
  * @param <K> type of key in map
  * @param <V> type of value in map
@@ -85,8 +85,6 @@ public abstract class MapBuffer<K, V> implements Serializable {
 	public void setMap(Map<K, V> map) {
 		this.map = map;
 	}
-		
-	//public abstract void add(K key, V value);
 
 	/**
 	 * Abstract method to merge internal map with another

@@ -50,7 +50,7 @@ import org.apache.spark.sql.api.java.UDF1;
 
 /**
  * Converts duration to seconds
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Dur2Sec implements UDF1<String, String> {

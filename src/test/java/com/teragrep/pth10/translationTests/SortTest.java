@@ -48,15 +48,14 @@ package com.teragrep.pth10.translationTests;
 import com.teragrep.functions.dpf_02.SortByClause;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.SortTransformation;
 import com.teragrep.pth10.steps.sort.SortStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
@@ -71,7 +70,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class SortTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(SortTest.class);
     @Test
-    void testSortTranslation() throws Exception {
+    void testSortTranslation() {
         String query = "| sort +num(offset)";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -85,35 +84,28 @@ public class SortTest {
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        stack.setStackMode(ProcessingStack.StackMode.SEQUENTIAL);
-        try {
-            SortTransformation ct = new SortTransformation(stack, ctx);
-            ct.visitSortTransformation((DPLParser.SortTransformationContext) tree.getChild(0).getChild(1));
-            SortStep cs = ct.sortStep;
+        SortTransformation ct = new SortTransformation(ctx, visitor);
+        ct.visitSortTransformation((DPLParser.SortTransformationContext) tree.getChild(1).getChild(0));
+        SortStep cs = ct.sortStep;
 
-            // expected
-            SortByClause sbc = new SortByClause();
-            sbc.setFieldName("offset");
-            sbc.setDescending(false);
-            sbc.setSortAsType(SortByClause.Type.NUMERIC);
+        // expected
+        SortByClause sbc = new SortByClause();
+        sbc.setFieldName("offset");
+        sbc.setDescending(false);
+        sbc.setSortAsType(SortByClause.Type.NUMERIC);
 
-            // actual
-            SortByClause testSbc = cs.getListOfSortByClauses().get(0);
+        // actual
+        SortByClause testSbc = cs.getListOfSortByClauses().get(0);
 
-            // check contents rather than objects
-            assertEquals(sbc.getSortAsType(), testSbc.getSortAsType());
-            assertEquals(sbc.getFieldName(), testSbc.getFieldName());
-            assertEquals(sbc.getLimit(), testSbc.getLimit());
+        // check contents rather than objects
+        assertEquals(sbc.getSortAsType(), testSbc.getSortAsType());
+        assertEquals(sbc.getFieldName(), testSbc.getFieldName());
+        assertEquals(sbc.getLimit(), testSbc.getLimit());
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
     @Test
-    void testSortTranslation2() throws Exception {
+    void testSortTranslation2() {
         String query = "| sort 1234 +num(a) -str(b) +ip(c) +auto(d) desc";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -126,64 +118,51 @@ public class SortTest {
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        SortTransformation ct = new SortTransformation(ctx, visitor);
+        ct.visitSortTransformation((DPLParser.SortTransformationContext) tree.getChild(1).getChild(0));
+        SortStep cs = ct.sortStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        stack.setStackMode(ProcessingStack.StackMode.SEQUENTIAL);
-        try {
-            SortTransformation ct = new SortTransformation(stack, ctx);
-            ct.visitSortTransformation((DPLParser.SortTransformationContext) tree.getChild(0).getChild(1));
-            SortStep cs = ct.sortStep;
+        // expected
+        // desc flips setDescending from actual given, add ! in front of each boolean
+        SortByClause sbc = new SortByClause();
+        sbc.setFieldName("a");
+        sbc.setLimit(1234);
+        sbc.setDescending(true);
+        sbc.setSortAsType(SortByClause.Type.NUMERIC);
 
-            // expected
-            // desc flips setDescending from actual given, add ! in front of each boolean
-            SortByClause sbc = new SortByClause();
-            sbc.setFieldName("a");
-            sbc.setLimit(1234);
-            sbc.setDescending(!false);
-            sbc.setSortAsType(SortByClause.Type.NUMERIC);
+        SortByClause sbc2 = new SortByClause();
+        sbc2.setFieldName("b");
+        sbc2.setLimit(1234);
+        sbc2.setDescending(false);
+        sbc2.setSortAsType(SortByClause.Type.STRING);
 
-            SortByClause sbc2 = new SortByClause();
-            sbc2.setFieldName("b");
-            sbc2.setLimit(1234);
-            sbc2.setDescending(!true);
-            sbc2.setSortAsType(SortByClause.Type.STRING);
+        SortByClause sbc3 = new SortByClause();
+        sbc3.setFieldName("c");
+        sbc3.setLimit(1234);
+        sbc3.setDescending(true);
+        sbc3.setSortAsType(SortByClause.Type.IP_ADDRESS);
 
-            SortByClause sbc3 = new SortByClause();
-            sbc3.setFieldName("c");
-            sbc3.setLimit(1234);
-            sbc3.setDescending(!false);
-            sbc3.setSortAsType(SortByClause.Type.IP_ADDRESS);
+        SortByClause sbc4 = new SortByClause();
+        sbc4.setFieldName("d");
+        sbc4.setLimit(1234);
+        sbc4.setDescending(true);
+        sbc4.setSortAsType(SortByClause.Type.AUTOMATIC);
 
-            SortByClause sbc4 = new SortByClause();
-            sbc4.setFieldName("d");
-            sbc4.setLimit(1234);
-            sbc4.setDescending(!false);
-            sbc4.setSortAsType(SortByClause.Type.AUTOMATIC);
+        // build list from expected
+        List<SortByClause> expected = new ArrayList<>();
+        expected.add(sbc); expected.add(sbc2); expected.add(sbc3); expected.add(sbc4);
 
-            // build list from expected
-            List<SortByClause> expected = new ArrayList<>();
-            expected.add(sbc); expected.add(sbc2); expected.add(sbc3); expected.add(sbc4);
+        for (int i = 0; i < cs.getListOfSortByClauses().size(); i++) {
+            SortByClause fromRun = cs.getListOfSortByClauses().get(i);
+            SortByClause fromExpected = expected.get(i);
 
-            // actual
-            SortByClause testSbc = cs.getListOfSortByClauses().get(0);
-
-            for (int i = 0; i < cs.getListOfSortByClauses().size(); i++) {
-                SortByClause fromRun = cs.getListOfSortByClauses().get(i);
-                SortByClause fromExpected = expected.get(i);
-
-                // check contents rather than objects
-                assertEquals(fromExpected.getSortAsType(), fromRun.getSortAsType());
-                assertEquals(fromExpected.getFieldName(), fromRun.getFieldName());
-                assertEquals(fromExpected.getLimit(), fromRun.getLimit());
-            }
-
-            assertEquals(1234, cs.getLimit());
-
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
+            // check contents rather than objects
+            assertEquals(fromExpected.getSortAsType(), fromRun.getSortAsType());
+            assertEquals(fromExpected.getFieldName(), fromRun.getFieldName());
+            assertEquals(fromExpected.getLimit(), fromRun.getLimit());
         }
+
+        assertEquals(1234, cs.getLimit());
     }
 }
 

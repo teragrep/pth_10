@@ -47,7 +47,6 @@
 package com.teragrep.pth10.steps.predict;
 
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,37 +54,37 @@ import org.slf4j.LoggerFactory;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
-public class PredictStep extends AbstractPredictStep {
+public final class PredictStep extends AbstractPredictStep {
     private static final Logger LOGGER = LoggerFactory.getLogger(PredictStep.class);
-    public PredictStep(Dataset<Row> dataset) {
-        super(dataset);
+    public PredictStep() {
+        super();
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
+        this.properties.add(CommandProperty.REQUIRE_PRECEDING_AGGREGATE);
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        LOGGER.info("Predict algo: " + this.algorithm);
+        LOGGER.info("Predict algo: <[{}]>", this.algorithm);
         switch (this.algorithm) {
             case LL:
-                return ll();
+                return ll(dataset);
             case LLT:
-                return llt();
+                return llt(dataset);
             default:
-                throw new IllegalArgumentException("'" + this.algorithm + "' is not yet supported by the predict command. Use 'LL' (default) or 'LLT' instead.");
+                throw new IllegalArgumentException("Algorithm '" + this.algorithm + "' is not yet supported by the predict command. Use 'LL' (default) or 'LLT' instead.");
         }
     }
 
     private double[] initArrayWithValue(double initialValue, int arraySize) {
         double[] arr = new double[arraySize];
-        for (int i = 0; i < arraySize; i++) {
-            arr[i] = initialValue;
-        }
+        Arrays.fill(arr, initialValue);
 
         return arr;
     }
@@ -101,15 +100,15 @@ public class PredictStep extends AbstractPredictStep {
         return sum/count;
     }
 
-    private Dataset<Row> llt() {
+    private Dataset<Row> llt(Dataset<Row> dataset) {
         // Supports one predict col for now!
         Column predictCol = this.listOfColumnsToPredict.get(0);
 
         // predict column naming
-        int indexOfAliasBeginningQuote = predictCol.toString().indexOf('`');
+        int indexOfAliasBeginningQuote = predictCol.toString().indexOf(" AS ");
         String predictFieldName = "prediction(" + predictCol + ")";
         if (indexOfAliasBeginningQuote != -1) {
-            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote+1, predictCol.toString().length()-1);
+            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote+4);
         }
 
         // upper/lower confidence interval column naming
@@ -124,7 +123,7 @@ public class PredictStep extends AbstractPredictStep {
         //feature = _time
 
         // sort by time, used for joining with estimates
-        Dataset<Row> ds = this.dataset.orderBy(functions.col("_time").asc());
+        Dataset<Row> ds = dataset.orderBy(functions.col("_time").asc());
         // y=
         List<Row> y = ds.select(predictCol, functions.col("_time")).collectAsList();
         // count of existing data
@@ -213,7 +212,7 @@ public class PredictStep extends AbstractPredictStep {
         int f = this.futureTimespan; //forecasting amount
 
         // get last dates; used to generate more timesets (t+1)
-        Row[] head = (Row[]) this.dataset.orderBy(functions.col("_time").desc()).take(2);
+        Row[] head = (Row[]) dataset.orderBy(functions.col("_time").desc()).take(2);
         Timestamp firstTs = head[1].getTimestamp(0);
         Timestamp secondTs = head[0].getTimestamp(0);
 
@@ -282,15 +281,15 @@ public class PredictStep extends AbstractPredictStep {
         return rv;
     }
 
-    private Dataset<Row> ll() {
+    private Dataset<Row> ll(Dataset<Row> dataset) {
         // Supports one predict col for now!
         Column predictCol = this.listOfColumnsToPredict.get(0);
 
         // predict column naming
-        int indexOfAliasBeginningQuote = predictCol.toString().indexOf('`');
+        int indexOfAliasBeginningQuote = predictCol.toString().indexOf(" AS ");
         String predictFieldName = "prediction(" + predictCol + ")";
         if (indexOfAliasBeginningQuote != -1) {
-            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote+1, predictCol.toString().length()-1);
+            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote+4);
         }
 
         // upper/lower confidence interval column naming
@@ -305,7 +304,7 @@ public class PredictStep extends AbstractPredictStep {
         //feature = _time
 
         // Sort by time, used for joining with estimates
-        Dataset<Row> ds = this.dataset.orderBy(functions.col("_time").asc());
+        Dataset<Row> ds = dataset.orderBy(functions.col("_time").asc());
         // y=
         List<Row> y = ds.select(predictCol, functions.col("_time")).collectAsList();
         // count of existing data
@@ -387,7 +386,7 @@ public class PredictStep extends AbstractPredictStep {
         int f = this.futureTimespan; //forecasting amount
 
         // get last dates; used to generate more timesets (t+1)
-        Row[] head = (Row[]) this.dataset.orderBy(functions.col("_time").desc()).take(2);
+        Row[] head = (Row[]) dataset.orderBy(functions.col("_time").desc()).take(2);
         Timestamp firstTs = head[1].getTimestamp(0);
         Timestamp secondTs = head[0].getTimestamp(0);
 

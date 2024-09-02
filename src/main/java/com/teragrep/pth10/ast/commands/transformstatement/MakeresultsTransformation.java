@@ -47,18 +47,12 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth10.ast.bo.Node;
-import com.teragrep.pth10.ast.bo.StringNode;
-import com.teragrep.pth10.ast.bo.Token;
+import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.steps.makeresults.MakeresultsStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,14 +66,9 @@ import java.util.regex.Pattern;
  * Generates $count rows with _time column. More columns can be added by setting $annotate=true
  */
 public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MakeresultsTransformation.class);
-    private ProcessingStack processingStack = null;
-    private DPLParserCatalystContext catCtx = null;
-
+    private final DPLParserCatalystContext catCtx;
     public MakeresultsStep makeresultsStep = null;
-
-    public MakeresultsTransformation(ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.processingStack = stack;
+    public MakeresultsTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
     }
 
@@ -95,11 +84,7 @@ public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
      * @return
      */
     private Node makeresultsTransformationEmitCatalyst(DPLParser.MakeresultsTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!processingStack.isEmpty()) {
-            ds = processingStack.pop();
-        }
-        this.makeresultsStep = new MakeresultsStep(ds);
+        this.makeresultsStep = new MakeresultsStep();
 
         int count = 1;
         boolean annotate = false;
@@ -108,7 +93,7 @@ public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
 
         // Go through any parameters
         if (ctx.t_makeresults_annotateOptParameter() != null) {
-            annotate = ((StringNode) visit(ctx.t_makeresults_annotateOptParameter())).toString().equals("true");
+            annotate = visit(ctx.t_makeresults_annotateOptParameter()).toString().equals("true");
         }
 
         if (ctx.t_makeresults_countParameter() != null) {
@@ -146,13 +131,8 @@ public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
         this.makeresultsStep.setCount(count);
         this.makeresultsStep.setServerGroups(serverGroup);
         this.makeresultsStep.setCatCtx(catCtx);
-        Dataset<Row> generated = null;
-        if (this.catCtx.getSparkSession() != null) {
-            generated = this.makeresultsStep.get();
-        }
 
-        processingStack.push(generated);
-        return new CatalystNode(generated);
+        return new StepNode(makeresultsStep);
     }
 
     @Override

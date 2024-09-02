@@ -46,26 +46,21 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement.rex4j;
 
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth10.ast.bo.Node;
-import com.teragrep.pth10.ast.bo.StringNode;
-import com.teragrep.pth10.ast.bo.Token;
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
+import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.steps.rex4j.Rex4jStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Class that contains the necessary implemented visitor functions for the rex4j command.<br>
@@ -79,73 +74,38 @@ import java.util.Map;
 public class Rex4jTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Rex4jTransformation.class);
 
-    private List<String> traceBuffer = null;
-    private Map<String, Object> symbolTable = new HashMap<>();
-    ProcessingStack processingPipe = null;
     public Rex4jStep rex4jStep = null;
+    private final DPLParserCatalystContext catCtx;
 
-    public Rex4jTransformation(Map<String, Object> symbolTable, List<String> buf, ProcessingStack stack)
+    public Rex4jTransformation(DPLParserCatalystContext catCtx)
     {
-        this.symbolTable = symbolTable;
-        this.processingPipe = stack;
-        this.traceBuffer = buf;
-    }
-
-    public Rex4jTransformation(Map<String, Object> symbolTable, List<String> buf, Dataset<Row> ds)
-    {
-        this.symbolTable = symbolTable;
-        this.traceBuffer = buf;
-    }
-
-    public Rex4jTransformation(Map<String, Object> symbolTable, List<String> buf, Document doc)
-    {
-        this.symbolTable = symbolTable;
-        this.traceBuffer = buf;
+        this.catCtx = catCtx;
     }
 
     /**
      * Main visitor function, from where the rest of the parse tree for this command will be walked
-     * @param ctx
-     * @return
+     * @param ctx Rex4jTransformationContext
+     * @return StepNode containing Step for rex4j command
      */
     public Node visitRex4jTransformation(DPLParser.Rex4jTransformationContext ctx) {
-        traceBuffer.add(ctx.getChildCount() + " Rex4jTransformation:" + ctx.getText());
-
         return rexTransformationEmitCatalyst(ctx);
     }
 
-    /**
-     * 	<pre>
-		rex4jTransformation
-	
-        : COMMAND_MODE_REX4J (t_rex4j_fieldParameter)? ((regexStringType (t_rex4j_maxMatchParameter)? (t_rex4j_offsetFieldParameter)? )|( t_rex4j_modeSedParameter regexStringType))
-	
-        ;
-        
-        rex4j field=host "regex string" --OR-- rex4j field=host mode=sed "s\abc\def\g"
-        </pre>
-     */
     public Node rexTransformationEmitCatalyst(DPLParser.Rex4jTransformationContext ctx) {
-    	Dataset<Row> ds = null;
-        if (!this.processingPipe.isEmpty()) {
-            ds = this.processingPipe.pop();
-        }
-        this.rex4jStep = new Rex4jStep(ds);
+        this.rex4jStep = new Rex4jStep(catCtx);
 
         Dataset<Row> res;
         String sedMode = null;
         String field = "_raw"; // The field that you want to extract information from.
-        traceBuffer.add(ctx.getChildCount() + " Rex4jTransformation:" + ctx.getText());
-        
+
         // Optional fieldname, default is _raw
         if(ctx.t_rex4j_fieldParameter()!= null) {
             field = visit(ctx.t_rex4j_fieldParameter()).toString();
         }
-        traceBuffer.add("Field used for extraction: " + field);
 
         // Check if mode=sed is present or not
         if (ctx.t_rex4j_modeSedParameter() != null) {
-            LOGGER.info("Rex4j sed mode parameter detected");
+            LOGGER.debug("Rex4j sed mode parameter detected");
             sedMode = visit(ctx.t_rex4j_modeSedParameter()).toString();
         }
 
@@ -153,35 +113,32 @@ public class Rex4jTransformation extends DPLParserBaseVisitor<Node> {
         if (ctx.t_rex4j_maxMatchParameter() != null) {
             Node n = visit(ctx.t_rex4j_maxMatchParameter());
             int maxMatch = Integer.parseInt(n.toString());
-            LOGGER.info("got parameter MaxMatch= " + maxMatch);
+            LOGGER.debug("Rex4j got parameter MaxMatch(int)=<[{}]>", maxMatch);
             this.rex4jStep.setMaxMatch(maxMatch);
         }
 
         DPLParser.RegexStringTypeContext string = ctx.regexStringType();
-        String regexStr = Util.stripQuotes(string.getText());
+        String regexStr = new UnquotedText(new TextString(string.getText())).read();
 
         this.rex4jStep.setField(field);
         this.rex4jStep.setSedMode(sedMode);
         this.rex4jStep.setRegexStr(regexStr);
 
-        res = this.rex4jStep.get();
-        
-        processingPipe.push(res);
-        return new CatalystNode(res);
+        return new StepNode(rex4jStep);
     }
 
     @Override public Node visitT_rex4j_fieldParameter(DPLParser.T_rex4j_fieldParameterContext ctx) {
         String s = ctx.getChild(1).getText();
-        s=Util.stripQuotes(s);
+        s = new UnquotedText(new TextString(s)).read();
         StringNode rv =  new StringNode(new Token(Type.STRING, s));
         return rv;
     }
 
     @Override public Node visitT_rex4j_maxMatchParameter(DPLParser.T_rex4j_maxMatchParameterContext ctx) {
         String s = ctx.getChild(1).getText();
-        s=Util.stripQuotes(s);
+        s = new UnquotedText(new TextString(s)).read();
         StringNode rv =  new StringNode(new Token(Type.STRING,s));
-        LOGGER.info("visitT_rex4j_maxMatchParameter:"+rv);
+        LOGGER.info("visitT_rex4j_maxMatchParameter: return=<{}>" , rv);
         return rv;
     }
     @Override public Node visitT_rex4j_modeSedParameter(DPLParser.T_rex4j_modeSedParameterContext ctx) {

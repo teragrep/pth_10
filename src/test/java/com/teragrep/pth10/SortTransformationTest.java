@@ -45,66 +45,34 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.StreamingQueryListener;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
-import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for the new ProcessingStack implementation
  * Uses streaming datasets
- * @author p000043u
+ * @author eemhu
  *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SortTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(SortTransformationTest.class);
 
-    DPLParserCatalystContext ctx = null;
-    DPLParserCatalystVisitor visitor = null;
+    private final String testFile = "src/test/resources/sortTransformationTest_data*.json"; // * to make the path into a directory path
 
-    SparkSession sparkSession = null;
-    SQLContext sqlContext = null;
-
-    ExpressionEncoder<Row> encoder = null;
-    MemoryStream<Row> rowMemoryStream = null;
-    Dataset<Row> rowDataset = null;
-
-    private static final StructType testSchema = new StructType(
+    private final StructType testSchema = new StructType(
             new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
                     new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
@@ -118,36 +86,22 @@ public class SortTransformationTest {
             }
     );
 
+    private StreamingTestUtil streamingTestUtil;
+
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
     }
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        sparkSession = SparkSession.builder()
-                .master("local[*]")
-                .config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                .config("checkpointLocation","/tmp/pth_10/test/sort/checkpoints/" + UUID.randomUUID() + "/")
-                .getOrCreate();
-
-        sqlContext = sparkSession.sqlContext();
-        ctx = new DPLParserCatalystContext(sparkSession);
-
-       sparkSession.sparkContext().setLogLevel("ERROR");
-
-        encoder = RowEncoder.apply(testSchema);
-        rowMemoryStream =
-                new MemoryStream<>(1, sqlContext, encoder);
-
-        // Create a spark structured streaming dataset and start writing the stream
-        rowDataset = rowMemoryStream.toDS();
-        ctx.setDs(rowDataset);	// for stream ds
+        this.streamingTestUtil.setUp();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        visitor = null;
+        this.streamingTestUtil.tearDown();
     }
 
 
@@ -158,11 +112,11 @@ public class SortTransformationTest {
     // FIXME fix these when sort command is fixed on parser side
     // (spaces before fields or auto(), num(), etc.)
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") // ascending auto sortByType with desc override
-    public void sort_test_1() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // ascending auto sortByType with desc override
+    public void sort_test_1() {
+        streamingTestUtil.performDPLTest(
                 "index=index_A | sort + auto(offset) desc",
-                null, //"[_time, _time2]",
+                testFile,
                 ds -> {
                     List<Row> listOfOffset = ds.select("offset").collectAsList();
                     long firstOffset = listOfOffset.get(0).getLong(0);
@@ -175,11 +129,11 @@ public class SortTransformationTest {
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") // override default/auto sorting
-    public void sort_test_1b() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // override default/auto sorting
+    public void sort_test_1b() {
+        streamingTestUtil.performDPLTest(
                 "index=index_A | sort 10 + str(offset)",
-                null, //"[_time, _time2]",
+                testFile,
                 ds -> {
                     List<Row> listOfOffset = ds.select("offset").collectAsList();
 
@@ -190,235 +144,151 @@ public class SortTransformationTest {
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") // descending sourcetype (pth03 parsing issue?, seems to be ascending)
-    public void sort_test_2() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // descending sourcetype (pth03 parsing issue?, seems to be ascending)
+    public void sort_test_2() {
+        streamingTestUtil.performDPLTest(
                 "index=index_A | sort limit=0 + sourcetype",
-                null,
+                testFile,
                 ds -> {
                     List<Row> listOfSourcetype = ds.select("sourcetype").collectAsList();
 
                     assertEquals("[stream1, stream1, stream1, stream1, stream1, stream2, stream2, stream2, stream2, stream2]",
                             Arrays.toString(listOfSourcetype.stream().map(r -> r.getAs(0).toString()).toArray()));
-
                 }
         );
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") // descending sort by ip address type
-    public void sort_test_3() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // descending sort by ip address type
+    public void sort_test_3() {
+        streamingTestUtil.performDPLTest(
                 "index=index_A | sort - ip(source)",
-                null,
+                testFile,
                 ds -> {
                     List<Row> listOfSource = ds.select("source").collectAsList();
 
                     assertEquals("[127.9.9.9, 127.8.8.8, 127.7.7.7, 127.6.6.6, 127.5.5.5, 127.4.4.4, 127.3.3.3, 127.2.2.2, 127.1.1.1, 127.0.0.0]",
                             Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-
                 }
         );
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") // sort with aggregate
-    public void sort_test_4() throws StreamingQueryException, InterruptedException {
-        performStreamingDPLTest(
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with aggregate
+    public void sort_test_4() {
+        streamingTestUtil.performDPLTest(
                 "index=index_A | stats count(offset) as count_offset avg(offset) as avg_offset by sourcetype | sort +num(avg_offset)",
-                null,
+                testFile,
                 ds -> {
                     List<Row> listOfSource = ds.select("avg_offset").collectAsList();
 
                     assertEquals("[5.0, 6.0]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-
                 }
         );
     }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") // chained sort
-    public void sort_test_5() throws StreamingQueryException,
-            InterruptedException {
-        performStreamingDPLTest(
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // chained sort
+    public void sort_test_5() {
+        streamingTestUtil.performDPLTest(
                 "index=index_A | sort - num(offset)",
-                null,
+                testFile,
                 ds -> {
                     List<Row> listOfSource =
                             ds.select("offset").collectAsList();
 
                     assertEquals("[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-
                 }
         );
     }
-    // ----------------------------------------
-    // Helper methods
-    // ----------------------------------------
 
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with a group by aggregate, descending sort
+    public void sort_test_6() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | stats max(offset) AS max_off by id | sort -num(max_off)",
+                testFile,
+                ds -> {
+                    List<Row> listOfSource =
+                            ds.select("max_off").collectAsList();
 
-    private void performStreamingDPLTest(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer) throws StreamingQueryException, InterruptedException {
-
-        // the names of the queries for source and result
-        final String nameOfSourceStream = "pth10_sort_test_src";
-
-        // start streams for rowDataset (source)
-        StreamingQuery sourceStreamingQuery = startStream(rowDataset, "append", nameOfSourceStream);
-        sourceStreamingQuery.processAllAvailable();
-
-
-        // listener for source stream, this allows stopping the stream when all processing is done
-        // without the use of thread.sleep()
-        sparkSession.streams().addListener(new StreamingQueryListener() {
-            int noProgress = 0;
-            @Override
-            public void onQueryStarted(QueryStartedEvent queryStarted) {
-                LOGGER.info("Query started: " + queryStarted.id());
-            }
-            @Override
-            public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-                LOGGER.info("Query terminated: " + queryTerminated.id());
-            }
-            @Override
-            public void onQueryProgress(QueryProgressEvent queryProgress) {
-                Double progress = queryProgress.progress().processedRowsPerSecond();
-                String nameOfStream = queryProgress.progress().name();
-
-                LOGGER.info("Processed rows/sec: " + progress);
-                // Check if progress has stopped (progress becomes NaN at the end)
-                // and end the query if that is the case
-                if (Double.isNaN(progress) && nameOfStream == nameOfSourceStream) {
-                    noProgress++;
-                    if (noProgress > 1) {
-                        LOGGER.info("No progress on source stream");
-
-                        sourceStreamingQuery.processAllAvailable();
-                        sourceStreamingQuery.stop();
-                        sparkSession.streams().removeListener(this);
-                    }
-
+                    assertEquals("[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
                 }
-
-            }
-        }); // end listener
-
-
-        // Keep adding data to stream until enough runs are done
-        long run = 0L, counter = 0L, id = 0L;
-        long maxCounter = 10L, maxRuns = 1L; /* You can use these two variables to customize the amount of data */
-
-        while (sourceStreamingQuery.isActive()) {
-            Timestamp time = Timestamp.from(Instant.ofEpochSecond(rng(1300091969, 1665391969)));//Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
-
-            if (run < maxRuns) {
-                org.apache.spark.sql.execution.streaming.Offset rmsOffset = rowMemoryStream.addData(
-                        makeRows(
-                                time, 					// _time
-                                ++id, 					// id
-                                "data data", 			// _raw
-                                "index_A", 				// index
-                                "stream" + (counter % 2 == 0 ? 1 : 2), 				// sourcetype
-                                "host", 				// host
-                                "127" + "." + counter + "." + counter + "." + counter,				// source
-                                String.valueOf(run), 	// partition
-                                ++counter, 				// offset
-                                1 //500 					// make n amount of rows
-                        )
-                );
-                //rowMemoryStream.commit((LongOffset)rmsOffset);
-            }
-
-            // Run $run times, each with $counter makeRows()
-            if (counter == maxCounter) {
-                run++;
-                counter = 0;
-            }
-
-        }
-
-        sourceStreamingQuery.awaitTermination(); // wait for query to be over
-
-        // Got streamed data
-        boolean truncateFields = false;
-        int numRowsToPreview = 25;
-
-        // Print previews of dataframes
-        LOGGER.info(" -- Source data -- ");
-        Dataset<Row> df = sqlContext.sql("SELECT * FROM " + nameOfSourceStream);
-        df.show(numRowsToPreview, truncateFields);
-
-        // Start performing the dpl query
-        performDPLQuery(query, expectedColumns, assertConsumer);
-
+        );
     }
 
-    // Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-    private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-        return rowDataset
-                .writeStream()
-                .outputMode(outputMode)
-                .format("memory")
-                .queryName(queryName)
-                .start();
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with a group by aggregate, ascending sort
+    public void sort_test_7() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | stats max(offset) AS max_off by id | sort +num(max_off)",
+                testFile,
+                ds -> {
+                    List<Row> listOfSource =
+                            ds.select("max_off").collectAsList();
+
+                    assertEquals("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
+                }
+        );
     }
 
-    // Performs given DPL query and returns result dataset<row>
-    private Dataset<Row> performDPLQuery(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer) {
-        LOGGER.info("-> Got DPL query: " + query);
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with a group by aggregate with auto sort
+    public void sort_test_8() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | stats max(offset) AS max_off by id | sort -auto(max_off)",
+                testFile,
+                ds -> {
+                    List<Row> listOfSource =
+                            ds.select("max_off").collectAsList();
 
-        ctx.setEarliest("-1Y");
-
-        // Visit the parse tree
-        visitor = new DPLParserCatalystVisitor(ctx);
-        CharStream inputStream = CharStreams.fromString(query);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-
-        LOGGER.debug(tree.toStringTree(parser));
-
-        // set path for join cmd
-        visitor.setHdfsPath("/tmp/pth_10/" + UUID.randomUUID());
-
-        // Set consumer for testing
-        visitor.setConsumer(ds -> {
-            LOGGER.info("Batch handler consumer called for ds with schema: " + ds.schema());
-            ds.show(50, false);
-            if (expectedColumns != null) assertEquals(expectedColumns, Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-            if (assertConsumer != null) assertConsumer.accept(ds); // more assertions, if any
-        });
-
-        assertTrue(visitor.getConsumer() != null, "Consumer was not properly registered to visitor !");
-        CatalystNode n = (CatalystNode) visitor.visit(tree);
-        DataStreamWriter<Row> dsw = n.getDataStreamWriter();
-
-        assertTrue(dsw != null || !n.getDataset().isStreaming(), "DataStreamWriter was not returned from visitor !");
-        if (dsw != null) {
-            // process forEachBatch
-            StreamingQuery sq = dsw.start();
-            sq.processAllAvailable();
-        }
-
-        return n.getDataset();
+                    assertEquals("[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
+                }
+        );
     }
 
-    // Make rows of given amount
-    private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host, String source, String partition, Long offset, long amount) {
-        ArrayList<Row> rowArrayList = new ArrayList<>();
-        Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // auto sort after eval
+    public void sort_test_9() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | eval a = offset + 4 | sort -auto(a)",
+                testFile,
+                ds -> {
+                    List<Row> listOfSource =
+                            ds.select("a").collectAsList();
 
-        while (amount > 0) {
-            rowArrayList.add(row);
-            amount--;
-        }
-
-        Seq<Row> rowSeq = JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
-        return rowSeq;
+                    assertEquals("[14, 13, 12, 11, 10, 9, 8, 7, 6, 5]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
+                }
+        );
     }
 
-    // generate number between a - b
-    private int rng(int a, int b) {
-        return new Random().nextInt(b-a) + a;
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // auto sort strings
+    public void sort_test_10() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | eval a = if ( offset < 6, \"abc\", \"bcd\") | sort +auto(a)",
+                testFile,
+                ds -> {
+                    List<Row> listOfSource =
+                            ds.select("a").collectAsList();
+
+                    assertEquals("[[abc], [abc], [abc], [abc], [abc], [bcd], [bcd], [bcd], [bcd], [bcd]]", Arrays.toString(listOfSource.stream().map(r -> r.getList(0).toString()).toArray()));
+                }
+        );
     }
 
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // auto sort ip addresses
+    public void sort_test_11() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | sort +auto(source)",
+                testFile,
+                ds -> {
+                    List<Row> listOfSource =
+                            ds.select("source").collectAsList();
+
+                    assertEquals("[127.0.0.0, 127.1.1.1, 127.2.2.2, 127.3.3.3, 127.4.4.4, 127.5.5.5, 127.6.6.6, 127.7.7.7, 127.8.8.8, 127.9.9.9]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
+                }
+        );
+    }
 }

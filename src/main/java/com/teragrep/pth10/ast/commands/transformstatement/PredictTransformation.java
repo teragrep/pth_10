@@ -46,21 +46,18 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.steps.predict.AbstractPredictStep;
 import com.teragrep.pth10.steps.predict.PredictStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,23 +67,15 @@ import java.util.List;
 
 public class PredictTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(PredictTransformation.class);
-    private final ProcessingStack stack;
-    private final DPLParserCatalystContext catCtx;
 
     public PredictStep predictStep = null;
-    public PredictTransformation(ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.stack = stack;
-        this.catCtx = catCtx;
+    public PredictTransformation() {
+
     }
 
     @Override
     public Node visitPredictTransformation(DPLParser.PredictTransformationContext ctx) {
-        LOGGER.info("In predict: " + this.stack.getStackMode());
-        Dataset<Row> ds = null;
-        if (!this.stack.isEmpty()) {
-            ds = this.stack.pop();
-        }
-        this.predictStep = new PredictStep(ds);
+        this.predictStep = new PredictStep();
 
         List<Column> listOfColumnsToPredict = new ArrayList<>();
         AbstractPredictStep.Algorithm algorithm = AbstractPredictStep.Algorithm.LL;
@@ -108,12 +97,13 @@ public class PredictTransformation extends DPLParserBaseVisitor<Node> {
                 ParseTree nextChild = ctx.getChild(i+1);
                 // <field> AS <new-name>
                 if (nextChild instanceof DPLParser.T_predict_fieldRenameInstructionContext) {
-                    listOfColumnsToPredict.add(functions.col(Util.stripQuotes(child.getText())).as(Util.stripQuotes(nextChild.getChild(1).getText())));
+                    listOfColumnsToPredict.add(functions.col(new UnquotedText(new TextString(child.getText())).read())
+                            .as(new UnquotedText(new TextString(nextChild.getChild(1).getText())).read()));
                     i++; // Skip next child, as it would be the same fieldRenameInstruction again
                 }
                 // <field>
                 else {
-                    listOfColumnsToPredict.add(functions.col(Util.stripQuotes(child.getText())));
+                    listOfColumnsToPredict.add(functions.col(new UnquotedText(new TextString(child.getText())).read()));
                 }
             }
             else if (child instanceof DPLParser.T_predict_pdAlgoOptionParameterContext) {
@@ -143,7 +133,7 @@ public class PredictTransformation extends DPLParserBaseVisitor<Node> {
             }
             else if (child instanceof DPLParser.T_predict_pdCorrelateOptionParameterContext) {
                 DPLParser.FieldTypeContext ftCtx = ((DPLParser.T_predict_pdCorrelateOptionParameterContext)child).fieldType();
-                correlateField = Util.stripQuotes(ftCtx.getText());
+                correlateField = new UnquotedText(new TextString(ftCtx.getText())).read();
             }
             else if (child instanceof DPLParser.T_predict_pdFutureTimespanOptionParameterContext) {
                 DPLParser.NumberTypeContext ntCtx = ((DPLParser.T_predict_pdFutureTimespanOptionParameterContext)child).numberType();
@@ -160,15 +150,15 @@ public class PredictTransformation extends DPLParserBaseVisitor<Node> {
             else if (child instanceof DPLParser.T_predict_pdUpperOptionParameterContext) {
                 DPLParser.T_predict_pdUpperOptionParameterContext uopCtx = (DPLParser.T_predict_pdUpperOptionParameterContext) child;
                 upper = Integer.parseInt(uopCtx.integerType().getText());
-                upperField = Util.stripQuotes(uopCtx.fieldType().getText());
+                upperField = new UnquotedText(new TextString(uopCtx.fieldType().getText())).read();
             }
             else if (child instanceof DPLParser.T_predict_pdLowerOptionParameterContext) {
                 DPLParser.T_predict_pdLowerOptionParameterContext lopCtx = (DPLParser.T_predict_pdLowerOptionParameterContext) child;
                 lower = Integer.parseInt(lopCtx.integerType().getText());
-                lowerField = Util.stripQuotes(lopCtx.fieldType().getText());
+                lowerField = new UnquotedText(new TextString(lopCtx.fieldType().getText())).read();
             }
             else if (child instanceof DPLParser.T_predict_pdSuppressOptionParameterContext) {
-                suppressField = Util.stripQuotes(((DPLParser.T_predict_pdSuppressOptionParameterContext)child).fieldType().getText());
+                suppressField = new UnquotedText(new TextString(((DPLParser.T_predict_pdSuppressOptionParameterContext)child).fieldType().getText())).read();
             }
             else if (child instanceof TerminalNode) {
                 // skip TerminalNode
@@ -189,10 +179,8 @@ public class PredictTransformation extends DPLParserBaseVisitor<Node> {
         this.predictStep.setCorrelateField(correlateField);
         this.predictStep.setSuppressField(suppressField);
         this.predictStep.setFutureTimespan(futureTimespan);
-        ds = this.predictStep.get();
 
-        this.stack.push(ds);
-        return new CatalystNode(ds);
+        return new StepNode(predictStep);
     }
 
 }

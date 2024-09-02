@@ -48,8 +48,6 @@ package com.teragrep.pth10.steps.predict;
 
 import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.List;
 
@@ -68,8 +66,8 @@ public abstract class AbstractPredictStep extends AbstractStep {
     protected int lower;
     protected String upperField;
     protected String lowerField;
-    public AbstractPredictStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractPredictStep() {
+        super();
     }
 
     public Algorithm getAlgorithm() {

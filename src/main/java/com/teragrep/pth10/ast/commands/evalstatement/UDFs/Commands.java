@@ -57,7 +57,7 @@ import java.util.List;
  * x is a string or field containing a search string<br>
  * Returns a mvfield with all the commands used in x
  *
- * @author p000043u
+ * @author eemhu
  */
 public class Commands implements UDF1<String, List<String>>, Serializable {
 

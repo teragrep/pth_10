@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
  * Exponential numbers are supported, and numbers beginning with +/- signs and dots (.)<br>
  * Also numbers beginning with 0 are supported.<br>
  * Only one decimal place is supported. (e.g. 100.000.000 is not a valid number).
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Rmunit implements UDF1<String, String> {
@@ -88,8 +88,6 @@ public class Rmunit implements UDF1<String, String> {
 		// Go through input, removing trailing characters if needed
 		for (int i = 0; i < value.length(); i++) {
 			char c = value.charAt(i);
-			//LOGGER.debug("Processing i: " + i + " c: " + c + " of " + value.length());
-
 			if (i == 0) {
 				// first one can be ./+/-/digit
 				if (c == '0') {
@@ -198,8 +196,8 @@ public class Rmunit implements UDF1<String, String> {
 			}
 		}
 
-		LOGGER.info("rmunit-Convert: " + cleanedUpString);
-		LOGGER.info("rmunit-Pattern: " + pattern);
+		LOGGER.debug("rmunit-Convert: <{}>", cleanedUpString);
+		LOGGER.debug("rmunit-Pattern: <{}>", pattern);
 		try {
 			rv = new DecimalFormat(pattern.toString()).format(new BigDecimal(cleanedUpString));
 

@@ -48,15 +48,13 @@ package com.teragrep.pth10.steps.sendemail;
 
 import com.teragrep.pth10.ast.commands.transformstatement.sendemail.SendemailResultsProcessor;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractSendemailStep extends AbstractStep {
     protected SendemailResultsProcessor sendemailResultsProcessor = null;
     protected boolean sendResults = false;
 
-    public AbstractSendemailStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractSendemailStep() {
+        super();
     }
 
     public void setSendemailResultsProcessor(SendemailResultsProcessor sendemailResultsProcessor) {

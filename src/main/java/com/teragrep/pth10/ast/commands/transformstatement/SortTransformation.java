@@ -46,20 +46,16 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.functions.dpf_02.SortByClause;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
+import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.steps.sort.SortStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,30 +71,21 @@ import java.util.regex.Pattern;
  */
 public class SortTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SortTransformation.class);
-    private DPLParserCatalystContext catCtx = null;
-    private ProcessingStack processingStack = null;
-    private boolean aggregatesUsed = false;
+    private final DPLParserCatalystContext catCtx;
+    private final DPLParserCatalystVisitor catVisitor;
 
     // parameters
     private int limit = 10000;
     private boolean desc = false;
 
     // sort by clauses
-    private List<SortByClause> listOfSortByClauses = new ArrayList<>();
+    private final List<SortByClause> listOfSortByClauses = new ArrayList<>();
 
     public SortStep sortStep = null;
 
-    public boolean getAggregatesUsed() {
-        return aggregatesUsed;
-    }
-
-    public void setAggregatesUsed(boolean aggregatesUsed) {
-        this.aggregatesUsed = aggregatesUsed;
-    }
-
-    public SortTransformation(ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.processingStack = stack;
+    public SortTransformation(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
         this.catCtx = catCtx;
+        this.catVisitor = catVisitor;
     }
 
     /**
@@ -110,15 +97,9 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitSortTransformation(DPLParser.SortTransformationContext ctx) {
-        LOGGER.info("Visiting sortTransformation: " + ctx.getText());
-        Dataset<Row> ds = null;
-        if (!this.processingStack.isEmpty()) {
-            LOGGER.info("Stack was not empty, popping dataset");
-            ds = processingStack.pop();
-        }
-        this.sortStep = new SortStep(ds);
+        LOGGER.info("Visiting sortTransformation: <{}>", ctx.getText());
 
-        limit = this.processingStack.getCatVisitor().getDPLRecallSize(); // get default sort limit via dpl recall size
+        limit = this.catVisitor.getDPLRecallSize(); // get default sort limit via dpl recall size
 
         // limit parameter with 'limit=' prefix
         if (ctx.t_sort_limitParameter() != null && !ctx.t_sort_limitParameter().isEmpty()) {
@@ -172,14 +153,10 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
             throw new IllegalArgumentException("Sort command should contain at least one sortByInstruction. Example: 'sort -_time'");
         }
 
-        this.sortStep.setListOfSortByClauses(listOfSortByClauses);
-        this.sortStep.setDesc(desc);
-        this.sortStep.setSortingBatchCollect((BatchCollect) catCtx.getObjectStore().get(Util.getObjectIdentifier(ctx)));
-        this.sortStep.setAggregatesUsed(aggregatesUsed);
-        this.sortStep.setLimit(limit);
+        this.sortStep = new SortStep(catCtx, listOfSortByClauses, limit, desc);
 
-        LOGGER.info(String.format("Set sortStep params to: sbc=%s, desc=%s, bc=%s, aggsUsed=%s, limit=%s",
-                Arrays.toString(this.sortStep.getListOfSortByClauses().toArray()), this.sortStep.isDesc(), this.sortStep.getSortingBatchCollect(), this.sortStep.isAggregatesUsed(),
+        LOGGER.info(String.format("Set sortStep params to: sbc=%s, desc=%s, bc=%s, limit=%s",
+                Arrays.toString(this.sortStep.getListOfSortByClauses().toArray()), this.sortStep.isDesc(), this.sortStep.getSortingBatchCollect(),
                 this.sortStep.getLimit()));
 
         return sortTransformationEmitCatalyst(ctx);
@@ -320,24 +297,6 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
      * @return
      */
     private Node sortTransformationEmitCatalyst(DPLParser.SortTransformationContext ctx) {
-        Dataset<Row> sortedDs = null;
-
-        if (processingStack.getStackMode() == ProcessingStack.StackMode.PARALLEL) {
-            throw new RuntimeException("Parallel stack mode not supported in sort command, this should not happen");
-        }
-        else {
-            // already in sequential mode, can do direct sort
-            sortedDs = this.sortStep.get();
-            this.catCtx.getObjectStore().add(Util.getObjectIdentifier(ctx), this.sortStep.getSortingBatchCollect());
-
-            if (sortedDs != null) {
-                processingStack.push("sortTransformation push sortedDs", sortedDs, ProcessingStack.StackMode.SEQUENTIAL, null, null, this.aggregatesUsed);
-            }
-            else {
-                LOGGER.error("Sorted dataframe was null!!!");
-            }
-        }
-
-        return new CatalystNode(sortedDs);
+        return new StepNode(sortStep);
     }
-    }
+}

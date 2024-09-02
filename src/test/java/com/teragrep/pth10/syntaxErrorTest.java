@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class syntaxErrorTest {
-	@Disabled
+	@Disabled(value = "Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void syntaxTest() {
 		String e;
@@ -64,7 +64,7 @@ public class syntaxErrorTest {
 		throw new UnsupportedOperationException("Implement");
 	}
 
-	@Disabled
+	@Disabled(value = "Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void syntax1Test() {
 		String e;
@@ -81,7 +81,7 @@ public class syntaxErrorTest {
 	/**
 	 * Now input is valid and test\"localhost is  just plain string
 	 */
-	@Disabled
+	@Disabled(value = "Should be converted to a dataframe test")
 	@Test
 	public void syntax2Test() {
 		String e;
@@ -94,7 +94,7 @@ public class syntaxErrorTest {
 
 	}
 
-	@Disabled
+	@Disabled(value = "Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void syntaxError3Test() {
 		String e;
@@ -107,14 +107,13 @@ public class syntaxErrorTest {
 
 	}
 
-	@Disabled
+	@Disabled(value = "Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void syntax4Test() {
 		String q,e;
 		// missing parameter in IF-clause
-		q = "index=*,voyager | where if(substr(_raw,0,14)==\"127.0.0.49\",\"true\")";
-		//e = "failed to parse at line 1:69 due to no viable alternative at input 'if(substr(_raw,0,14)==\"127.0.0.49\",\"true\")'";
-		e="failed to parse at line 1:69 due to mismatched input ')' expecting {EVAL_LANGUAGE_MODE_COMMA, EVAL_LANGUAGE_MODE_DEQ, EVAL_LANGUAGE_MODE_EQ, EVAL_LANGUAGE_MODE_NEQ, EVAL_LANGUAGE_MODE_LT, EVAL_LANGUAGE_MODE_LTE, EVAL_LANGUAGE_MODE_GT, EVAL_LANGUAGE_MODE_GTE, EVAL_LANGUAGE_MODE_DOT, EVAL_LANGUAGE_MODE_AND, EVAL_LANGUAGE_MODE_OR, EVAL_LANGUAGE_MODE_XOR, EVAL_LANGUAGE_MODE_WILDCARD, EVAL_LANGUAGE_MODE_PLUS, EVAL_LANGUAGE_MODE_MINUS, EVAL_LANGUAGE_MODE_SLASH, EVAL_LANGUAGE_MODE_Like, EVAL_LANGUAGE_MODE_PERCENT, EVAL_LANGUAGE_MODE_LIKE}";
+		q = "index=*,cinnamon | where if(substr(_raw,0,14)==\"127.0.0.49\",\"true\")";
+		e = "failed to parse at line 1:69 due to mismatched input ')' expecting {EVAL_LANGUAGE_MODE_COMMA, EVAL_LANGUAGE_MODE_DEQ, EVAL_LANGUAGE_MODE_EQ, EVAL_LANGUAGE_MODE_NEQ, EVAL_LANGUAGE_MODE_LT, EVAL_LANGUAGE_MODE_LTE, EVAL_LANGUAGE_MODE_GT, EVAL_LANGUAGE_MODE_GTE, EVAL_LANGUAGE_MODE_DOT, EVAL_LANGUAGE_MODE_AND, EVAL_LANGUAGE_MODE_OR, EVAL_LANGUAGE_MODE_XOR, EVAL_LANGUAGE_MODE_WILDCARD, EVAL_LANGUAGE_MODE_PLUS, EVAL_LANGUAGE_MODE_MINUS, EVAL_LANGUAGE_MODE_SLASH, EVAL_LANGUAGE_MODE_Like, EVAL_LANGUAGE_MODE_PERCENT, EVAL_LANGUAGE_MODE_LIKE}";
 		Throwable exception = assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
 		assertEquals(e, exception.getMessage());
 		throw new UnsupportedOperationException("Implement");
