@@ -46,45 +46,40 @@
 
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
+import com.teragrep.pth10.ast.NullValue;
 import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.CountBuffer;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.expressions.Aggregator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 
 /**
  * Aggregator for command dc()
- * 
  * Aggregator types: IN=Row, BUF=CountBuffer, OUT=String
  * Serializable
  * @author eemhu
  *
  */
 public class DistinctCountAggregator extends Aggregator<Row, CountBuffer, Integer> implements Serializable {
-	private static final Logger LOGGER = LoggerFactory.getLogger(DistinctCountAggregator.class);
-
-	private static final long serialVersionUID = 1L;
-	private String colName = null;
-	private static final boolean debugEnabled = false;
+    private static final long serialVersionUID = 1L;
+	private final String colName;
+	private final NullValue nullValue;
 	
 	/**
 	 * Constructor used to feed in the column name
 	 * @param colName Column name for source field
 	 * */
-	public DistinctCountAggregator(String colName) {
+	public DistinctCountAggregator(String colName, NullValue nullValue) {
 		super();
 		this.colName = colName;
+		this.nullValue = nullValue;
 	}
 	
 	/** Encoder for the buffer (class: Values)*/
 	@Override
 	public Encoder<CountBuffer> bufferEncoder() {
-		if (debugEnabled) LOGGER.info("Buffer encoder");
-		
 		// TODO using kryo should speed this up
 		return Encoders.javaSerialization(CountBuffer.class);
 	}
@@ -92,32 +87,24 @@ public class DistinctCountAggregator extends Aggregator<Row, CountBuffer, Intege
 	/** Encoder for the output (String of all the values in column, lexicographically sorted)*/
 	@Override
 	public Encoder<Integer> outputEncoder() {
-		if (debugEnabled) LOGGER.info("Output encoder");
-		
 		return Encoders.INT();
 	}
 
 	/** Initialization */
 	@Override
 	public CountBuffer zero() {
-		if (debugEnabled) LOGGER.info("zero");
-		
 		return new CountBuffer();
 	}
 
 	/** Perform at the end of the aggregation */
 	@Override
 	public Integer finish(CountBuffer buffer) {
-		if (debugEnabled) LOGGER.info("finish");
-		
 		return buffer.dc();
 	}
 
 	/** Merge two buffers into one */
 	@Override
 	public CountBuffer merge(CountBuffer buffer, CountBuffer buffer2) {
-		if (debugEnabled) LOGGER.info("merge");
-		
 		buffer.mergeMap(buffer2.getMap());
 		return buffer;
 	}
@@ -125,11 +112,10 @@ public class DistinctCountAggregator extends Aggregator<Row, CountBuffer, Intege
 	/** Update array with new input value */
 	@Override
 	public CountBuffer reduce(CountBuffer buffer, Row input) {
-		if (debugEnabled) LOGGER.info("reduce");
-		
-		String inputString = input.getAs(colName).toString();
-		buffer.add(inputString);
-	
+		Object inputObject = input.getAs(colName);
+		if (inputObject != nullValue.value()) {
+			buffer.add(inputObject.toString());
+		}
 		return buffer;
 	}
 }
