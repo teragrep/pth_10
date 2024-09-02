@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.spath;
 
 import com.teragrep.pth10.ast.MapTypeColumn;
@@ -58,6 +57,7 @@ import org.apache.spark.sql.types.MapType;
 import java.util.*;
 
 public final class SpathStep extends AbstractSpathStep {
+
     public SpathStep() {
         super();
     }
@@ -75,19 +75,19 @@ public final class SpathStep extends AbstractSpathStep {
 
         // register udf with SparkSession and get column
         ss.udf().register("UDF_Spath", new Spath(catCtx.nullValue), returnType);
-        Column spathExpr = functions.callUDF(
-                "UDF_Spath",            // name of UDF
-                functions.col(inputColumn),   // Input column (actual data to run spath on)
-                functions.lit(path),       // Path to extract data from, usually mainkey.someotherkey
-                functions.lit(inputColumn),   // Name of input column (no data)
-                functions.lit(outputColumn)   // Name of output column (no data)
-        );
+        Column spathExpr = functions
+                .callUDF(
+                        "UDF_Spath", // name of UDF
+                        functions.col(inputColumn), // Input column (actual data to run spath on)
+                        functions.lit(path), // Path to extract data from, usually mainkey.someotherkey
+                        functions.lit(inputColumn), // Name of input column (no data)
+                        functions.lit(outputColumn) // Name of output column (no data)
+                );
 
         // Not in auto-extraction mode: can just return the first and only value from the map
         if (!autoExtractionMode) {
             return dataset.withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(path));
         }
-
 
         //
         // auto-extraction mode
@@ -107,15 +107,18 @@ public final class SpathStep extends AbstractSpathStep {
 
         // Check for nulls; return an empty string if null, otherwise value for given key
         for (String key : keys) {
-            withAppliedUdfDs = withAppliedUdfDs.withColumn(
-                    key,
-                    functions.when(
-                            /* if key.value == null */
-                            functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
-                            /* then return empty string */
-                            functions.lit(""))
-                            /* otherwise return key.value */
-                            .otherwise(withAppliedUdfDs.col(outputColumn).getItem(key)));
+            withAppliedUdfDs = withAppliedUdfDs
+                    .withColumn(
+                            key, functions
+                                    .when(
+                                            /* if key.value == null */
+                                            functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
+                                            /* then return empty string */
+                                            functions.lit("")
+                                    )
+                                    /* otherwise return key.value */
+                                    .otherwise(withAppliedUdfDs.col(outputColumn).getItem(key))
+                    );
         }
 
         // Output column can be dropped

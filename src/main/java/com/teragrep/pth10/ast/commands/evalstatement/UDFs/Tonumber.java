@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth10.ast.NullValue;
@@ -57,34 +56,37 @@ import java.io.Serializable;
  * UDF for eval method tonumber(numstr, base)<br>
  * Converts a numeric string to a long of base.
  */
-public class Tonumber implements UDF2<String, Integer, Object>, Serializable{
-	private static final Logger LOGGER = LoggerFactory.getLogger(Tonumber.class);
-	private static final long serialVersionUID = 1L;
-	private final NullValue nullValue;
+public class Tonumber implements UDF2<String, Integer, Object>, Serializable {
 
-	public Tonumber(NullValue nullValue) {
-		super();
-		this.nullValue = nullValue;
-	}
+    private static final Logger LOGGER = LoggerFactory.getLogger(Tonumber.class);
+    private static final long serialVersionUID = 1L;
+    private final NullValue nullValue;
 
-	@Override
-	public Object call(String numstr, Integer base) throws Exception {
-		Object rv = nullValue.value();
-		
-		if (base < 2 || base > 36) {
-			throw new UnsupportedOperationException("Tonumber: 'base' argument should be an integer value between 2 and 36.");
-		}
-		
-		// try parsing, otherwise return null
-		try {
-			rv = Long.valueOf(numstr, base);
-		}
-		catch (NumberFormatException nfe) {
-			LOGGER.warn("Tonumber: Error parsing, returning 'null'. Details: <{}>", nfe.getMessage());
-			// Could not parse, return null
-		}
-		
-		return rv;
-	}
+    public Tonumber(NullValue nullValue) {
+        super();
+        this.nullValue = nullValue;
+    }
+
+    @Override
+    public Object call(String numstr, Integer base) throws Exception {
+        Object rv = nullValue.value();
+
+        if (base < 2 || base > 36) {
+            throw new UnsupportedOperationException(
+                    "Tonumber: 'base' argument should be an integer value between 2 and 36."
+            );
+        }
+
+        // try parsing, otherwise return null
+        try {
+            rv = Long.valueOf(numstr, base);
+        }
+        catch (NumberFormatException nfe) {
+            LOGGER.warn("Tonumber: Error parsing, returning 'null'. Details: <{}>", nfe.getMessage());
+            // Could not parse, return null
+        }
+
+        return rv;
+    }
 
 }

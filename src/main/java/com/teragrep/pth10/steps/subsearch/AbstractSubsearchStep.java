@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -50,10 +50,12 @@ import com.teragrep.pth10.ast.StepList;
 import com.teragrep.pth10.steps.AbstractStep;
 
 public abstract class AbstractSubsearchStep extends AbstractStep {
+
     public enum SubSearchType {
         MAIN_SEARCH_FILTERING, // for use in "LogicalStatement" subsearch (e.g. index=a [ search index=b ])
         JOIN_COMMAND_SUBSEARCH // for use in join command's [ ] brackets (e.g. | join (...) [ search index=b ])
     }
+
     protected StepList stepList;
     protected DPLInternalStreamingQueryListener listener;
     protected String hdfsPath;

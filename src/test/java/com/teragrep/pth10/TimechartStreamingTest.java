@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -63,29 +63,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests for the new ProcessingStack implementation
- * Uses streaming datasets
+ * Tests for the new ProcessingStack implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TimechartStreamingTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartStreamingTest.class);
 
     private final String testFile = "src/test/resources/dedup_test_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -105,101 +103,129 @@ public class TimechartStreamingTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void timechartStreamingTest_1() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A earliest=2020-01-01T00:00:00z latest=2021-01-01T00:00:00z | timechart span=1mon count(_raw) as craw by sourcetype",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=2020-01-01T00:00:00z latest=2021-01-01T00:00:00z | timechart span=1mon count(_raw) as craw by sourcetype",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-                    List<Row> listOfTime = ds.select("_time").collectAsList();
+                            List<Row> listOfTime = ds.select("_time").collectAsList();
 
-                    // span buckets one per month (one extra due to timezones)
-                    assertEquals(13, listOfTime.size());
-                }
-        );
+                            // span buckets one per month (one extra due to timezones)
+                            assertEquals(13, listOfTime.size());
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void timechartStreamingTest_1b() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A earliest=2020-12-12T00:00:00z latest=2020-12-12T00:30:00z | timechart span=1min count(_raw) as craw by sourcetype",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=2020-12-12T00:00:00z latest=2020-12-12T00:30:00z | timechart span=1min count(_raw) as craw by sourcetype",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-                    List<Row> listOfTime = ds.select("_time").collectAsList();
+                            List<Row> listOfTime = ds.select("_time").collectAsList();
 
-                    // span buckets one per minute for 30mins
-                    assertEquals(31, listOfTime.size());
-                }
-        );
+                            // span buckets one per minute for 30mins
+                            assertEquals(31, listOfTime.size());
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void timechartStreamingTest_2() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | timechart span=1min count(_raw) as craw by sourcetype",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | timechart span=1min count(_raw) as craw by sourcetype", testFile, ds -> {
+                            assertEquals(
+                                    "[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-                    List<String> listOfSourcetype =
-                            ds.select("sourcetype").na().drop("any")
-                                    .dropDuplicates().collectAsList().stream().map(r->r.getAs(0).toString()).filter(str->!str.equals("0"))
+                            List<String> listOfSourcetype = ds
+                                    .select("sourcetype")
+                                    .na()
+                                    .drop("any")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .filter(str -> !str.equals("0"))
                                     .collect(Collectors.toList());
 
-                    assertTrue(listOfSourcetype.contains("stream1") && listOfSourcetype.contains("stream2"));
-                    assertEquals(2, listOfSourcetype.size());
-                }
-        );
+                            assertTrue(listOfSourcetype.contains("stream1") && listOfSourcetype.contains("stream2"));
+                            assertEquals(2, listOfSourcetype.size());
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void timechartStreamingTest_3() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | timechart count by host",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, host, count]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil.performDPLTest("index=index_A | timechart count by host", testFile, ds -> {
+            assertEquals(
+                    "[_time, host, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
 
-                   List<String> listOfHosts = ds.select("host").dropDuplicates().collectAsList().stream().map(r->r.getAs(0).toString())
-                           .filter(str -> !str.equals("0")).collect(Collectors.toList());
+            List<String> listOfHosts = ds
+                    .select("host")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .filter(str -> !str.equals("0"))
+                    .collect(Collectors.toList());
 
-                   assertEquals(1, listOfHosts.size());
-                }
-        );
+            assertEquals(1, listOfHosts.size());
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void timechartStreamingTest_4() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | timechart count",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, count]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil.performDPLTest("index=index_A | timechart count", testFile, ds -> {
+            assertEquals(
+                    "[_time, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
 
-                    List<String> listOfCount = ds.select("count").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString())
-                                    .filter(str->!str.equals("0")).collect(Collectors.toList());
+            List<String> listOfCount = ds
+                    .select("count")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .filter(str -> !str.equals("0"))
+                    .collect(Collectors.toList());
 
-                    assertEquals(1, listOfCount.size());
-                    assertEquals("10", listOfCount.get(0));
-                }
-        );
+            assertEquals(1, listOfCount.size());
+            assertEquals("10", listOfCount.get(0));
+        });
     }
 }

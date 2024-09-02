@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -46,7 +46,6 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
 import com.teragrep.pth10.ast.commands.transformstatement.TopTransformation;
 import com.teragrep.pth10.steps.top.TopStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
@@ -58,12 +57,11 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.ArrayList;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TopTest {
+
     @Test
     void testTopTranslation() {
         final String query = " | top _raw 10";
@@ -84,4 +82,3 @@ public class TopTest {
     }
 
 }
-

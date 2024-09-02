@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -71,6 +71,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CatalystVisitorTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(CatalystVisitorTest.class);
 
     // Use this file for  dataset initialization
@@ -94,7 +95,10 @@ public class CatalystVisitorTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void fromStringNot2Test() {
         String q = "index = \"cpu\" AND sourcetype = \"log:cpu:0\" NOT src";
 
@@ -130,7 +134,10 @@ public class CatalystVisitorTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void columnFromStringDateTest() {
         // Add time ranges
         String q = "((( index =\"cpu\" AND host = \"sc-99-99-14-25\" ) AND sourcetype = \"log:cpu:0\" ) AND ( earliest= \"01/01/1970:02:00:00\"  AND latest= \"01/01/2030:00:00:00\" ))";
@@ -138,7 +145,9 @@ public class CatalystVisitorTest {
             try {
                 long earliestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("01/01/1970:02:00:00");
                 long latestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("01/01/2030:00:00:00");
-                String e = "(((RLIKE(index, (?i)^cpu$) AND RLIKE(host, (?i)^sc-99-99-14-25)) AND RLIKE(sourcetype, (?i)^log:cpu:0)) AND ((_time >= from_unixtime(" + earliestEpoch + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime("+ latestEpoch + ", yyyy-MM-dd HH:mm:ss))))";
+                String e = "(((RLIKE(index, (?i)^cpu$) AND RLIKE(host, (?i)^sc-99-99-14-25)) AND RLIKE(sourcetype, (?i)^log:cpu:0)) AND ((_time >= from_unixtime("
+                        + earliestEpoch + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(" + latestEpoch
+                        + ", yyyy-MM-dd HH:mm:ss))))";
                 DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
                 String result = ctx.getSparkQuery();
@@ -146,14 +155,15 @@ public class CatalystVisitorTest {
                 LOGGER.info("Expected=" + e);
                 LOGGER.info("Result=" + result);
                 assertEquals(e, result);
-            } catch (ParseException e) {
+            }
+            catch (ParseException e) {
                 fail(e.getMessage());
             }
         });
     }
 
     @Disabled
-        // FIXME * to %
+    // FIXME * to %
     void columnFromStringDate1Test() {
         String q, e;
         Column result;
@@ -165,24 +175,30 @@ public class CatalystVisitorTest {
 
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
-            e = "((((NOT `index` LIKE 'strawberry') AND `sourcetype` LIKE 'example:strawberry:strawberry') AND `host` LIKE 'loadbalancer.example.com') OR ((((`index` LIKE '*' AND `host` LIKE 'firewall.example.com') AND (`_time` >= from_unixtime("+zero+", 'yyyy-MM-dd HH:mm:ss'))) AND (`_time` <= from_unixtime("+epoch+", 'yyyy-MM-dd HH:mm:ss'))) AND `_raw` RLIKE '(?i)^.*\\\\QDenied\\\\E.*'))";
-        ctx.setEarliest("-1Y");
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-		LOGGER.debug(tree.toStringTree(parser));
-        Object n = visitor.visit(tree);
-        result = visitor.getLogicalPartAsColumn();
+            e = "((((NOT `index` LIKE 'strawberry') AND `sourcetype` LIKE 'example:strawberry:strawberry') AND `host` LIKE 'loadbalancer.example.com') OR ((((`index` LIKE '*' AND `host` LIKE 'firewall.example.com') AND (`_time` >= from_unixtime("
+                    + zero + ", 'yyyy-MM-dd HH:mm:ss'))) AND (`_time` <= from_unixtime(" + epoch
+                    + ", 'yyyy-MM-dd HH:mm:ss'))) AND `_raw` RLIKE '(?i)^.*\\\\QDenied\\\\E.*'))";
+            ctx.setEarliest("-1Y");
+            DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+            CharStream inputStream = CharStreams.fromString(q);
+            DPLLexer lexer = new DPLLexer(inputStream);
+            DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
+            ParseTree tree = parser.root();
+            LOGGER.debug(tree.toStringTree(parser));
+            Object n = visitor.visit(tree);
+            result = visitor.getLogicalPartAsColumn();
             assertEquals(e, result.expr().sql());
-        } catch (ParseException exception) {
+        }
+        catch (ParseException exception) {
             fail(exception.getMessage());
         }
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void columnFromStringAndTest() {
         //LOGGER.info("------ AND ---------");
         String q = "index =\"strawberry\" AND sourcetype =\"example:strawberry:strawberry\"";
@@ -196,7 +212,10 @@ public class CatalystVisitorTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void columnFromStringOrTest() {
         //LOGGER.info("------ OR ---------");
         String q = "index != \"strawberry\" OR sourcetype =\"example:strawberry:strawberry\"";
@@ -221,8 +240,10 @@ public class CatalystVisitorTest {
         try {
             long earliest = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("04/26/2021:07:00:00");
             long latest = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("04/26/2021:08:00:00");
-//        e = "((((NOT `index` LIKE 'strawberry') AND `sourcetype` LIKE 'example:strawberry:strawberry') AND `host` LIKE 'loadbalancer.example.com') OR ((((`index` LIKE '*' AND `host` LIKE 'firewall.example.com') AND (`_time` >= from_unixtime("+earliest+", 'yyyy-MM-dd HH:mm:ss'))) AND (`_time` <= from_unixtime("+latest+", 'yyyy-MM-dd HH:mm:ss'))) AND `_raw` LIKE '%Denied%'))";
-            e = "((((NOT `index` LIKE 'strawberry') AND `sourcetype` LIKE 'example:strawberry:strawberry') AND `host` LIKE 'loadbalancer.example.com') OR ((((`index` LIKE '*' AND `host` LIKE 'firewall.example.com') AND (`_time` >= from_unixtime("+earliest+", 'yyyy-MM-dd HH:mm:ss'))) AND (`_time` <= from_unixtime("+latest+", 'yyyy-MM-dd HH:mm:ss'))) AND `_raw` RLIKE '(?i)^.*\\\\QDenied\\\\E.*'))";
+            //        e = "((((NOT `index` LIKE 'strawberry') AND `sourcetype` LIKE 'example:strawberry:strawberry') AND `host` LIKE 'loadbalancer.example.com') OR ((((`index` LIKE '*' AND `host` LIKE 'firewall.example.com') AND (`_time` >= from_unixtime("+earliest+", 'yyyy-MM-dd HH:mm:ss'))) AND (`_time` <= from_unixtime("+latest+", 'yyyy-MM-dd HH:mm:ss'))) AND `_raw` LIKE '%Denied%'))";
+            e = "((((NOT `index` LIKE 'strawberry') AND `sourcetype` LIKE 'example:strawberry:strawberry') AND `host` LIKE 'loadbalancer.example.com') OR ((((`index` LIKE '*' AND `host` LIKE 'firewall.example.com') AND (`_time` >= from_unixtime("
+                    + earliest + ", 'yyyy-MM-dd HH:mm:ss'))) AND (`_time` <= from_unixtime(" + latest
+                    + ", 'yyyy-MM-dd HH:mm:ss'))) AND `_raw` RLIKE '(?i)^.*\\\\QDenied\\\\E.*'))";
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
             ctx.setEarliest("-1Y");
@@ -234,20 +255,25 @@ public class CatalystVisitorTest {
             LOGGER.debug(tree.toStringTree(parser));
             CatalystNode n = (CatalystNode) visitor.visit(tree);
             result = visitor.getLogicalPartAsColumn();
-            assertEquals(e, result.expr().sql());} catch (ParseException exception) {
+            assertEquals(e, result.expr().sql());
+        }
+        catch (ParseException exception) {
             fail(exception.getMessage());
         }
     }
 
-
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void fromStringFullTest() {
         String q = "index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
             long earliest = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
-            String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + earliest + ", yyyy-MM-dd HH:mm:ss)))";
+            String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + earliest
+                    + ", yyyy-MM-dd HH:mm:ss)))";
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
             String result = ctx.getSparkQuery();
@@ -256,50 +282,60 @@ public class CatalystVisitorTest {
         });
     }
 
-
     // index = cinnamon _index_earliest="04/16/2020:10:25:40"
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEndTest() {
-        this.streamingTestUtil.performDPLTest("index = cinnamon _index_earliest=\"04/16/2020:10:25:40\"", this.testFile, res -> {
-            String e = "[_raw: string, _time: string ... 6 more fields]";
-            // check schema
-            assertEquals(e, res.toString());
+        this.streamingTestUtil
+                .performDPLTest("index = cinnamon _index_earliest=\"04/16/2020:10:25:40\"", this.testFile, res -> {
+                    String e = "[_raw: string, _time: string ... 6 more fields]";
+                    // check schema
+                    assertEquals(e, res.toString());
 
-            String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
-            // check column for archive query i.e. only logical part'
-            DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
-            long indexEarliestEpoch = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
-            e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch + ", yyyy-MM-dd HH:mm:ss)))";
-            assertEquals(e, logicalPart);
-        });
+                    String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
+                    // check column for archive query i.e. only logical part'
+                    DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
+                    long indexEarliestEpoch = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
+                    e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch
+                            + ", yyyy-MM-dd HH:mm:ss)))";
+                    assertEquals(e, logicalPart);
+                });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEnd2Test() {
         // Use this file as the test data
         String testFile = "src/test/resources/subsearchData*.json";
 
         this.streamingTestUtil.performDPLTest("index=index_A \"(1)(enTIty)\"", testFile, res -> {
             String e = "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))";
-            String resSchema=res.schema().toString();
+            String resSchema = res.schema().toString();
             assertEquals(e, resSchema);
             // Check result count
             List<Row> lst = res.collectAsList();
             // check result count
-            assertEquals(1,lst.size());
+            assertEquals(1, lst.size());
 
             // get logical part
             String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
-            e="(RLIKE(index, (?i)^index_A$) AND RLIKE(_raw, (?i)^.*\\Q(1)(enTIty)\\E.*))";
+            e = "(RLIKE(index, (?i)^index_A$) AND RLIKE(_raw, (?i)^.*\\Q(1)(enTIty)\\E.*))";
             assertEquals(e, logicalPart);
         });
     }
 
     // Check that is AggregatesUsed returns false
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEnd6Test() {
         this.streamingTestUtil.performDPLTest("index = jla02logger ", this.testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
@@ -307,19 +343,26 @@ public class CatalystVisitorTest {
         });
     }
 
-
     // Check that issue#179 returns user friendly error message
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void searchQualifierMissingRightSide_Issue179_Test() {
         // assert user-friendly exception
-        RuntimeException thrown =
-            this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class, "index = ", this.testFile, res -> {});
+        RuntimeException thrown = this.streamingTestUtil
+                .performThrowingDPLTest(RuntimeException.class, "index = ", this.testFile, res -> {
+                });
 
-        Assertions.assertEquals("The right side of the search qualifier was empty! Check that the index has a valid value, like 'index = cinnamon'.", thrown.getMessage());
+        Assertions
+                .assertEquals(
+                        "The right side of the search qualifier was empty! Check that the index has a valid value, like 'index = cinnamon'.",
+                        thrown.getMessage()
+                );
     }
 
-    @Disabled(value="Disabled because the test needs to be converted to a dataframe test")
+    @Disabled(value = "Disabled because the test needs to be converted to a dataframe test")
     @Test // disabled on 2022-05-16 TODO convert to dataframe test
     public void parseWhereXmlTest() {
         String q, e;
@@ -328,33 +371,38 @@ public class CatalystVisitorTest {
         DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
         long earliest = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
 
-        e = "<root><!--index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70--><search root=\"true\"><logicalStatement><AND><index operation=\"EQUALS\" value=\"cinnamon\"/><index_earliest operation=\"GE\" value=\"" + earliest + "\"/></AND><transformStatements><transform><divideBy field=\"_time\"><chart field=\"_raw\" fieldRename=\"count\" function=\"count\" type=\"aggregate\"><transform><where><evalCompareStatement field=\"count\" operation=\"GT\" value=\"70\"/></where></transform></chart></divideBy></transform></transformStatements></logicalStatement></search></root>";
+        e = "<root><!--index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70--><search root=\"true\"><logicalStatement><AND><index operation=\"EQUALS\" value=\"cinnamon\"/><index_earliest operation=\"GE\" value=\""
+                + earliest
+                + "\"/></AND><transformStatements><transform><divideBy field=\"_time\"><chart field=\"_raw\" fieldRename=\"count\" function=\"count\" type=\"aggregate\"><transform><where><evalCompareStatement field=\"count\" operation=\"GT\" value=\"70\"/></where></transform></chart></divideBy></transform></transformStatements></logicalStatement></search></root>";
         String xml = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
         assertEquals(e, xml);
     }
 
-    @Disabled(value="Disabled because the test needs to be converted to a dataframe test")
+    @Disabled(value = "Disabled because the test needs to be converted to a dataframe test")
     @Test // disabled on 2022-05-16 TODO convert to dataframe test
     public void parseWhereXml1Test() {
         String q = "index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70 AND count < 75";
 
         DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
         long earliest = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
-        String e = "<root><!--index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70 AND count < 75--><search root=\"true\"><logicalStatement><AND><index operation=\"EQUALS\" value=\"cinnamon\"/><index_earliest operation=\"GE\" value=\"" + earliest + "\"/></AND><transformStatements><transform><divideBy field=\"_time\"><chart field=\"_raw\" fieldRename=\"count\" function=\"count\" type=\"aggregate\"><transform><where><AND><evalCompareStatement field=\"count\" operation=\"GT\" value=\"70\"/><evalCompareStatement field=\"count\" operation=\"LT\" value=\"75\"/></AND></where></transform></chart></divideBy></transform></transformStatements></logicalStatement></search></root>";
+        String e = "<root><!--index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70 AND count < 75--><search root=\"true\"><logicalStatement><AND><index operation=\"EQUALS\" value=\"cinnamon\"/><index_earliest operation=\"GE\" value=\""
+                + earliest
+                + "\"/></AND><transformStatements><transform><divideBy field=\"_time\"><chart field=\"_raw\" fieldRename=\"count\" function=\"count\" type=\"aggregate\"><transform><where><AND><evalCompareStatement field=\"count\" operation=\"GT\" value=\"70\"/><evalCompareStatement field=\"count\" operation=\"LT\" value=\"75\"/></AND></where></transform></chart></divideBy></transform></transformStatements></logicalStatement></search></root>";
         String xml = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
         assertEquals(e, xml);
     }
 
-    @Disabled(value="Disabled because the test needs to be converted to a dataframe test")
+    @Disabled(value = "Disabled because the test needs to be converted to a dataframe test")
     @Test // disabled on 2022-05-16 TODO convert to dataframe test
     public void parseWhereXml2Test() {
         String q = "index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70 AND count < 75 | where count = 72";
 
         DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
         long earliest = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
-        String e = "<root><!--index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70 AND count < 75 | where count = 72--><search root=\"true\"><logicalStatement><AND><index operation=\"EQUALS\" value=\"cinnamon\"/><index_earliest operation=\"GE\" value=\"" + earliest + "\"/></AND><transformStatements><transform><divideBy field=\"_time\"><chart field=\"_raw\" fieldRename=\"count\" function=\"count\" type=\"aggregate\"><transform><where><AND><evalCompareStatement field=\"count\" operation=\"GT\" value=\"70\"/><evalCompareStatement field=\"count\" operation=\"LT\" value=\"75\"/><transform><where><evalCompareStatement field=\"count\" operation=\"EQUALS\" value=\"72\"/></where></transform></AND></where></transform></chart></divideBy></transform></transformStatements></logicalStatement></search></root>";
+        String e = "<root><!--index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70 AND count < 75 | where count = 72--><search root=\"true\"><logicalStatement><AND><index operation=\"EQUALS\" value=\"cinnamon\"/><index_earliest operation=\"GE\" value=\""
+                + earliest
+                + "\"/></AND><transformStatements><transform><divideBy field=\"_time\"><chart field=\"_raw\" fieldRename=\"count\" function=\"count\" type=\"aggregate\"><transform><where><AND><evalCompareStatement field=\"count\" operation=\"GT\" value=\"70\"/><evalCompareStatement field=\"count\" operation=\"LT\" value=\"75\"/><transform><where><evalCompareStatement field=\"count\" operation=\"EQUALS\" value=\"72\"/></where></transform></AND></where></transform></chart></divideBy></transform></transformStatements></logicalStatement></search></root>";
         String xml = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
         assertEquals(e, xml);
     }
 }
-

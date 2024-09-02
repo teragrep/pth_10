@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast;
 
 import org.apache.spark.sql.Dataset;
@@ -74,13 +73,15 @@ public class MapTypeColumn {
 
     /**
      * Extracts the keys from the Map of the column.
+     * 
      * @return Keys as a Set of Strings
      */
     public Set<String> getKeys() throws StreamingQueryException {
         Set<String> keys;
         if (dataset.isStreaming()) {
             keys = this.getKeysParallel();
-        } else {
+        }
+        else {
             keys = this.getKeysSequential();
         }
         return keys;
@@ -90,15 +91,10 @@ public class MapTypeColumn {
     private Set<String> getKeysSequential() {
         final Set<String> keys = new HashSet<>();
 
-        dataset.select(
-                functions.explode(
-                        functions.map_keys(
-                                functions.col(this.columnName)
-                        )
-                )
-            )
-            .collectAsList()
-            .forEach(r -> keys.add(r.getString(0)));
+        dataset
+                .select(functions.explode(functions.map_keys(functions.col(this.columnName))))
+                .collectAsList()
+                .forEach(r -> keys.add(r.getString(0)));
 
         return keys;
     }
@@ -111,19 +107,14 @@ public class MapTypeColumn {
         if (dataset.isStreaming()) { // parallel mode
             final String id = UUID.randomUUID().toString();
             final String name = "keys_" + id;
-            DataStreamWriter<Row> writer = dataset.select(
-                    functions.explode(
-                            functions.map_keys(
-                                    functions.col(this.columnName)
-                            )
-                    )
-            ).writeStream().foreachBatch((batchDs, batchId) -> {
-                // Get all the map's keys
-                // e.g. key->value; key2->value2 ==> key, key2
-                batchDs
-                        .collectAsList()
-                        .forEach(r -> keys.add(r.getString(0)));
-            });
+            DataStreamWriter<Row> writer = dataset
+                    .select(functions.explode(functions.map_keys(functions.col(this.columnName))))
+                    .writeStream()
+                    .foreachBatch((batchDs, batchId) -> {
+                        // Get all the map's keys
+                        // e.g. key->value; key2->value2 ==> key, key2
+                        batchDs.collectAsList().forEach(r -> keys.add(r.getString(0)));
+                    });
 
             StreamingQuery sq = this.catCtx.getInternalStreamingQueryListener().registerQuery(name, writer);
             sq.awaitTermination();

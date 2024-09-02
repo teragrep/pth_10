@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -60,29 +60,27 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for the new ProcessingStack implementation
- * Uses streaming datasets
+ * Tests for the new ProcessingStack implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TableTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TableTransformationTest.class);
 
     private final String testFile = "src/test/resources/regexTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -102,74 +100,73 @@ public class TableTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void table_test_1() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | strcat _time \"\" _time2 | table _time*",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, _time2]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table _time*", testFile, ds -> {
+            assertEquals(
+                    "[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void table_test_2() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | table index, offset",
-                testFile,
-                ds -> {
-                    assertEquals("[index, offset]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | table index, offset", testFile, ds -> {
+            assertEquals(
+                    "[index, offset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void table_test_3() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | table _time offset index",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, offset, index]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | table _time offset index", testFile, ds -> {
+            assertEquals(
+                    "[_time, offset, index]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
     }
 
     // dangling meta character '?' issue
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void table_test_4_issue283() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | table \"?????\"",
-                testFile,
-                ds -> {
-                    assertEquals("[]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | table \"?????\"", testFile, ds -> {
+            assertEquals(
+                    "[]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void table_test_5() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | strcat _time \"\" _time2 | table *ime*",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, _time2]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table *ime*", testFile, ds -> {
+            assertEquals(
+                    "[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
     }
 }

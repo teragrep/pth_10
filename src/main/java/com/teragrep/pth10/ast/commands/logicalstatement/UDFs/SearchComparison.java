@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.logicalstatement.UDFs;
 
 import com.teragrep.jue_01.GlobToRegEx;
@@ -60,6 +59,7 @@ import java.util.regex.Pattern;
  * UDF for comparing a field to a value in a search command.
  */
 public class SearchComparison implements UDF3<Object, Integer, Object, Boolean> {
+
     @Override
     public Boolean call(Object l, Integer operationType, Object r) throws Exception {
         // Parse in case a number has been set to a String
@@ -81,19 +81,23 @@ public class SearchComparison implements UDF3<Object, Integer, Object, Boolean> 
             // get left as string
             if (leftType == ParsedResult.Type.STRING) {
                 leftString = left.getString();
-            } else if (leftType == ParsedResult.Type.DOUBLE) {
+            }
+            else if (leftType == ParsedResult.Type.DOUBLE) {
                 leftString = BigDecimal.valueOf(left.getDouble()).toPlainString();
-            } else {
+            }
+            else {
                 leftString = BigDecimal.valueOf(left.getLong()).toPlainString();
             }
 
             // get right as string
             if (rightType == ParsedResult.Type.STRING) {
                 rightString = right.getString();
-            } else if (rightType == ParsedResult.Type.DOUBLE) {
+            }
+            else if (rightType == ParsedResult.Type.DOUBLE) {
                 // make into a string through BigDecimal to get it exactly as written in the command
                 rightString = BigDecimal.valueOf(right.getDouble()).stripTrailingZeros().toPlainString();
-            } else {
+            }
+            else {
                 rightString = BigDecimal.valueOf(right.getLong()).stripTrailingZeros().toPlainString();
             }
 
@@ -142,8 +146,10 @@ public class SearchComparison implements UDF3<Object, Integer, Object, Boolean> 
             }
         }
         else {
-            BigDecimal leftNumber = left.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(left.getDouble()) : BigDecimal.valueOf(left.getLong());
-            BigDecimal rightNumber = right.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(right.getDouble()) : BigDecimal.valueOf(right.getLong());
+            BigDecimal leftNumber = left.getType() == ParsedResult.Type.DOUBLE ? BigDecimal
+                    .valueOf(left.getDouble()) : BigDecimal.valueOf(left.getLong());
+            BigDecimal rightNumber = right.getType() == ParsedResult.Type.DOUBLE ? BigDecimal
+                    .valueOf(right.getDouble()) : BigDecimal.valueOf(right.getLong());
 
             switch (operationType) {
                 case DPLLexer.EQ:

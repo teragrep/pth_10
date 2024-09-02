@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
 import com.teragrep.pth10.ast.NullValue;
@@ -56,66 +55,66 @@ import org.apache.spark.sql.expressions.Aggregator;
 import java.io.Serializable;
 
 /**
- * Aggregator for command dc()
- * Aggregator types: IN=Row, BUF=CountBuffer, OUT=String
- * Serializable
+ * Aggregator for command dc() Aggregator types: IN=Row, BUF=CountBuffer, OUT=String Serializable
+ * 
  * @author eemhu
- *
  */
 public class DistinctCountAggregator extends Aggregator<Row, CountBuffer, Integer> implements Serializable {
+
     private static final long serialVersionUID = 1L;
-	private final String colName;
-	private final NullValue nullValue;
-	
-	/**
-	 * Constructor used to feed in the column name
-	 * @param colName Column name for source field
-	 * */
-	public DistinctCountAggregator(String colName, NullValue nullValue) {
-		super();
-		this.colName = colName;
-		this.nullValue = nullValue;
-	}
-	
-	/** Encoder for the buffer (class: Values)*/
-	@Override
-	public Encoder<CountBuffer> bufferEncoder() {
-		// TODO using kryo should speed this up
-		return Encoders.javaSerialization(CountBuffer.class);
-	}
+    private final String colName;
+    private final NullValue nullValue;
 
-	/** Encoder for the output (String of all the values in column, lexicographically sorted)*/
-	@Override
-	public Encoder<Integer> outputEncoder() {
-		return Encoders.INT();
-	}
+    /**
+     * Constructor used to feed in the column name
+     * 
+     * @param colName Column name for source field
+     */
+    public DistinctCountAggregator(String colName, NullValue nullValue) {
+        super();
+        this.colName = colName;
+        this.nullValue = nullValue;
+    }
 
-	/** Initialization */
-	@Override
-	public CountBuffer zero() {
-		return new CountBuffer();
-	}
+    /** Encoder for the buffer (class: Values) */
+    @Override
+    public Encoder<CountBuffer> bufferEncoder() {
+        // TODO using kryo should speed this up
+        return Encoders.javaSerialization(CountBuffer.class);
+    }
 
-	/** Perform at the end of the aggregation */
-	@Override
-	public Integer finish(CountBuffer buffer) {
-		return buffer.dc();
-	}
+    /** Encoder for the output (String of all the values in column, lexicographically sorted) */
+    @Override
+    public Encoder<Integer> outputEncoder() {
+        return Encoders.INT();
+    }
 
-	/** Merge two buffers into one */
-	@Override
-	public CountBuffer merge(CountBuffer buffer, CountBuffer buffer2) {
-		buffer.mergeMap(buffer2.getMap());
-		return buffer;
-	}
+    /** Initialization */
+    @Override
+    public CountBuffer zero() {
+        return new CountBuffer();
+    }
 
-	/** Update array with new input value */
-	@Override
-	public CountBuffer reduce(CountBuffer buffer, Row input) {
-		Object inputObject = input.getAs(colName);
-		if (inputObject != nullValue.value()) {
-			buffer.add(inputObject.toString());
-		}
-		return buffer;
-	}
+    /** Perform at the end of the aggregation */
+    @Override
+    public Integer finish(CountBuffer buffer) {
+        return buffer.dc();
+    }
+
+    /** Merge two buffers into one */
+    @Override
+    public CountBuffer merge(CountBuffer buffer, CountBuffer buffer2) {
+        buffer.mergeMap(buffer2.getMap());
+        return buffer;
+    }
+
+    /** Update array with new input value */
+    @Override
+    public CountBuffer reduce(CountBuffer buffer, Row input) {
+        Object inputObject = input.getAs(colName);
+        if (inputObject != nullValue.value()) {
+            buffer.add(inputObject.toString());
+        }
+        return buffer;
+    }
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.NullValue;
@@ -62,100 +61,104 @@ import java.util.List;
  * Used to concatenate two or more field values and/or string literals into a destination field
  */
 public class StrcatTransformation extends DPLParserBaseVisitor<Node> {
-	private final Logger LOGGER = LoggerFactory.getLogger(StrcatTransformation.class);
-	public StrcatStep strcatStep = null;
-	private final NullValue nullValue;
 
-	public StrcatTransformation(NullValue nullValue) {
-		this.nullValue = nullValue;
-	}
+    private final Logger LOGGER = LoggerFactory.getLogger(StrcatTransformation.class);
+    public StrcatStep strcatStep = null;
+    private final NullValue nullValue;
 
-	/**
-	 * <pre>
-	 * -- Command info: --
-	 *
-	 * {@literal strcat [allrequired=<bool>] <source-fields> <dest-field>}
-	 * Concatenates string values from 2 or more fields, combines string values and
-	 * literals into a new field. The destination field name is specified at the end of
-	 * the strcat command. allrequired is not a required argument, and it can be omitted.
-	 *
-	 * -- Grammar rules: --
-	 *
-	 * strcatTransformation
-	 *  : COMMAND_MODE_STRCAT (t_strcat_allrequiredParameter)? t_strcat_srcfieldsParameter fieldType
-	 *  ;
-	 *
-	 * t_strcat_allrequiredParameter
-	 *  : COMMAND_STRCAT_MODE_ALLREQUIRED booleanType
-	 *  ;
-	 *
-	 * t_strcat_srcfieldsParameter
-	 *  : (fieldType | stringType) (fieldType | stringType)+
-	 *  ;
-	 *
-	 * -- SQL: --
-	 *
-	 * strcat allRequired=bool field1 field2 ... fieldN destField
-	 *  to
-	 * SELECT CONCAT(field1, field2, ..., fieldN) AS destField FROM ˇtemporaryDPLViewˇ
-	 *  </pre>
-	 * */
-	@Override
-	public Node visitStrcatTransformation(DPLParser.StrcatTransformationContext ctx) {
-		LOGGER.debug(String.format("Child count: %s in StrcatTransformation: %s", ctx.getChildCount(), ctx.getText()));
-		return strcatTransformationEmitCatalyst(ctx);
-	}
+    public StrcatTransformation(NullValue nullValue) {
+        this.nullValue = nullValue;
+    }
 
-	/**
-	 * Emit catalyst from strcatTransformation
-	 * @param ctx StrcatTransformationContext
-	 * @return CatalystNode containing resultset
-	 */
-	public Node strcatTransformationEmitCatalyst(DPLParser.StrcatTransformationContext ctx) {
-		// syntax: strcat allrequired src-fields dest-field
-		// child#	0		1			2			3
-		this.strcatStep = new StrcatStep(nullValue);
-		visitChildren(ctx);
-		return new StepNode(this.strcatStep);
-	}
+    /**
+     * <pre>
+     * -- Command info: --
+     *
+     * {@literal strcat [allrequired=<bool>] <source-fields> <dest-field>}
+     * Concatenates string values from 2 or more fields, combines string values and
+     * literals into a new field. The destination field name is specified at the end of
+     * the strcat command. allrequired is not a required argument, and it can be omitted.
+     *
+     * -- Grammar rules: --
+     *
+     * strcatTransformation
+     *  : COMMAND_MODE_STRCAT (t_strcat_allrequiredParameter)? t_strcat_srcfieldsParameter fieldType
+     *  ;
+     *
+     * t_strcat_allrequiredParameter
+     *  : COMMAND_STRCAT_MODE_ALLREQUIRED booleanType
+     *  ;
+     *
+     * t_strcat_srcfieldsParameter
+     *  : (fieldType | stringType) (fieldType | stringType)+
+     *  ;
+     *
+     * -- SQL: --
+     *
+     * strcat allRequired=bool field1 field2 ... fieldN destField
+     *  to
+     * SELECT CONCAT(field1, field2, ..., fieldN) AS destField FROM ˇtemporaryDPLViewˇ
+     *  </pre>
+     */
+    @Override
+    public Node visitStrcatTransformation(DPLParser.StrcatTransformationContext ctx) {
+        LOGGER.debug(String.format("Child count: %s in StrcatTransformation: %s", ctx.getChildCount(), ctx.getText()));
+        return strcatTransformationEmitCatalyst(ctx);
+    }
 
-	/** <pre>
-	 * t_strcat_allrequiredParameter
-	 *  : COMMAND_STRCAT_MODE_ALLREQUIRED booleanType
-	 *  ;
-	 *
-	 *  If the parameter exists, the second child (child#1) contains the boolean type whether or not all source fields are required
-	 *  </pre>
-	 */
-	@Override
-	public Node visitT_strcat_allrequiredParameter(DPLParser.T_strcat_allrequiredParameterContext ctx) {
-		this.strcatStep.setAllRequired(ctx.booleanType().GET_BOOLEAN_TRUE() != null);
-		return null;
-	}
+    /**
+     * Emit catalyst from strcatTransformation
+     * 
+     * @param ctx StrcatTransformationContext
+     * @return CatalystNode containing resultset
+     */
+    public Node strcatTransformationEmitCatalyst(DPLParser.StrcatTransformationContext ctx) {
+        // syntax: strcat allrequired src-fields dest-field
+        // child#	0		1			2			3
+        this.strcatStep = new StrcatStep(nullValue);
+        visitChildren(ctx);
+        return new StepNode(this.strcatStep);
+    }
 
-	/** <pre>
-	 * 	t_strcat_srcfieldsParameter
-	 *   : (fieldType | stringType) (fieldType | stringType)+
-	 *   ;
-	 *
-	 *  Contains all the source fields, one or more.
-	 *   Adds all fields into an array, while stripping quotes from each one of the fields.</pre>
-	 */
-	@Override
-	public Node visitT_strcat_srcfieldsParameter(DPLParser.T_strcat_srcfieldsParameterContext ctx) {
-		List<String> srcFields = new ArrayList<>();
+    /**
+     * <pre>
+     * t_strcat_allrequiredParameter
+     *  : COMMAND_STRCAT_MODE_ALLREQUIRED booleanType
+     *  ;
+     *
+     *  If the parameter exists, the second child (child#1) contains the boolean type whether or not all source fields are required
+     *  </pre>
+     */
+    @Override
+    public Node visitT_strcat_allrequiredParameter(DPLParser.T_strcat_allrequiredParameterContext ctx) {
+        this.strcatStep.setAllRequired(ctx.booleanType().GET_BOOLEAN_TRUE() != null);
+        return null;
+    }
 
-		ctx.children.forEach(child -> srcFields.add(child.getText()));
+    /**
+     * <pre>
+     * 	t_strcat_srcfieldsParameter
+     *   : (fieldType | stringType) (fieldType | stringType)+
+     *   ;
+     *
+     *  Contains all the source fields, one or more.
+     *   Adds all fields into an array, while stripping quotes from each one of the fields.</pre>
+     */
+    @Override
+    public Node visitT_strcat_srcfieldsParameter(DPLParser.T_strcat_srcfieldsParameterContext ctx) {
+        List<String> srcFields = new ArrayList<>();
 
-		this.strcatStep.setListOfFields(srcFields);
-		this.strcatStep.setNumberOfSrcFieldsOriginally(ctx.getChildCount());
+        ctx.children.forEach(child -> srcFields.add(child.getText()));
 
-		return null;
-	}
+        this.strcatStep.setListOfFields(srcFields);
+        this.strcatStep.setNumberOfSrcFieldsOriginally(ctx.getChildCount());
 
-	@Override
-	public Node visitT_strcat_destfieldParameter(DPLParser.T_strcat_destfieldParameterContext ctx) {
-		this.strcatStep.setDestField(ctx.fieldType().getText());
-		return null;
-	}
+        return null;
+    }
+
+    @Override
+    public Node visitT_strcat_destfieldParameter(DPLParser.T_strcat_destfieldParameterContext ctx) {
+        this.strcatStep.setDestField(ctx.fieldType().getText());
+        return null;
+    }
 }

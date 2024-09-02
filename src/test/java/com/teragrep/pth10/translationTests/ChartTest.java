@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -63,6 +63,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ChartTest {
+
     @Test
     void testChartTranslation() {
         String query = "| chart count(_raw) by _time";
@@ -78,7 +79,10 @@ public class ChartTest {
         ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
         ChartStep cs = ct.chartStep;
 
-        assertEquals("[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
+        assertEquals(
+                "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
+                Arrays.toString(cs.getListOfExpr().toArray())
+        );
         assertEquals("[_time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
 
     }
@@ -98,7 +102,10 @@ public class ChartTest {
         ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
         ChartStep cs = ct.chartStep;
 
-        assertEquals("[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
+        assertEquals(
+                "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
+                Arrays.toString(cs.getListOfExpr().toArray())
+        );
         assertEquals("[_time, fieldTwo]", Arrays.toString(cs.getListOfGroupBy().toArray()));
     }
 
@@ -117,9 +124,11 @@ public class ChartTest {
         ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
         ChartStep cs = ct.chartStep;
 
-        assertEquals("[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]", Arrays.toString(cs.getListOfExpr().toArray()));
+        assertEquals(
+                "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
+                Arrays.toString(cs.getListOfExpr().toArray())
+        );
         assertEquals("[fieldTwo, _time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
 
     }
 }
-

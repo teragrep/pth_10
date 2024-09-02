@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.rex;
 
 import com.teragrep.jpr_01.JavaPcre;
@@ -56,6 +55,7 @@ import org.apache.spark.sql.types.DataTypes;
 import java.util.Map;
 
 public final class RexStep extends AbstractRexStep {
+
     public RexStep() {
         super();
     }
@@ -78,9 +78,11 @@ public final class RexStep extends AbstractRexStep {
         }
         else {
             // extract mode
-            UserDefinedFunction udf = functions.udf(new RexExtractModeUDF(), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType));
+            UserDefinedFunction udf = functions
+                    .udf(new RexExtractModeUDF(), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType));
             ss.udf().register("RexExtractUDF", udf);
-            Column udfResult = functions.callUDF("RexExtractUDF", functions.col(this.field), functions.lit(this.regexStr));
+            Column udfResult = functions
+                    .callUDF("RexExtractUDF", functions.col(this.field), functions.lit(this.regexStr));
 
             final String outputCol = "$$dpl_internal_rex_result$$";
             res = res.withColumn(outputCol, udfResult);
@@ -92,11 +94,8 @@ public final class RexStep extends AbstractRexStep {
 
             // go through the capture group names and if value is null, apply NullValue, otherwise value
             for (String name : nameTable.keySet()) {
-                res = res.withColumn(
-                        name,
-                        functions.when(
-                                functions.isnull(res.col(outputCol).getItem(name)),
-                                functions.lit(catCtx.nullValue.value()).cast(DataTypes.StringType)).otherwise(res.col(outputCol).getItem(name)));
+                res = res
+                        .withColumn(name, functions.when(functions.isnull(res.col(outputCol).getItem(name)), functions.lit(catCtx.nullValue.value()).cast(DataTypes.StringType)).otherwise(res.col(outputCol).getItem(name)));
             }
 
             // drop intermediate result column

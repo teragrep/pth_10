@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.NullValue;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
@@ -60,8 +59,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FillnullTransformation extends DPLParserBaseVisitor<Node> {
+
     public final FillnullStep fillnullStep;
     private final NullValue nullValue;
+
     public FillnullTransformation(NullValue nullValue) {
         this.nullValue = nullValue;
         this.fillnullStep = new FillnullStep();

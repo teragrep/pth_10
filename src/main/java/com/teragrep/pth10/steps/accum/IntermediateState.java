@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -48,6 +48,7 @@ package com.teragrep.pth10.steps.accum;
 import java.io.Serializable;
 
 public class IntermediateState implements Serializable {
+
     private static final long serialVersionUID = 1L;
     private Double aggValueAsDouble;
     private Long aggValueAsLong;
@@ -62,14 +63,14 @@ public class IntermediateState implements Serializable {
 
     public void accumulate(long val) {
         // If long type, accumulate on both as long has less precision compared to double
-        this.aggValueAsLong+=val;
-        this.aggValueAsDouble+=val;
+        this.aggValueAsLong += val;
+        this.aggValueAsDouble += val;
     }
 
     public void accumulate(double val) {
         // If double type, accumulate on only double field and set isLongType to false.
         this.isLongType = false;
-        this.aggValueAsDouble+=val;
+        this.aggValueAsDouble += val;
     }
 
     public boolean isLongType() {
@@ -80,7 +81,8 @@ public class IntermediateState implements Serializable {
         // allow return only if longs were present with no doubles
         if (this.isLongType) {
             return this.aggValueAsLong;
-        } else {
+        }
+        else {
             throw new IllegalStateException("Can't return long value as double type was used!");
         }
     }
@@ -89,7 +91,8 @@ public class IntermediateState implements Serializable {
         // allow return only if one or more doubles were present
         if (!this.isLongType) {
             return this.aggValueAsDouble;
-        } else {
+        }
+        else {
             throw new IllegalStateException("Can't return double value as long type was used!");
         }
     }

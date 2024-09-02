@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -62,22 +62,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class WhereTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(WhereTransformationTest.class);
 
     private final String testFile = "src/test/resources/rex4jTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -102,66 +101,82 @@ public class WhereTransformationTest {
     // ----------------------------------------
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void WhereLikeWildcardTest() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | where _raw like \"%rainfall_rate%\"",
-                testFile,
-                ds -> {
-                    // get extracted column data
-                    List<String> rawColumn =
-                            ds.select("_raw").dropDuplicates()
-                            .collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil.performDPLTest("index=index_A | where _raw like \"%rainfall_rate%\"", testFile, ds -> {
+            // get extracted column data
+            List<String> rawColumn = ds
+                    .select("_raw")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-                    assertEquals(1, rawColumn.size());
-                });
+            assertEquals(1, rawColumn.size());
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void WhereLikeSameTextTest() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | where index like \"index_A\"",
-                testFile,
-                ds -> {
-                    // get extracted column data
-                    List<String> indexColumn = ds.select("index").dropDuplicates()
-                            .collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil.performDPLTest("index=index_A | where index like \"index_A\"", testFile, ds -> {
+            // get extracted column data
+            List<String> indexColumn = ds
+                    .select("index")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-                    assertEquals(1, indexColumn.size());
-                });
+            assertEquals(1, indexColumn.size());
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void WhereLikeNoMatchTest() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | where index like \"index_A_\"",
-                testFile,
-                ds -> {
-                    // get extracted column data
-                    List<String> indexColumn = ds.select("index").dropDuplicates()
-                            .collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil.performDPLTest("index=index_A | where index like \"index_A_\"", testFile, ds -> {
+            // get extracted column data
+            List<String> indexColumn = ds
+                    .select("index")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-                    assertEquals(0, indexColumn.size());
-                });
+            assertEquals(0, indexColumn.size());
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void WhereLikeUnderscoreTest() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | where host like \"_ost\"",
-                testFile,
-                ds -> {
-                    // get extracted column data
-                    List<String> hostColumn = ds.select("host").dropDuplicates()
-                            .collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil.performDPLTest("index=index_A | where host like \"_ost\"", testFile, ds -> {
+            // get extracted column data
+            List<String> hostColumn = ds
+                    .select("host")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-                    assertEquals(1, hostColumn.size());
-                });
+            assertEquals(1, hostColumn.size());
+        });
     }
 }
-
-
-

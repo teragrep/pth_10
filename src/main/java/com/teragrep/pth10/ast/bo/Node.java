@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.bo;
 
 import java.util.ArrayList;
@@ -53,96 +52,96 @@ import java.util.List;
  * Base abstract class for all Nodes
  */
 public abstract class Node {
-	
-	com.teragrep.pth10.ast.bo.Token token;
-	List<Node> children;
 
-	public Node() {
-		; // disconnected ones for lists etc
-	}
-	
-	public Node(com.teragrep.pth10.ast.bo.Token token ) {
-		this.token = token;
-	}
+    com.teragrep.pth10.ast.bo.Token token;
+    List<Node> children;
 
-	// Convenience API to get token base type
-	public Token.Type getNodeType(){
-		return token.getType();
-	}
+    public Node() {
+        ; // disconnected ones for lists etc
+    }
 
-	public void addChild(Node child) {
-		if (this.children == null) {
-			this.children = new ArrayList<Node>();
-		}
-		this.children.add(child);	
-	}
+    public Node(com.teragrep.pth10.ast.bo.Token token) {
+        this.token = token;
+    }
 
-	public List<Node> getChildren(){
-		return this.children;
-	}
+    // Convenience API to get token base type
+    public Token.Type getNodeType() {
+        return token.getType();
+    }
 
-	public String toString() {
-		if (this.token != null) {
-			return this.token.toString();
-		}
-		else {
-			return "null";
-		}
-	}
-	
-	public String toTree() {
-		if (children != null && children.size() > 0) {
-			// recurse children
-			StringBuilder subTree = new StringBuilder();
-			
-			subTree.append("{");
-			subTree.append(this.toString());
-			subTree.append(" ");
-			
-			// their
-			int nChild = this.children.size();
-			while (nChild>0) {
-				Node child = children.get(nChild-1);
-				subTree.append(" ");
-				subTree.append(child.toTree());
-				nChild--;
-			}
-			
-			subTree.append("}");
-			
-			return subTree.toString();
-		}
-		else {
-			// leaf
-			return this.toString();
-		}
-	}
+    public void addChild(Node child) {
+        if (this.children == null) {
+            this.children = new ArrayList<Node>();
+        }
+        this.children.add(child);
+    }
 
-	public String toXMLTree() {
-		if (children != null && children.size() > 0) {
-			// recurse children
-			StringBuilder subTree = new StringBuilder();
-			
-			subTree.append("<");
-			subTree.append(this.toString());
-			subTree.append(" ");
-			
-			// their
-			int nChild = this.children.size();
-			while (nChild>0) {
-				Node child = children.get(nChild-1);
-				subTree.append(" ");
-				subTree.append(child.toTree());
-				nChild--;
-			}
-			
-			subTree.append(">");
-			
-			return subTree.toString();
-		}
-		else {
-			// leaf
-			return this.toString();
-		}
-	}	
+    public List<Node> getChildren() {
+        return this.children;
+    }
+
+    public String toString() {
+        if (this.token != null) {
+            return this.token.toString();
+        }
+        else {
+            return "null";
+        }
+    }
+
+    public String toTree() {
+        if (children != null && children.size() > 0) {
+            // recurse children
+            StringBuilder subTree = new StringBuilder();
+
+            subTree.append("{");
+            subTree.append(this.toString());
+            subTree.append(" ");
+
+            // their
+            int nChild = this.children.size();
+            while (nChild > 0) {
+                Node child = children.get(nChild - 1);
+                subTree.append(" ");
+                subTree.append(child.toTree());
+                nChild--;
+            }
+
+            subTree.append("}");
+
+            return subTree.toString();
+        }
+        else {
+            // leaf
+            return this.toString();
+        }
+    }
+
+    public String toXMLTree() {
+        if (children != null && children.size() > 0) {
+            // recurse children
+            StringBuilder subTree = new StringBuilder();
+
+            subTree.append("<");
+            subTree.append(this.toString());
+            subTree.append(" ");
+
+            // their
+            int nChild = this.children.size();
+            while (nChild > 0) {
+                Node child = children.get(nChild - 1);
+                subTree.append(" ");
+                subTree.append(child.toTree());
+                nChild--;
+            }
+
+            subTree.append(">");
+
+            return subTree.toString();
+        }
+        else {
+            // leaf
+            return this.toString();
+        }
+    }
 }

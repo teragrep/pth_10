@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -62,10 +61,10 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 /**
- * Base transformation for DPL command
- * Currently allows only one subcommand, "parsetree"
+ * Base transformation for DPL command Currently allows only one subcommand, "parsetree"
  */
 public class DPLTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLTransformation.class);
     DPLParserCatalystContext catCtx = null;
 
@@ -86,7 +85,6 @@ public class DPLTransformation extends DPLParserBaseVisitor<Node> {
 
         String explainStr;
         List<String> lines = new ArrayList<>();
-
 
         explainStr = "dpl";
         if (ctx.t_dpl_basefilenameParameter() != null) {
@@ -110,9 +108,8 @@ public class DPLTransformation extends DPLParserBaseVisitor<Node> {
             }
         }
 
-
         // FIXME: This has never been functional, seemingly it was supposed to print subsearch parse tree.
-       /* if(ctx.t_dpl_subsearchParameter()!= null ){
+        /* if(ctx.t_dpl_subsearchParameter()!= null ){
             //add subsearch result
             if (ctx.t_dpl_subsearchParameter().getChild(1).getText().equalsIgnoreCase("true")) {
                 if (symbolTable.containsKey("SubsearchParseTree")) {

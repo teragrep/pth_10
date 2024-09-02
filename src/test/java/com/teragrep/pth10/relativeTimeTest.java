@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -63,28 +63,29 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class relativeTimeTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(relativeTimeTest.class);
-	private TimeZone originalTimeZone = null;
+    private TimeZone originalTimeZone = null;
 
     // use this file to initialize the streaming dataset
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
     private StreamingTestUtil streamingTestUtil;
 
-	@BeforeAll
-	void setEnv() {
+    @BeforeAll
+    void setEnv() {
         // set default timezone
-		originalTimeZone = TimeZone.getDefault();
-		TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
+        originalTimeZone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
 
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
-	}
-	
-	@BeforeEach
-	void setUp() {
-		TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
+    }
+
+    @BeforeEach
+    void setUp() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
         this.streamingTestUtil.setUp();
-	}
+    }
 
     @AfterEach
     void tearDown() {
@@ -93,11 +94,14 @@ public class relativeTimeTest {
 
     @AfterAll
     void recoverTimeZone() {
-		TimeZone.setDefault(originalTimeZone);
-	}
+        TimeZone.setDefault(originalTimeZone);
+    }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimeformatTest() {
         // unix epoch format
         String q = "index=kafka_topic timeformat=%s earliest=1587032680 latest=1587021942";
@@ -110,8 +114,11 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimeformat_example_default_format_Test() {
         // default but given manually
         String q = "index=kafka_topic timeformat=%m/%d/%Y:%H:%M:%S earliest=\"04/16/2020:10:24:40\" latest=\"04/16/2020:10:25:42\"";
@@ -120,14 +127,17 @@ public class relativeTimeTest {
             long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
-            LOGGER.info("Complex timeformat<{}>",q);
+            LOGGER.info("Complex timeformat<{}>", q);
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             assertTrue(result.matches(regex));
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimeformat_custom_format1_Test() {
         // custom format SS-MM-HH YY-DD-MM
         String q = "index=kafka_topic timeformat=\"%S-%M-%H %Y-%d-%m\" earliest=\"40-24-10 2020-16-04\" latest=\"42-25-10 2020-16-04\"";
@@ -141,8 +151,11 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimeformat_custom_format2_Test() {
         // earliest custom format ISO8601 + HH:MM:SS , latest default
         String q = "index=kafka_topic timeformat=\"%F %T\" earliest=\"2020-04-16 10:24:40\" latest=\"2020-04-16 10:25:42\"";
@@ -151,14 +164,17 @@ public class relativeTimeTest {
             long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
-            LOGGER.info("Complex timeformat<{}>",q);
+            LOGGER.info("Complex timeformat<{}>", q);
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             assertTrue(result.matches(regex));
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimeformat_custom_format3_Test() {
         // earliest custom format 16 Apr 2020 10.24.40 AM (dd MMM y hh.mm.ss a) , latest default
         String q = "index=kafka_topic timeformat=\"%d %b %Y %I.%M.%S %p\" earliest=\"16 Apr 2020 10.24.40 AM\" latest=\"16 Apr 2020 10.25.42 AM\"";
@@ -173,8 +189,11 @@ public class relativeTimeTest {
     }
 
     @Disabled(value = "starttimeu is not implemented")
-	@Test // disabled on 2022-05-16 TODO implement
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test // disabled on 2022-05-16 TODO implement
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseStarttimeuTest() {
         String q = "index=cinnamon starttimeu=1587032680";
 
@@ -187,7 +206,10 @@ public class relativeTimeTest {
 
     @Disabled(value = "endtimeu is not implemented")
     @Test // disabled on 2022-05-16 TODO implement
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseEndtimeuTest() {
         String q = "index=cinnamon endtimeu=1587032680";
 
@@ -199,8 +221,11 @@ public class relativeTimeTest {
 
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampEarliestRelativeTest() {
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         Instant t1 = timestamp.toInstant();
@@ -212,23 +237,27 @@ public class relativeTimeTest {
         LocalDateTime etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
         RelativeTimestamp rtTimestamp = rtParser.parse("-1h");
         long rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(etime.getHour(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getHour());
+        assertEquals(
+                etime.getHour(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getHour()
+        );
 
         // -3 min
         exp = t1.plus(-3, ChronoUnit.MINUTES);
         etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
         rtTimestamp = rtParser.parse("-3m");
         rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(etime.getMinute(),
-                LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMinute());
+        assertEquals(
+                etime.getMinute(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMinute()
+        );
         // Using localDateTime-method
         // -1 week
         LocalDateTime dt = timestamp.toLocalDateTime();
         LocalDateTime et = dt.minusWeeks(1);
         rtTimestamp = rtParser.parse("-1w");
         rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(et.getDayOfWeek(),
-                LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getDayOfWeek());
+        assertEquals(
+                et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getDayOfWeek()
+        );
         // -3 month
         dt = timestamp.toLocalDateTime();
         et = dt.minusMonths(3);
@@ -243,30 +272,37 @@ public class relativeTimeTest {
         rtEpoch = rtTimestamp.calculate(timestamp);
         assertEquals(et.getYear(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getYear());
     }
-    
+
     // test snap-to-time "@d"
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampSnapToTimeRelativeTest() {
-    	// Test for snap-to-time functionality
-    	// for example "-@d" would snap back to midnight of set day
-    	long epochSeconds = 1643881600; // Thursday, February 3, 2022 09:46:40 UTC
-    	Timestamp timestamp = new Timestamp(epochSeconds*1000L);
+        // Test for snap-to-time functionality
+        // for example "-@d" would snap back to midnight of set day
+        long epochSeconds = 1643881600; // Thursday, February 3, 2022 09:46:40 UTC
+        Timestamp timestamp = new Timestamp(epochSeconds * 1000L);
         RelativeTimeParser rtParser = new RelativeTimeParser();
-    	
-    	LocalDateTime dt = timestamp.toLocalDateTime();
+
+        LocalDateTime dt = timestamp.toLocalDateTime();
         LocalDateTime et = dt.minusHours(9);
         et = et.minusMinutes(46);
         et = et.minusSeconds(40); // Thu Feb 3, 2022 00:00 UTC
 
         RelativeTimestamp rtTimestamp = rtParser.parse("@d");
         long rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(et.getDayOfWeek(),
-                LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.systemDefault()).getDayOfWeek());
+        assertEquals(
+                et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.systemDefault()).getDayOfWeek()
+        );
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampLatestRelativeTest() {
         String q = "index=cinnamon latest=-3h ";
 
@@ -282,7 +318,10 @@ public class relativeTimeTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampLatestRelativeTestWithPlus() {
         String q = "index=cinnamon latest=+3h ";
 
@@ -298,19 +337,26 @@ public class relativeTimeTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampLatestRelativeTestWithoutSign() {
         String q = "index=cinnamon latest=3h ";
         String expected = "TimeQualifier conversion error: <3h> can't be parsed.";
 
-        RuntimeException exception =
-                this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {});
+        RuntimeException exception = this.streamingTestUtil
+                .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
+                });
 
         assertEquals(expected, exception.getMessage());
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampLatestRelativeSnapTest() {
         String q = "index=cinnamon latest=@d ";
 
@@ -326,8 +372,11 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampLatestRelativeSnapWithOffsetTest() {
         String q = "index=cinnamon latest=@d+3h ";
 
@@ -344,8 +393,11 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampLatestRelativeNowTest() {
         String q = "index=cinnamon latest=now ";
 
@@ -360,10 +412,13 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampRelativeTicket24QueryTest() {
-    	// pth10 ticket #24 query: 'index=... sourcetype=... earliest=@d latest=now'
+        // pth10 ticket #24 query: 'index=... sourcetype=... earliest=@d latest=now'
         String q = "index=cinnamon earliest=@d latest=now";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -372,42 +427,55 @@ public class relativeTimeTest {
             long expectedEarliest = now.truncatedTo(ChronoUnit.DAYS).toInstant().getEpochSecond();
             long expectedLatest = now.toEpochSecond();
             String expectedLatestString = String.valueOf(expectedLatest).substring(0, 7); // don't check last 2 numbers as the query takes some time and the "now" is different
-            String regex = "^.*_time >= from_unixtime\\(" + expectedEarliest + ".*_time < from_unixtime\\(" + expectedLatestString + ".*$";;
+            String regex = "^.*_time >= from_unixtime\\(" + expectedEarliest + ".*_time < from_unixtime\\("
+                    + expectedLatestString + ".*$";
+            ;
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             assertTrue(result.matches(regex));
         });
     }
-    
+
     // should throw an exception
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampRelativeTicket66QueryTest() {
-    	// pth10 ticket #66 query: 'index=... sourcetype=... earliest=@-5h latest=@-3h'
+        // pth10 ticket #66 query: 'index=... sourcetype=... earliest=@-5h latest=@-3h'
         String query = "index=cinnamon earliest=\"@-5h\" latest=\"@-3h\"";
         String expected = "TimeQualifier conversion error: <@-5h> can't be parsed.";
 
-        RuntimeException exception =
-                this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {});
+        RuntimeException exception = this.streamingTestUtil
+                .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
+                });
 
         assertEquals(expected, exception.getMessage());
     }
-    
+
     // should throw an exception
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampRelativeInvalidTimeUnitQueryTest() {
         String q = "index=cinnamon earliest=-5x latest=-7z";
         String e = "Relative timestamp contained an invalid time unit";
-        
-        Throwable exception =
-                this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {});
-        
+
+        Throwable exception = this.streamingTestUtil
+                .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
+                });
+
         assertEquals(e, exception.getMessage());
     }
-    
+
     // test with quotes
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampRelativeWithQuotesTest() {
         String q = "index=cinnamon earliest=\"-3h@h\" latest=\"-1h@h\"";
 
@@ -416,15 +484,19 @@ public class relativeTimeTest {
             Instant now = timestamp.toInstant();
             Instant earliest = now.minus(3L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
             Instant latest = now.minus(1L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
-            String regex = "^.*_time >= from_unixtime\\(" + earliest.getEpochSecond() + ".*_time < from_unixtime\\(" + latest.getEpochSecond() + ".*$";
+            String regex = "^.*_time >= from_unixtime\\(" + earliest.getEpochSecond() + ".*_time < from_unixtime\\("
+                    + latest.getEpochSecond() + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             assertTrue(result.matches(regex));
         });
     }
-    
+
     // test with -h
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampRelativeWithoutExplicitAmountOfTimeTest() {
         String q = "index=cinnamon earliest=\"-h\"";
 
@@ -438,10 +510,13 @@ public class relativeTimeTest {
             assertTrue(result.matches(regex));
         });
     }
-    
+
     // test with relative timestamp, snap to time and offset
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampRelativeComplexTest() {
         String q = "index=cinnamon earliest=\"-3h@d+1d\"";
 
@@ -456,9 +531,12 @@ public class relativeTimeTest {
             assertTrue(result.matches(regex));
         });
     }
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampEarliestTest() {
         String q;
         // earliest
@@ -472,8 +550,11 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampLatestTest() {
         String q;
         // latest
@@ -487,15 +568,19 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampEarliestLatestTest() {
         String q;
         // earliest, latest
         q = "index=cinnamon earliest=\"04/16/2020:10:25:40\" latest=\"04/16/2020:10:25:42\"";
         long earliestEpoch2 = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
         long latestEpoch2 = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2 + ".*$";
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2
+                + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -503,14 +588,18 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseTimestampIndexEarliestLatestTest() {
         // _index_earliest, _index_latest
         String q = "index=cinnamon _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\"";
         long indexEarliestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
         long indexLatestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-        String regex = "^.*_time >= from_unixtime\\(" + indexEarliestEpoch + ".*_time < from_unixtime\\(" + indexLatestEpoch + ".*$";
+        String regex = "^.*_time >= from_unixtime\\(" + indexEarliestEpoch + ".*_time < from_unixtime\\("
+                + indexLatestEpoch + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -518,13 +607,17 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void streamListTest() {
         String q = "index = memory earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
         long earliestEpoch = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
         long latestEpoch = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch + ".*$";
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
+                + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -532,13 +625,17 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void streamList1Test() {
         String q = "index = memory-test earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
         long earliestEpoch2 = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
         long latestEpoch2 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2 + ".*$";
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2
+                + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -546,13 +643,17 @@ public class relativeTimeTest {
         });
     }
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void streamList2Test() {
         String q = "index = memory-test/yyy earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
         long earliestEpoch3 = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
         long latestEpoch3 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch3 + ".*_time < from_unixtime\\(" + latestEpoch3 + ".*$";
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch3 + ".*_time < from_unixtime\\(" + latestEpoch3
+                + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();

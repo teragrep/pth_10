@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -50,7 +50,6 @@ import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -72,14 +71,13 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests time-related aspects of the project,
- * such as TimeStatement.
- * Uses streaming datasets
+ * Tests time-related aspects of the project, such as TimeStatement. Uses streaming datasets
  *
  * @author eemhu
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EarliestLatestTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EarliestLatestTest.class);
 
     // Use this file for dataset initialization
@@ -103,136 +101,47 @@ public class EarliestLatestTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
     // FIXME: earliest-latest defaulting removed and default tests set to Disabled to fix issue #351
 
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void earliestLatestTest1() {
         String query = "index=strawberry earliest=-10y OR index=seagull";
-        this.streamingTestUtil.performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"),
-                res -> {
-                    List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
 
                     assertTrue(indexAsList.contains("strawberry"));
                     assertFalse(indexAsList.contains("seagull"));
                 });
     }
 
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest2( ) {
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest2() {
         String query = "index=strawberry OR index=seagull | stats count(_raw) by index";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertTrue(indexAsList.contains("strawberry"));
-            assertTrue(indexAsList.contains("seagull"));
-        });
-    }
-
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest3( ) {
-        String query = "index=strawberry OR index=seagull earliest=-10y | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertTrue(indexAsList.contains("strawberry"));
-            assertTrue(indexAsList.contains("seagull"));
-        });
-    }
-
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest4( ) {
-        String query = "earliest=-10y index=strawberry OR index=seagull | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertTrue(indexAsList.contains("strawberry"));
-            assertTrue(indexAsList.contains("seagull"));
-        });
-    }
-
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest5( ) {
-        String query = "earliest=-10y index=strawberry OR (index=seagull latest=-10y) | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertTrue(indexAsList.contains("strawberry"));
-            assertFalse(indexAsList.contains("seagull"));
-        });
-    }
-
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest6( ) {
-        String query = "earliest=-10y index=strawberry OR index=seagull latest=-10y | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertFalse(indexAsList.contains("strawberry"));
-            assertFalse(indexAsList.contains("seagull"));
-        });
-    }
-
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest7( ) {
-        String query = "earliest=-10y index=strawberry OR index=seagull latest=-1y | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertTrue(indexAsList.contains("strawberry"));
-            assertTrue(indexAsList.contains("seagull"));
-        });
-    }
-
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest8( ) {
-        String query = "earliest=-20y index=strawberry OR index=seagull earliest=-1d | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertFalse(indexAsList.contains("strawberry"));
-            assertFalse(indexAsList.contains("seagull"));
-        });
-    }
-
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest9( ) {
-        String query = "earliest=-20y index=strawberry OR index=seagull earliest=now | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-
-            assertFalse(indexAsList.contains("strawberry"));
-            assertFalse(indexAsList.contains("seagull"));
-        });
-    }
-    
-	@Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void earliestLatestTest10( ) {
-        String query = "earliest=-20y index=strawberry OR index=seagull latest=now | stats count(_raw) by index";
-        this.streamingTestUtil.performDPLTest(query, this.testFile,setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-            List<String> indexAsList = res.select("index").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> indexAsList = res
+                    .select("index")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
             assertTrue(indexAsList.contains("strawberry"));
             assertTrue(indexAsList.contains("seagull"));
@@ -240,11 +149,187 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest3() {
+        String query = "index=strawberry OR index=seagull earliest=-10y | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertTrue(indexAsList.contains("strawberry"));
+                    assertTrue(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest4() {
+        String query = "earliest=-10y index=strawberry OR index=seagull | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertTrue(indexAsList.contains("strawberry"));
+                    assertTrue(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest5() {
+        String query = "earliest=-10y index=strawberry OR (index=seagull latest=-10y) | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertTrue(indexAsList.contains("strawberry"));
+                    assertFalse(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest6() {
+        String query = "earliest=-10y index=strawberry OR index=seagull latest=-10y | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertFalse(indexAsList.contains("strawberry"));
+                    assertFalse(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest7() {
+        String query = "earliest=-10y index=strawberry OR index=seagull latest=-1y | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertTrue(indexAsList.contains("strawberry"));
+                    assertTrue(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest8() {
+        String query = "earliest=-20y index=strawberry OR index=seagull earliest=-1d | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertFalse(indexAsList.contains("strawberry"));
+                    assertFalse(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest9() {
+        String query = "earliest=-20y index=strawberry OR index=seagull earliest=now | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertFalse(indexAsList.contains("strawberry"));
+                    assertFalse(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void earliestLatestTest10() {
+        String query = "earliest=-20y index=strawberry OR index=seagull latest=now | stats count(_raw) by index";
+        this.streamingTestUtil
+                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+                    List<String> indexAsList = res
+                            .select("index")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+
+                    assertTrue(indexAsList.contains("strawberry"));
+                    assertTrue(indexAsList.contains("seagull"));
+                });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void defaultFormatTest() { // MM/dd/yyyy:HH:mm:ss 2013-07-15 10:01:50
         String query = "(index=strawberry OR index=seagull) AND earliest=03/15/2014:00:00:00";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> time = res
+                    .select("_time")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
             assertEquals("2014-04-15 08:23:17", time.get(0));
             assertEquals("2014-03-15 21:54:14", time.get(1));
@@ -252,19 +337,32 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void defaultFormatInvalidInputTest() { // MM/dd/yyyy:HH:mm:ss 2013-07-15 10:01:50
         String query = "(index=strawberry OR index=seagull) AND earliest=31/31/2014:00:00:00";
-        RuntimeException sqe = this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {});
+        RuntimeException sqe = this.streamingTestUtil
+                .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
+                });
         assertEquals("TimeQualifier conversion error: <31/31/2014:00:00:00> can't be parsed.", sqe.getMessage());
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void ISO8601ZonedFormatTest() { // '2011-12-03T10:15:30+01:00'
         String query = "(index=strawberry OR index=seagull) AND earliest=2014-03-15T00:00:00+03:00";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> time = res
+                    .select("_time")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
             assertEquals("2014-04-15 08:23:17", time.get(0));
             assertEquals("2014-03-15 21:54:14", time.get(1));
@@ -272,11 +370,19 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void ISO8601WithoutZoneFormatTest() { // '2011-12-03T10:15:30+01:00'
         String query = "(index=strawberry OR index=seagull) AND earliest=2014-03-15T00:00:00";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> time = res
+                    .select("_time")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
             assertEquals("2014-04-15 08:23:17", time.get(0));
             assertEquals("2014-03-15 21:54:14", time.get(1));
@@ -284,18 +390,29 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void OverflowTest( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void OverflowTest() {
         String query = "index=strawberry latest=-3644444444444444d";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> time = res
+                    .select("_time")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
             assertTrue(time.isEmpty());
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void OverflowTest2( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void OverflowTest2() {
         String query = "index=strawberry earliest=-1000y@y latest=+3644444444444444d";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             String maxTime = res.agg(functions.max("_time")).first().getString(0);
@@ -307,8 +424,11 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void TimeformatTest1( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void TimeformatTest1() {
         String query = "index=strawberry timeformat=%s earliest=0";
         this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
             // epoch test data contains values from 1970-01-01 till 2050-03-15
@@ -321,8 +441,11 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void TimeformatTest2( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void TimeformatTest2() {
         String query = "index=strawberry timeformat=\"%Y-%m-%d-%H-%M-%S\" earliest=2030-01-01-00-00-00 latest=2040-01-01-00-00-00";
         this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
             // epoch test data contains values from 1970-01-01 till 2050-03-15
@@ -368,7 +491,6 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = i.plus(amount, ChronoUnit.MINUTES).getEpochSecond();
 
-
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
@@ -388,7 +510,6 @@ public class EarliestLatestTest {
         final int amount = 100;
         // Expected result
         final long expected = i.plus(amount, ChronoUnit.HOURS).getEpochSecond();
-
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
@@ -410,7 +531,6 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = i.plus(amount, ChronoUnit.DAYS).getEpochSecond();
 
-
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100d etc.
@@ -430,7 +550,6 @@ public class EarliestLatestTest {
         final int amount = 100;
         // Expected result
         final long expected = now.plusWeeks(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
@@ -471,7 +590,6 @@ public class EarliestLatestTest {
         final long amount = 100;
         // Expected result
         final long expected = now.plusYears(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
@@ -525,7 +643,12 @@ public class EarliestLatestTest {
 
         // Amount to add
         final long v = Long.MAX_VALUE;
-        final long expected = Instant.ofEpochMilli(v).atZone(ZoneId.systemDefault()).withYear(9999).toInstant().getEpochSecond();
+        final long expected = Instant
+                .ofEpochMilli(v)
+                .atZone(ZoneId.systemDefault())
+                .withYear(9999)
+                .toInstant()
+                .getEpochSecond();
 
         // positive overflow epoch should be long max value
         RelativeTimeParser rtParser = new RelativeTimeParser();
@@ -548,9 +671,12 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void defaultEarliestLatestTest1( ) { // '2011-12-03T10:15:30+01:00'
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void defaultEarliestLatestTest1() { // '2011-12-03T10:15:30+01:00'
         String query = "(index=strawberry OR index=seagull)";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(-1L);
         this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
@@ -567,8 +693,11 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void defaultEarliestLatestTest2() { // '2011-12-03T10:15:30+01:00'
         String query = "(index=strawberry earliest=2014-03-15T21:54:14+02:00) OR index=seagull)";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(-1L);
@@ -586,15 +715,23 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void defaultEarliestLatestTest3() { // '2011-12-03T10:15:30+01:00'
         String query = "(index=strawberry earliest=2014-03-15T21:54:14+02:00) OR (index=seagull earliest=2014-04-15T08:23:17+02:00))";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
         this.streamingTestUtil.getCtx().setDplDefaultLatest(1678713103L);
 
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            List<String> time = res.select("_time").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> time = res
+                    .select("_time")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
             assertEquals(2, time.size());
             assertEquals("2014-04-15 08:23:17", time.get(0));
@@ -609,9 +746,12 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void defaultEarliestLatestTest4( ) {
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void defaultEarliestLatestTest4() {
         String query = "(earliest=1900-01-01T00:00:00Z latest=1960-01-01T00:00:00Z) OR ((index=seagull earliest=1970-01-01T00:00:00Z latest=2100-01-01T00:00:00Z)) OR index=strawberry earliest=1950-01-01T00:00:00Z";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
         this.streamingTestUtil.getCtx().setDplDefaultLatest(1678711652L);
@@ -620,40 +760,30 @@ public class EarliestLatestTest {
 
         });
 
-        final String expectedXml = "<AND>" +
-                "<OR>" +
-                "<OR>" +
-                "<AND>" +
-                "<earliest operation=\"GE\" value=\"-2208994789\"/>" +
-                "<latest operation=\"LE\" value=\"-315626400\"/>" +
-                "</AND>" +
-                "<AND>" +
-                "<AND>" +
-                "<comparisonstatement field=\"index\" operation=\"=\" value=\"seagull\"/>" +
-                "<earliest operation=\"GE\" value=\"-7200\"/>" +
-                "</AND>" +
-                "<latest operation=\"LE\" value=\"4102437600\"/>" +
-                "</AND>" +
-                "</OR>" +
-                "<AND>" +
-                "<comparisonstatement field=\"index\" operation=\"=\" value=\"strawberry\"/>" +
-                "<latest operation=\"LE\" value=\"1678711652\"/>" +
-                "</AND>" +
-                "</OR>" +
-                "<earliest operation=\"GE\" value=\"-631159200\"/>" +
-                "</AND>";
-        final String expectedSpark = "(((((_time >= from_unixtime(-2208994789, yyyy-MM-dd HH:mm:ss)) AND (_time <= from_unixtime(-315626400, yyyy-MM-dd HH:mm:ss)))" +
-                " OR ((index RLIKE ^seagull$ AND (_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(4102437600, yyyy-MM-dd HH:mm:ss))))" +
-                " OR (index RLIKE ^strawberry$ AND (_time <= from_unixtime(1678711652, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(-631159200, yyyy-MM-dd HH:mm:ss)))";
+        final String expectedXml = "<AND>" + "<OR>" + "<OR>" + "<AND>"
+                + "<earliest operation=\"GE\" value=\"-2208994789\"/>"
+                + "<latest operation=\"LE\" value=\"-315626400\"/>" + "</AND>" + "<AND>" + "<AND>"
+                + "<comparisonstatement field=\"index\" operation=\"=\" value=\"seagull\"/>"
+                + "<earliest operation=\"GE\" value=\"-7200\"/>" + "</AND>"
+                + "<latest operation=\"LE\" value=\"4102437600\"/>" + "</AND>" + "</OR>" + "<AND>"
+                + "<comparisonstatement field=\"index\" operation=\"=\" value=\"strawberry\"/>"
+                + "<latest operation=\"LE\" value=\"1678711652\"/>" + "</AND>" + "</OR>"
+                + "<earliest operation=\"GE\" value=\"-631159200\"/>" + "</AND>";
+        final String expectedSpark = "(((((_time >= from_unixtime(-2208994789, yyyy-MM-dd HH:mm:ss)) AND (_time <= from_unixtime(-315626400, yyyy-MM-dd HH:mm:ss)))"
+                + " OR ((index RLIKE ^seagull$ AND (_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(4102437600, yyyy-MM-dd HH:mm:ss))))"
+                + " OR (index RLIKE ^strawberry$ AND (_time <= from_unixtime(1678711652, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(-631159200, yyyy-MM-dd HH:mm:ss)))";
 
         assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
         assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void defaultEarliestLatestTest5( ) {
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void defaultEarliestLatestTest5() {
         String query = "index=strawberry OR index=seagull earliest=2020-01-01T00:00:00Z";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
         this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
@@ -670,11 +800,14 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void defaultEarliestLatestTest6( ) {
-        String query = "index=seagull earliest=1970-01-01T00:00:00.000+02:00 OR " +
-                "index=strawberry earliest=2010-12-31T00:00:00.000+02:00";
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void defaultEarliestLatestTest6() {
+        String query = "index=seagull earliest=1970-01-01T00:00:00.000+02:00 OR "
+                + "index=strawberry earliest=2010-12-31T00:00:00.000+02:00";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
         this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
 
@@ -689,11 +822,13 @@ public class EarliestLatestTest {
         assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
-
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void defaultEarliestLatestTest7( ) {
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void defaultEarliestLatestTest7() {
         String query = "(index=strawberry earliest=2019-01-01T00:00:00Z) AND (index=seagull) earliest=2009-01-01T00:00:00Z";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
         this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
@@ -708,9 +843,12 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value="Should be changed to a dataframe test")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void defaultEarliestLatestTest8( ) {
+    @Disabled(value = "Should be changed to a dataframe test")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void defaultEarliestLatestTest8() {
         String query = "(index=strawberry earliest=2019-01-01T00:00:00Z) AND (index=seagull) earliest=2009-01-01T00:00:00Z";
         this.streamingTestUtil.getCtx().setDplDefaultEarliest(0L);
         this.streamingTestUtil.getCtx().setDplDefaultLatest(1L);
@@ -725,8 +863,11 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void searchIssue383Test( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchIssue383Test() {
         // test issue 383
         // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
         String query = " index=abc earliest=\"01/01/2022:00:00:00\" latest=\"01/02/2022:00:00:00\" \"XYZ=\\\"yes asd\\\"\" ";
@@ -737,8 +878,11 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void searchIssue383_2Test( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchIssue383_2Test() {
         // test issue 383
         // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
         String query = " index=abc \"XYZ=\\\"yes asd\\\"\" ";
@@ -751,9 +895,12 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value="Broken on pth-03")
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void searchIssue384Test( ) {
+    @Disabled(value = "Broken on pth-03")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchIssue384Test() {
         // test issue 384
         // FIXME: Parser error: line 1:35 token recognition error at: '"[17/Aug/2023:08:03:55.441546368 +0300] conn='
         // |makeresultscount=1|eval_raw=917818
@@ -762,14 +909,20 @@ public class EarliestLatestTest {
             Row r = res.select("_raw").first();
             String s = r.getAs(0).toString();
 
-            assertEquals("[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"", s);
+            assertEquals(
+                    "[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"",
+                    s
+            );
         });
     }
 
-    @Disabled(value="Broken on pth-03") /* FIXME: Parser can't handle = symbol inside quotes */
+    @Disabled(value = "Broken on pth-03") /* FIXME: Parser can't handle = symbol inside quotes */
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void searchIssue384_2Test( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchIssue384_2Test() {
         // test issue 384
         // works with escaping '=' symbols
         String query = " | makeresults count=1 | eval _raw=\"[10/Jan/2020:05:03:55.441546368 +0300] xyz\\=654321 ab\\=2 DEF pid\\=\\\"1.23.456.7.899999.1.2.34\\\" key\\=\\\"random-words-here\\\"\"";
@@ -777,25 +930,34 @@ public class EarliestLatestTest {
             Row r = res.select("_raw").first();
             String s = r.getAs(0).toString();
 
-            assertEquals("[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"", s);
+            assertEquals(
+                    "[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"",
+                    s
+            );
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void searchIssue382Test( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchIssue382Test() {
         // test issue 382
         // case: index=* earliest=x latest=y abcdef and index=*abc* earliest=x latest=y abcdef match differently (data/no data)
-        this.streamingTestUtil.performDPLTest("index=*g*", this.testFile,res -> {
-            if (res.count() == 0){
+        this.streamingTestUtil.performDPLTest("index=*g*", this.testFile, res -> {
+            if (res.count() == 0) {
                 fail("(index=*g*) Expected result rows, instead got 0");
             }
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void searchIssue382Test2( ) {
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchIssue382Test2() {
         // test issue 382
         // index=* case
         this.streamingTestUtil.performDPLTest("index=*", this.testFile, res -> {

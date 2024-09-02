@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast;
 
 import java.text.ParseException;
@@ -51,16 +50,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * Parser for the three default timeformats that can be used:
- * 1. MM/dd/yyyy:HH:mm:ss
- * 2. ISO 8601 with timezone offset, e.g. 2011-12-03T10:15:30+01:00
- * 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30
- * When timezone is not specified, uses the system default
+ * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
+ * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
+ * uses the system default
  */
 public class DefaultTimeFormat {
 
     /**
      * Calculate the epoch from given string.
+     * 
      * @param time The human-readable time
      * @return epoch as long
      */
@@ -70,6 +68,7 @@ public class DefaultTimeFormat {
 
     /**
      * Parses the given human-readable time to a Date object.
+     * 
      * @param time The human-readable time
      * @return Date parsed from the given string
      */
@@ -84,21 +83,25 @@ public class DefaultTimeFormat {
                     // Use default format (MM/dd/yyyy:HH:mm:ss)
                     // Use system default timezone
                     date = this.parseDate(time, "MM/dd/yyyy:HH:mm:ss");
-                } else if (attempt == 1) {
+                }
+                else if (attempt == 1) {
                     // On first fail, try ISO 8601 with timezone offset, e.g. '2011-12-03T10:15:30+01:00'
                     date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ssXXX");
-                } else {
+                }
+                else {
                     // On second fail, try ISO 8601 without offset, e.g. '2011-12-03T10:15:30'
                     // Use system default timezone
                     date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ss");
                 }
                 break;
 
-            } catch (ParseException e) {
+            }
+            catch (ParseException e) {
                 if (attempt > 1) {
                     throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
                 }
-            } finally {
+            }
+            finally {
                 attempt++;
             }
         }

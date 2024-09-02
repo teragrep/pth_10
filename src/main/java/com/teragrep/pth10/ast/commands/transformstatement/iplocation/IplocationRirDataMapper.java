@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.iplocation;
 
 import com.maxmind.db.Reader;
@@ -65,11 +64,11 @@ import java.util.Map;
 
 /**
  * Maps each IP address string to location information.<br>
- * Requires a rir-data MaxMind database to function.
- * Expects the rir-data schema to contain "Country" and "Operator", however
- * will skip any null values and return empty strings if encountered.
+ * Requires a rir-data MaxMind database to function. Expects the rir-data schema to contain "Country" and "Operator",
+ * however will skip any null values and return empty strings if encountered.
  */
 public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Map<String, String>> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IplocationRirDataMapper.class);
     private boolean initialized = false;
     private final String path;
@@ -97,8 +96,9 @@ public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Ma
 
         InetAddress inetAddress;
         try {
-             inetAddress = InetAddress.getByName(ipString);
-        } catch (UnknownHostException uhe) {
+            inetAddress = InetAddress.getByName(ipString);
+        }
+        catch (UnknownHostException uhe) {
             LOGGER.warn("Unknown host exception: <{}>. Returning null result.", uhe);
             result.put("country", nullValue.value());
             result.put("operator", nullValue.value());
@@ -132,7 +132,8 @@ public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Ma
 
     /**
      * Reads a file from HDFS and prepares an InputStream of it
-     * @param path HDFS (or local) file path
+     * 
+     * @param path       HDFS (or local) file path
      * @param hadoopConf Hadoop configuration item required for HDFS reading
      * @return Java IO InputStream of the file
      */
@@ -150,7 +151,8 @@ public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Ma
             else {
                 throw new RuntimeException("Invalid database file path given for iplocation command.");
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -159,6 +161,7 @@ public class IplocationRirDataMapper implements UDF3<String, String, Boolean, Ma
 
     /**
      * Assembles the Hadoop configuration object based on the key-value mapping of internal hadoop config map<br>
+     * 
      * @param hadoopCfgMap Map containing key-value pairs of hadoop configuration
      * @return Hadoop configuration object
      */

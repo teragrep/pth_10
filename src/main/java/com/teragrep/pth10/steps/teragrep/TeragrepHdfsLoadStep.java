@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -74,6 +73,7 @@ import java.util.stream.Collectors;
  * Teragrep exec hdfs load: Load avro-formatted data from disk to memory
  */
 public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepHdfsLoadStep.class);
     private final DPLParserCatalystContext catCtx;
     public final String pathStr;
@@ -85,7 +85,13 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
         CSV, JSON, AVRO
     }
 
-    public TeragrepHdfsLoadStep(DPLParserCatalystContext catCtx, String pathStr, Format format, boolean header, String schema) {
+    public TeragrepHdfsLoadStep(
+            DPLParserCatalystContext catCtx,
+            String pathStr,
+            Format format,
+            boolean header,
+            String schema
+    ) {
         this.catCtx = catCtx;
         this.pathStr = pathStr;
         this.format = format;
@@ -98,8 +104,8 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
         Dataset<Row> rv = null;
         try {
             // get hadoop fs
-            org.apache.hadoop.fs.FileSystem fs = org.apache.hadoop.fs.FileSystem.get(
-                    catCtx.getSparkSession().sparkContext().hadoopConfiguration());
+            org.apache.hadoop.fs.FileSystem fs = org.apache.hadoop.fs.FileSystem
+                    .get(catCtx.getSparkSession().sparkContext().hadoopConfiguration());
             // first check if there is any wildcards
             if (pathStr.contains("*")) {
                 // wildcard * char present
@@ -110,7 +116,8 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
 
                     if (rv == null) {
                         rv = processHdfsLoad(sPath, fs, false, schema);
-                    } else {
+                    }
+                    else {
                         Dataset<Row> res = processHdfsLoad(sPath, fs, false, schema);
                         if (res != null) {
                             rv = rv.union(res);
@@ -118,20 +125,22 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                     }
                 }
 
-            } else {
+            }
+            else {
                 // no wildcard char present
                 LOGGER.info("HDFS Load did not find a wildcard char, loading as single path");
                 rv = processHdfsLoad(pathStr, fs, true, schema);
             }
 
-
-        } catch (IOException ioe) {
+        }
+        catch (IOException ioe) {
             throw new RuntimeException(ioe);
         }
 
         if (rv == null) {
-            throw new RuntimeException("HDFS Load did not find any valid data in the given path, please double-check " +
-                    "the path.");
+            throw new RuntimeException(
+                    "HDFS Load did not find any valid data in the given path, please double-check " + "the path."
+            );
         }
 
         return rv;
@@ -139,11 +148,13 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
 
     /**
      * Used to process each of the paths and return the loaded dataset
+     * 
      * @param pathStr HDFS path to the folder containing the 'metadata.dpl' file and '/data' folder.
-     * @param fs Hadoop FS object
+     * @param fs      Hadoop FS object
      * @return loaded data as Dataset
      */
-    private Dataset<Row> processHdfsLoad(String pathStr, FileSystem fs, boolean isSinglePath, String csvSchema) throws StreamingQueryException {
+    private Dataset<Row> processHdfsLoad(String pathStr, FileSystem fs, boolean isSinglePath, String csvSchema)
+            throws StreamingQueryException {
         // read metadata first
         HdfsSaveMetadata metadata;
         StructType schema = new StructType();
@@ -166,13 +177,18 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                 wasStreaming = metadata.getWasStreamingDataset();
                 originalSchema = metadata.getOriginalSchema();
                 mapOfAvroNames = metadata.getMapOfAvroColumnNames();
-            } else if (format == Format.AVRO && isSinglePath) {
-                throw new RuntimeException("Could not find metadata in the specified path. Double-check the given path.");
-            } else if (format == Format.AVRO) {
+            }
+            else if (format == Format.AVRO && isSinglePath) {
+                throw new RuntimeException(
+                        "Could not find metadata in the specified path. Double-check the given path."
+                );
+            }
+            else if (format == Format.AVRO) {
                 throw new RuntimeException("Path '" + pathStr + "' did not contain the necessary metadata.");
             }
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -187,15 +203,23 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                 if (wasStreaming) {
                     // Standard streaming dataset, e.g. no aggregations or forEachBatch mode when saved
                     return ss.readStream().format("avro").schema(schema).load(pathStr.concat("/data"));
-                } else {
+                }
+                else {
                     // Non-streaming dataset, e.g. aggregations or forEachBatch mode when saved.
 
                     // read json dataset
-                    Dataset<Row> jsonDataset = ss.readStream().format("avro").schema(schema).load(pathStr.concat("/data"));
+                    Dataset<Row> jsonDataset = ss
+                            .readStream()
+                            .format("avro")
+                            .schema(schema)
+                            .load(pathStr.concat("/data"));
 
                     // explode into '$$dpl_internal_json_table$$' column
-                    Dataset<Row> explodedJsonDs = jsonDataset.withColumn("$$dpl_internal_json_table$$",
-                            functions.explode(functions.from_json(functions.col("value"), DataTypes.createArrayType(DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType)))));
+                    Dataset<Row> explodedJsonDs = jsonDataset
+                            .withColumn(
+                                    "$$dpl_internal_json_table$$", functions
+                                            .explode(functions.from_json(functions.col("value"), DataTypes.createArrayType(DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType))))
+                            );
 
                     // get original column names and prefix with '$$dpl_internal_json_table$$.' to access them
                     final List<String> jsonTableFields = new ArrayList<>();
@@ -204,11 +228,13 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                     }
 
                     // select only prefixed columns
-                    Seq<Column> selectCols = JavaConversions.asScalaBuffer(jsonTableFields.stream().map(functions::col).collect(Collectors.toList()));
+                    Seq<Column> selectCols = JavaConversions
+                            .asScalaBuffer(jsonTableFields.stream().map(functions::col).collect(Collectors.toList()));
                     explodedJsonDs = explodedJsonDs.select(selectCols);
                     return explodedJsonDs;
                 }
-            } else {
+            }
+            else {
                 // new avro-friendly save
                 // load data from disk
                 Dataset<Row> out = ss.readStream().format("avro").schema(schema).load(pathStr.concat("/data"));
@@ -221,33 +247,41 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                 // get timechart span if '_time' column is present
                 for (StructField field : out.schema().fields()) {
                     if (field.name().equals("_time")) {
-                        LOGGER.info("Found '_time' column in HDFS load data, reading min and max for timechart range calculation.");
+                        LOGGER
+                                .info(
+                                        "Found '_time' column in HDFS load data, reading min and max for timechart range calculation."
+                                );
                         AtomicLong earliest = new AtomicLong(Long.MAX_VALUE);
                         AtomicLong latest = new AtomicLong(Long.MIN_VALUE);
-                        DataStreamWriter<Row> dsw = out
-                                .writeStream()
-                                .foreachBatch((ds, i) -> {
-                                    if (!ds.isEmpty()) {
-                                        final long newEarliest = ds.agg(functions.min("_time")).first().getTimestamp(0).getTime() / 1000L;
-                                        if (earliest.get() > newEarliest) {
-                                            LOGGER.debug("Set default earliest: <{}>", newEarliest);
-                                            earliest.set(newEarliest);
-                                        }
+                        DataStreamWriter<Row> dsw = out.writeStream().foreachBatch((ds, i) -> {
+                            if (!ds.isEmpty()) {
+                                final long newEarliest = ds
+                                        .agg(functions.min("_time"))
+                                        .first()
+                                        .getTimestamp(0)
+                                        .getTime() / 1000L;
+                                if (earliest.get() > newEarliest) {
+                                    LOGGER.debug("Set default earliest: <{}>", newEarliest);
+                                    earliest.set(newEarliest);
+                                }
 
-                                        final long newLatest = ds.agg(functions.max("_time")).first().getTimestamp(0).getTime() / 1000L;
-                                        if (latest.get() < newLatest) {
-                                            LOGGER.debug("Set default latest: <{}>", newLatest);
-                                            latest.set(newLatest);
-                                        }
-                                    } else {
-                                        LOGGER.info("Avro file was empty, returning an empty dataset.");
-                                    }
-                                });
+                                final long newLatest = ds.agg(functions.max("_time")).first().getTimestamp(0).getTime()
+                                        / 1000L;
+                                if (latest.get() < newLatest) {
+                                    LOGGER.debug("Set default latest: <{}>", newLatest);
+                                    latest.set(newLatest);
+                                }
+                            }
+                            else {
+                                LOGGER.info("Avro file was empty, returning an empty dataset.");
+                            }
+                        });
 
-                        StreamingQuery sq = catCtx.getInternalStreamingQueryListener().registerQuery(String.valueOf(UUID.randomUUID()), dsw);
+                        StreamingQuery sq = catCtx
+                                .getInternalStreamingQueryListener()
+                                .registerQuery(String.valueOf(UUID.randomUUID()), dsw);
 
                         sq.awaitTermination();
-
 
                         catCtx.setDplMinimumEarliest(earliest.get());
                         catCtx.setDplMaximumLatest(latest.get());
@@ -257,50 +291,53 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
 
                 return out;
             }
-        } else if (format == Format.CSV) {
-                // Standard csv format streaming dataset
-                String fileFormat = "csv";
-                DataStreamReader reader = ss.readStream();
-                if (header) {
-                    reader = reader.option("header", "true");
-                } else {
-                    reader = reader.option("header", "false");
-                }
+        }
+        else if (format == Format.CSV) {
+            // Standard csv format streaming dataset
+            String fileFormat = "csv";
+            DataStreamReader reader = ss.readStream();
+            if (header) {
+                reader = reader.option("header", "true");
+            }
+            else {
+                reader = reader.option("header", "false");
+            }
 
-                // prioritize schema given in command
-                if (csvSchema != null && !csvSchema.isEmpty()) {
-                    reader = reader.schema(generateSchemaFromCsvHeader(csvSchema));
-                } else if (schema != null && !schema.isEmpty()) {
-                    // schema from metadata
-                    reader = reader.schema(schema);
-                } else {
-                    // no schema, load all in _raw column
-                    // read as plain text to ignore delimiters
-                    fileFormat = "text";
-                    reader = reader.schema(new StructType(
-                            new StructField[]
-                                    {
-                                            new StructField("_raw", DataTypes.StringType, true,
-                                                    new MetadataBuilder().build())
-                                    }));
-                }
+            // prioritize schema given in command
+            if (csvSchema != null && !csvSchema.isEmpty()) {
+                reader = reader.schema(generateSchemaFromCsvHeader(csvSchema));
+            }
+            else if (schema != null && !schema.isEmpty()) {
+                // schema from metadata
+                reader = reader.schema(schema);
+            }
+            else {
+                // no schema, load all in _raw column
+                // read as plain text to ignore delimiters
+                fileFormat = "text";
+                reader = reader.schema(new StructType(new StructField[] {
+                        new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build())
+                }));
+            }
 
-                // files saved with HDFS save use a directory-based path
-                // 3rd party files may be single .csv files
-                if (pathStr.endsWith(".csv")) {
-                    // append wildcard to make it a directory, structured streaming requires it
-                    return reader.format(fileFormat).load(pathStr.concat("*"));
-                } else {
-                    return reader.format(fileFormat).load(pathStr.concat("/data"));
-                }
-        } else {
-                throw new IllegalArgumentException("Format '" + format + "' is not supported.");
+            // files saved with HDFS save use a directory-based path
+            // 3rd party files may be single .csv files
+            if (pathStr.endsWith(".csv")) {
+                // append wildcard to make it a directory, structured streaming requires it
+                return reader.format(fileFormat).load(pathStr.concat("*"));
+            }
+            else {
+                return reader.format(fileFormat).load(pathStr.concat("/data"));
+            }
+        }
+        else {
+            throw new IllegalArgumentException("Format '" + format + "' is not supported.");
         }
     }
 
     /**
-     * Generate a Spark-compatible schema from a comma-separated header
-     * "a, b, c, d"
+     * Generate a Spark-compatible schema from a comma-separated header "a, b, c, d"
+     * 
      * @param csvHeader CSV-style header schema
      * @return StructType containing the same schema. All as StringType.
      */

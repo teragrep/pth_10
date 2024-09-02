@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -64,12 +64,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class JoinTest {
+
     /*
         String joinMode = "inner";
-		Boolean usetime = false;
-		Boolean earlier = true;
-		Boolean overwrite = true;
-		Integer max = 1;
+    	Boolean usetime = false;
+    	Boolean earlier = true;
+    	Boolean overwrite = true;
+    	Integer max = 1;
      */
     @Test
     void testJoinTranslation() {
@@ -83,7 +84,6 @@ public class JoinTest {
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-
 
         JoinTransformation ct = new JoinTransformation(visitor, ctx);
         ct.visitJoinTransformation((DPLParser.JoinTransformationContext) tree.getChild(1).getChild(0));
@@ -124,4 +124,3 @@ public class JoinTest {
         assertFalse(cs.getUsetime());
     }
 }
-

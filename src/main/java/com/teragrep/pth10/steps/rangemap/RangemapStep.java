@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class RangemapStep extends AbstractRangemapStep {
+
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) {
         // check values
@@ -80,7 +81,7 @@ public final class RangemapStep extends AbstractRangemapStep {
         Column mapCol = functions.map_from_arrays(keyCol, valueCol);
 
         // apply udf to column "range"
-        return dataset.withColumn("range", functions.callUDF("RangemapUDF",
-                functions.col(sourceField), functions.lit(defaultValue), mapCol));
+        return dataset
+                .withColumn("range", functions.callUDF("RangemapUDF", functions.col(sourceField), functions.lit(defaultValue), mapCol));
     }
 }

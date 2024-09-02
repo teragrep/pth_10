@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast;
 
 import com.teragrep.pth_06.ArchiveMicroStreamReader;
@@ -63,8 +62,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
- * StreamingQueryListener used to handle stopping all the streaming queries used internally in the
- * DPL translation layer (pth_10).
+ * StreamingQueryListener used to handle stopping all the streaming queries used internally in the DPL translation layer
+ * (pth_10).
  */
 public class DPLInternalStreamingQueryListener extends StreamingQueryListener implements Serializable {
 
@@ -76,15 +75,12 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
     private final Map<String, DPLInternalStreamingQuery> _queries = new HashMap<>();
 
     /**
-     * Used to send messages about the current streaming queries to the UI
-     * Map [K: String, V: Map[K:String, V:String]]
+     * Used to send messages about the current streaming queries to the UI Map [K: String, V: Map[K:String, V:String]]
      */
     private Consumer<Map<String, Map<String, String>>> _msgHandler;
 
     /**
-     * Contains information of all the queries
-     * Key = query id
-     * Value = map of query info key-value
+     * Contains information of all the queries Key = query id Value = map of query info key-value
      */
     private final Map<String, Map<String, String>> _queryInfoMap = new HashMap<>();
 
@@ -94,6 +90,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Initializes this listener in the specified sparkSession.
+     * 
      * @param sparkSession sparkSession to initialize the listener in
      */
     public void init(SparkSession sparkSession) {
@@ -109,6 +106,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Add message handler to this listener
+     * 
      * @param handler Consumer of type String
      */
     public void registerHandler(Consumer<Map<String, Map<String, String>>> handler) {
@@ -126,6 +124,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Emit on query start
+     * 
      * @param queryStartedEvent Spark calls on query start
      */
     @Override
@@ -142,6 +141,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Emit on query progress
+     * 
      * @param queryProgressEvent Spark calls on query progress
      */
     @Override
@@ -152,9 +152,11 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
         internalKeyValueMap.put("name", nameOfQuery);
         internalKeyValueMap.put("status", "processing");
 
-        internalKeyValueMap.put("processedRowsPerSecond", String.valueOf(queryProgressEvent.progress().processedRowsPerSecond()));
+        internalKeyValueMap
+                .put("processedRowsPerSecond", String.valueOf(queryProgressEvent.progress().processedRowsPerSecond()));
         internalKeyValueMap.put("batchId", String.valueOf(queryProgressEvent.progress().batchId()));
-        internalKeyValueMap.put("inputRowsPerSecond", String.valueOf(queryProgressEvent.progress().inputRowsPerSecond()));
+        internalKeyValueMap
+                .put("inputRowsPerSecond", String.valueOf(queryProgressEvent.progress().inputRowsPerSecond()));
         internalKeyValueMap.put("id", String.valueOf(queryProgressEvent.progress().id()));
         internalKeyValueMap.put("runId", String.valueOf(queryProgressEvent.progress().runId()));
         internalKeyValueMap.put("timestamp", queryProgressEvent.progress().timestamp());
@@ -166,11 +168,19 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
             internalKeyValueMap.put("sourceDescription", queryProgressEvent.progress().sources()[0].description());
             internalKeyValueMap.put("sourceStartOffset", queryProgressEvent.progress().sources()[0].startOffset());
             internalKeyValueMap.put("sourceEndOffset", queryProgressEvent.progress().sources()[0].endOffset());
-            internalKeyValueMap.put("sourceInputRowsPerSecond", String.valueOf(queryProgressEvent.progress().sources()[0].inputRowsPerSecond()));
-            internalKeyValueMap.put("sourceProcessedRowsPerSecond", String.valueOf(queryProgressEvent.progress().sources()[0].processedRowsPerSecond()));
-            internalKeyValueMap.put("sourceNumInputRows", String.valueOf(queryProgressEvent.progress().sources()[0].numInputRows()));
+            internalKeyValueMap
+                    .put(
+                            "sourceInputRowsPerSecond",
+                            String.valueOf(queryProgressEvent.progress().sources()[0].inputRowsPerSecond())
+                    );
+            internalKeyValueMap
+                    .put(
+                            "sourceProcessedRowsPerSecond",
+                            String.valueOf(queryProgressEvent.progress().sources()[0].processedRowsPerSecond())
+                    );
+            internalKeyValueMap
+                    .put("sourceNumInputRows", String.valueOf(queryProgressEvent.progress().sources()[0].numInputRows()));
         }
-
 
         // completion checking
         if (this.isRegisteredQuery(nameOfQuery)) {
@@ -183,7 +193,11 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
                 internalKeyValueMap.put("status", "complete");
 
                 if (!wasRemoved) {
-                    LOGGER.error("Removing the query <{}> from the internal DPLStreamingQuery listener was unsuccessful!", nameOfQuery);
+                    LOGGER
+                            .error(
+                                    "Removing the query <{}> from the internal DPLStreamingQuery listener was unsuccessful!",
+                                    nameOfQuery
+                            );
                 }
             }
         }
@@ -198,6 +212,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Emit on query termination
+     * 
      * @param queryTerminatedEvent Spark calls on query termination
      */
     @Override
@@ -218,8 +233,9 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Starts a streaming query with the given name and registers it to the listener
+     * 
      * @param name Name of the query, must be unique
-     * @param dsw DataStreamWriter to start
+     * @param dsw  DataStreamWriter to start
      * @return StreamingQuery; use its awaitTermination to block
      */
     public StreamingQuery registerQuery(final String name, DataStreamWriter<Row> dsw) {
@@ -229,7 +245,8 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
         else {
             try {
                 this._queries.put(name, new DPLInternalStreamingQuery(dsw.queryName(name).start()));
-            } catch (TimeoutException e) {
+            }
+            catch (TimeoutException e) {
                 LOGGER.error("Exception occurred on query start <{}>", e.getMessage(), e);
                 throw new RuntimeException("Could not register query: " + e.getMessage());
             }
@@ -240,6 +257,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Remove query from the listener
+     * 
      * @param name queryName
      * @return was removal successful (bool)
      */
@@ -251,12 +269,14 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Stop query
+     * 
      * @param name Name of the query to stop
      */
     public void stopQuery(String name) {
         try {
             this._queries.get(name).getQuery().stop();
-        } catch (TimeoutException e) {
+        }
+        catch (TimeoutException e) {
             LOGGER.error("Exception occurred on query stop <{}>", e.getMessage(), e);
             throw new RuntimeException("Exception occurred on query stop: " + e.getMessage());
         }
@@ -264,6 +284,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Does the internal map contain the specified query
+     * 
      * @param name queryName
      * @return bool
      */
@@ -273,6 +294,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Returns the internal DPLInternalStreamingQuery object based on queryName
+     * 
      * @param name queryName
      * @return DPLInternalStreamingQuery object
      */
@@ -282,6 +304,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Send message to messageHandler if it was registered
+     * 
      * @param s message string
      */
     private void sendMessageEvent(Map<String, Map<String, String>> s) {
@@ -296,6 +319,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Check if the stream has provided all the data or if it is still in progress
+     * 
      * @return is the stream complete
      */
     private boolean checkCompletion(DPLInternalStreamingQuery sq) {
@@ -318,6 +342,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * check if archive stream is done
+     * 
      * @param sq StreamingQuery object
      * @return done?
      */
@@ -326,8 +351,10 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
         for (int i = 0; i < sq.lastProgress().sources().length; i++) {
             SourceProgress progress = sq.lastProgress().sources()[i];
 
-
-            if (progress.description() != null && !progress.description().startsWith(ArchiveMicroStreamReader.class.getName().concat("@"))) {
+            if (
+                progress.description() != null
+                        && !progress.description().startsWith(ArchiveMicroStreamReader.class.getName().concat("@"))
+            ) {
                 // ignore others than archive
                 continue;
             }
@@ -347,6 +374,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * check if memory stream is done
+     * 
      * @param sq StreamingQuery object
      * @return done?
      */

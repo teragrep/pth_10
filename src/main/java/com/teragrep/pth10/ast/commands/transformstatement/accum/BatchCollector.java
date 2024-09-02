@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.accum;
 
 import org.apache.spark.sql.Dataset;
@@ -60,84 +59,79 @@ import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 public class BatchCollector {
-	private static final Logger LOGGER = LoggerFactory.getLogger(BatchCollector.class);
 
-	private final ConcurrentSkipListMap<Timestamp, List<Row>> mapOfCollected;
-	private int rowsCollected;
-	private int numberOfRowsToCollect;
-	
-	private StructType batchSchema = null;
-	private boolean ordered = true;
-	
-	public BatchCollector() {
-		this.mapOfCollected = new ConcurrentSkipListMap<>();
-		this.rowsCollected = 0;
-		//this.numberOfRowsToCollect = numberOfRowsToCollect;
-		this.ordered = true;
-	}
-	
-	public BatchCollector(boolean ordered) {
-		this.mapOfCollected = new ConcurrentSkipListMap<>();
-		this.rowsCollected = 0;
-		//this.numberOfRowsToCollect = numberOfRowsToCollect;
-		this.ordered = ordered;
-	}
-	
-	public void collect(Dataset<Row> batchDF, Long batchId) {
-		List<Row> rowsFromBatch = null;
-		this.batchSchema = batchDF.schema();
-		
-		if (ordered) {
-			rowsFromBatch = batchDF
-					.orderBy(functions.col("_time").desc())
-					.repartition(1)
-					.collectAsList();
-		}
-		else {
-			rowsFromBatch = batchDF
-					.repartition(1)
-					.collectAsList();
-		}
-		
+    private static final Logger LOGGER = LoggerFactory.getLogger(BatchCollector.class);
 
-		rowsFromBatch.forEach(row -> {
-			insert(row);
-		});
-	}
-	
-	public StructType getBatchSchema() {
-		return this.batchSchema;
-	}
-	
-	public void insert(Row rowToInsert) {
-		Timestamp timestampOfRow = rowToInsert.getTimestamp(0);
-		rowsCollected++;
-		
-		// Key exists in map, add the rowToInsert to the List of rows for the timestamp
-		if (mapOfCollected.get(timestampOfRow) != null) {
-			mapOfCollected.get(timestampOfRow).add(rowToInsert);
-		}
-		// Key does not exist in map, add new Key (Timestamp), Value (List<Row>) pair to map
-		else {
-			LinkedList<Row> listOfRows = new LinkedList<Row>();
-			listOfRows.add(rowToInsert);
-			mapOfCollected.put(timestampOfRow, listOfRows);
-		}
-	}
-	
-	public void printCollected() {
-		mapOfCollected.values().forEach(value -> {
-			LOGGER.info(value.toString());
-		});
-	}
-	
-	public ArrayList<Row> toList() {
-		ArrayList<Row> rv = new ArrayList<>();
-		
-		mapOfCollected.values().forEach(rowList -> {
-			rv.addAll(rowList);
-		});
-		
-		return rv;
-	}
+    private final ConcurrentSkipListMap<Timestamp, List<Row>> mapOfCollected;
+    private int rowsCollected;
+    private int numberOfRowsToCollect;
+
+    private StructType batchSchema = null;
+    private boolean ordered = true;
+
+    public BatchCollector() {
+        this.mapOfCollected = new ConcurrentSkipListMap<>();
+        this.rowsCollected = 0;
+        //this.numberOfRowsToCollect = numberOfRowsToCollect;
+        this.ordered = true;
+    }
+
+    public BatchCollector(boolean ordered) {
+        this.mapOfCollected = new ConcurrentSkipListMap<>();
+        this.rowsCollected = 0;
+        //this.numberOfRowsToCollect = numberOfRowsToCollect;
+        this.ordered = ordered;
+    }
+
+    public void collect(Dataset<Row> batchDF, Long batchId) {
+        List<Row> rowsFromBatch = null;
+        this.batchSchema = batchDF.schema();
+
+        if (ordered) {
+            rowsFromBatch = batchDF.orderBy(functions.col("_time").desc()).repartition(1).collectAsList();
+        }
+        else {
+            rowsFromBatch = batchDF.repartition(1).collectAsList();
+        }
+
+        rowsFromBatch.forEach(row -> {
+            insert(row);
+        });
+    }
+
+    public StructType getBatchSchema() {
+        return this.batchSchema;
+    }
+
+    public void insert(Row rowToInsert) {
+        Timestamp timestampOfRow = rowToInsert.getTimestamp(0);
+        rowsCollected++;
+
+        // Key exists in map, add the rowToInsert to the List of rows for the timestamp
+        if (mapOfCollected.get(timestampOfRow) != null) {
+            mapOfCollected.get(timestampOfRow).add(rowToInsert);
+        }
+        // Key does not exist in map, add new Key (Timestamp), Value (List<Row>) pair to map
+        else {
+            LinkedList<Row> listOfRows = new LinkedList<Row>();
+            listOfRows.add(rowToInsert);
+            mapOfCollected.put(timestampOfRow, listOfRows);
+        }
+    }
+
+    public void printCollected() {
+        mapOfCollected.values().forEach(value -> {
+            LOGGER.info(value.toString());
+        });
+    }
+
+    public ArrayList<Row> toList() {
+        ArrayList<Row> rv = new ArrayList<>();
+
+        mapOfCollected.values().forEach(rowList -> {
+            rv.addAll(rowList);
+        });
+
+        return rv;
+    }
 }

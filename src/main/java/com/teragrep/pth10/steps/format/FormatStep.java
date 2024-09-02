@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -67,6 +67,7 @@ public final class FormatStep extends AbstractFormatStep implements Serializable
         super();
         this.properties.add(CommandProperty.AGGREGATE);
     }
+
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) {
         // make variables that are in mapFunction final. Otherwise, they will be the initial default values.
@@ -80,7 +81,8 @@ public final class FormatStep extends AbstractFormatStep implements Serializable
         // maxResults=0 does not limit and maxResults<0 is invalid
         if (maxResults > 0) {
             mappedDs = mappedDs.limit(this.maxResults);
-        } else if (maxResults < 0) {
+        }
+        else if (maxResults < 0) {
             throw new IllegalArgumentException("Expected a non-negative integer value for 'maxresults' parameter.");
         }
 
@@ -90,8 +92,12 @@ public final class FormatStep extends AbstractFormatStep implements Serializable
             strBuilder.append(colPrefix);
             strBuilder.append(' ');
             for (int j = 0; j < r.schema().length(); j++) {
-                if (r.schema().fields()[j].dataType().typeName().equals(
-                        DataTypes.createArrayType(DataTypes.StringType).typeName())) {
+                if (
+                    r.schema().fields()[j]
+                            .dataType()
+                            .typeName()
+                            .equals(DataTypes.createArrayType(DataTypes.StringType).typeName())
+                ) {
                     // MV field
                     // ( col="value1" OR col="value2" OR col="value3" )
                     List<Object> mvField = r.getList(j);
@@ -103,27 +109,27 @@ public final class FormatStep extends AbstractFormatStep implements Serializable
                         strBuilder.append("=\"");
                         strBuilder.append(mvField.get(k));
                         strBuilder.append("\"");
-                        if (k != mvField.size()-1){
+                        if (k != mvField.size() - 1) {
                             // Do not append ' OR ' on last mvField cell
                             strBuilder.append(" ".concat(mvSep).concat(" "));
                         }
                     }
                     // ' ) '
                     strBuilder.append(" ) ");
-                } else {
+                }
+                else {
                     // 'col="value"'
                     strBuilder.append(r.schema().fields()[j].name());
                     strBuilder.append("=\"");
                     strBuilder.append(r.getAs(r.fieldIndex(r.schema().fields()[j].name())).toString());
                     strBuilder.append("\"");
-                    if (j != r.schema().fields().length-1) {
+                    if (j != r.schema().fields().length - 1) {
                         // ' AND '
                         strBuilder.append(' ');
                         strBuilder.append(colSep);
                     }
                     strBuilder.append(' ');
                 }
-
 
             }
 
@@ -132,16 +138,18 @@ public final class FormatStep extends AbstractFormatStep implements Serializable
             strBuilder.append(' ');
 
             return RowFactory.create(strBuilder.toString());
-        }, RowEncoder.apply(new StructType(new StructField[]{StructField.apply("search", DataTypes.StringType, false, new MetadataBuilder().build())})));
+        }, RowEncoder.apply(new StructType(new StructField[] {
+                StructField.apply("search", DataTypes.StringType, false, new MetadataBuilder().build())
+        })));
 
+        Seq<Column> concatRows = JavaConversions
+                .asScalaBuffer(Arrays.asList(functions.lit(this.rowPrefix.concat(" ")), // '( '
+                        functions.concat_ws(this.rowSep.concat(" "), // 'OR '
+                                functions.collect_list("search")
+                        ), // cols
+                        functions.lit(this.rowSuffix)
+                )); // ')'
 
-        Seq<Column> concatRows = JavaConversions.asScalaBuffer(Arrays.asList(
-                functions.lit(this.rowPrefix.concat(" ")), // '( '
-                functions.concat_ws(this.rowSep.concat(" "), // 'OR '
-                functions.collect_list("search")), // cols
-                functions.lit(this.rowSuffix))); // ')'
-
-        return mappedDs.agg(
-                functions.concat(concatRows).as("search"));
+        return mappedDs.agg(functions.concat(concatRows).as("search"));
     }
 }

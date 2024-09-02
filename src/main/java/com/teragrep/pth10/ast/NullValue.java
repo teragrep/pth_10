@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -48,32 +48,36 @@ package com.teragrep.pth10.ast;
 import java.io.Serializable;
 
 /**
- * Object, that is used to provide the value to be used as the
- * null value across the project.
+ * Object, that is used to provide the value to be used as the null value across the project.
  */
 public class NullValue implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     /**
-     * <p>Defines which type of null to use as the null value.</p>
+     * <p>
+     * Defines which type of null to use as the null value.
+     * </p>
      * <ul>
-     *      <li>{@link Type#DEFAULT_NULL}: Java <code>null</code> value</li>
-     *      <li>{@link Type#EMPTY_STRING}: <code>""</code> string</li>
-     *      <li>{@link Type#NULL_AS_STRING}: <code>"null"</code> string</li>
+     * <li>{@link Type#DEFAULT_NULL}: Java <code>null</code> value</li>
+     * <li>{@link Type#EMPTY_STRING}: <code>""</code> string</li>
+     * <li>{@link Type#NULL_AS_STRING}: <code>"null"</code> string</li>
      * </ul>
      */
     public enum Type {
-        DEFAULT_NULL,
-        EMPTY_STRING,
-        NULL_AS_STRING
+        DEFAULT_NULL, EMPTY_STRING, NULL_AS_STRING
     }
+
     private final Type type;
+
     public NullValue() {
         this.type = Type.DEFAULT_NULL;
     }
+
     public NullValue(Type type) {
         this.type = type;
     }
+
     public String value() {
         switch (type) {
             case DEFAULT_NULL:

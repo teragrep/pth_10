@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -62,21 +62,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FormatTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FormatTransformationTest.class);
     private final String testFile = "src/test/resources/strcatTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -96,250 +95,129 @@ public class FormatTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void formatTransformationTest0() {
         String q = "index=index_A | format ";
 
-        streamingTestUtil.performDPLTest(q, testFile, res -> {
-            // Check if result contains the column that was created for format result
-            assertTrue(Arrays.toString(res.columns()).contains("search"));
+        streamingTestUtil
+                .performDPLTest(
+                        q, testFile, res -> {
+                            // Check if result contains the column that was created for format result
+                            assertTrue(Arrays.toString(res.columns()).contains("search"));
 
-            // List of expected values for the format destination field
-            List<String> expectedValues = Collections.singletonList(
-                    "( " +
-                            "( " +
-                                "_time=\"2023-09-06 11:22:31.0\" " +
-                                "AND " +
-                                "id=\"1\" " +
-                                "AND " +
-                                "_raw=\"raw 01\" " +
-                                "AND " +
-                                "index=\"index_A\" " +
-                                "AND " +
-                                "sourcetype=\"A:X:0\" " +
-                                "AND " +
-                                "host=\"host\" " +
-                                "AND " +
-                                "source=\"input\" " +
-                                "AND " +
-                                "partition=\"0\" " +
-                                "AND offset=\"1\"" +
-                            " ) " +
-                            "OR " +
-                            "( " +
-                                "_time=\"2023-09-06 12:22:31.0\" " +
-                                "AND " +
-                                "id=\"2\" " +
-                                "AND " +
-                                "_raw=\"raw 02\" " +
-                                "AND " +
-                                "index=\"index_A\" " +
-                                "AND " +
-                                "sourcetype=\"A:X:0\" " +
-                                "AND " +
-                                "host=\"host\" " +
-                                "AND " +
-                                "source=\"input\" " +
-                                "AND " +
-                                "partition=\"0\" " +
-                                "AND " +
-                                "offset=\"2\" " +
-                            ") " +
-                            "OR " +
-                            "( " +
-                                "_time=\"2023-09-06 13:22:31.0\" " +
-                                "AND id=\"3\" " +
-                                "AND " +
-                                "_raw=\"raw 03\" " +
-                                "AND " +
-                                "index=\"index_A\" " +
-                                "AND " +
-                                "sourcetype=\"A:Y:0\" " +
-                                "AND " +
-                                "host=\"host\" " +
-                                "AND " +
-                                "source=\"input\" " +
-                                "AND " +
-                                "partition=\"0\" " +
-                                "AND " +
-                                "offset=\"3\" " +
-                            ") " +
-                            "OR " +
-                            "( " +
-                                "_time=\"2023-09-06 14:22:31.0\" " +
-                                "AND " +
-                                "id=\"4\" " +
-                                "AND " +
-                                "_raw=\"raw 04\" " +
-                                "AND " +
-                                "index=\"index_A\" " +
-                                "AND " +
-                                "sourcetype=\"A:Y:0\" " +
-                                "AND " +
-                                "host=\"host\" " +
-                                "AND " +
-                                "source=\"input\" " +
-                                "AND " +
-                                "partition=\"0\" " +
-                                "AND " +
-                                "offset=\"4\" " +
-                            ") " +
-                            "OR " +
-                            "( " +
-                                "_time=\"2023-09-06 15:22:31.0\" " +
-                                "AND " +
-                                "id=\"5\" " +
-                                "AND " +
-                                "_raw=\"raw 05\" " +
-                                "AND " +
-                                "index=\"index_A\" " +
-                                "AND " +
-                                "sourcetype=\"A:Y:0\" " +
-                                "AND " +
-                                "host=\"host\" " +
-                                "AND " +
-                                "source=\"input\" " +
-                                "AND " +
-                                "partition=\"0\" " +
-                                "AND " +
-                                "offset=\"5\" " +
-                            ") " +
-                    ")"
-            );
+                            // List of expected values for the format destination field
+                            List<String> expectedValues = Collections
+                                    .singletonList(
+                                            "( " + "( " + "_time=\"2023-09-06 11:22:31.0\" " + "AND " + "id=\"1\" "
+                                                    + "AND " + "_raw=\"raw 01\" " + "AND " + "index=\"index_A\" "
+                                                    + "AND " + "sourcetype=\"A:X:0\" " + "AND " + "host=\"host\" "
+                                                    + "AND " + "source=\"input\" " + "AND " + "partition=\"0\" "
+                                                    + "AND offset=\"1\"" + " ) " + "OR " + "( "
+                                                    + "_time=\"2023-09-06 12:22:31.0\" " + "AND " + "id=\"2\" " + "AND "
+                                                    + "_raw=\"raw 02\" " + "AND " + "index=\"index_A\" " + "AND "
+                                                    + "sourcetype=\"A:X:0\" " + "AND " + "host=\"host\" " + "AND "
+                                                    + "source=\"input\" " + "AND " + "partition=\"0\" " + "AND "
+                                                    + "offset=\"2\" " + ") " + "OR " + "( "
+                                                    + "_time=\"2023-09-06 13:22:31.0\" " + "AND id=\"3\" " + "AND "
+                                                    + "_raw=\"raw 03\" " + "AND " + "index=\"index_A\" " + "AND "
+                                                    + "sourcetype=\"A:Y:0\" " + "AND " + "host=\"host\" " + "AND "
+                                                    + "source=\"input\" " + "AND " + "partition=\"0\" " + "AND "
+                                                    + "offset=\"3\" " + ") " + "OR " + "( "
+                                                    + "_time=\"2023-09-06 14:22:31.0\" " + "AND " + "id=\"4\" " + "AND "
+                                                    + "_raw=\"raw 04\" " + "AND " + "index=\"index_A\" " + "AND "
+                                                    + "sourcetype=\"A:Y:0\" " + "AND " + "host=\"host\" " + "AND "
+                                                    + "source=\"input\" " + "AND " + "partition=\"0\" " + "AND "
+                                                    + "offset=\"4\" " + ") " + "OR " + "( "
+                                                    + "_time=\"2023-09-06 15:22:31.0\" " + "AND " + "id=\"5\" " + "AND "
+                                                    + "_raw=\"raw 05\" " + "AND " + "index=\"index_A\" " + "AND "
+                                                    + "sourcetype=\"A:Y:0\" " + "AND " + "host=\"host\" " + "AND "
+                                                    + "source=\"input\" " + "AND " + "partition=\"0\" " + "AND "
+                                                    + "offset=\"5\" " + ") " + ")"
+                                    );
 
-            // Destination field from result dataset
-            List<String> searchAsList = res
-                    .select("search")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getString(0))
-                    .collect(Collectors.toList());
+                            // Destination field from result dataset
+                            List<String> searchAsList = res.select("search").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
-            // Assert search field contents as equals with expected contents
-            assertEquals(expectedValues, searchAsList);
-        });
+                            // Assert search field contents as equals with expected contents
+                            assertEquals(expectedValues, searchAsList);
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void formatTransformationTest1() {
         String q = "index=index_A | eval a=mvappend(\"1\", \"2\") | format maxresults=1 ";
 
-        streamingTestUtil.performDPLTest(q, testFile, res -> {
-            // Check if result contains the column that was created for format result
-            assertTrue(Arrays.toString(res.columns()).contains("search"));
+        streamingTestUtil
+                .performDPLTest(
+                        q, testFile, res -> {
+                            // Check if result contains the column that was created for format result
+                            assertTrue(Arrays.toString(res.columns()).contains("search"));
 
-            // List of expected values for the format destination field
-            List<String> expectedValues = Collections.singletonList(
-                    "( " +
-                            "( " +
-                                "_time=\"2023-09-06 11:22:31.0\" " +
-                                "AND " +
-                                "id=\"1\" " +
-                                "AND " +
-                                "_raw=\"raw 01\" " +
-                                "AND " +
-                                "index=\"index_A\" " +
-                                "AND " +
-                                "sourcetype=\"A:X:0\" " +
-                                "AND " +
-                                "host=\"host\" " +
-                                "AND " +
-                                "source=\"input\" " +
-                                "AND " +
-                                "partition=\"0\" " +
-                                "AND " +
-                                "offset=\"1\" " +
-                                "AND " +
-                                "( " +
-                                    "a=\"1\" " +
-                                    "OR " +
-                                    "a=\"2\" " +
-                                ") " +
-                            ") " +
-                    ")"
-            );
+                            // List of expected values for the format destination field
+                            List<String> expectedValues = Collections
+                                    .singletonList(
+                                            "( " + "( " + "_time=\"2023-09-06 11:22:31.0\" " + "AND " + "id=\"1\" "
+                                                    + "AND " + "_raw=\"raw 01\" " + "AND " + "index=\"index_A\" "
+                                                    + "AND " + "sourcetype=\"A:X:0\" " + "AND " + "host=\"host\" "
+                                                    + "AND " + "source=\"input\" " + "AND " + "partition=\"0\" "
+                                                    + "AND " + "offset=\"1\" " + "AND " + "( " + "a=\"1\" " + "OR "
+                                                    + "a=\"2\" " + ") " + ") " + ")"
+                                    );
 
-            // Destination field from result dataset
-            List<String> searchAsList = res
-                    .select("search")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getString(0))
-                    .collect(Collectors.toList());
+                            // Destination field from result dataset
+                            List<String> searchAsList = res.select("search").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
-            // Assert search field contents as equals with expected contents
-            assertEquals(expectedValues, searchAsList);
-        });
+                            // Assert search field contents as equals with expected contents
+                            assertEquals(expectedValues, searchAsList);
+                        }
+                );
     }
 
-
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void formatTransformationTest2() {
         String q = "index=index_A | format maxresults=2 \"ROWPRE\" \"COLPRE\" \"COLSEP\" \"COLSUF\"\"ROWSEP\" \"ROWSUF\" ";
 
-        streamingTestUtil.performDPLTest(q, testFile, res -> {
-            // Check if result contains the column that was created for format result
-            assertTrue(Arrays.toString(res.columns()).contains("search"));
+        streamingTestUtil
+                .performDPLTest(
+                        q, testFile, res -> {
+                            // Check if result contains the column that was created for format result
+                            assertTrue(Arrays.toString(res.columns()).contains("search"));
 
-            // List of expected values for the format destination field
-            List<String> expectedValues = Collections.singletonList(
-                    "ROWPRE " +
-                            "COLPRE " +
-                            "_time=\"2023-09-06 11:22:31.0\" " +
-                            "COLSEP " +
-                            "id=\"1\" " +
-                            "COLSEP " +
-                            "_raw=\"raw 01\" " +
-                            "COLSEP " +
-                            "index=\"index_A\" " +
-                            "COLSEP " +
-                            "sourcetype=\"A:X:0\" " +
-                            "COLSEP " +
-                            "host=\"host\" " +
-                            "COLSEP " +
-                            "source=\"input\" " +
-                            "COLSEP " +
-                            "partition=\"0\" " +
-                            "COLSEP " +
-                            "offset=\"1\"" +
-                            " COLSUF " +
-                            "ROWSEP " +
-                            "COLPRE " +
-                            "_time=\"2023-09-06 12:22:31.0\" " +
-                            "COLSEP " +
-                            "id=\"2\" " +
-                            "COLSEP " +
-                            "_raw=\"raw 02\" " +
-                            "COLSEP " +
-                            "index=\"index_A\" " +
-                            "COLSEP " +
-                            "sourcetype=\"A:X:0\" " +
-                            "COLSEP " +
-                            "host=\"host\" " +
-                            "COLSEP " +
-                            "source=\"input\" " +
-                            "COLSEP " +
-                            "partition=\"0\" " +
-                            "COLSEP " +
-                            "offset=\"2\" " +
-                            "COLSUF " +
-                            "ROWSUF"
-            );
+                            // List of expected values for the format destination field
+                            List<String> expectedValues = Collections
+                                    .singletonList(
+                                            "ROWPRE " + "COLPRE " + "_time=\"2023-09-06 11:22:31.0\" " + "COLSEP "
+                                                    + "id=\"1\" " + "COLSEP " + "_raw=\"raw 01\" " + "COLSEP "
+                                                    + "index=\"index_A\" " + "COLSEP " + "sourcetype=\"A:X:0\" "
+                                                    + "COLSEP " + "host=\"host\" " + "COLSEP " + "source=\"input\" "
+                                                    + "COLSEP " + "partition=\"0\" " + "COLSEP " + "offset=\"1\""
+                                                    + " COLSUF " + "ROWSEP " + "COLPRE "
+                                                    + "_time=\"2023-09-06 12:22:31.0\" " + "COLSEP " + "id=\"2\" "
+                                                    + "COLSEP " + "_raw=\"raw 02\" " + "COLSEP " + "index=\"index_A\" "
+                                                    + "COLSEP " + "sourcetype=\"A:X:0\" " + "COLSEP " + "host=\"host\" "
+                                                    + "COLSEP " + "source=\"input\" " + "COLSEP " + "partition=\"0\" "
+                                                    + "COLSEP " + "offset=\"2\" " + "COLSUF " + "ROWSUF"
+                                    );
 
-            // Destination field from result dataset
-            List<String> searchAsList = res
-                    .select("search")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getString(0))
-                    .collect(Collectors.toList());
+                            // Destination field from result dataset
+                            List<String> searchAsList = res.select("search").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
-            // Assert search field contents as equals with expected contents
-            assertEquals(expectedValues, searchAsList);
-        });
+                            // Assert search field contents as equals with expected contents
+                            assertEquals(expectedValues, searchAsList);
+                        }
+                );
     }
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -61,28 +61,26 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for the EventstatsTransformation implementation
- * Uses streaming datasets
+ * Tests for the EventstatsTransformation implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EventstatsTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EventstatsTransformationTest.class);
     private final String testFile = "src/test/resources/eventstatsTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -102,74 +100,116 @@ public class EventstatsTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // Standard eventstats, without wildcards in WITH-clause
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // Standard eventstats, without wildcards in WITH-clause
     public void eventstats_test_NoByClause() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | eventstats avg(offset) AS avg_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                   List<String> listOfOffset = ds.select("avg_offset").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                   assertEquals(1, listOfOffset.size());
-                   assertEquals("5.5", listOfOffset.get(0));
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | eventstats avg(offset) AS avg_offset", testFile, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            List<String> listOfOffset = ds
+                    .select("avg_offset")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(1, listOfOffset.size());
+            assertEquals("5.5", listOfOffset.get(0));
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // Standard eventstats, without wildcards in WITH-clause
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // Standard eventstats, without wildcards in WITH-clause
     public void eventstats_test_WithByClause() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | eventstats avg(offset) AS avg_offset BY sourcetype",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    List<String> listOfOffset = ds.select("avg_offset").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil
+                .performDPLTest("index=index_A | eventstats avg(offset) AS avg_offset BY sourcetype", testFile, ds -> {
+                    assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]", Arrays
+                                    .toString(ds.columns()),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
+                    List<String> listOfOffset = ds
+                            .select("avg_offset")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(2, listOfOffset.size());
                     assertEquals("6.0", listOfOffset.get(0));
                     assertEquals("5.0", listOfOffset.get(1));
-                }
-        );
+                });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // count with implied wildcard
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // count with implied wildcard
     public void eventstats_test_count() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | eventstats count",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, count]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    List<String> listOfCount = ds.select("count").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(1, listOfCount.size());
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | eventstats count", testFile, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            List<String> listOfCount = ds
+                    .select("count")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(1, listOfCount.size());
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // multiple aggregation functions
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // multiple aggregation functions
     public void eventstats_test_multi() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | eventstats count avg(offset) stdevp(offset)",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, count, avg(offset), stdevp(offset)]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    List<String> listOfCount = ds.select("count").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil
+                .performDPLTest("index=index_A | eventstats count avg(offset) stdevp(offset)", testFile, ds -> {
+                    assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count, avg(offset), stdevp(offset)]",
+                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                    );
+                    List<String> listOfCount = ds
+                            .select("count")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(1, listOfCount.size());
-                    List<String> listOfAvg = ds.select("avg(offset)").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> listOfAvg = ds
+                            .select("avg(offset)")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(1, listOfAvg.size());
-                    List<String> listOfStdevp = ds.select("stdevp(offset)").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> listOfStdevp = ds
+                            .select("stdevp(offset)")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(1, listOfStdevp.size());
-                }
-        );
+                });
     }
 }

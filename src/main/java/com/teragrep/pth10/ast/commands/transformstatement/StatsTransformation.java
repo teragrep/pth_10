@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.functions.dpf_02.SortByClause;
@@ -72,147 +71,157 @@ import java.util.stream.Collectors;
  * Base transformation class for the <code>stats</code> command
  */
 public class StatsTransformation extends DPLParserBaseVisitor<Node> {
-	private static final Logger LOGGER = LoggerFactory.getLogger(StatsTransformation.class);
-	List<Object> queueOfAggregates = new ArrayList<>(); // contains all aggregate ColumnNodes
-	
-	final List<String> byFields = new ArrayList<>();
-	final List<Column> listOfByFields = new ArrayList<>(); // seq of fields to be used for groupBy
-	private final List<SortByClause> listOfSbc = new ArrayList<>();
 
-	public StatsStep statsStep;
-	private final DPLParserCatalystContext catCtx;
-	
-	public StatsTransformation(DPLParserCatalystContext catCtx) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(StatsTransformation.class);
+    List<Object> queueOfAggregates = new ArrayList<>(); // contains all aggregate ColumnNodes
+
+    final List<String> byFields = new ArrayList<>();
+    final List<Column> listOfByFields = new ArrayList<>(); // seq of fields to be used for groupBy
+    private final List<SortByClause> listOfSbc = new ArrayList<>();
+
+    public StatsStep statsStep;
+    private final DPLParserCatalystContext catCtx;
+
+    public StatsTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
-	}
-	
-	/* 
-	 * Command info:
-	 * Performs the AggregateFunction with given fieldRenameInstruction and byInstruction
-	 * Example command:
-	 * index=index_A | stats avg(offset) AS avg_offset BY sourcetype
-	 * 
-	 * Tree:
-	 * --------------StatsTransformation-------------------
-	 * ---|------------------------|------------------|----------------------------|------------
-	 * COMMAND_MODE_STATS aggregateFunction t_stats_fieldRenameInstruction t_stats_byInstruction
-	 * ------------------------------------------------|--------------------------|-------------
-	 * --------------------------------------COMMAND_STATS_MODE_AS fieldType--COMMAND_STATS_MODE_BY fieldListType
-	 * */
-	public Node visitStatsTransformation(DPLParser.StatsTransformationContext ctx) {
-		Node rv = statsTransformationEmitCatalyst(ctx);
-		return rv;
-	}
-	
-	public Node statsTransformationEmitCatalyst(DPLParser.StatsTransformationContext ctx) {
-		// Process children
-		// COMMAND_MODE_STATS t_stats_partitions? t_stats_allnum? t_stats_delim? t_stats_agg
-		for (int i = 0; i < ctx.getChildCount(); ++i) {
-			ParseTree child = ctx.getChild(i);
-			LOGGER.debug("Processing child: <{}>", child.getText());
-			if (child instanceof TerminalNode) {
-				LOGGER.debug("typeof child = TerminalNode");
-				continue; /* Skip stats keyword */
-			}
-			else if (child instanceof DPLParser.T_stats_aggContext) {
-				visit(child);
-			}
-			// FIXME Implement: t_stats_partitions , t_stats_allnum , t_stats_delim
-		}
+    }
 
+    /* 
+     * Command info:
+     * Performs the AggregateFunction with given fieldRenameInstruction and byInstruction
+     * Example command:
+     * index=index_A | stats avg(offset) AS avg_offset BY sourcetype
+     * 
+     * Tree:
+     * --------------StatsTransformation-------------------
+     * ---|------------------------|------------------|----------------------------|------------
+     * COMMAND_MODE_STATS aggregateFunction t_stats_fieldRenameInstruction t_stats_byInstruction
+     * ------------------------------------------------|--------------------------|-------------
+     * --------------------------------------COMMAND_STATS_MODE_AS fieldType--COMMAND_STATS_MODE_BY fieldListType
+     * */
+    public Node visitStatsTransformation(DPLParser.StatsTransformationContext ctx) {
+        Node rv = statsTransformationEmitCatalyst(ctx);
+        return rv;
+    }
 
-		List<Column> listOfCompleteAggregations = new ArrayList<>(); // contains all aggregate Columns
-		
-		for (int i = 0; i < queueOfAggregates.size(); ++i) {
-			Object item = queueOfAggregates.get(i);
-			
-			// If next in queue is a column
-			if (item instanceof ColumnNode) {
+    public Node statsTransformationEmitCatalyst(DPLParser.StatsTransformationContext ctx) {
+        // Process children
+        // COMMAND_MODE_STATS t_stats_partitions? t_stats_allnum? t_stats_delim? t_stats_agg
+        for (int i = 0; i < ctx.getChildCount(); ++i) {
+            ParseTree child = ctx.getChild(i);
+            LOGGER.debug("Processing child: <{}>", child.getText());
+            if (child instanceof TerminalNode) {
+                LOGGER.debug("typeof child = TerminalNode");
+                continue; /* Skip stats keyword */
+            }
+            else if (child instanceof DPLParser.T_stats_aggContext) {
+                visit(child);
+            }
+            // FIXME Implement: t_stats_partitions , t_stats_allnum , t_stats_delim
+        }
 
-				// Check if out of index
-				Object nextToItem = null;
-				if (queueOfAggregates.size()-1 >= i+1) {
-					nextToItem = queueOfAggregates.get(i + 1);
-				}
+        List<Column> listOfCompleteAggregations = new ArrayList<>(); // contains all aggregate Columns
 
-				// Check for fieldRename
-				if (nextToItem instanceof String) {
-					listOfCompleteAggregations.add(((ColumnNode)item).getColumn().name((String)nextToItem));
-					i++;
-				}
-				// No fieldRename
-				else {
-					listOfCompleteAggregations.add(((ColumnNode)item).getColumn());
-				}
-			}
-		}
+        for (int i = 0; i < queueOfAggregates.size(); ++i) {
+            Object item = queueOfAggregates.get(i);
 
-		statsStep = new StatsStep(listOfCompleteAggregations, listOfByFields);
-		SortStep sortStep = new SortStep(catCtx, listOfSbc, this.catCtx.getDplRecallSize(), false);
+            // If next in queue is a column
+            if (item instanceof ColumnNode) {
 
-		List<AbstractStep> steps = new ArrayList<>();
-		steps.add(statsStep);
-		steps.add(sortStep);
-		return new StepListNode(steps);
-	}
-	
-	// AS fieldType
-	public Node visitT_stats_fieldRenameInstruction(DPLParser.T_stats_fieldRenameInstructionContext ctx) {
-		return new StringNode(new Token(Type.STRING, ctx.getChild(1).getText()));
-	}
-	
-	// BY fieldListType
-	public Node visitT_stats_byInstruction(DPLParser.T_stats_byInstructionContext ctx) {
-		// Child #0 "BY"
-		// Child #1 fieldListType
-		return visit(ctx.getChild(1));
-	}
-	
-	// fieldListType : fieldType ((COMMA)? fieldType)*?
-	public Node visitFieldListType(DPLParser.FieldListTypeContext ctx) {
-		List<String> fields = new ArrayList<>();
-		ctx.children.forEach(child -> {
-			String field = child.getText();
-			fields.addAll(Arrays.asList(field.split(",")));
-		});
-		
-		return new StringListNode(fields);
-	}
-	
-	// t_stats_agg
-	public Node visitT_stats_agg(DPLParser.T_stats_aggContext ctx) {
-		AggregateFunction aggregateFunction = new AggregateFunction(catCtx);
-		
-		ctx.children.forEach(child -> {
-			// AS fieldType
-			if (child instanceof DPLParser.T_stats_fieldRenameInstructionContext) {
-				LOGGER.debug("typeof child = fieldRenameInstructionCtx");
-				queueOfAggregates.add(visit(child).toString());
-			}
-			// BY fieldListType
-			else if (child instanceof DPLParser.T_stats_byInstructionContext) {
-				LOGGER.debug("typeof child = byInstructionCtx");
-				byFields.addAll(((StringListNode)visit(child)).asList());
-				listOfByFields.addAll(byFields.stream().map(functions::col).collect(Collectors.toList()));
-				listOfSbc.addAll(byFields.stream().map(this::createSbc).collect(Collectors.toList()));
-			}
-			// other; aggregateFunction visit
-			else if (child instanceof DPLParser.AggregateFunctionContext) {
-				LOGGER.debug("typeof child = AggregateFunctionCtx");
-				queueOfAggregates.add((ColumnNode) aggregateFunction.visitAggregateFunction((DPLParser.AggregateFunctionContext) child));
-			}
-		});
-		
-		return null;
-		
-	}
+                // Check if out of index
+                Object nextToItem = null;
+                if (queueOfAggregates.size() - 1 >= i + 1) {
+                    nextToItem = queueOfAggregates.get(i + 1);
+                }
 
-	private SortByClause createSbc(String fieldName) {
-		SortByClause sbc = new SortByClause();
-		sbc.setFieldName(fieldName);
-		sbc.setDescending(false);
-		sbc.setLimit(this.catCtx.getDplRecallSize());
-		sbc.setSortAsType(SortByClause.Type.AUTOMATIC);
-		return sbc;
-	}
+                // Check for fieldRename
+                if (nextToItem instanceof String) {
+                    listOfCompleteAggregations.add(((ColumnNode) item).getColumn().name((String) nextToItem));
+                    i++;
+                }
+                // No fieldRename
+                else {
+                    listOfCompleteAggregations.add(((ColumnNode) item).getColumn());
+                }
+            }
+        }
+
+        statsStep = new StatsStep(listOfCompleteAggregations, listOfByFields);
+        SortStep sortStep = new SortStep(catCtx, listOfSbc, this.catCtx.getDplRecallSize(), false);
+
+        List<AbstractStep> steps = new ArrayList<>();
+        steps.add(statsStep);
+        steps.add(sortStep);
+        return new StepListNode(steps);
+    }
+
+    // AS fieldType
+    public Node visitT_stats_fieldRenameInstruction(DPLParser.T_stats_fieldRenameInstructionContext ctx) {
+        return new StringNode(new Token(Type.STRING, ctx.getChild(1).getText()));
+    }
+
+    // BY fieldListType
+    public Node visitT_stats_byInstruction(DPLParser.T_stats_byInstructionContext ctx) {
+        // Child #0 "BY"
+        // Child #1 fieldListType
+        return visit(ctx.getChild(1));
+    }
+
+    // fieldListType : fieldType ((COMMA)? fieldType)*?
+    public Node visitFieldListType(DPLParser.FieldListTypeContext ctx) {
+        List<String> fields = new ArrayList<>();
+        ctx.children.forEach(child -> {
+            String field = child.getText();
+            fields.addAll(Arrays.asList(field.split(",")));
+        });
+
+        return new StringListNode(fields);
+    }
+
+    // t_stats_agg
+    public Node visitT_stats_agg(DPLParser.T_stats_aggContext ctx) {
+        AggregateFunction aggregateFunction = new AggregateFunction(catCtx);
+
+        ctx.children
+                .forEach(
+                        child -> {
+                            // AS fieldType
+                            if (child instanceof DPLParser.T_stats_fieldRenameInstructionContext) {
+                                LOGGER.debug("typeof child = fieldRenameInstructionCtx");
+                                queueOfAggregates.add(visit(child).toString());
+                            }
+                            // BY fieldListType
+                            else if (child instanceof DPLParser.T_stats_byInstructionContext) {
+                                LOGGER.debug("typeof child = byInstructionCtx");
+                                byFields.addAll(((StringListNode) visit(child)).asList());
+                                listOfByFields
+                                        .addAll(byFields.stream().map(functions::col).collect(Collectors.toList()));
+                                listOfSbc.addAll(byFields.stream().map(this::createSbc).collect(Collectors.toList()));
+                            }
+                            // other; aggregateFunction visit
+                            else if (child instanceof DPLParser.AggregateFunctionContext) {
+                                LOGGER.debug("typeof child = AggregateFunctionCtx");
+                                queueOfAggregates
+                                        .add(
+                                                (ColumnNode) aggregateFunction
+                                                        .visitAggregateFunction(
+                                                                (DPLParser.AggregateFunctionContext) child
+                                                        )
+                                        );
+                            }
+                        }
+                );
+
+        return null;
+
+    }
+
+    private SortByClause createSbc(String fieldName) {
+        SortByClause sbc = new SortByClause();
+        sbc.setFieldName(fieldName);
+        sbc.setDescending(false);
+        sbc.setLimit(this.catCtx.getDplRecallSize());
+        sbc.setSortAsType(SortByClause.Type.AUTOMATIC);
+        return sbc;
+    }
 }

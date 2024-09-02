@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -67,6 +66,7 @@ import java.util.*;
  * teragrep exec hdfs save: Save dataset to disk in avro format
  */
 public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepHdfsSaveStep.class);
 
     private final DPLParserCatalystContext catCtx;
@@ -75,11 +75,19 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
     public final String retentionSpan;
     public final Format format;
     public final boolean header;
+
     public enum Format {
         CSV, JSON, AVRO
     }
 
-    public TeragrepHdfsSaveStep(DPLParserCatalystContext catCtx, boolean overwrite, String pathStr, String retentionSpan, Format format, boolean header) {
+    public TeragrepHdfsSaveStep(
+            DPLParserCatalystContext catCtx,
+            boolean overwrite,
+            String pathStr,
+            String retentionSpan,
+            Format format,
+            boolean header
+    ) {
         super();
         this.catCtx = catCtx;
         this.overwrite = overwrite;
@@ -110,7 +118,10 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
             // If it doesn't exist, continue as-is.
             if (fs.exists(fsPath) && fs.isDirectory(fsPath)) {
                 if (overwrite) {
-                    LOGGER.info("TG HDFS Save: Pre-existing data was found in specified path. Deleting pre-existing data.");
+                    LOGGER
+                            .info(
+                                    "TG HDFS Save: Pre-existing data was found in specified path. Deleting pre-existing data."
+                            );
 
                     // path=fsPath, recursive=true
                     fs.delete(fsPath, true);
@@ -133,13 +144,22 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                         previousSaveWasStreaming = metadata.getWasStreamingDataset();
                     }
 
-                    if (applicationId != null && applicationId.equals(catCtx.getSparkSession().sparkContext().applicationId())
-                            && paragraphId != null && paragraphId.equals(catCtx.getParagraphUrl()) && !previousSaveWasStreaming) {
+                    if (
+                        applicationId != null && applicationId
+                                .equals(catCtx.getSparkSession().sparkContext().applicationId()) && paragraphId != null
+                                && paragraphId.equals(catCtx.getParagraphUrl()) && !previousSaveWasStreaming
+                    ) {
                         // appId matches last save and was not streaming (=aggregated); allow to overwrite
                         // this is due to sequential mode visiting this multiple times -> metadata will exist after first batch and overwrite=false would block rest of the batches!
-                        LOGGER.info("Previous HDFS save to this path was not streaming and appId matches last save; allowing overwrite and bypassing overwrite=false parameter.");
-                    } else {
-                        throw new RuntimeException("The specified path '" + pathStr + "' already exists, please select another path.");
+                        LOGGER
+                                .info(
+                                        "Previous HDFS save to this path was not streaming and appId matches last save; allowing overwrite and bypassing overwrite=false parameter."
+                                );
+                    }
+                    else {
+                        throw new RuntimeException(
+                                "The specified path '" + pathStr + "' already exists, please select another path."
+                        );
                     }
 
                 }
@@ -170,17 +190,18 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                 final Map<String, String> mapOfColumnNames = new HashMap<>();
                 for (final StructField field : dataset.schema().fields()) {
                     // avro-friendly column names conversion
-                    final String encodedName = "HEX".concat(Hex.encodeHexString(field.name().getBytes(StandardCharsets.UTF_8)));
+                    final String encodedName = "HEX"
+                            .concat(Hex.encodeHexString(field.name().getBytes(StandardCharsets.UTF_8)));
                     convertedDataset = convertedDataset.withColumnRenamed(field.name(), encodedName);
                     mapOfColumnNames.put(encodedName, field.name());
                 }
 
                 metadata.setMapOfAvroColumnNames(mapOfColumnNames);
                 metadata.setSchema(convertedDataset.schema());
-            } else {
+            }
+            else {
                 metadata.setSchema(dataset.schema());
             }
-
 
             // serialize and write to hdfs
             byte[] mdataArray = serializeMetadata(metadata);
@@ -191,7 +212,8 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
             out.write(mdataArray);
             out.close();
 
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException("Saving metadata object failed due to: \n" + e);
         }
 
@@ -207,7 +229,8 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                         .mode(this.aggregatesUsedBefore ? SaveMode.Overwrite : SaveMode.Append)
                         .option("checkpointLocation", cpPath)
                         .option("path", pathStr.concat("/data"));
-            } else if (format == Format.CSV) {
+            }
+            else if (format == Format.CSV) {
                 hdfsSaveWriter = dataset
                         .write()
                         .format("csv")
@@ -215,7 +238,8 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                         .option("checkpointLocation", cpPath)
                         .option("header", header)
                         .option("path", pathStr.concat("/data"));
-            } else {
+            }
+            else {
                 throw new IllegalArgumentException("Format '" + format + "' is not supported.");
             }
 
@@ -237,7 +261,8 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                         .option("path", pathStr.concat("/data"))
                         .option("checkpointLocation", cpPath)
                         .outputMode(OutputMode.Append());
-            } else if (format == Format.CSV) {
+            }
+            else if (format == Format.CSV) {
                 hdfsSaveWriter = dataset
                         .repartition(1)
                         .writeStream()
@@ -247,12 +272,15 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                         .option("checkpointLocation", cpPath)
                         .option("header", header)
                         .outputMode(OutputMode.Append());
-            } else {
+            }
+            else {
                 throw new IllegalArgumentException("Format '" + format + "' is not supported.");
             }
 
             // check for query completion
-            StreamingQuery hdfsSaveQuery = catCtx.getInternalStreamingQueryListener().registerQuery(queryName, hdfsSaveWriter);
+            StreamingQuery hdfsSaveQuery = catCtx
+                    .getInternalStreamingQueryListener()
+                    .registerQuery(queryName, hdfsSaveWriter);
 
             // await for listener to stop the hdfsSaveQuery
             hdfsSaveQuery.awaitTermination();

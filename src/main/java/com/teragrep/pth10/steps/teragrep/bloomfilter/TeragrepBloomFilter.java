@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import org.apache.spark.util.sketch.BloomFilter;
@@ -65,6 +64,7 @@ import org.slf4j.LoggerFactory;
  * Class create a selected sized {@link BloomFilter} and run operations
  */
 public class TeragrepBloomFilter {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepBloomFilter.class);
 
     private final String partitionID;
@@ -74,7 +74,12 @@ public class TeragrepBloomFilter {
     private Long selectedExpectedNumOfItems;
     private Double selectedFpp;
 
-    public TeragrepBloomFilter(String partition, byte[] bloomfilterBytes, Connection connection, FilterSizes filterSizes) {
+    public TeragrepBloomFilter(
+            String partition,
+            byte[] bloomfilterBytes,
+            Connection connection,
+            FilterSizes filterSizes
+    ) {
         this.partitionID = partition;
         this.bloomfilterBytes = bloomfilterBytes;
         this.filterSizes = filterSizes;
@@ -83,8 +88,8 @@ public class TeragrepBloomFilter {
 
     private BloomFilter sizedFilter() {
 
-        SortedMap<Long,Double> filterSizesMap = filterSizes.asSortedMap();
-        Map<Long,Long> bitsizeToExpectedItemsMap = filterSizes.asBitsizeSortedMap();
+        SortedMap<Long, Double> filterSizesMap = filterSizes.asSortedMap();
+        Map<Long, Long> bitsizeToExpectedItemsMap = filterSizes.asBitsizeSortedMap();
 
         try (ByteArrayInputStream bais = new ByteArrayInputStream(bloomfilterBytes)) {
             BloomFilter bf = BloomFilter.readFrom(bais);
@@ -96,16 +101,19 @@ public class TeragrepBloomFilter {
                 this.selectedExpectedNumOfItems = expectedItems;
                 this.selectedFpp = fpp;
                 return bf;
-            } else {
+            }
+            else {
                 throw new IllegalArgumentException("no such filterSize <[" + bitSize + "]>");
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     /**
      * Write filter bytes to database
+     * 
      * @param overwriteExisting Set if existing filter data will be overwritten
      */
     public void saveFilter(Boolean overwriteExisting) {
@@ -115,8 +123,11 @@ public class TeragrepBloomFilter {
 
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                LOGGER.info("Saving filter[expected: <{}> , fpp: <{}>] to bloomdb.bloomfilter, overwrite existing data: <{}>",
-                        selectedExpectedNumOfItems, selectedFpp, overwriteExisting);
+                LOGGER
+                        .info(
+                                "Saving filter[expected: <{}> , fpp: <{}>] to bloomdb.bloomfilter, overwrite existing data: <{}>",
+                                selectedExpectedNumOfItems, selectedFpp, overwriteExisting
+                        );
 
                 filter.writeTo(baos);
                 InputStream is = new ByteArrayInputStream(baos.toByteArray());
@@ -130,13 +141,16 @@ public class TeragrepBloomFilter {
 
                 is.close();
                 connection.commit();
-                
-            } catch (IOException e) {
+
+            }
+            catch (IOException e) {
                 throw new RuntimeException("Error serializing data\n" + e);
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException("Error writing to database\n" + e);
             }
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error generating a prepared statement\n" + e);
         }
     }
@@ -144,11 +158,12 @@ public class TeragrepBloomFilter {
     private static String sqlString(Boolean overwriteExisting) {
         final String sql;
         if (overwriteExisting) {
-            sql = "REPLACE INTO `bloomfilter` (`partition_id`, `filter_type_id`, `filter`) " +
-                    "VALUES(?, (SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=?),?)";
-        } else {
-            sql = "INSERT IGNORE INTO `bloomfilter` (`partition_id`, `filter_type_id`, `filter`) " +
-                    "VALUES(?, (SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=?),?)";
+            sql = "REPLACE INTO `bloomfilter` (`partition_id`, `filter_type_id`, `filter`) "
+                    + "VALUES(?, (SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=?),?)";
+        }
+        else {
+            sql = "INSERT IGNORE INTO `bloomfilter` (`partition_id`, `filter_type_id`, `filter`) "
+                    + "VALUES(?, (SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=?),?)";
         }
         return sql;
     }

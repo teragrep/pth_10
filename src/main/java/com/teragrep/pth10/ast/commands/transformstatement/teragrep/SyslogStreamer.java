@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.teragrep;
 
 import com.cloudbees.syslog.Facility;
@@ -105,14 +104,15 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
     }
 
     /**
-     * Base constructor for the SyslogStreamer. Use the {@link #SyslogStreamer(String, int) secondary constructor}
-     * and provide it with the relp server hostname and port instead.
+     * Base constructor for the SyslogStreamer. Use the {@link #SyslogStreamer(String, int) secondary constructor} and
+     * provide it with the relp server hostname and port instead.
      */
     public SyslogStreamer() {
     }
 
     /**
      * Constructor for SyslogStreamer, provide the RELP server's hostname and port.
+     * 
      * @param relpHost relp server hostname/ip address
      * @param relpPort relp server port
      */
@@ -123,6 +123,7 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
 
     /**
      * Connects to the RELP server <code>relpHost:relpPort</code><br>
+     * 
      * @throws RuntimeException if the server is unavailable for more than {@link #maxFailedConnectionAttempts}
      */
     private void connect() {
@@ -139,22 +140,32 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
             }
 
             if (connected) {
-                LOGGER.info("SyslogStreamer connected to RELP server host=<[{}]> port=<[{}]> !",relpHostAddress, relpPort);
+                LOGGER
+                        .info(
+                                "SyslogStreamer connected to RELP server host=<[{}]> port=<[{}]> !", relpHostAddress,
+                                relpPort
+                        );
                 failedConnectionAttempts = 0;
                 notConnected = false;
             }
             else {
                 if (failedConnectionAttempts++ >= maxFailedConnectionAttempts) {
-                    throw new RuntimeException("Connection to RELP server failed more times than allowed. " +
-                            "(Maximum " + maxFailedConnectionAttempts + " times)");
+                    throw new RuntimeException(
+                            "Connection to RELP server failed more times than allowed. " + "(Maximum "
+                                    + maxFailedConnectionAttempts + " times)"
+                    );
                 }
 
                 try {
-                    LOGGER.warn("Connection to RELP server was unsuccessful, attempting again in <{}> ms", reconnectInterval);
+                    LOGGER
+                            .warn(
+                                    "Connection to RELP server was unsuccessful, attempting again in <{}> ms",
+                                    reconnectInterval
+                            );
                     Thread.sleep(this.reconnectInterval);
                 }
                 catch (InterruptedException e) {
-                   LOGGER.error("An error occurred while waiting for reconnection: <{}>", e.getMessage());
+                    LOGGER.error("An error occurred while waiting for reconnection: <{}>", e.getMessage());
                 }
             }
         }
@@ -220,7 +231,8 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
      * Main mapping function call function. Initializes the RELP sender, connects to the RELP server,<br>
      * and builds a syslog message from each of the rows given to this function.<br>
      * To be used with the dataset map() function.<br>
-     * E.g. <code>ds.map(new SyslogStreamer(host, port), ds.exprEnc());</code><br><br>
+     * E.g. <code>ds.map(new SyslogStreamer(host, port), ds.exprEnc());</code><br>
+     * <br>
      *
      * @param row Input row to send as syslog
      * @return the given input row unchanged
@@ -262,18 +274,18 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
 
         // If _time column didn't exist, get current time as the syslog message time
         if (!timeSetFromColumn) {
-            time = Instant.now().getEpochSecond()*1000L;
+            time = Instant.now().getEpochSecond() * 1000L;
         }
 
         // build the syslog message
         final SyslogMessage syslogMessage = new SyslogMessage()
-                .withTimestamp(time)                        // _time column as syslog message time
+                .withTimestamp(time) // _time column as syslog message time
                 .withSeverity(Severity.WARNING)
                 .withAppName(appName)
                 .withHostname(hostname)
                 .withFacility(Facility.USER)
-                .withSDElement(teragrep_output_48577)       // teragrep-output@48577 SDElement
-                .withMsg(payload);                          // _raw column as syslog payload
+                .withSDElement(teragrep_output_48577) // teragrep-output@48577 SDElement
+                .withMsg(payload); // _raw column as syslog payload
 
         // send to server
         this.append(syslogMessage);
@@ -283,6 +295,7 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
 
     /**
      * Appends the given syslog message into the relp batch, and sends it to the server.
+     * 
      * @param syslogMessage the message to be appended to the batch, and sent to the server.
      */
     private void append(SyslogMessage syslogMessage) {
@@ -307,7 +320,8 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
                 this.tearDown();
                 try {
                     Thread.sleep(this.reconnectInterval);
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e) {
                     LOGGER.warn("Reconnect sleep was interrupted", e);
                 }
                 this.connect();

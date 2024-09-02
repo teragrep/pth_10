@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -97,8 +96,8 @@ public final class TeragrepHdfsListStep extends AbstractStep {
                 // no path specified, get user's home directory
                 pathStr = "/user/" + catCtx.getSparkSession().sparkContext().sparkUser();
             }
-            org.apache.hadoop.fs.FileSystem fs = org.apache.hadoop.fs.FileSystem.get(
-                    catCtx.getSparkSession().sparkContext().hadoopConfiguration());
+            org.apache.hadoop.fs.FileSystem fs = org.apache.hadoop.fs.FileSystem
+                    .get(catCtx.getSparkSession().sparkContext().hadoopConfiguration());
             org.apache.hadoop.fs.Path path = new org.apache.hadoop.fs.Path(pathStr);
 
             FileStatus[] fileStatuses = fs.globStatus(path);
@@ -127,29 +126,27 @@ public final class TeragrepHdfsListStep extends AbstractStep {
                     String size = twoDecimals.format((fileStatus.getLen() / 1024d)) + "K";
 
                     // create row containing the file info and add it to the listOfRows
-                    Row r = RowFactory.create(
-                            filePerms, fileOwner, size, fileModDate, fileAccDate, fileName, filePath, type);
+                    Row r = RowFactory
+                            .create(filePerms, fileOwner, size, fileModDate, fileAccDate, fileName, filePath, type);
                     listOfRows.add(r);
                 }
-            } else {
+            }
+            else {
                 // no files found
                 listOfRows.add(RowFactory.create(null, null, null, null, null, null, null, null));
             }
 
             // schema for the created rows
-            final StructType schema =
-                    new StructType(
-                            new StructField[]{
-                                    new StructField("permissions", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("owner", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("size", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("modificationDate", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("accessDate", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("name", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("path", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("type", DataTypes.StringType, true, new MetadataBuilder().build())
-                            }
-                    );
+            final StructType schema = new StructType(new StructField[] {
+                    new StructField("permissions", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("owner", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("size", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("modificationDate", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("accessDate", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("name", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("path", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("type", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
 
             // make a streaming dataset
             SparkSession ss = catCtx.getSparkSession();
@@ -161,9 +158,10 @@ public final class TeragrepHdfsListStep extends AbstractStep {
 
             // create hdfs writer and query
             final String queryName = "list_hdfs_files_" + ((int) (Math.random() * 100000));
-            DataStreamWriter<Row> listHdfsWriter = generated.
-                    writeStream().outputMode("append").format("memory");
-            StreamingQuery listHdfsQuery = catCtx.getInternalStreamingQueryListener().registerQuery(queryName, listHdfsWriter);
+            DataStreamWriter<Row> listHdfsWriter = generated.writeStream().outputMode("append").format("memory");
+            StreamingQuery listHdfsQuery = catCtx
+                    .getInternalStreamingQueryListener()
+                    .registerQuery(queryName, listHdfsWriter);
 
             // add all the generated data to the memory stream
             rowMemoryStream.addData(JavaConversions.asScalaBuffer(listOfRows));
@@ -171,9 +169,13 @@ public final class TeragrepHdfsListStep extends AbstractStep {
             // wait for it to be done and then return it
             listHdfsQuery.awaitTermination();
 
-        } catch (FileNotFoundException fnfe) {
-            throw new RuntimeException("Specified path '" + pathStr + "' could not be found. Check that the path is written correctly.");
-        } catch (IOException e) {
+        }
+        catch (FileNotFoundException fnfe) {
+            throw new RuntimeException(
+                    "Specified path '" + pathStr + "' could not be found. Check that the path is written correctly."
+            );
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
         // filter null-name rows out

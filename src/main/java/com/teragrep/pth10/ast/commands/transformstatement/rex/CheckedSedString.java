@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -46,16 +46,17 @@
 package com.teragrep.pth10.ast.commands.transformstatement.rex;
 
 /**
- * Checked to be valid sed mode string.
- * Checks validity on initialization.
+ * Checked to be valid sed mode string. Checks validity on initialization.
  */
 public class CheckedSedString {
+
     private String[] components;
     private boolean globalMode;
     private int replaceOccurrencesAmount;
 
     /**
      * Initialize a new instance of a checked sed string
+     * 
      * @param uncheckedString string of a valid sed string format 's/.../.../g'
      */
     public CheckedSedString(String uncheckedString) {
@@ -66,6 +67,7 @@ public class CheckedSedString {
 
     /**
      * Get the regex to match in string format
+     * 
      * @return regex string
      */
     public String toRegexString() {
@@ -74,6 +76,7 @@ public class CheckedSedString {
 
     /**
      * Get the replacement string
+     * 
      * @return replacement
      */
     public String toReplacementString() {
@@ -82,6 +85,7 @@ public class CheckedSedString {
 
     /**
      * How many occurrences of regex to replace
+     * 
      * @return int, -1 means all
      */
     public int replaceOccurrencesAmount() {
@@ -90,6 +94,7 @@ public class CheckedSedString {
 
     /**
      * get if sed global mode is to be used
+     * 
      * @return bool for global mode
      */
     public boolean globalMode() {
@@ -98,6 +103,7 @@ public class CheckedSedString {
 
     /**
      * Checks the string validity. Throws exceptions if errors are encountered.
+     * 
      * @param sedStr string to check
      */
     private void checkSedString(final String sedStr) {
@@ -121,22 +127,25 @@ public class CheckedSedString {
 
         // should have four parts: sed mode, original string, replacement string and other flags.
         if (this.components.length != 4) {
-            throw new IllegalStateException("Invalid sed mode string was given: '" + sedStr + "', but expected " +
-                    "s/original/replacement/[g|Ng|N], where n>0 and '/' is any delimiter of choice.");
+            throw new IllegalStateException(
+                    "Invalid sed mode string was given: '" + sedStr + "', but expected "
+                            + "s/original/replacement/[g|Ng|N], where n>0 and '/' is any delimiter of choice."
+            );
         }
 
-        if (this.components[3].charAt(this.components[3].length()-1) == 'g' && this.components[3].length() == 1) {
+        if (this.components[3].charAt(this.components[3].length() - 1) == 'g' && this.components[3].length() == 1) {
             // global mode 'g'
-            globalMode=true;
+            globalMode = true;
         }
-        else if (this.components[3].charAt(this.components[3].length()-1) != 'g') {
+        else if (this.components[3].charAt(this.components[3].length() - 1) != 'g') {
             // replace occurrences mode 'N'
             replaceOccurrencesAmount = Integer.parseInt(this.components[3]);
         }
         else {
             // 'Ng' mode
-            globalMode=true;
-            replaceOccurrencesAmount = Integer.parseInt(this.components[3].substring(0, this.components[3].length()-1));
+            globalMode = true;
+            replaceOccurrencesAmount = Integer
+                    .parseInt(this.components[3].substring(0, this.components[3].length() - 1));
         }
     }
 }

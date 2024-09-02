@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.functions.dpf_02.SortByClause;
@@ -65,6 +64,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class DedupTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupTransformation.class);
     private final DPLParserCatalystContext catCtx;
 
@@ -90,8 +90,10 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
                 maxDuplicates = Integer.parseInt(ctx.t_dedup_numberParameter().getText());
             }
             catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException("Invalid limit parameter value. It must be larger or equal to 1," +
-                        "however within the limits of an IntegerType.");
+                throw new IllegalArgumentException(
+                        "Invalid limit parameter value. It must be larger or equal to 1,"
+                                + "however within the limits of an IntegerType."
+                );
             }
 
             if (maxDuplicates < 1) {
@@ -121,7 +123,6 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
             for (int i = 0; i < sortByInstCtx.getChildCount(); i++) {
                 ParseTree child = sortByInstCtx.getChild(i);
 
-
                 if (child instanceof DPLParser.T_dedup_sortOrderContext) {
                     if (sbc != null) {
                         // add previous (if any) sortByClause to list
@@ -146,7 +147,7 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
                     sbc.setFieldName(((DPLParser.T_dedup_sortbyMethodNumContext) child).fieldType().getText());
                 }
                 else if (child instanceof DPLParser.T_dedup_sortbyMethodStrContext) {
-                    assert sbc != null: "Sort by method STR expected a sort by clause, instead was null";
+                    assert sbc != null : "Sort by method STR expected a sort by clause, instead was null";
                     sbc.setSortAsType(SortByClause.Type.STRING);
                     sbc.setFieldName(((DPLParser.T_dedup_sortbyMethodStrContext) child).fieldType().getText());
                 }
@@ -158,21 +159,37 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
 
             sortStep = new SortStep(catCtx, listOfSortByClauses, this.catCtx.getDplRecallSize(), false); // no support for desc in dedup
 
-            LOGGER.info("Processing sortByClauses in dedup with params: sbc={}, limit={}, desc={}",
-                            Arrays.toString(sortStep.getListOfSortByClauses().toArray()), sortStep.getLimit(), sortStep.isDesc());
+            LOGGER
+                    .info(
+                            "Processing sortByClauses in dedup with params: sbc={}, limit={}, desc={}", Arrays
+                                    .toString(sortStep.getListOfSortByClauses().toArray()),
+                            sortStep.getLimit(), sortStep.isDesc()
+                    );
 
         }
 
         // initialize dedupStep here, so the sorted ds will be used if it was set
-        this.dedupStep = new DedupStep(listOfFields, maxDuplicates, keepEmpty, keepEvents, consecutive, catCtx, sortStep!=null);
+        this.dedupStep = new DedupStep(
+                listOfFields,
+                maxDuplicates,
+                keepEmpty,
+                keepEvents,
+                consecutive,
+                catCtx,
+                sortStep != null
+        );
 
-        LOGGER.info("Processing dedup with params: limit={}, keepempty={}, keepevents={}, consecutive={}, cols={}",
-                maxDuplicates, keepEmpty, keepEvents, consecutive, Arrays.toString(listOfFields.toArray()));
+        LOGGER
+                .info(
+                        "Processing dedup with params: limit={}, keepempty={}, keepevents={}, consecutive={}, cols={}",
+                        maxDuplicates, keepEmpty, keepEvents, consecutive, Arrays.toString(listOfFields.toArray())
+                );
 
         // only return StepListNode if sort is used as they're two separate step objects (dedup & sort)
         if (sortStep != null) {
             return new StepListNode(Arrays.asList(sortStep, this.dedupStep));
-        } else {
+        }
+        else {
             return new StepNode(this.dedupStep);
         }
     }

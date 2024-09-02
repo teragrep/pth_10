@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import java.io.Serializable;
@@ -53,12 +52,12 @@ import java.sql.SQLException;
 
 import com.typesafe.config.Config;
 
-
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_URL_CONFIG_ITEM;
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_USERNAME_CONFIG_ITEM;
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_PASSWORD_CONFIG_ITEM;
 
 public class LazyConnection implements Serializable {
+
     private static Connection connection = null;
     private final Config config;
 
@@ -71,16 +70,13 @@ public class LazyConnection implements Serializable {
             // lazy init
             String connectionURL = connectionURL();
             String username = connectionUsername();
-            String password= connectionPassword();
+            String password = connectionPassword();
 
             try {
-                connection = DriverManager.getConnection(
-                        connectionURL,
-                        username,
-                        password
-                );
+                connection = DriverManager.getConnection(connectionURL, username, password);
 
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -95,7 +91,8 @@ public class LazyConnection implements Serializable {
             if (username == null || username.isEmpty()) {
                 throw new RuntimeException("Database username not set.");
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("Missing configuration item: '" + BLOOMDB_USERNAME_CONFIG_ITEM + "'.");
         }
         return username;
@@ -109,7 +106,8 @@ public class LazyConnection implements Serializable {
             if (password == null) {
                 throw new RuntimeException("Database password not set.");
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("Missing configuration item: '" + BLOOMDB_PASSWORD_CONFIG_ITEM + "'.");
         }
         return password;
@@ -123,7 +121,8 @@ public class LazyConnection implements Serializable {
             if (databaseUrl == null || databaseUrl.isEmpty()) {
                 throw new RuntimeException("Database url not set.");
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("Missing configuration item: '" + BLOOMDB_URL_CONFIG_ITEM + "'.");
         }
         return databaseUrl;

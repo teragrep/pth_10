@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -64,6 +64,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class commandTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(commandTest.class);
 
     // Use this file for  dataset initialization
@@ -88,12 +89,15 @@ public class commandTest {
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void explainTest() {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            StructType expectedSchema = new StructType(new StructField[]{
+            StructType expectedSchema = new StructType(new StructField[] {
                     StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
             });
             List<Row> resAsList = res.collectAsList();
@@ -105,12 +109,15 @@ public class commandTest {
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void explain1Test() {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain extended";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            StructType expectedSchema = new StructType(new StructField[]{
+            StructType expectedSchema = new StructType(new StructField[] {
                     StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
             });
             List<Row> resAsList = res.collectAsList();
@@ -123,12 +130,15 @@ public class commandTest {
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void explain2Test() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|explain extended";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            StructType expectedSchema = new StructType(new StructField[]{
+            StructType expectedSchema = new StructType(new StructField[] {
                     StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
             });
             List<Row> resAsList = res.collectAsList();
@@ -141,21 +151,28 @@ public class commandTest {
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void auditTest() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host] | explain extended";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             DPLAuditInformation ainf = this.streamingTestUtil.getCtx().getAuditInformation();
             // Check auditInformation
-            assertEquals("TestUser",ainf.getUser());
-            assertEquals(q,ainf.getQuery());
-            assertEquals("Testing audit log",ainf.getReason());
+            assertEquals("TestUser", ainf.getUser());
+            assertEquals(q, ainf.getQuery());
+            assertEquals("Testing audit log", ainf.getReason());
         });
 
     }
+
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void teragrepTest() {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host | teragrep get system version";
 
@@ -175,9 +192,12 @@ public class commandTest {
             }
         });
     }
-    
+
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void teragrep_Issue149_Test() {
         String q = " | teragrep get system version";
 
@@ -200,7 +220,10 @@ public class commandTest {
 
     // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void dplTest() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=true";
 
@@ -210,7 +233,10 @@ public class commandTest {
 
     // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void dpl2Test() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=false";
 
@@ -220,7 +246,10 @@ public class commandTest {
 
     // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void dpl3Test() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree";
 
@@ -230,7 +259,10 @@ public class commandTest {
 
     // TODO: change after pth_03 issue #115 is closed (dpl changed under teragrep command)
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void dpl4Test() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]  [ search sourcetype= c:X:0| top limit=1 host | fields + host] |dpl debug=parsetree subsearch=true";
 
@@ -239,4 +271,3 @@ public class commandTest {
     }
 
 }
-

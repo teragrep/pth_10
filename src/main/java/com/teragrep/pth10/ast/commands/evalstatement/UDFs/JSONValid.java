@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.google.gson.Gson;
@@ -58,26 +57,26 @@ import java.io.Serializable;
  * Where x is a field containing a string, either in JSON format or not.<br>
  * Returns TRUE for valid JSON, and FALSE for strings that are not considered to be valid JSON.<br>
  * The check is fairly strict, using com.google.gson.Gson.
+ * 
  * @author eemhu
- *
  */
 public class JSONValid implements UDF1<String, Boolean>, Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public Boolean call(String jsonStr) throws Exception {
-		boolean isValidJson = true;
-		
-		try {
-			new Gson().getAdapter(JsonElement.class).fromJson(jsonStr);
-		}
-		catch (IOException ie) {
-			// Gson will throw an IOException if jsonStr is not valid JSON
-			isValidJson = false;
-		}
-		
-		return isValidJson;
-	}
+    @Override
+    public Boolean call(String jsonStr) throws Exception {
+        boolean isValidJson = true;
+
+        try {
+            new Gson().getAdapter(JsonElement.class).fromJson(jsonStr);
+        }
+        catch (IOException ie) {
+            // Gson will throw an IOException if jsonStr is not valid JSON
+            isValidJson = false;
+        }
+
+        return isValidJson;
+    }
 
 }

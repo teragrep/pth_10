@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.*;
@@ -63,12 +62,14 @@ import org.slf4j.LoggerFactory;
  * {@literal | iplocation prefix=<string> allfields=<boolean> lang=<string> <field-name>}
  */
 public class IplocationTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IplocationTransformation.class);
     private static final String DATABASE_PATH_CONFIG_ITEM = "dpl.pth_10.transform.iplocation.db.path";
     private final DPLParserCatalystContext catCtx;
     private final DPLParserCatalystVisitor catVisitor;
 
     public IplocationStep iplocationStep = null;
+
     public IplocationTransformation(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
         this.catCtx = catCtx;
         this.catVisitor = catVisitor;
@@ -124,8 +125,10 @@ public class IplocationTransformation extends DPLParserBaseVisitor<Node> {
                 allFields = false;
                 break;
             default:
-                throw new RuntimeException("Invalid boolean type provided for 'allfields' parameter!\nMake sure that" +
-                        " the parameter is followed by 'true' or 'false'.");
+                throw new RuntimeException(
+                        "Invalid boolean type provided for 'allfields' parameter!\nMake sure that"
+                                + " the parameter is followed by 'true' or 'false'."
+                );
         }
 
         this.iplocationStep.setAllFields(allFields);

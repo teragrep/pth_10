@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.*;
@@ -72,6 +71,7 @@ import java.util.regex.Pattern;
  * <pre>Dataset.groupBy("_time").pivot(aggregateField).sum(fieldname)</pre>
  */
 public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTransformation.class);
     private DPLParserCatalystContext catCtx = null;
     private DPLParserCatalystVisitor catVisitor;
@@ -95,23 +95,15 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         return this.aggregateField;
     }
 
-
-
     /**
-     timechartTransformation
-     : COMMAND_MODE_TIMECHART
-     (t_timechart_sepParameter)?
-     (t_timechart_formatParameter)?
-     (t_timechart_fixedrangeParameter)?
-     (t_timechart_partialParameter)?
-     (t_timechart_contParameter)?
-     (t_timechart_limitParameter)?
-     (t_timechart_binOptParameter)*
-     (t_timechart_singleAggregation|t_timechart_intervalInstruction|EVAL_LANGUAGE_MODE_PARENTHESIS_L evalStatement EVAL_LANGUAGE_MODE_PARENTHESIS_R)+
-     (t_timechart_divideByInstruction)
-     ;
-	*/
-    @Override public Node visitTimechartTransformation(DPLParser.TimechartTransformationContext ctx) {
+     * timechartTransformation : COMMAND_MODE_TIMECHART (t_timechart_sepParameter)? (t_timechart_formatParameter)?
+     * (t_timechart_fixedrangeParameter)? (t_timechart_partialParameter)? (t_timechart_contParameter)?
+     * (t_timechart_limitParameter)? (t_timechart_binOptParameter)*
+     * (t_timechart_singleAggregation|t_timechart_intervalInstruction|EVAL_LANGUAGE_MODE_PARENTHESIS_L evalStatement
+     * EVAL_LANGUAGE_MODE_PARENTHESIS_R)+ (t_timechart_divideByInstruction) ;
+     */
+    @Override
+    public Node visitTimechartTransformation(DPLParser.TimechartTransformationContext ctx) {
         return timechartTransformationEmitCatalyst(ctx);
     }
 
@@ -120,8 +112,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
         Column span = null;
 
-
-        if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty())  {
+        if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty()) {
             LOGGER.info("Timechart Optional parameters: <[{}]>", ctx.t_timechart_binOptParameter().get(0).getText());
 
             ColumnNode spanNode = (ColumnNode) visit(ctx.t_timechart_binOptParameter().get(0));
@@ -148,7 +139,9 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 }
             }
             else if (child instanceof DPLParser.T_timechart_divideByInstructionContext) {
-                String divByInst = ((StringNode)visitT_timechart_divideByInstruction((DPLParser.T_timechart_divideByInstructionContext) child)).toString();
+                String divByInst = ((StringNode) visitT_timechart_divideByInstruction(
+                        (DPLParser.T_timechart_divideByInstructionContext) child
+                )).toString();
                 listOfDivideByInst.add(divByInst);
             }
             else if (child instanceof DPLParser.T_timechart_fieldRenameInstructionContext) {
@@ -183,6 +176,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Convert span of type Column to the span length in seconds
+     * 
      * @param span span of type column
      * @return span length in seconds
      */
@@ -199,7 +193,8 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 if (!isWithinNumber) {
                     break;
                 }
-            } else if (isWithinNumber && spanChar != ' ') {
+            }
+            else if (isWithinNumber && spanChar != ' ') {
                 num.append(spanChar);
             }
         }
@@ -215,25 +210,26 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitAggregateFunction(DPLParser.AggregateFunctionContext ctx) {
         Node rv = aggregateFunction.visitAggregateFunction(ctx);
-        if(aggregateField == null)
+        if (aggregateField == null)
             aggregateField = aggregateFunction.getAggregateField();
         return aggregateFunction.visitAggregateFunction(ctx);
     }
 
     @Override
-    public Node visitT_timechart_divideByInstruction(DPLParser.T_timechart_divideByInstructionContext ctx ){
-//        LOGGER.info(ctx.getChildCount()+"--visitT_chart_divideByInstruction incoming{}", ctx.getText());
-        if(ctx.getChildCount() == 0){
+    public Node visitT_timechart_divideByInstruction(DPLParser.T_timechart_divideByInstructionContext ctx) {
+        //        LOGGER.info(ctx.getChildCount()+"--visitT_chart_divideByInstruction incoming{}", ctx.getText());
+        if (ctx.getChildCount() == 0) {
             return null;
         }
         String target = ctx.getChild(1).getChild(0).toString();
 
         if (doc != null) {
-                Element el = doc.createElement("divideBy");
-                el.setAttribute("field", target);
-                return new ElementNode(el);
-        } else {
-                return new StringNode(new Token(Type.STRING, target));
+            Element el = doc.createElement("divideBy");
+            el.setAttribute("field", target);
+            return new ElementNode(el);
+        }
+        else {
+            return new StringNode(new Token(Type.STRING, target));
         }
     }
 
@@ -244,18 +240,21 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
             Element el = doc.createElement("fieldRename");
             el.setAttribute("field", field);
             return new ElementNode(el);
-        } else {
+        }
+        else {
             return new StringNode(new Token(Type.STRING, field));
         }
     }
 
-    @Override public Node visitT_timechart_binOptParameter(DPLParser.T_timechart_binOptParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binOptParameter:<{}>",ctx.getText());
+    @Override
+    public Node visitT_timechart_binOptParameter(DPLParser.T_timechart_binOptParameterContext ctx) {
+        LOGGER.info("visitT_timechart_binOptParameter:<{}>", ctx.getText());
         return visitChildren(ctx);
     }
 
-    @Override public Node visitT_timechart_binSpanParameter(DPLParser.T_timechart_binSpanParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binSpanParameter:<{}>",ctx.getText());
+    @Override
+    public Node visitT_timechart_binSpanParameter(DPLParser.T_timechart_binSpanParameterContext ctx) {
+        LOGGER.info("visitT_timechart_binSpanParameter:<{}>", ctx.getText());
         CalendarInterval ival = getSpanLength(ctx.getChild(1).getText());
         Column col = new Column("_time");
         Column span = functions.window(col, String.valueOf(ival));
@@ -265,94 +264,96 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Creates a column with default span of one hour
+     * 
      * @return
      */
-    private Column createDefaultSpan(){
+    private Column createDefaultSpan() {
         long sec = 0;
         TimeRange tr = TimeRange.ONE_HOUR;
         String duration = "1 days"; // Default duration
-//        LOGGER.info("createDefaultSpan="+catCtx.getTimeRange());
+        //        LOGGER.info("createDefaultSpan="+catCtx.getTimeRange());
         DPLParserConfig pConf = catCtx.getParserConfig();
-        if(pConf != null){
-            tr=pConf.getTimeRange();
+        if (pConf != null) {
+            tr = pConf.getTimeRange();
         }
-        switch(tr){
-            case TEN_SECONDS:{
+        switch (tr) {
+            case TEN_SECONDS: {
                 sec = 10;
                 duration = "10 seconds";
                 break;
             }
-            case ONE_MINUTE:{
+            case ONE_MINUTE: {
                 sec = 60;
                 duration = "1 minutes";
                 break;
             }
-            case FIVE_MINUTES:{
-                sec = 5*60;
+            case FIVE_MINUTES: {
+                sec = 5 * 60;
                 duration = "5 minutes";
                 break;
             }
-            case THIRTY_MINUTES:{
-                sec = 30*60;
+            case THIRTY_MINUTES: {
+                sec = 30 * 60;
                 duration = "30 minutes";
                 break;
             }
-            case ONE_HOUR:{
+            case ONE_HOUR: {
                 sec = 3600;
                 duration = "1 hours";
                 break;
             }
-            case ONE_DAY:{
-                sec = 24*3600;
+            case ONE_DAY: {
+                sec = 24 * 3600;
                 duration = "1 days";
                 break;
             }
-            case ONE_MONTH:{
-                sec = 30*24*3600;
+            case ONE_MONTH: {
+                sec = 30 * 24 * 3600;
                 duration = "30 days";
                 break;
             }
-            default :{
+            default: {
                 throw new RuntimeException("timechart span duration greater that month is not supported");
             }
         }
-       CalendarInterval ival = new CalendarInterval(0,0, sec*1000*1000);
-       return functions.window(new Column("_time"), String.valueOf(ival), duration, "0 minutes");
+        CalendarInterval ival = new CalendarInterval(0, 0, sec * 1000 * 1000);
+        return functions.window(new Column("_time"), String.valueOf(ival), duration, "0 minutes");
     }
 
     /**
      * Gets the CalendarInterval of string form span
+     * 
      * @param value span as string
      * @return CalendarInterval
      */
-    private CalendarInterval getSpanLength(String value){
+    private CalendarInterval getSpanLength(String value) {
         // incoming span-length consist of
         // <int>[<timescale>]
         // default timescale is sec
-        String timescale="sec";
+        String timescale = "sec";
         int numericalValue;
         int month = 0;
         long sec = 0;
         Pattern p = Pattern.compile("\\d+");
         Matcher m = p.matcher(value);
-        if(m.lookingAt()) {
+        if (m.lookingAt()) {
             numericalValue = Integer.parseInt(m.group());
             String[] parts = value.split(m.group());
-            if(parts.length>1)
+            if (parts.length > 1)
                 timescale = parts[1].trim();
         }
         else {
             LOGGER.error("Span length error: missing numerical value:<{}>", value);
-            throw new RuntimeException("getSpanLength, missing numerical value:"+value);
+            throw new RuntimeException("getSpanLength, missing numerical value:" + value);
         }
         // Calculate value
-        switch(timescale){
+        switch (timescale) {
             case "s":
             case "sec":
             case "secs":
             case "second":
             case "seconds":
-            case "S":{
+            case "S": {
                 sec = numericalValue;
                 break;
             }
@@ -361,7 +362,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
             case "mins":
             case "minute":
             case "minutes":
-            case "M":{
+            case "M": {
                 sec = numericalValue * 60L;
                 break;
             }
@@ -370,54 +371,117 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
             case "hrs":
             case "hour":
             case "hours":
-            case "H":{
+            case "H": {
                 sec = numericalValue * 3600L;
                 break;
             }
             case "d":
             case "day":
             case "days":
-            case "D":{
+            case "D": {
                 sec = numericalValue * 3600L * 24;
                 break;
             }
             case "w":
             case "week":
             case "weeks":
-            case "W":{
+            case "W": {
                 sec = numericalValue * 3600L * 24 * 7;
                 break;
             }
             case "mon":
             case "month":
             case "months":
-            case "MON":{
+            case "MON": {
                 //month = numericalValue;
                 // month is not  supported as such, it needs to be changed seconds
                 // use 30 as default month length
-                sec = (long) numericalValue *30*24*3600;
+                sec = (long) numericalValue * 30 * 24 * 3600;
                 break;
             }
         }
-        return new CalendarInterval(month, 0, sec*1000*1000L);
+        return new CalendarInterval(month, 0, sec * 1000 * 1000L);
     }
 
-    @Override public Node visitT_timechart_binsParameter(DPLParser.T_timechart_binsParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_binStartEndParameter(DPLParser.T_timechart_binStartEndParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_contParameter(DPLParser.T_timechart_contParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_fixedrangeParameter(DPLParser.T_timechart_fixedrangeParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_formatParameter(DPLParser.T_timechart_formatParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_limitParameter(DPLParser.T_timechart_limitParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_partialParameter(DPLParser.T_timechart_partialParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_sepParameter(DPLParser.T_timechart_sepParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_binMinspanParameter(DPLParser.T_timechart_binMinspanParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_binAligntimeParameter(DPLParser.T_timechart_binAligntimeParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_whereInstruction(DPLParser.T_timechart_whereInstructionContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_nullstrParameter(DPLParser.T_timechart_nullstrParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_otherstrParameter(DPLParser.T_timechart_otherstrParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_usenullParameter(DPLParser.T_timechart_usenullParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_useotherParameter(DPLParser.T_timechart_useotherParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_evaledField(DPLParser.T_timechart_evaledFieldContext ctx) { return visitChildren(ctx); }
+    @Override
+    public Node visitT_timechart_binsParameter(DPLParser.T_timechart_binsParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_binStartEndParameter(DPLParser.T_timechart_binStartEndParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_contParameter(DPLParser.T_timechart_contParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_fixedrangeParameter(DPLParser.T_timechart_fixedrangeParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_formatParameter(DPLParser.T_timechart_formatParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_limitParameter(DPLParser.T_timechart_limitParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_partialParameter(DPLParser.T_timechart_partialParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_sepParameter(DPLParser.T_timechart_sepParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_binMinspanParameter(DPLParser.T_timechart_binMinspanParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_binAligntimeParameter(DPLParser.T_timechart_binAligntimeParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_whereInstruction(DPLParser.T_timechart_whereInstructionContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_nullstrParameter(DPLParser.T_timechart_nullstrParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_otherstrParameter(DPLParser.T_timechart_otherstrParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_usenullParameter(DPLParser.T_timechart_usenullParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_useotherParameter(DPLParser.T_timechart_useotherParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_evaledField(DPLParser.T_timechart_evaledFieldContext ctx) {
+        return visitChildren(ctx);
+    }
 
     /*@Override public Node visitT_timechart_singleAggregation(DPLParser.T_timechart_singleAggregationContext ctx) {
         String oper = ctx.getText();
@@ -427,7 +491,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         if(oper.equalsIgnoreCase("count") || oper.equalsIgnoreCase("c")) {
             aggregateField = "count"; // use default name
             col = org.apache.spark.sql.functions.count(defaultField);
-//            LOGGER.info("T_timechart_singleAggregation (Catalyst):{}", col.expr().sql()+" default field="+defaultField);
+    //            LOGGER.info("T_timechart_singleAggregation (Catalyst):{}", col.expr().sql()+" default field="+defaultField);
             traceBuffer.add("Visit AggregateMethodCount(Catalyst):{}", col.expr().sql());
             rv = new ColumnNode(col);
         }else {
@@ -438,17 +502,29 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         if(ctx.t_timechart_fieldRenameInstruction() != null){
             Node renameCmd = visitT_timechart_fieldRenameInstruction(ctx.t_timechart_fieldRenameInstruction());
             aggregateField = renameCmd.toString();
-//            rv = new ColumnNode(((ColumnNode) rv).getColumn().as(renameCmd.toString()));
+    //            rv = new ColumnNode(((ColumnNode) rv).getColumn().as(renameCmd.toString()));
         }
         return rv;
     }*/
 
-    @Override public Node visitSpanType(DPLParser.SpanTypeContext ctx) {
-//        LOGGER.info("visitSpanType:"+ctx.getText());
+    @Override
+    public Node visitSpanType(DPLParser.SpanTypeContext ctx) {
+        //        LOGGER.info("visitSpanType:"+ctx.getText());
         return visitChildren(ctx);
     }
 
-    @Override public Node visitT_timechart_aggParameter(DPLParser.T_timechart_aggParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_dedupSplitParameter(DPLParser.T_timechart_dedupSplitParameterContext ctx) { return visitChildren(ctx); }
-    @Override public Node visitT_timechart_tcOpt(DPLParser.T_timechart_tcOptContext ctx) { return visitChildren(ctx); }
+    @Override
+    public Node visitT_timechart_aggParameter(DPLParser.T_timechart_aggParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_dedupSplitParameter(DPLParser.T_timechart_dedupSplitParameterContext ctx) {
+        return visitChildren(ctx);
+    }
+
+    @Override
+    public Node visitT_timechart_tcOpt(DPLParser.T_timechart_tcOptContext ctx) {
+        return visitChildren(ctx);
+    }
 }

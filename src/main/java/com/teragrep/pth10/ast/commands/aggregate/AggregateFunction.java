@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -66,18 +65,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Processes any aggregate functions used for example by the stats command.
- * The aggregation function is returned as a column, which will be applied
- * to the desired dataset using the <code>Dataset.agg()</code> method.
+ * Processes any aggregate functions used for example by the stats command. The aggregation function is returned as a
+ * column, which will be applied to the desired dataset using the <code>Dataset.agg()</code> method.
  */
 public class AggregateFunction extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(AggregateFunction.class);
     private String aggregateField = null;
     private final DPLParserCatalystContext catCtx;
 
     /**
-     * Constructor for the aggregate function, used to initialize
-     * the class inside aggregating commands like statsTransformation.
+     * Constructor for the aggregate function, used to initialize the class inside aggregating commands like
+     * statsTransformation.
      */
     public AggregateFunction(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
@@ -87,10 +86,10 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
         return this.aggregateField;
     }
 
-
     /**
      * Visit aggregate function<br>
      * <code>func( arg )</code>
+     * 
      * @param ctx AggregationFunctionContext
      * @return Node containing the column needed for processing the aggregation
      */
@@ -103,15 +102,14 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     *  -- Aggregate method: Count --
-     *  Uses the built-in Spark function count().
+     * -- Aggregate method: Count -- Uses the built-in Spark function count().
      */
     @Override
     public Node visitAggregateMethodCount(DPLParser.AggregateMethodCountContext ctx) {
         Node rv = aggregateMethodCountEmitCatalyst(ctx);
 
         // Default fieldname
-        aggregateField ="count";
+        aggregateField = "count";
         return rv;
     }
 
@@ -134,15 +132,14 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     *  -- Aggregate method: Sum --
-     *  Uses the built-in Spark function sum().
+     * -- Aggregate method: Sum -- Uses the built-in Spark function sum().
      */
     @Override
     public Node visitAggregateMethodSum(DPLParser.AggregateMethodSumContext ctx) {
         Node rv = aggregateMethodSumEmitCatalyst(ctx);
 
         // Default fieldname
-        aggregateField ="sum";
+        aggregateField = "sum";
         return rv;
     }
 
@@ -156,7 +153,8 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
         if (columnPt != null) {
             col = new SumAggregator(new FieldIndexImpl(columnPt.getText()), catCtx.nullValue).toColumn();
             resultColumnName = String.format("sum(%s)", columnPt.getText());
-        } else {
+        }
+        else {
             col = new SumAggregator(new FieldIndexStub(), catCtx.nullValue).toColumn();
         }
 
@@ -165,15 +163,15 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Median --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ExactPercentileAggregator}
-     * with <code>percentile = 0.5d</code> to calculate the median.
+     * -- Aggregate method: Median -- Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ExactPercentileAggregator} with
+     * <code>percentile = 0.5d</code> to calculate the median.
      */
     public Node visitAggregateMethodMedian(DPLParser.AggregateMethodMedianContext ctx) {
         Node rv = aggregateMethodMedianEmitCatalyst(ctx);
 
         // Default fieldname
-        aggregateField ="median";
+        aggregateField = "median";
         return rv;
     }
 
@@ -192,20 +190,24 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: EstimatedDistinctCount_error --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.UDAF_DistinctCount} with built-in spark
-     * functions approx_count_distinct(), abs() and divide().
+     * -- Aggregate method: EstimatedDistinctCount_error -- Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.UDAF_DistinctCount} with built-in spark functions
+     * approx_count_distinct(), abs() and divide().
      * <pre>estdc_error = abs(estimate_distinct_count - real_distinct_count)/real_distinct_count</pre>
      */
-    public Node visitAggregateMethodEstimatedDistinctErrorCount(DPLParser.AggregateMethodEstimatedDistinctErrorCountContext ctx) {
+    public Node visitAggregateMethodEstimatedDistinctErrorCount(
+            DPLParser.AggregateMethodEstimatedDistinctErrorCountContext ctx
+    ) {
         Node rv = aggregateMethodEstimatedDistinctErrorCountEmitCatalyst(ctx);
 
         // Default fieldname
-        aggregateField ="estdc";
+        aggregateField = "estdc";
         return rv;
     }
 
-    public Node aggregateMethodEstimatedDistinctErrorCountEmitCatalyst(DPLParser.AggregateMethodEstimatedDistinctErrorCountContext ctx) {
+    public Node aggregateMethodEstimatedDistinctErrorCountEmitCatalyst(
+            DPLParser.AggregateMethodEstimatedDistinctErrorCountContext ctx
+    ) {
         Node rv = null;
         String arg = ctx.getChild(1).getText();
 
@@ -236,10 +238,8 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Range --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.MinMaxAggregator} in
-     * <code>RANGE</code> mode to perform the aggregation.
-     * <pre>range(x) = max(x) - min(x)</pre>
+     * -- Aggregate method: Range -- Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.MinMaxAggregator}
+     * in <code>RANGE</code> mode to perform the aggregation. <pre>range(x) = max(x) - min(x)</pre>
      */
     public Node visitAggregateMethodRange(DPLParser.AggregateMethodRangeContext ctx) {
         Node rv = aggregateMethodRangeEmitCatalyst(ctx);
@@ -264,15 +264,13 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     *  -- Aggregate method: SumSquare --
-     *  Uses the built-in Spark functions pow() and sum() to calculate first the square and then the sum
-     *  to form the sum of squares.
-     *  <pre>sumSq = x0^2 + x1^2 + ... + xn^2</pre>
+     * -- Aggregate method: SumSquare -- Uses the built-in Spark functions pow() and sum() to calculate first the square
+     * and then the sum to form the sum of squares. <pre>sumSq = x0^2 + x1^2 + ... + xn^2</pre>
      */
     public Node visitAggregateMethodSumSquare(DPLParser.AggregateMethodSumSquareContext ctx) {
         Node rv = aggregateMethodSumSquareEmitCatalyst(ctx);
 
-        aggregateField ="sumsq";
+        aggregateField = "sumsq";
         return rv;
     }
 
@@ -293,13 +291,13 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: DistinctCount --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.DistinctCountAggregator} to perform the aggregation.
+     * -- Aggregate method: DistinctCount -- Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.DistinctCountAggregator} to perform the aggregation.
      */
     public Node visitAggregateMethodDistinctCount(DPLParser.AggregateMethodDistinctCountContext ctx) {
         Node rv = aggregateMethodDistinctCountEmitCatalyst(ctx);
 
-        aggregateField ="dc";
+        aggregateField = "dc";
         return rv;
     }
 
@@ -319,17 +317,18 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: EstimatedDistinctCount --
-     * Uses the built-in Spark function approx_count_distinct()
+     * -- Aggregate method: EstimatedDistinctCount -- Uses the built-in Spark function approx_count_distinct()
      */
     public Node visitAggregateMethodEstimatedDistinctCount(DPLParser.AggregateMethodEstimatedDistinctCountContext ctx) {
         Node rv = aggregateMethodEstimatedDistinctCountEmitCatalyst(ctx);
 
-        aggregateField ="estdc";
+        aggregateField = "estdc";
         return rv;
     }
 
-    public Node aggregateMethodEstimatedDistinctCountEmitCatalyst(DPLParser.AggregateMethodEstimatedDistinctCountContext ctx) {
+    public Node aggregateMethodEstimatedDistinctCountEmitCatalyst(
+            DPLParser.AggregateMethodEstimatedDistinctCountContext ctx
+    ) {
         Node rv = null;
         String arg = ctx.getChild(1).getText();
 
@@ -343,14 +342,13 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Max --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.MinMaxAggregator} in
+     * -- Aggregate method: Max -- Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.MinMaxAggregator} in
      * <code>MAX</code> mode to perform the aggregation.
      */
     public Node visitAggregateMethodMax(DPLParser.AggregateMethodMaxContext ctx) {
         Node rv = aggregateMethodMaxEmitCatalyst(ctx);
 
-        aggregateField ="max";
+        aggregateField = "max";
         return rv;
     }
 
@@ -368,14 +366,13 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Min --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.MinMaxAggregator} in
+     * -- Aggregate method: Min -- Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.MinMaxAggregator} in
      * <code>MIN</code> mode to perform the aggregation.
      */
     public Node visitAggregateMethodMin(DPLParser.AggregateMethodMinContext ctx) {
         Node rv = aggregateMethodMinEmitCatalyst(ctx);
 
-        aggregateField ="min";
+        aggregateField = "min";
         return rv;
     }
 
@@ -393,13 +390,12 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Variance --
-     * Uses the built-in Spark functions var_samp() and var_pop()
+     * -- Aggregate method: Variance -- Uses the built-in Spark functions var_samp() and var_pop()
      */
     public Node visitAggregateMethodVariance(DPLParser.AggregateMethodVarianceContext ctx) {
         Node rv = aggregateMethodVarianceEmitCatalyst(ctx);
 
-        aggregateField ="var";
+        aggregateField = "var";
         return rv;
     }
 
@@ -430,13 +426,12 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Standard Deviation --
-     * Uses the built-in Spark function for stddev_samp() and stddev_pop()
+     * -- Aggregate method: Standard Deviation -- Uses the built-in Spark function for stddev_samp() and stddev_pop()
      */
     public Node visitAggregateMethodStandardDeviation(DPLParser.AggregateMethodStandardDeviationContext ctx) {
         Node rv = aggregateMethodStandardDeviationEmitCatalyst(ctx);
 
-        aggregateField ="stdev";
+        aggregateField = "stdev";
         return rv;
     }
 
@@ -465,8 +460,7 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     *  -- Aggregate method: Avg --
-     *  Uses the built-in Spark function for avg().
+     * -- Aggregate method: Avg -- Uses the built-in Spark function for avg().
      */
     public Node visitAggregateMethodAvg(DPLParser.AggregateMethodAvgContext ctx) {
         Node rv = aggregateMethodAvgEmitCatalyst(ctx);
@@ -500,9 +494,8 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Mode --
-     * Returns the field value with most occurrences within a given column.
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ModeAggregator} to perform the aggregation.
+     * -- Aggregate method: Mode -- Returns the field value with most occurrences within a given column. Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ModeAggregator} to perform the aggregation.
      */
     public Node visitAggregateMethodMode(DPLParser.AggregateMethodModeContext ctx) {
         Node rv = aggregateMethodModeEmitCatalyst(ctx);
@@ -545,7 +538,7 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     public Node visitAggregateMethodLast(DPLParser.AggregateMethodLastContext ctx) {
         Node rv = aggregateMethodLastEmitCatalyst(ctx);
 
-        aggregateField ="last";
+        aggregateField = "last";
         return rv;
     }
 
@@ -556,15 +549,14 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Earliest --
-     * Returns the row with the earliest timestamp
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in
-     * <code>EARLIEST</code> mode to perform the aggregation.
+     * -- Aggregate method: Earliest -- Returns the row with the earliest timestamp Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in <code>EARLIEST</code>
+     * mode to perform the aggregation.
      */
     public Node visitAggregateMethodEarliest(DPLParser.AggregateMethodEarliestContext ctx) {
         Node rv = aggregateMethodEarliestEmitCatalyst(ctx);
 
-        aggregateField ="earliest";
+        aggregateField = "earliest";
         return rv;
     }
 
@@ -581,8 +573,8 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregation method: Earliest_time --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in
+     * -- Aggregation method: Earliest_time -- Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in
      * <code>EARLIEST_TIME</code> mode to perform the aggregation.
      */
     public Node visitAggregateMethodEarliestTime(DPLParser.AggregateMethodEarliestTimeContext ctx) {
@@ -599,15 +591,18 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
         String columnName = ctx.getChild(1).getText();
         String resultColumnName = String.format("earliest_time(%s)", columnName);
 
-        Column asUnixTime = new EarliestLatestAggregator_String(columnName, AggregatorMode.EarliestLatestAggregatorMode.EARLIEST_TIME).toColumn();
+        Column asUnixTime = new EarliestLatestAggregator_String(
+                columnName,
+                AggregatorMode.EarliestLatestAggregatorMode.EARLIEST_TIME
+        ).toColumn();
 
         return new ColumnNode(asUnixTime.as(resultColumnName));
     }
 
     /**
-     * -- Aggregation method: Latest --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in
-     * <code>LATEST</code> mode to perform the aggregation.
+     * -- Aggregation method: Latest -- Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in <code>LATEST</code>
+     * mode to perform the aggregation.
      */
     public Node visitAggregateMethodLatest(DPLParser.AggregateMethodLatestContext ctx) {
         Node rv = aggregateMethodLatestEmitCatalyst(ctx);
@@ -623,20 +618,21 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
         String resultColumnName = String.format("latest(%s)", colName);
 
         // use aggregator
-        Column col = new EarliestLatestAggregator_String(colName, AggregatorMode.EarliestLatestAggregatorMode.LATEST).toColumn();
+        Column col = new EarliestLatestAggregator_String(colName, AggregatorMode.EarliestLatestAggregatorMode.LATEST)
+                .toColumn();
 
         return new ColumnNode(col.as(resultColumnName));
     }
 
     /**
-     * -- Aggregation method: Latest_time --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in
+     * -- Aggregation method: Latest_time -- Uses the
+     * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.EarliestLatestAggregator_String} in
      * <code>LATEST_TIME</code> mode to perform the aggregation.
      */
     public Node visitAggregateMethodLatestTime(DPLParser.AggregateMethodLatestTimeContext ctx) {
         Node rv = aggregateMethodLatestTimeEmitCatalyst(ctx);
 
-        aggregateField ="latest_time";
+        aggregateField = "latest_time";
         return rv;
     }
 
@@ -647,19 +643,21 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
         String colName = ctx.getChild(1).getText();
         String resultColumnName = String.format("latest_time(%s)", colName);
 
-        Column asUnixTime = new EarliestLatestAggregator_String(colName, AggregatorMode.EarliestLatestAggregatorMode.LATEST_TIME).toColumn();
+        Column asUnixTime = new EarliestLatestAggregator_String(
+                colName,
+                AggregatorMode.EarliestLatestAggregatorMode.LATEST_TIME
+        ).toColumn();
         return new ColumnNode(asUnixTime.as(resultColumnName));
     }
 
     /**
-     * -- Aggregate method: List --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ValuesAggregator} in <code>LIST</code> mode
-     * to perform the aggregation.
+     * -- Aggregate method: List -- Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ValuesAggregator} in
+     * <code>LIST</code> mode to perform the aggregation.
      */
     public Node visitAggregateMethodList(DPLParser.AggregateMethodListContext ctx) {
         Node rv = aggregateMethodListEmitCatalyst(ctx);
 
-        aggregateField ="list";
+        aggregateField = "list";
         return rv;
     }
 
@@ -681,13 +679,13 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * -- Aggregate method: Values --
-     * Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ValuesAggregator} to perform the aggregation
+     * -- Aggregate method: Values -- Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ValuesAggregator}
+     * to perform the aggregation
      */
     public Node visitAggregateMethodValues(DPLParser.AggregateMethodValuesContext ctx) {
         Node rv = aggregateMethodValuesEmitCatalyst(ctx);
 
-        aggregateField ="values";
+        aggregateField = "values";
         return rv;
     }
 
@@ -706,68 +704,69 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     *  -- Aggregate method: Percentile --
-     *  Can calculate the percentile multiple different ways,
-     *  exactperc(), upperperc() and perc().
-     *  Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ExactPercentileAggregator} to perform exactperc(),
-     *  and {@link com.teragrep.pth10.ast.commands.aggregate.utils.PercentileApprox} for upperperc() and perc().
+     * -- Aggregate method: Percentile -- Can calculate the percentile multiple different ways, exactperc(), upperperc()
+     * and perc(). Uses the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ExactPercentileAggregator} to perform
+     * exactperc(), and {@link com.teragrep.pth10.ast.commands.aggregate.utils.PercentileApprox} for upperperc() and
+     * perc().
      */
     public Node visitAggregateMethodPercentileVariable(DPLParser.AggregateMethodPercentileVariableContext ctx) {
-    	LOGGER.debug("Visiting percX(Y)");
-    	Node rv = aggregateMethodPercentileVariableEmitCatalyst(ctx);
+        LOGGER.debug("Visiting percX(Y)");
+        Node rv = aggregateMethodPercentileVariableEmitCatalyst(ctx);
 
-        aggregateField ="percentile";
+        aggregateField = "percentile";
         return rv;
     }
 
     // TODO Implement upperperc
     public Node aggregateMethodPercentileVariableEmitCatalyst(DPLParser.AggregateMethodPercentileVariableContext ctx) {
-    	TerminalNode func = (TerminalNode) ctx.getChild(0);
-    	String commandName = func.getText();
-    	String colName = ctx.getChild(2).getText();
-    	Column col = null;
-    	
-    	// Make sure the result column name matches the DPL command
-    	String resultColumnName = String.format("%s(%s)", commandName, colName);
-    	
-    	LOGGER.debug("Command: <[{}]>", commandName);
+        TerminalNode func = (TerminalNode) ctx.getChild(0);
+        String commandName = func.getText();
+        String colName = ctx.getChild(2).getText();
+        Column col = null;
 
-    	// There are four different options for func: pX, percX, exactpercX, upperpercX
-    	// This separates the X from the command name into its own variable xThPercentileArg.
-    	String funcAsString = func.getText();
+        // Make sure the result column name matches the DPL command
+        String resultColumnName = String.format("%s(%s)", commandName, colName);
 
-    	double xThPercentileArg =
-    			(funcAsString.length() <= 4) ?
-    			Double.valueOf(funcAsString.substring(funcAsString.indexOf('p') + 1)) : /* pX */
-    			Double.valueOf(funcAsString.substring(funcAsString.lastIndexOf('c') + 1)); /* percX, exactpercX, upperpercX */
+        LOGGER.debug("Command: <[{}]>", commandName);
 
-    	LOGGER.debug("perc: Use percentile = <[{}]>", xThPercentileArg);
-    	
-    	switch (func.getSymbol().getType()) {
-	    	case DPLLexer.METHOD_AGGREGATE_P_VARIABLE:
-	    	case DPLLexer.METHOD_AGGREGATE_PERC_VARIABLE: {
-	    		col = new PercentileApprox().percentile_approx(functions.col(colName), functions.lit(xThPercentileArg/100));
-	    		break;
-	    	}
-	    	case DPLLexer.METHOD_AGGREGATE_EXACTPERC_VARIABLE: {
-	    		col = new ExactPercentileAggregator(colName, xThPercentileArg/100).toColumn();
-	    		break;
-	    	}
-	    	case DPLLexer.METHOD_AGGREGATE_UPPERPERC_VARIABLE: {
-	    		// upperperc() returns the same as perc() if under 1000 values
-	    		// TODO over 1000 distinct values
-	    		col = new PercentileApprox().percentile_approx(functions.col(colName), functions.lit(xThPercentileArg/100));
-	    		//throw new UnsupportedOperationException("Upper percentile mode not supported yet");
-	    		break;
-	    	}
-    	}
-    	
-    	return new ColumnNode(col.as(resultColumnName));
+        // There are four different options for func: pX, percX, exactpercX, upperpercX
+        // This separates the X from the command name into its own variable xThPercentileArg.
+        String funcAsString = func.getText();
+
+        double xThPercentileArg = (funcAsString.length() <= 4) ? Double
+                .valueOf(funcAsString.substring(funcAsString.indexOf('p') + 1)) : /* pX */
+                Double
+                        .valueOf(funcAsString.substring(funcAsString.lastIndexOf('c') + 1)); /* percX, exactpercX, upperpercX */
+
+        LOGGER.debug("perc: Use percentile = <[{}]>", xThPercentileArg);
+
+        switch (func.getSymbol().getType()) {
+            case DPLLexer.METHOD_AGGREGATE_P_VARIABLE:
+            case DPLLexer.METHOD_AGGREGATE_PERC_VARIABLE: {
+                col = new PercentileApprox()
+                        .percentile_approx(functions.col(colName), functions.lit(xThPercentileArg / 100));
+                break;
+            }
+            case DPLLexer.METHOD_AGGREGATE_EXACTPERC_VARIABLE: {
+                col = new ExactPercentileAggregator(colName, xThPercentileArg / 100).toColumn();
+                break;
+            }
+            case DPLLexer.METHOD_AGGREGATE_UPPERPERC_VARIABLE: {
+                // upperperc() returns the same as perc() if under 1000 values
+                // TODO over 1000 distinct values
+                col = new PercentileApprox()
+                        .percentile_approx(functions.col(colName), functions.lit(xThPercentileArg / 100));
+                //throw new UnsupportedOperationException("Upper percentile mode not supported yet");
+                break;
+            }
+        }
+
+        return new ColumnNode(col.as(resultColumnName));
     }
 
     /**
-     * -- Aggregate method: rate --
-     * Represents <pre>(latest(X) - earliest(X)) / (latest_time(X) - earliest_time(X))</pre>
+     * -- Aggregate method: rate -- Represents
+     * <pre>(latest(X) - earliest(X)) / (latest_time(X) - earliest_time(X))</pre>
      */
     public Node visitAggregateMethodRate(DPLParser.AggregateMethodRateContext ctx) {
         Node rv = aggregateMethodRateEmitCatalyst(ctx);
@@ -782,7 +781,8 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
         // Make sure the result column name matches the DPL command
         String resultColumnName = String.format("rate(%s)", colName);
 
-        Column res = new EarliestLatestAggregator_Double(colName, AggregatorMode.EarliestLatestAggregatorMode.RATE).toColumn();
+        Column res = new EarliestLatestAggregator_Double(colName, AggregatorMode.EarliestLatestAggregatorMode.RATE)
+                .toColumn();
         return new ColumnNode(res.as(resultColumnName));
     }
 

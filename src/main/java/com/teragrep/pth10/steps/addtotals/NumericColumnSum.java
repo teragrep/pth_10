@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -57,11 +57,14 @@ import java.util.Iterator;
 import java.util.List;
 
 public class NumericColumnSum implements Serializable {
+
     private static final long serialVersionUID = 1L;
     private final AddtotalsIntermediateState currentState;
+
     public NumericColumnSum() {
         this.currentState = new AddtotalsIntermediateState();
     }
+
     public List<Row> process(Iterator<Row> events) {
         // Perform the cumulative sum aggregation
         List<Row> rv = new ArrayList<>();
@@ -79,7 +82,8 @@ public class NumericColumnSum implements Serializable {
                 final String valueAsString;
                 if (rowItem == null) {
                     valueAsString = "";
-                } else {
+                }
+                else {
                     valueAsString = rowItem.toString();
                 }
                 // Parse to LONG or DOUBLE. Others will be STRING and skipped.
@@ -88,7 +92,8 @@ public class NumericColumnSum implements Serializable {
                 if (parsedResult.getType().equals(ParsedResult.Type.LONG)) {
                     // got long, accumulate
                     currentState.accumulate(i, parsedResult.getLong());
-                } else if (parsedResult.getType().equals(ParsedResult.Type.DOUBLE)) {
+                }
+                else if (parsedResult.getType().equals(ParsedResult.Type.DOUBLE)) {
                     // got double, accumulate
                     currentState.accumulate(i, parsedResult.getDouble());
                 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.*;
@@ -75,6 +74,7 @@ import java.util.Arrays;
  * Class containing the visitor methods for all "| teragrep" subcommands
  */
 public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTransformation.class);
     DPLParserCatalystContext catCtx;
     DPLParserCatalystVisitor catVisitor;
@@ -93,15 +93,14 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
     private static final String portCfgItem = "dpl.pth_10.transform.teragrep.syslog.parameter.port";
     private static final String enforceDestinationCfgItem = "dpl.pth_10.transform.teragrep.syslog.restrictedMode";
 
-    public TeragrepTransformation(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor)
-    {
+    public TeragrepTransformation(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
         this.catCtx = catCtx;
         this.catVisitor = catVisitor;
     }
 
     /**
-     * Topmost visitor, teragrep subcommand visiting starts from this function
-     * COMMAND_MODE_TERAGREP (t_modeParameter | t_getParameter) t_hostParameter?
+     * Topmost visitor, teragrep subcommand visiting starts from this function COMMAND_MODE_TERAGREP (t_modeParameter |
+     * t_getParameter) t_hostParameter?
      */
     @Override
     public Node visitTeragrepTransformation(DPLParser.TeragrepTransformationContext ctx) {
@@ -109,8 +108,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Visits the subrules and sets the parameters based on the parse tree.
-     * Also uses the zeppelin config to set defaults, if available
+     * Visits the subrules and sets the parameters based on the parse tree. Also uses the zeppelin config to set
+     * defaults, if available
+     * 
      * @param ctx Main parse tree
      * @return CatalystNode
      */
@@ -139,8 +139,11 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             }
         }
         else {
-            LOGGER.error("Zeppelin config was not provided to the Teragrep command: host and port will be set as default, {}",
-                    "and no destination will be enforced.");
+            LOGGER
+                    .error(
+                            "Zeppelin config was not provided to the Teragrep command: host and port will be set as default, {}",
+                            "and no destination will be enforced."
+                    );
         }
 
         return visit(ctx.getChild(1));
@@ -148,17 +151,20 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Sets the <code>cmdMode</code> based on the parse tree given<br>
+     * 
      * @param ctx getParameter sub parse tree
      * @return null, as the function sets a global variable <code>cmdMode</code>
      */
     @Override
-	public Node visitT_getParameter(DPLParser.T_getParameterContext ctx) {
+    public Node visitT_getParameter(DPLParser.T_getParameterContext ctx) {
         // get archive summary OR get system version
         if (ctx.t_getTeragrepVersionParameter() != null) {
             return visit(ctx.t_getTeragrepVersionParameter());
-        } else if (ctx.t_getArchiveSummaryParameter() != null) {
+        }
+        else if (ctx.t_getArchiveSummaryParameter() != null) {
             return visit(ctx.t_getArchiveSummaryParameter());
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Unsupported teragrep command: " + ctx.getText());
         }
     }
@@ -171,8 +177,10 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
         }
         catch (ParserConfigurationException pce) {
-            throw new RuntimeException("Error occurred during initialization of XML document in metadata query: <{" +
-                    pce.getMessage() + "}>");
+            throw new RuntimeException(
+                    "Error occurred during initialization of XML document in metadata query: <{" + pce.getMessage()
+                            + "}>"
+            );
         }
         // get metadata via logicalStatement and isMetadataQuery=true
         LogicalStatementXML logiXml = new LogicalStatementXML(catCtx, doc, true);
@@ -190,6 +198,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Sets the host and port, if given
+     * 
      * @param ctx hostParameter sub parse tree
      * @return null, as the function sets the global variables <code>host</code> and <code>port</code>
      */
@@ -254,20 +263,26 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
         if (ctx.t_pathParameter() != null && !ctx.t_pathParameter().isEmpty()) {
             if (ctx.t_pathParameter().size() != 1) {
-                throw new IllegalArgumentException("Path parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "Path parameter was provided multiple times! Please provide it only once."
+                );
             }
             hdfsPath = visit(ctx.t_pathParameter(0)).toString();
         }
         if (ctx.t_retentionParameter() != null && !ctx.t_retentionParameter().isEmpty()) {
             if (ctx.t_retentionParameter().size() != 1) {
-                throw new IllegalArgumentException("Retention parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "Retention parameter was provided multiple times! Please provide it only once."
+                );
             }
             hdfsRetentionSpan = ctx.t_retentionParameter(0).spanType().getText();
         }
 
         if (ctx.t_overwriteParameter() != null && !ctx.t_overwriteParameter().isEmpty()) {
             if (ctx.t_overwriteParameter().size() != 1) {
-                throw new IllegalArgumentException("Overwrite parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "Overwrite parameter was provided multiple times! Please provide it only once."
+                );
             }
             TerminalNode overwriteBoolNode = (TerminalNode) ctx.t_overwriteParameter(0).booleanType().getChild(0);
             switch (overwriteBoolNode.getSymbol().getType()) {
@@ -278,15 +293,19 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                     hdfsOverwrite = false;
                     break;
                 default:
-                    throw new RuntimeException("Expected a boolean value for parameter 'overwrite', instead it was something else.\n" +
-                            "Try replacing the text after 'overwrite=' with 'true' or 'false'.");
+                    throw new RuntimeException(
+                            "Expected a boolean value for parameter 'overwrite', instead it was something else.\n"
+                                    + "Try replacing the text after 'overwrite=' with 'true' or 'false'."
+                    );
             }
         }
 
         TeragrepHdfsSaveStep.Format format = TeragrepHdfsSaveStep.Format.AVRO;
         if (ctx.t_hdfsFormatParameter() != null && !ctx.t_hdfsFormatParameter().isEmpty()) {
             if (ctx.t_hdfsFormatParameter().size() != 1) {
-                throw new IllegalArgumentException("'format=' parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "'format=' parameter was provided multiple times! Please provide it only once."
+                );
             }
 
             TerminalNode formatNode = (TerminalNode) ctx.t_hdfsFormatParameter(0).getChild(1);
@@ -302,7 +321,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
         if (ctx.t_headerParameter() != null && !ctx.t_headerParameter().isEmpty()) {
             if (ctx.t_headerParameter().size() != 1) {
-                throw new IllegalArgumentException("'header=' parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "'header=' parameter was provided multiple times! Please provide it only once."
+                );
             }
             TerminalNode headerNode = (TerminalNode) ctx.t_headerParameter(0).booleanType().getChild(0);
             switch (headerNode.getSymbol().getType()) {
@@ -317,7 +338,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        return new StepNode(new TeragrepHdfsSaveStep(catCtx, hdfsOverwrite, hdfsPath, hdfsRetentionSpan, format, header));
+        return new StepNode(
+                new TeragrepHdfsSaveStep(catCtx, hdfsOverwrite, hdfsPath, hdfsRetentionSpan, format, header)
+        );
     }
 
     // exec hdfs load path
@@ -329,7 +352,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
         if (ctx.t_pathParameter() != null && !ctx.t_pathParameter().isEmpty()) {
             if (ctx.t_pathParameter().size() != 1) {
-                throw new IllegalArgumentException("Path parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "Path parameter was provided multiple times! Please provide it only once."
+                );
             }
             hdfsPath = visit(ctx.t_pathParameter(0)).toString();
         }
@@ -337,7 +362,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         TeragrepHdfsLoadStep.Format format = TeragrepHdfsLoadStep.Format.AVRO;
         if (ctx.t_hdfsFormatParameter() != null && !ctx.t_hdfsFormatParameter().isEmpty()) {
             if (ctx.t_hdfsFormatParameter().size() != 1) {
-                throw new IllegalArgumentException("'format=' parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "'format=' parameter was provided multiple times! Please provide it only once."
+                );
             }
             TerminalNode formatNode = (TerminalNode) ctx.t_hdfsFormatParameter(0).getChild(1);
             switch (formatNode.getSymbol().getType()) {
@@ -352,7 +379,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
         if (ctx.t_headerParameter() != null && !ctx.t_headerParameter().isEmpty()) {
             if (ctx.t_headerParameter().size() != 1) {
-                throw new IllegalArgumentException("'header=' parameter was provided multiple times! Please provide it only once.");
+                throw new IllegalArgumentException(
+                        "'header=' parameter was provided multiple times! Please provide it only once."
+                );
             }
             TerminalNode headerNode = (TerminalNode) ctx.t_headerParameter(0).booleanType().getChild(0);
             switch (headerNode.getSymbol().getType()) {
@@ -368,8 +397,10 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         }
 
         if (ctx.t_schemaParameter() != null && !ctx.t_schemaParameter().isEmpty()) {
-            if (ctx.t_schemaParameter().size() != 1){
-                throw new IllegalArgumentException("'schema=' parameter was provided multiple times! Please provide it only once.");
+            if (ctx.t_schemaParameter().size() != 1) {
+                throw new IllegalArgumentException(
+                        "'schema=' parameter was provided multiple times! Please provide it only once."
+                );
             }
             schema = new UnquotedText(new TextString(ctx.t_schemaParameter(0).stringType().getText())).read();
         }
@@ -433,26 +464,35 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                 // bloom update
                 mode = TeragrepBloomStep.BloomMode.UPDATE;
             }
-            else if(ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_ESTIMATE() != null) {
+            else if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_ESTIMATE() != null) {
                 // bloom estimate
                 mode = TeragrepBloomStep.BloomMode.ESTIMATE;
             }
 
             if (ctx.t_bloomOptionParameter().t_inputParamater() != null) {
-                inputCol = new UnquotedText(new TextString(ctx.t_bloomOptionParameter().t_inputParamater().fieldType().getText())).read();
-            } else {
+                inputCol = new UnquotedText(
+                        new TextString(ctx.t_bloomOptionParameter().t_inputParamater().fieldType().getText())
+                ).read();
+            }
+            else {
                 inputCol = "tokens";
             }
 
             if (ctx.t_bloomOptionParameter().t_outputParameter() != null) {
-                outputCol = new UnquotedText(new TextString(ctx.t_bloomOptionParameter().t_outputParameter().fieldType().getText())).read();
-            } else {
+                outputCol = new UnquotedText(
+                        new TextString(ctx.t_bloomOptionParameter().t_outputParameter().fieldType().getText())
+                ).read();
+            }
+            else {
                 outputCol = String.format("estimate(%s)", inputCol);
             }
 
             if (ctx.t_bloomOptionParameter().t_estimatesParameter() != null) {
-                estimateCol = new UnquotedText(new TextString(ctx.t_bloomOptionParameter().t_estimatesParameter().fieldType().getText())).read();
-            } else {
+                estimateCol = new UnquotedText(
+                        new TextString(ctx.t_bloomOptionParameter().t_estimatesParameter().fieldType().getText())
+                ).read();
+            }
+            else {
                 estimateCol = String.format("estimate(%s)", inputCol);
             }
         }
@@ -461,8 +501,13 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
         if (mode == TeragrepBloomStep.BloomMode.CREATE || mode == TeragrepBloomStep.BloomMode.UPDATE) {
             // create aggregate step to run before bloom create and bloom update
-            TeragrepBloomStep aggregateStep = new TeragrepBloomStep(this.zplnConfig, TeragrepBloomStep.BloomMode.AGGREGATE,
-                    inputCol, outputCol, estimateCol);
+            TeragrepBloomStep aggregateStep = new TeragrepBloomStep(
+                    this.zplnConfig,
+                    TeragrepBloomStep.BloomMode.AGGREGATE,
+                    inputCol,
+                    outputCol,
+                    estimateCol
+            );
 
             return new StepListNode(Arrays.asList(aggregateStep, bloomStep));
         }
@@ -477,13 +522,18 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         String outputCol = "tokens";
         AbstractTokenizerStep.TokenizerFormat tokenizerFormat = AbstractTokenizerStep.TokenizerFormat.STRING;
         if (ctx.t_formatParameter() != null) {
-            final String format = new UnquotedText(new TextString(ctx.t_formatParameter().stringType().getText())).read();
+            final String format = new UnquotedText(new TextString(ctx.t_formatParameter().stringType().getText()))
+                    .read();
             if (format.equalsIgnoreCase("string")) {
                 tokenizerFormat = AbstractTokenizerStep.TokenizerFormat.STRING;
-            } else if (format.equalsIgnoreCase("bytes")) {
+            }
+            else if (format.equalsIgnoreCase("bytes")) {
                 tokenizerFormat = AbstractTokenizerStep.TokenizerFormat.BYTES;
-            } else {
-                throw new IllegalArgumentException("Invalid format parameter '" + format + "'. Expected 'string' or 'bytes'");
+            }
+            else {
+                throw new IllegalArgumentException(
+                        "Invalid format parameter '" + format + "'. Expected 'string' or 'bytes'"
+                );
             }
         }
         if (ctx.t_inputParamater() != null) {
@@ -502,15 +552,20 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         final String url;
         if (ctx.stringType() != null) {
             metricKey = new UnquotedText(new TextString(ctx.stringType().getText())).read();
-        } else if (catCtx.getNotebookUrl() != null && !catCtx.getNotebookUrl().isEmpty()){
+        }
+        else if (catCtx.getNotebookUrl() != null && !catCtx.getNotebookUrl().isEmpty()) {
             metricKey = catCtx.getNotebookUrl();
-        } else {
+        }
+        else {
             metricKey = "NoteBookID";
         }
 
-        if (catCtx.getConfig() != null && catCtx.getConfig().hasPath("dpl.pth_10.transform.teragrep.dynatrace.api.url")) {
+        if (
+            catCtx.getConfig() != null && catCtx.getConfig().hasPath("dpl.pth_10.transform.teragrep.dynatrace.api.url")
+        ) {
             url = catCtx.getConfig().getString("dpl.pth_10.transform.teragrep.dynatrace.api.url");
-        } else {
+        }
+        else {
             url = "http://localhost:9001/metrics/ingest";
         }
 

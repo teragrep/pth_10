@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.logicalstatement;
 
 import com.teragrep.pth10.ast.*;
@@ -65,13 +64,14 @@ import org.w3c.dom.Element;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
-import java.util.Stack;
 
 /**
- * <p>A subrule of logicalStatement, used for statements of time such as
- * earliest, latest, and et cetera.</p>
+ * <p>
+ * A subrule of logicalStatement, used for statements of time such as earliest, latest, and et cetera.
+ * </p>
  */
 public class TimeStatement extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TimeStatement.class);
 
     private final Document doc;
@@ -121,13 +121,10 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
 
     /**
      * {@inheritDoc}
-     *
      * <p>
-     * The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.
+     * The default implementation returns the result of calling {@link #visitChildren} on {@code ctx}.
      * </p>
-     * timeFormatQualifier : TIMEFORMAT EQ stringType //FIXME implement Time
-     * Properties ;
+     * timeFormatQualifier : TIMEFORMAT EQ stringType //FIXME implement Time Properties ;
      */
     @Override
     public Node visitTimeFormatQualifier(DPLParser.TimeFormatQualifierContext ctx) {
@@ -137,12 +134,9 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
 
     /**
      * {@inheritDoc}
-     *
      * <p>
-     * The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.
+     * The default implementation returns the result of calling {@link #visitChildren} on {@code ctx}.
      * </p>
-     *
      * <pre>
      * timeQualifier
      * : EARLIEST EQ stringType
@@ -176,11 +170,11 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
     public Node visitTimeQualifier(DPLParser.TimeQualifierContext ctx) {
         Node rv = null;
         switch (mode) {
-            case XML:{
+            case XML: {
                 rv = timeQualifierEmitXml(ctx);
                 break;
             }
-            case CATALYST:{
+            case CATALYST: {
                 rv = timeQualifierEmitCatalyst(ctx);
                 break;
             }
@@ -189,9 +183,10 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Returns an ElementNode with {@literal LE(<=) or GE(>=)} of unix time used
-     * to restrict search results to certain timeframe. <br>
+     * Returns an ElementNode with {@literal LE(<=) or GE(>=)} of unix time used to restrict search results to certain
+     * timeframe. <br>
      * Supports <code>EARLIEST, INDEX_EARLIEST, LATEST, INDEX_LATEST</code>
+     * 
      * @param ctx
      * @return ElementNode(XML) with LE/GE unixtime
      */
@@ -214,7 +209,8 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
             // relative time
             RelativeTimestamp rtTimestamp = rtParser.parse(value); // might throw NFE if not relative timestamp
             timevalue = rtTimestamp.calculate(now);
-        } catch (NumberFormatException ne) {
+        }
+        catch (NumberFormatException ne) {
             // absolute time
             timevalue = this.getEpochFromString(value, catCtx.getTimeFormatString());
         }
@@ -257,9 +253,10 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Returns a ColumnNode containing a column with {@literal LEQ(<=) or GEQ(>=)} of unix time used
-     * to restrict search results to certain timeframe. <br>
+     * Returns a ColumnNode containing a column with {@literal LEQ(<=) or GEQ(>=)} of unix time used to restrict search
+     * results to certain timeframe. <br>
      * Supports <code>EARLIEST, INDEX_EARLIEST, LATEST, INDEX_LATEST</code>
+     * 
      * @param ctx
      * @return ColumnNode with leq/geq unixtime
      */
@@ -283,7 +280,8 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
             // relative time
             RelativeTimestamp rtTimestamp = rtParser.parse(value);
             timevalue = rtTimestamp.calculate(now);
-        } catch (NumberFormatException ne) {
+        }
+        catch (NumberFormatException ne) {
             // absolute time
             timevalue = this.getEpochFromString(value, catCtx.getTimeFormatString());
         }
@@ -321,14 +319,16 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         long timevalue = 0;
         if (timeFormatString == null || timeFormatString.equals("")) {
             timevalue = new DefaultTimeFormat().getEpoch(value);
-        } else {
+        }
+        else {
             // TODO: should be included in DPLTimeFormat
             if (timeFormatString.equals("%s")) {
                 return Long.parseLong(value);
             }
             try {
                 timevalue = new DPLTimeFormat(timeFormatString).getEpoch(value);
-            } catch (ParseException e) {
+            }
+            catch (ParseException e) {
                 throw new RuntimeException("TimeQualifier conversion error: <" + value + "> can't be parsed.");
             }
         }

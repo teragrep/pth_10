@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,10 +43,8 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst;
@@ -64,8 +62,6 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -79,6 +75,7 @@ import java.util.function.Consumer;
  * Visitor used for Catalyst emit mode (main emit mode, XML emit mode only used for archive query)
  */
 public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLParserCatalystVisitor.class);
 
     Node logicalPart = null;
@@ -90,7 +87,6 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
 
     private final DPLParserCatalystContext catCtx;
 
-    
     // hdfs path - used for join command's subsearch save
     private String hdfsPath = null;
 
@@ -117,8 +113,9 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * returns "trace buffer", which is an empty list for compatibility reasons.
-     * getTracebuffer is used in some older tests, which should be removed
+     * returns "trace buffer", which is an empty list for compatibility reasons. getTracebuffer is used in some older
+     * tests, which should be removed
+     * 
      * @return empty list
      */
     @Deprecated
@@ -133,13 +130,14 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
 
     /**
      * Sets the consumer to handle the results of each of the batches
+     * 
      * @param consumer Consumer with type Dataset to be implemented in pth_07
      */
     public void setConsumer(Consumer<Dataset<Row>> consumer) {
         this.stepList.setBatchHandler(consumer);
     }
 
-    public void setMessageHandler(Consumer<Map<String, Map<String,String>>> messageHandler) {
+    public void setMessageHandler(Consumer<Map<String, Map<String, String>>> messageHandler) {
         this.messageHandler = messageHandler;
         // register messageHandler to DPLInternalStreamingQueryListener
         if (this.catCtx != null && this.messageHandler != null) {
@@ -152,35 +150,42 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
 
     /**
      * Sets the maximum results for batchCollect
+     * 
      * @param val int value
      */
     public void setDPLRecallSize(Integer val) {
-    	this.getCatalystContext().setDplRecallSize(val);
+        this.getCatalystContext().setDplRecallSize(val);
     }
 
     /**
      * Gets the dpl recall size (max results from batchCollect)
+     * 
      * @return max results as int
      */
     public Integer getDPLRecallSize() {
-    	return this.getCatalystContext().getDplRecallSize();
+        return this.getCatalystContext().getDplRecallSize();
     }
 
     /**
      * HDFS path used for join subsearch save
+     * 
      * @param path path as string
      */
     public void setHdfsPath(String path) {
-    	this.hdfsPath = path;
+        this.hdfsPath = path;
     }
 
     /**
      * HDFS path used for join/eventstats/subsearch save <br>
      * Generate a random path if none was set via setHdfsPath()
+     * 
      * @return path as string
      */
     public String getHdfsPath() {
-        if (this.hdfsPath == null && this.catCtx != null && this.catCtx.getSparkSession() != null && this.catCtx.getParagraphUrl() != null) {
+        if (
+            this.hdfsPath == null && this.catCtx != null && this.catCtx.getSparkSession() != null
+                    && this.catCtx.getParagraphUrl() != null
+        ) {
             final String appId = this.catCtx.getSparkSession().sparkContext().applicationId();
             final String paragraphId = this.catCtx.getParagraphUrl();
             final String path = String.format("/tmp/%s/%s/%s/", appId, paragraphId, UUID.randomUUID());
@@ -200,8 +205,9 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Sets the backup mmdb database path used by iplocation command
-     * Only used, if the zeppelin config item is not found.
+     * Sets the backup mmdb database path used by iplocation command Only used, if the zeppelin config item is not
+     * found.
+     * 
      * @param iplocationMmdbPath new mmdb file path as string
      */
     public void setIplocationMmdbPath(String iplocationMmdbPath) {
@@ -209,16 +215,16 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Gets the backup mmdb database path used by iplocation command
-     * Only used, if the zeppelin config item is not found.
+     * Gets the backup mmdb database path used by iplocation command Only used, if the zeppelin config item is not
+     * found.
+     * 
      * @return mmdb file path as string
      */
     public String getIplocationMmdbPath() {
         return iplocationMmdbPath;
     }
 
-    public boolean getAggregatesUsed()
-    {
+    public boolean getAggregatesUsed() {
         return this.getStepList().getAggregateCount() > 0;
     }
 
@@ -226,7 +232,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     public String getLogicalPart() {
         String rv = null;
         if (logicalPart != null) {
-            ColumnNode cn = (ColumnNode)logicalPart;
+            ColumnNode cn = (ColumnNode) logicalPart;
             LOGGER.debug("\ngetLogicalPart incoming=<{}>", logicalPart);
             rv = cn.asExpression().sql();
         }
@@ -245,6 +251,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
 
     /**
      * Get current DPLCatalystContext containing for instance audit information
+     * 
      * @return DPLCatalystContext
      */
     public DPLParserCatalystContext getCatalystContext() {
@@ -269,7 +276,8 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
         if (ctx.searchTransformationRoot() != null) {
             LOGGER.info("visitRoot Handle logical part: <{}>", ctx.getChild(0).getText());
             logicalPart = visitSearchTransformationRoot(ctx.searchTransformationRoot());
-        } else {
+        }
+        else {
             // no logical part, e.g. makeresults or similar command in use without main search
             this.getStepList().add(new EmptyDataframeStep());
         }
@@ -290,11 +298,16 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
         // Check for index= / index!= / index IN without right side
         if (ctx.getChildCount() == 1 && ctx.getChild(0) instanceof TerminalNode) {
             TerminalNode term = (TerminalNode) ctx.getChild(0);
-            if (term.getSymbol().getType() == DPLLexer.INDEX_EQ || term.getSymbol().getType() == DPLLexer.INDEX_SPACE
-                    || term.getSymbol().getType() == DPLLexer.INDEX_NEG || term.getSymbol().getType() == DPLLexer.INDEX_SPACE_NEG
-                    || term.getSymbol().getType() == DPLLexer.INDEX_IN) {
-                throw new RuntimeException("The right side of the search qualifier was empty! Check that the index has" +
-                        " a valid value, like 'index = cinnamon'.");
+            if (
+                term.getSymbol().getType() == DPLLexer.INDEX_EQ || term.getSymbol().getType() == DPLLexer.INDEX_SPACE
+                        || term.getSymbol().getType() == DPLLexer.INDEX_NEG
+                        || term.getSymbol().getType() == DPLLexer.INDEX_SPACE_NEG
+                        || term.getSymbol().getType() == DPLLexer.INDEX_IN
+            ) {
+                throw new RuntimeException(
+                        "The right side of the search qualifier was empty! Check that the index has"
+                                + " a valid value, like 'index = cinnamon'."
+                );
             }
         }
 
@@ -324,14 +337,15 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
         return new NullNode();
     }
 
-    /** Used to visit subsearches. Builds a StepList for subsearch and returns SubsearchStep.
+    /**
+     * Used to visit subsearches. Builds a StepList for subsearch and returns SubsearchStep.
      *
      * @param ctx SubsearchTransformStatementContext
      * @return StepNode that has subsearchStep inside
      */
     @Override
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
-       DPLParser.SearchTransformationContext searchCtx = null;
+        DPLParser.SearchTransformationContext searchCtx = null;
         if (ctx.transformStatement() != null) {
             searchCtx = ctx.transformStatement().searchTransformation();
         }
@@ -342,14 +356,16 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
             // data from other indices compared to main query
             Document xmlDoc;
             try {
-                 xmlDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
-            } catch (ParserConfigurationException e) {
+                xmlDoc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+            }
+            catch (ParserConfigurationException e) {
                 throw new RuntimeException(e);
             }
             LogicalStatementXML logicalXml = new LogicalStatementXML(catCtx, xmlDoc);
 
             AbstractStep xmlStep = logicalXml.visitLogicalStatementXML(searchCtx.searchTransformationRoot());
-            AbstractStep catalystStep = this.logicalCatalyst.visitLogicalStatementCatalyst(searchCtx.searchTransformationRoot());
+            AbstractStep catalystStep = this.logicalCatalyst
+                    .visitLogicalStatementCatalyst(searchCtx.searchTransformationRoot());
 
             this.stepList.add(xmlStep);
             this.stepList.add(catalystStep);
@@ -360,7 +376,8 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
                 transformStatement.visit(ctx.transformStatement().transformStatement());
             }
 
-        } else { // no main search, check first transformStatement
+        }
+        else { // no main search, check first transformStatement
             if (ctx.transformStatement() != null) {
                 transformStatement = new TransformStatement(catCtx, this);
                 // Adding transformation steps to stepList is done in TransformStatement
@@ -374,10 +391,9 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * logicalStatement : macroStatement | subsearchStatement | sublogicalStatement
-     * | timeStatement | searchQualifier | Not logicalStatement | indexStatement |
-     * comparisonStatement | logicalStatement Or logicalStatement | logicalStatement
-     * And? logicalStatement ;
+     * logicalStatement : macroStatement | subsearchStatement | sublogicalStatement | timeStatement | searchQualifier |
+     * Not logicalStatement | indexStatement | comparisonStatement | logicalStatement Or logicalStatement |
+     * logicalStatement And? logicalStatement ;
      */
     @Override
     public Node visitLogicalStatement(DPLParser.LogicalStatementContext ctx) {
@@ -386,9 +402,9 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
 
     /**
      * {@inheritDoc}
-     *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public Node visitComparisonStatement(DPLParser.ComparisonStatementContext ctx) {
@@ -397,8 +413,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Time format handling
-     * timeStatement : timeFormatQualifier? timeQualifier ;
+     * Time format handling timeStatement : timeFormatQualifier? timeQualifier ;
      */
     @Override
     public Node visitTimeStatement(DPLParser.TimeStatementContext ctx) {

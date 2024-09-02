@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,21 +43,25 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.iplocation;
 
 import com.maxmind.db.MaxMindDbConstructor;
 import com.maxmind.db.MaxMindDbParameter;
 
 /**
- * Used by the MaxMind database reader for looking up results and providing a way
- * for the Java code to access the results for given IP address
+ * Used by the MaxMind database reader for looking up results and providing a way for the Java code to access the
+ * results for given IP address
  */
 public class RirLookupResult {
+
     private final String country;
     private final String operator;
+
     @MaxMindDbConstructor
-    public RirLookupResult(@MaxMindDbParameter(name="Country") String country, @MaxMindDbParameter(name="Operator") String operator) {
+    public RirLookupResult(
+            @MaxMindDbParameter(name = "Country") String country,
+            @MaxMindDbParameter(name = "Operator") String operator
+    ) {
         this.country = country;
         this.operator = operator;
     }

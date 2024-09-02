@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast;
 
 import com.teragrep.pth10.ast.time.RelativeTimeParser;
@@ -58,10 +57,11 @@ import java.util.Map;
 import static java.lang.Math.abs;
 
 /**
- * Configuration for parser/UI data transfer. For instance latest/earliest values used for default span/time window calculation
- * and map which can contain additional named values.
+ * Configuration for parser/UI data transfer. For instance latest/earliest values used for default span/time window
+ * calculation and map which can contain additional named values.
  */
 public class DPLParserConfig {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLParserConfig.class);
 
     private Map<String, Object> config = new LinkedHashMap<>();
@@ -70,40 +70,41 @@ public class DPLParserConfig {
 
     /**
      * Get named value from config map
+     * 
      * @param key Name string
      * @return value
      */
-    public Object get(String key)
-    {
+    public Object get(String key) {
         return config.get(key);
     }
 
     /**
      * Put named value object into the map
-     * @param key name string
+     * 
+     * @param key   name string
      * @param value as object. String/int/...
      */
-    public void put(String key, Object value)
-    {
+    public void put(String key, Object value) {
         config.put(key, value);
     }
 
     /**
-     * Get earliest flag which is used when  calculating window ranges for different spans.
+     * Get earliest flag which is used when calculating window ranges for different spans.
+     * 
      * @return earliest as string value
      */
-    public String getEarliest()
-    {
+    public String getEarliest() {
         return (String) config.get("earliest");
     }
 
     /**
-     * Set earliest flag with given string, If flag is relative, calculate it relative to  current now-instance. Store
+     * Set earliest flag with given string, If flag is relative, calculate it relative to current now-instance. Store
      * also that calculated value as epoch
+     * 
      * @param earliest string value like -1h or actual timestamp
      */
     public void setEarliest(String earliest) {
-        long earliestEpoch =0;
+        long earliestEpoch = 0;
         Timestamp now = new Timestamp(System.currentTimeMillis());
         RelativeTimeParser rtParser = new RelativeTimeParser();
 
@@ -111,7 +112,8 @@ public class DPLParserConfig {
         try {
             RelativeTimestamp rtTimestamp = rtParser.parse(earliest); // can throw error if not relative timestamp
             earliestEpoch = rtTimestamp.calculate(now);
-        } catch (NumberFormatException ne) {
+        }
+        catch (NumberFormatException ne) {
             // absolute time
             earliestEpoch = new DefaultTimeFormat().getEpoch(earliest);
         }
@@ -121,7 +123,8 @@ public class DPLParserConfig {
     }
 
     /**
-     * Get latest flag which is used when  calculating window ranges for different spans.
+     * Get latest flag which is used when calculating window ranges for different spans.
+     * 
      * @return latest as string value
      */
     public String getLatest() {
@@ -129,8 +132,9 @@ public class DPLParserConfig {
     }
 
     /**
-     * Set latest flag with given string, If flag is relative, calculate it relative to  current now-instance. Store
-     * also that calculated value as epoch
+     * Set latest flag with given string, If flag is relative, calculate it relative to current now-instance. Store also
+     * that calculated value as epoch
+     * 
      * @param latest string value like -1h or actual timestamp
      */
     public void setLatest(String latest) {
@@ -142,7 +146,8 @@ public class DPLParserConfig {
         try {
             RelativeTimestamp rtTimestamp = rtParser.parse(latest); // can throw exception if not relative timestamp
             latestEpoch = rtTimestamp.calculate(now);
-        } catch (NumberFormatException ne) {
+        }
+        catch (NumberFormatException ne) {
             // absolute time
             latestEpoch = new DefaultTimeFormat().getEpoch(latest);
         }
@@ -152,7 +157,8 @@ public class DPLParserConfig {
     }
 
     /**
-     * Use config map and  calculate default time range according to it.
+     * Use config map and calculate default time range according to it.
+     * 
      * @return enum range values 10s,...,1M
      */
     public TimeRange getTimeRange() {
@@ -160,27 +166,33 @@ public class DPLParserConfig {
         long r = 0;
         // Earliest set, latest not
         if (config.get("earliest") != null && config.get("latest") == null) {
-            r = System.currentTimeMillis() - (long)config.get("earliestEpoch");
-        } else if (config.get("latest") != null && config.get("earliest") == null) {
-            r = (long)config.get("latestEpoch");
-        } else if (config.get("earliest") != null && config.get("latest") != null) {
+            r = System.currentTimeMillis() - (long) config.get("earliestEpoch");
+        }
+        else if (config.get("latest") != null && config.get("earliest") == null) {
+            r = (long) config.get("latestEpoch");
+        }
+        else if (config.get("earliest") != null && config.get("latest") != null) {
             // Both set
             // Calculate time range according to latest-earliest
-            LOGGER.info("config=<[{}]>",config);
-            r = (long)config.get("latestEpoch") - (long)config.get("earliestEpoch");
+            LOGGER.info("config=<[{}]>", config);
+            r = (long) config.get("latestEpoch") - (long) config.get("earliestEpoch");
         }
-        if(r<0)
-            r=abs(r);
-        LOGGER.info("Calculated range=<{}>",r);
-        if (r <= 15 * 60 ) {
+        if (r < 0)
+            r = abs(r);
+        LOGGER.info("Calculated range=<{}>", r);
+        if (r <= 15 * 60) {
             rv = TimeRange.TEN_SECONDS;
-        } else if (r <= 60 * 60 ) {
+        }
+        else if (r <= 60 * 60) {
             rv = TimeRange.ONE_MINUTE;
-        } else if (r <= 4 * 60 * 60 ) {
+        }
+        else if (r <= 4 * 60 * 60) {
             rv = TimeRange.FIVE_MINUTES;
-        } else if (r <= 24 * 60 * 60 ) {
+        }
+        else if (r <= 24 * 60 * 60) {
             rv = TimeRange.THIRTY_MINUTES;
-        } else if (r > 30 * 24 * 60 * 60 ) {
+        }
+        else if (r > 30 * 24 * 60 * 60) {
             // Default max value is 1 day
             rv = TimeRange.ONE_DAY;
         }

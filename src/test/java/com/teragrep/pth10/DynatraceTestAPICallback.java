@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -54,9 +54,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DynatraceTestAPICallback implements ExpectationResponseCallback {
+
     public DynatraceTestAPICallback() {
 
     }
+
     @Override
     public HttpResponse handle(HttpRequest httpRequest) {
         final String reqString = httpRequest.getBodyAsString();
@@ -64,14 +66,18 @@ public class DynatraceTestAPICallback implements ExpectationResponseCallback {
         int invalidCount = 0;
         int statusCode = 500; //500=server error, 202=all lines ok, 400=some lines may be ok
 
-        Pattern p = Pattern.compile(".*(\\.[^()]*)*\\sgauge," +
-                "min=\\d+(\\.\\d+)?,max=\\d+(\\.\\d+)?,sum=\\d+(\\.\\d+)?,count=\\d+\\s\\d+\n" +
-                "#.*\\sgauge\\sdt\\.meta\\.displayName=.*,\\sdt\\.meta\\.description=.*,\\sdt\\.meta\\.unit=.*");
+        Pattern p = Pattern
+                .compile(
+                        ".*(\\.[^()]*)*\\sgauge,"
+                                + "min=\\d+(\\.\\d+)?,max=\\d+(\\.\\d+)?,sum=\\d+(\\.\\d+)?,count=\\d+\\s\\d+\n"
+                                + "#.*\\sgauge\\sdt\\.meta\\.displayName=.*,\\sdt\\.meta\\.description=.*,\\sdt\\.meta\\.unit=.*"
+                );
         Matcher m = p.matcher(reqString);
 
         if (m.matches()) {
             validCount++;
-        } else {
+        }
+        else {
             invalidCount++;
         }
 
@@ -79,8 +85,11 @@ public class DynatraceTestAPICallback implements ExpectationResponseCallback {
 
         statusCode = 202;
 
-        return HttpResponse.response("{\"error\": null, " +
-                "\"linesValid\": " + validCount +", " +
-                "\"linesInvalid\": " + invalidCount + "}").withStatusCode(statusCode);
+        return HttpResponse
+                .response(
+                        "{\"error\": null, " + "\"linesValid\": " + validCount + ", " + "\"linesInvalid\": "
+                                + invalidCount + "}"
+                )
+                .withStatusCode(statusCode);
     }
 }

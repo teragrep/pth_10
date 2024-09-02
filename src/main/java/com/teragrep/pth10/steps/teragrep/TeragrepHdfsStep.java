@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.HdfsSaveMetadata;
@@ -59,18 +58,22 @@ public abstract class TeragrepHdfsStep extends AbstractStep {
 
     /**
      * Serializes HdfsSaveMetadata to a byte array
+     * 
      * @param metadata input metadata
      * @return serialized as byte array
      */
     byte[] serializeMetadata(HdfsSaveMetadata metadata) {
         byte[] serialized;
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+        try (
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ObjectOutputStream oos = new ObjectOutputStream(baos)
+        ) {
 
             oos.writeObject(metadata);
             serialized = baos.toByteArray();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException("Error serializing metadata object: " + e);
         }
 
@@ -79,17 +82,20 @@ public abstract class TeragrepHdfsStep extends AbstractStep {
 
     /**
      * Deserializes a byte array into a HdfsSaveMetadata object
+     * 
      * @param serialized byte array
      * @return deserialized metadata object
      */
     HdfsSaveMetadata deserializeMetadata(byte[] serialized) {
         HdfsSaveMetadata deserialized;
 
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(serialized);
-             DecompressibleInputStream dis = new DecompressibleInputStream(bais)) {
+        try (
+                ByteArrayInputStream bais = new ByteArrayInputStream(serialized); DecompressibleInputStream dis = new DecompressibleInputStream(bais)
+        ) {
 
             deserialized = (HdfsSaveMetadata) dis.readObject();
-        } catch (IOException | ClassNotFoundException e) {
+        }
+        catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Error deserializing metadata object: " + e);
         }
 

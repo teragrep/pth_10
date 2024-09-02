@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -53,23 +53,23 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class indexQueryTest {
 
-	@Disabled(value="Should be converted to a dataframe test")
-	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseSimpleIndexQueryTest() {
-		String q,e,result;
-		q = "index=cinnamon";
-		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
-		result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-		assertEquals(e,result);
-	}
+    @Disabled(value = "Should be converted to a dataframe test")
+    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    public void parseSimpleIndexQueryTest() {
+        String q, e, result;
+        q = "index=cinnamon";
+        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
+        result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        assertEquals(e, result);
+    }
 
-	@Disabled(value="Should be converted to a dataframe test")
-	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseIndexQueryWithSearchStringTest() {
-		String q,e,result;
-		q = "index=kafka_topic conn";
-		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%'";
-		result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-		assertEquals(e,result);
-	}
+    @Disabled(value = "Should be converted to a dataframe test")
+    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    public void parseIndexQueryWithSearchStringTest() {
+        String q, e, result;
+        q = "index=kafka_topic conn";
+        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%'";
+        result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        assertEquals(e, result);
+    }
 }

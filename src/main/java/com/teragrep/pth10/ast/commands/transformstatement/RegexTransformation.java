@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.bo.Node;
@@ -61,6 +60,7 @@ import org.slf4j.LoggerFactory;
  * Base visitor class for command <code>regex</code>
  */
 public class RegexTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RegexTransformation.class);
     public RegexStep regexStep = null;
 
@@ -72,7 +72,7 @@ public class RegexTransformation extends DPLParserBaseVisitor<Node> {
     (root
     (searchTransformationRoot (logicalStatement (searchQualifier index = (stringType index_A))))
     (transformStatement | (regexTransformation regex (fieldType _raw) != (regexStringType "data data")) (transformStatement <EOF>)))
-
+    
     (root
     (searchTransformationRoot (logicalStatement (searchQualifier index = (stringType index_A))))
     (transformStatement | (regexTransformation regex (fieldType _raw) = (regexStringType "data data")) (transformStatement <EOF>)))
@@ -104,10 +104,10 @@ public class RegexTransformation extends DPLParserBaseVisitor<Node> {
             ParseTree eq = ctx.getChild(2);
             LOGGER.debug(eq.getText());
             if (eq instanceof TerminalNode) {
-                if (((TerminalNode)eq).getSymbol().getType() == DPLLexer.COMMAND_REGEX_MODE_EQ) {
+                if (((TerminalNode) eq).getSymbol().getType() == DPLLexer.COMMAND_REGEX_MODE_EQ) {
                     equals = true;
                 }
-                else if (((TerminalNode)eq).getSymbol().getType() == DPLLexer.COMMAND_REGEX_MODE_NEQ) {
+                else if (((TerminalNode) eq).getSymbol().getType() == DPLLexer.COMMAND_REGEX_MODE_NEQ) {
                     equals = false;
                 }
             }

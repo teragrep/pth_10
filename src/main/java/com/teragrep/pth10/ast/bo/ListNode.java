@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.bo;
 
 import java.util.ArrayList;
@@ -51,9 +50,11 @@ import java.util.List;
 
 /**
  * Node that can contain an ArrayList of type T
+ * 
  * @param <T> type for arraylist
  */
 public class ListNode<T> extends Node {
+
     private List<T> list = new ArrayList<>();
 
     public ListNode(Token token) {
@@ -61,26 +62,26 @@ public class ListNode<T> extends Node {
     }
 
     public ListNode(List<T> lst) {
-        list=lst;
+        list = lst;
     }
 
     public ListNode() {
         super();
     }
 
-    public void add(T s){
+    public void add(T s) {
         list.add(s);
     }
 
-    public void add(int i, T s){
-        list.add(i,s);
+    public void add(int i, T s) {
+        list.add(i, s);
     }
 
-    public T get(int i){
+    public T get(int i) {
         return list.get(i);
     }
 
-    public List<T> asList(){
+    public List<T> asList() {
         return list;
     }
 }

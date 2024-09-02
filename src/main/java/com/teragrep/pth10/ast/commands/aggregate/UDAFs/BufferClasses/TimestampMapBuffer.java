@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
 import java.io.Serializable;
@@ -52,159 +51,169 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Java Bean compliant class to enclose the map with helper methods
- * used in EarliestLatestAggregator.java
+ * Java Bean compliant class to enclose the map with helper methods used in EarliestLatestAggregator.java
+ * 
  * @author eemhu
- *
  */
 public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * Merge the buffer's map with another
-	 * @param another map to merge with
-	 */
-	public void mergeMap(Map<Timestamp, String> another) {
-		another.forEach((key, value) -> {
-			this.map.merge(key, value, (v1, v2) -> {
-				// This gets called for possible duplicates
-				// In that case, retain the first value
-				return v1;
-			});
-		});
-	}
+    /**
+     * Merge the buffer's map with another
+     * 
+     * @param another map to merge with
+     */
+    public void mergeMap(Map<Timestamp, String> another) {
+        another.forEach((key, value) -> {
+            this.map
+                    .merge(key, value, (v1, v2) -> {
+                        // This gets called for possible duplicates
+                        // In that case, retain the first value
+                        return v1;
+                    });
+        });
+    }
 
-	/**
-	 * Add Time, Data pair to map
-	 * @param time key
-	 * @param data value
-	 */
-	public void add(Timestamp time, String data) {
-		if (!this.map.containsKey(time)) {
-			this.map.put(time, data);
-		}
-	}
+    /**
+     * Add Time, Data pair to map
+     * 
+     * @param time key
+     * @param data value
+     */
+    public void add(Timestamp time, String data) {
+        if (!this.map.containsKey(time)) {
+            this.map.put(time, data);
+        }
+    }
 
-	/**
-	 * Gets the earliest map entry
-	 * @return Map.Entry
-	 */
-	public Optional<Map.Entry<Timestamp, String>> earliestMapEntry() {
-		Optional<Map.Entry<Timestamp, String>> earliestEntry = Optional.empty();
-		
-		for (Map.Entry<Timestamp, String> entry : this.map.entrySet()) {
-			if (!earliestEntry.isPresent()) {
-				earliestEntry = Optional.of(entry);
-			}
-			else if (entry.getKey().before(earliestEntry.get().getKey())) {
-				earliestEntry = Optional.of(entry);
-			}
-		}
-		
-		return earliestEntry;
-	}
+    /**
+     * Gets the earliest map entry
+     * 
+     * @return Map.Entry
+     */
+    public Optional<Map.Entry<Timestamp, String>> earliestMapEntry() {
+        Optional<Map.Entry<Timestamp, String>> earliestEntry = Optional.empty();
 
-	/**
-	 * Gets the latest map entry
-	 * @return Map.Entry
-	 */
-	public Optional<Map.Entry<Timestamp, String>> latestMapEntry() {
-		Optional<Map.Entry<Timestamp, String>> latestEntry = Optional.empty();
-		
-		for (Map.Entry<Timestamp, String> entry : this.map.entrySet()) {
-			if (!latestEntry.isPresent()) {
-				latestEntry = Optional.of(entry);
-			}
-			else if (entry.getKey().after(latestEntry.get().getKey())) {
-				latestEntry = Optional.of(entry);
-			}
-		}
-		
-		return latestEntry;
-	}
+        for (Map.Entry<Timestamp, String> entry : this.map.entrySet()) {
+            if (!earliestEntry.isPresent()) {
+                earliestEntry = Optional.of(entry);
+            }
+            else if (entry.getKey().before(earliestEntry.get().getKey())) {
+                earliestEntry = Optional.of(entry);
+            }
+        }
 
-	/**
-	 * Gets the earliest field value
-	 * @return field value as string
-	 */
-	public String earliest() {
-		if (this.earliestMapEntry().isPresent()) {
-			return this.earliestMapEntry().get().getValue();
-		} else {
-			return "";
-		}
-	}
+        return earliestEntry;
+    }
 
-	/**
-	 * Gets the latest field value
-	 * @return field value as string
-	 */
-	public String latest() {
-		if (this.latestMapEntry().isPresent()) {
-			return this.latestMapEntry().get().getValue();
-		}
-		else {
-			return "";
-		}
-	}
+    /**
+     * Gets the latest map entry
+     * 
+     * @return Map.Entry
+     */
+    public Optional<Map.Entry<Timestamp, String>> latestMapEntry() {
+        Optional<Map.Entry<Timestamp, String>> latestEntry = Optional.empty();
 
-	/**
-	 * Gets the earliest unix time
-	 * @return field time as unix epoch
-	 */
-	public String earliest_time() {
-		if (this.earliestMapEntry().isPresent()) {
-			return String.valueOf(this.earliestMapEntry().get().getKey().getTime() / 1000L);
-		} else {
-			return "";
-		}
-	}
+        for (Map.Entry<Timestamp, String> entry : this.map.entrySet()) {
+            if (!latestEntry.isPresent()) {
+                latestEntry = Optional.of(entry);
+            }
+            else if (entry.getKey().after(latestEntry.get().getKey())) {
+                latestEntry = Optional.of(entry);
+            }
+        }
 
-	/**
-	 * Gets the latest unix time
-	 * @return field time as unix epoch
-	 */
-	public String latest_time() {
-		if (this.latestMapEntry().isPresent()) {
-			return String.valueOf(this.latestMapEntry().get().getKey().getTime() / 1000L);
-		} else {
-			return "";
-		}
-	}
+        return latestEntry;
+    }
 
-	/**
-	 * Calculates the rate<br>
-	 * <pre>rate = latest - earliest / latest_time - earliest_time</pre>
-	 * latest and earliest must be numerical<br>
-	 * latest_time != earliest_time<br>
-	 * @return rate as double
-	 */
-	public Double rate() {
-		Optional<Map.Entry<Timestamp, String>> earliestEntry = this.earliestMapEntry();
-		Optional<Map.Entry<Timestamp, String>> latestEntry = this.latestMapEntry();
-		if (!earliestEntry.isPresent() || !latestEntry.isPresent()) {
-			throw new IllegalStateException("Could not get earliest / latest entry from data!");
-		}
-		
-		// get earliest and latest values - must be numerical!
-		long earliest = Long.parseLong(earliestEntry.get().getValue());
-		long latest = Long.parseLong(latestEntry.get().getValue());
+    /**
+     * Gets the earliest field value
+     * 
+     * @return field value as string
+     */
+    public String earliest() {
+        if (this.earliestMapEntry().isPresent()) {
+            return this.earliestMapEntry().get().getValue();
+        }
+        else {
+            return "";
+        }
+    }
 
-		// get earliest and latest time
-		long earliest_time = earliestEntry.get().getKey().getTime() / 1000L;
-		long latest_time = latestEntry.get().getKey().getTime() / 1000L;
+    /**
+     * Gets the latest field value
+     * 
+     * @return field value as string
+     */
+    public String latest() {
+        if (this.latestMapEntry().isPresent()) {
+            return this.latestMapEntry().get().getValue();
+        }
+        else {
+            return "";
+        }
+    }
 
-		if (earliest_time == latest_time) {
-			throw new IllegalStateException("Earliest time was the same as the latest time! Can't calculate rate.");
-		}
+    /**
+     * Gets the earliest unix time
+     * 
+     * @return field time as unix epoch
+     */
+    public String earliest_time() {
+        if (this.earliestMapEntry().isPresent()) {
+            return String.valueOf(this.earliestMapEntry().get().getKey().getTime() / 1000L);
+        }
+        else {
+            return "";
+        }
+    }
 
-		// rate = latest - earliest / latest_time - earliest_time
-		double dividend = (double)(latest - earliest);
-		double divisor = (double)(latest_time - earliest_time);
-		double rate = dividend/divisor;
-		
-		return rate;
-	}
+    /**
+     * Gets the latest unix time
+     * 
+     * @return field time as unix epoch
+     */
+    public String latest_time() {
+        if (this.latestMapEntry().isPresent()) {
+            return String.valueOf(this.latestMapEntry().get().getKey().getTime() / 1000L);
+        }
+        else {
+            return "";
+        }
+    }
+
+    /**
+     * Calculates the rate<br>
+     * <pre>rate = latest - earliest / latest_time - earliest_time</pre> latest and earliest must be numerical<br>
+     * latest_time != earliest_time<br>
+     * 
+     * @return rate as double
+     */
+    public Double rate() {
+        Optional<Map.Entry<Timestamp, String>> earliestEntry = this.earliestMapEntry();
+        Optional<Map.Entry<Timestamp, String>> latestEntry = this.latestMapEntry();
+        if (!earliestEntry.isPresent() || !latestEntry.isPresent()) {
+            throw new IllegalStateException("Could not get earliest / latest entry from data!");
+        }
+
+        // get earliest and latest values - must be numerical!
+        long earliest = Long.parseLong(earliestEntry.get().getValue());
+        long latest = Long.parseLong(latestEntry.get().getValue());
+
+        // get earliest and latest time
+        long earliest_time = earliestEntry.get().getKey().getTime() / 1000L;
+        long latest_time = latestEntry.get().getKey().getTime() / 1000L;
+
+        if (earliest_time == latest_time) {
+            throw new IllegalStateException("Earliest time was the same as the latest time! Can't calculate rate.");
+        }
+
+        // rate = latest - earliest / latest_time - earliest_time
+        double dividend = (double) (latest - earliest);
+        double divisor = (double) (latest_time - earliest_time);
+        double rate = dividend / divisor;
+
+        return rate;
+    }
 }
-	

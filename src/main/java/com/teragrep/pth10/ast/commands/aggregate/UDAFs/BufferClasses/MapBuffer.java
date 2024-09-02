@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
 import java.io.Serializable;
@@ -52,43 +51,47 @@ import java.util.Map;
 
 /**
  * An abstract class to base Map-based Aggregation buffers on
+ * 
  * @author eemhu
- *
  * @param <K> type of key in map
  * @param <V> type of value in map
  */
 public abstract class MapBuffer<K, V> implements Serializable {
-	private static final long serialVersionUID = 1L;
-	protected Map<K, V> map;
-	
-	// Required constructors & methods for Java Bean compliance
 
-	/**
-	 * Initialize a map buffer
-	 */
-	public MapBuffer() {
-		this.map = new HashMap<K, V>();
-	}
+    private static final long serialVersionUID = 1L;
+    protected Map<K, V> map;
 
-	/**
-	 * Gets the internal map of the buffer
-	 * @return internal map
-	 */
-	public Map<K, V> getMap() {
-		return this.map;
-	}
+    // Required constructors & methods for Java Bean compliance
 
-	/**
-	 * Sets the internal map of the buffer
-	 * @param map new internal map
-	 */
-	public void setMap(Map<K, V> map) {
-		this.map = map;
-	}
+    /**
+     * Initialize a map buffer
+     */
+    public MapBuffer() {
+        this.map = new HashMap<K, V>();
+    }
 
-	/**
-	 * Abstract method to merge internal map with another
-	 * @param another map to merge with
-	 */
-	public abstract void mergeMap(Map<K, V> another);
+    /**
+     * Gets the internal map of the buffer
+     * 
+     * @return internal map
+     */
+    public Map<K, V> getMap() {
+        return this.map;
+    }
+
+    /**
+     * Sets the internal map of the buffer
+     * 
+     * @param map new internal map
+     */
+    public void setMap(Map<K, V> map) {
+        this.map = map;
+    }
+
+    /**
+     * Abstract method to merge internal map with another
+     * 
+     * @param another map to merge with
+     */
+    public abstract void mergeMap(Map<K, V> another);
 }

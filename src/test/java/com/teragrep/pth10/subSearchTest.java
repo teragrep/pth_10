@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -61,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class subSearchTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(subSearchTest.class);
 
     private StreamingTestUtil streamingTestUtil;
@@ -82,13 +83,16 @@ public class subSearchTest {
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEndSubSearch2Test() {
-        String q="index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host]";
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host]";
         String testFile = "src/test/resources/subsearchData*.json";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e="RLIKE(index, (?i)^index_A$)";
+            String e = "RLIKE(index, (?i)^index_A$)";
             // Check that sub-query get executed and result is used as query parameter
             assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
 
@@ -101,13 +105,16 @@ public class subSearchTest {
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEndSubSearch3Test() {
-        String q="index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]";
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e="RLIKE(index, (?i)^index_A$)";
+            String e = "RLIKE(index, (?i)^index_A$)";
 
             // Check that sub-query get executed and result is used as query parameter
             assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
@@ -115,7 +122,14 @@ public class subSearchTest {
             // Should have all the columns, fields command in subsearch shouldn't affect the main search
             assertEquals(9, res.columns().length);
 
-            List<String> lst = res.select("host").distinct().orderBy("host").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+            List<String> lst = res
+                    .select("host")
+                    .distinct()
+                    .orderBy("host")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
 
             assertEquals(2, lst.size());
 
@@ -126,48 +140,54 @@ public class subSearchTest {
     }
 
     @Disabled
-	@Test
+    @Test
     void endToEndSubSearch4Test() {
-        String q="index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host] [ search sourcetype= c:X:0| top limit=1 host | fields + host]";
+        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host] [ search sourcetype= c:X:0| top limit=1 host | fields + host]";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
-//        q="index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host] [ search host= computer03.example.com | top limit=1 host | fields + host]";
+        //        q="index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host] [ search host= computer03.example.com | top limit=1 host | fields + host]";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e="(`index` LIKE 'index_A' AND ((`_raw` LIKE '%computer01.example.com%' AND `_raw` LIKE '%computer02.example.com%') AND `_raw` LIKE '%computer01.example.com%'))";
+            String e = "(`index` LIKE 'index_A' AND ((`_raw` LIKE '%computer01.example.com%' AND `_raw` LIKE '%computer02.example.com%') AND `_raw` LIKE '%computer01.example.com%'))";
 
             // Check that sub-query get executed and result is used as query parameter
             assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
             // Check full result
-            e = "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n" +
-                    "|value                                                                                                                                                                                                                                                                                                                                                                                                                                                     |\n" +
-                    "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n" +
-                    "|{\"_raw\":\"127.0.0.123:4567 [26/Nov/2021:07:02:44.809] https-in~ https-in/<NOSRV> 0/-1/-1/-1/0 302 104 - - LR-- 1/1/0/0/0 0/0 \\\"GET /Monster_boy_normal_(entity) HTTP/1.1\\\" A:X:0 computer01.example.com computer02.example.com\",\"_time\":\"2001-01-01T01:01:01.011+03:00\",\"host\":\"computer02.example.com\",\"index\":\"index_A\",\"offset\":1,\"partition\":\"hundred-year/2001/01-01/computer01.example.com/01/01.logGLOB-2001010101.log.gz\",\"source\":\"imfile:computer01.example.com:01.log\",\"sourcetype\":\"A:X:0\"}|\n" +
-                    "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n";
+            e = "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
+                    + "|value                                                                                                                                                                                                                                                                                                                                                                                                                                                     |\n"
+                    + "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
+                    + "|{\"_raw\":\"127.0.0.123:4567 [26/Nov/2021:07:02:44.809] https-in~ https-in/<NOSRV> 0/-1/-1/-1/0 302 104 - - LR-- 1/1/0/0/0 0/0 \\\"GET /Monster_boy_normal_(entity) HTTP/1.1\\\" A:X:0 computer01.example.com computer02.example.com\",\"_time\":\"2001-01-01T01:01:01.011+03:00\",\"host\":\"computer02.example.com\",\"index\":\"index_A\",\"offset\":1,\"partition\":\"hundred-year/2001/01-01/computer01.example.com/01/01.logGLOB-2001010101.log.gz\",\"source\":\"imfile:computer01.example.com:01.log\",\"sourcetype\":\"A:X:0\"}|\n"
+                    + "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n";
             String jsonStr = res.toJSON().showString(7, 0, false);
             assertEquals(e, jsonStr);
         });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEndSearchTest() {
-        String q="sourcetype=A:X:0| top limit=2 host | fields + host";
+        String q = "sourcetype=A:X:0| top limit=2 host | fields + host";
         String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String head=res.head().getString(0);
+            String head = res.head().getString(0);
             List<Row> lst = res.collectAsList();
             // Correct  item count
-            assertEquals(2,lst.size());
-            assertEquals("computer01.example.com",lst.get(0).getString(0));
-            assertEquals("computer02.example.com",lst.get(1).getString(0));
+            assertEquals(2, lst.size());
+            assertEquals("computer01.example.com", lst.get(0).getString(0));
+            assertEquals("computer02.example.com", lst.get(1).getString(0));
         });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEndSearch1Test() {
-        String q="index = index_A AND computer01.example.com AND computer02.example.com";
+        String q = "index = index_A AND computer01.example.com AND computer02.example.com";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -177,24 +197,25 @@ public class subSearchTest {
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void endToEndSearch3Test() {
-        String q="sourcetype=c:X:0| top limit=1 host | fields + host";
+        String q = "sourcetype=c:X:0| top limit=1 host | fields + host";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             List<Row> lst = res.collectAsList();
-            lst.forEach(item->{
-                LOGGER.info("item value={}",item.getString(0));
+            lst.forEach(item -> {
+                LOGGER.info("item value={}", item.getString(0));
             });
             // Correct  item count
-            assertEquals(1,lst.size());
-            assertEquals("computer03.example.com",lst.get(0).getString(0));
+            assertEquals(1, lst.size());
+            assertEquals("computer03.example.com", lst.get(0).getString(0));
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
             assertFalse(aggregates);
         });
     }
 
-
 }
-

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -56,16 +55,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Base transformation for the 'search' command
- * <pre>| 'search' logicalStatement </pre>
+ * Base transformation for the 'search' command <pre>| 'search' logicalStatement </pre>
  */
 public class SearchTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchTransformation.class);
     public final SearchStep searchStep;
     private final DPLParserCatalystContext catCtx;
 
-    public SearchTransformation(DPLParserCatalystContext catCtx)
-    {
+    public SearchTransformation(DPLParserCatalystContext catCtx) {
         this.searchStep = new SearchStep();
         this.catCtx = catCtx;
     }
@@ -93,7 +91,9 @@ public class SearchTransformation extends DPLParserBaseVisitor<Node> {
 
         }
         else {
-            throw new IllegalStateException("Invalid search command. Expected SearchTransformationRoot, instead got '" + ctx.getText() + "'");
+            throw new IllegalStateException(
+                    "Invalid search command. Expected SearchTransformationRoot, instead got '" + ctx.getText() + "'"
+            );
         }
 
         return new StepNode(this.searchStep);

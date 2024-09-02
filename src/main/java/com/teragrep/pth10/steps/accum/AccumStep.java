@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -65,9 +65,11 @@ import java.util.Iterator;
 import java.util.List;
 
 public class AccumStep extends AbstractStep implements Serializable {
+
     private final String sourceField;
     private final String renameField;
     private final NullValue nullValue;
+
     public AccumStep(final NullValue nullValue, final String sourceField, final String renameField) {
         super();
         this.properties.add(CommandProperty.IGNORE_DEFAULT_SORTING);
@@ -80,43 +82,50 @@ public class AccumStep extends AbstractStep implements Serializable {
     public Dataset<Row> get(Dataset<Row> dataset) {
         // group all events under the same group (=0)
         final String groupCol = "$$accum_internal_grouping_col$$";
-        Dataset<Row> dsWithGroupCol = dataset.withColumn(groupCol,
-                functions.lit(0));
+        Dataset<Row> dsWithGroupCol = dataset.withColumn(groupCol, functions.lit(0));
 
         // Create output encoder for results
         ExpressionEncoder<Row> outputEncoder;
         if (renameField.isEmpty()) {
             // No rename field: Use source column for results
-            dsWithGroupCol = dsWithGroupCol.withColumn(sourceField,
-                    functions.col(sourceField).cast(DataTypes.StringType));
+            dsWithGroupCol = dsWithGroupCol
+                    .withColumn(sourceField, functions.col(sourceField).cast(DataTypes.StringType));
             outputEncoder = RowEncoder.apply(dsWithGroupCol.schema());
-        } else {
+        }
+        else {
             // Rename field: Used 'as <new-field>', returns StringType
             final StructType st = dsWithGroupCol.schema().add(renameField, DataTypes.StringType);
             outputEncoder = RowEncoder.apply(st);
         }
 
         // group dataset by '0', creating one group
-        KeyValueGroupedDataset<Integer, Row> keyValueGroupedDs = dsWithGroupCol.groupByKey((
-                MapFunction<Row, Integer>) (r) -> (Integer) r.getAs(groupCol), Encoders.INT());
+        KeyValueGroupedDataset<Integer, Row> keyValueGroupedDs = dsWithGroupCol
+                .groupByKey((MapFunction<Row, Integer>) (r) -> (Integer) r.getAs(groupCol), Encoders.INT());
 
         // use flatMapGroupsWithState to retain state between rows; grouping really isn't used here.
         // IntermediateState is used to retain state of cumulative sum.
-        Dataset<Row> rv = keyValueGroupedDs.flatMapGroupsWithState(this::flatMapGroupsWithStateFunc,
-                OutputMode.Append(), Encoders.javaSerialization(IntermediateState.class),
-                outputEncoder, GroupStateTimeout.NoTimeout());
+        Dataset<Row> rv = keyValueGroupedDs
+                .flatMapGroupsWithState(
+                        this::flatMapGroupsWithStateFunc, OutputMode.Append(), Encoders
+                                .javaSerialization(IntermediateState.class),
+                        outputEncoder, GroupStateTimeout.NoTimeout()
+                );
 
         // Return whilst dropping grouping column
         return rv.drop(groupCol);
     }
 
-    private Iterator<Row> flatMapGroupsWithStateFunc(Integer group, Iterator<Row> events,
-                                                     GroupState<IntermediateState> state) {
+    private Iterator<Row> flatMapGroupsWithStateFunc(
+            Integer group,
+            Iterator<Row> events,
+            GroupState<IntermediateState> state
+    ) {
         // Get the previous state if applicable, otherwise initialize state
         final IntermediateState currentState;
         if (state.exists()) {
             currentState = state.get();
-        } else {
+        }
+        else {
             currentState = new IntermediateState();
         }
 
@@ -138,21 +147,28 @@ public class AccumStep extends AbstractStep implements Serializable {
             if (parsedResult.getType().equals(ParsedResult.Type.LONG)) {
                 // got long, accumulate
                 currentState.accumulate(parsedResult.getLong());
-            } else if (parsedResult.getType().equals(ParsedResult.Type.DOUBLE)) {
+            }
+            else if (parsedResult.getType().equals(ParsedResult.Type.DOUBLE)) {
                 // got double, accumulate
                 currentState.accumulate(parsedResult.getDouble());
-            } else {
+            }
+            else {
                 // string, skip and return empty
                 skip = true;
             }
 
             // Build new row: First, add already existing fields
             for (int i = 0; i < r.length(); i++) {
-                if (renameField.isEmpty() && i==r.fieldIndex(sourceField) && !skip) {
+                if (renameField.isEmpty() && i == r.fieldIndex(sourceField) && !skip) {
                     // replace old content with cumulative sum if no new field given
-                    rowContents.add(currentState.isLongType() ?
-                            currentState.asLong().toString() : currentState.asDouble().toString());
-                } else {
+                    rowContents
+                            .add(
+                                    currentState.isLongType() ? currentState.asLong().toString() : currentState
+                                            .asDouble()
+                                            .toString()
+                            );
+                }
+                else {
                     // return old content if renameField was given or current row is to be skipped
                     rowContents.add(r.get(i));
                 }
@@ -163,9 +179,14 @@ public class AccumStep extends AbstractStep implements Serializable {
                 if (skip) {
                     // on skip return null
                     rowContents.add(nullValue.value());
-                } else {
-                    rowContents.add(currentState.isLongType() ?
-                            currentState.asLong().toString() : currentState.asDouble().toString());
+                }
+                else {
+                    rowContents
+                            .add(
+                                    currentState.isLongType() ? currentState.asLong().toString() : currentState
+                                            .asDouble()
+                                            .toString()
+                            );
                 }
             }
             // Add new row to collection of new rows

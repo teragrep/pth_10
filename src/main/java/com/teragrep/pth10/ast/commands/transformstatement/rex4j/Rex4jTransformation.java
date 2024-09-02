@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.rex4j;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -60,30 +59,26 @@ import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 /**
  * Class that contains the necessary implemented visitor functions for the rex4j command.<br>
- *
- * Rex4j provides a way to extract data from fields and generate new fields based on the extracted
- * data.<br>
- *
- * Rex4j also has a replace mode (mode=sed) that can use sed-based syntax to replace
- * values in the given field. If no field is specified, field is set to "_raw" by default.
+ * Rex4j provides a way to extract data from fields and generate new fields based on the extracted data.<br>
+ * Rex4j also has a replace mode (mode=sed) that can use sed-based syntax to replace values in the given field. If no
+ * field is specified, field is set to "_raw" by default.
  */
 public class Rex4jTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Rex4jTransformation.class);
 
     public Rex4jStep rex4jStep = null;
     private final DPLParserCatalystContext catCtx;
 
-    public Rex4jTransformation(DPLParserCatalystContext catCtx)
-    {
+    public Rex4jTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
     }
 
     /**
      * Main visitor function, from where the rest of the parse tree for this command will be walked
+     * 
      * @param ctx Rex4jTransformationContext
      * @return StepNode containing Step for rex4j command
      */
@@ -99,7 +94,7 @@ public class Rex4jTransformation extends DPLParserBaseVisitor<Node> {
         String field = "_raw"; // The field that you want to extract information from.
 
         // Optional fieldname, default is _raw
-        if(ctx.t_rex4j_fieldParameter()!= null) {
+        if (ctx.t_rex4j_fieldParameter() != null) {
             field = visit(ctx.t_rex4j_fieldParameter()).toString();
         }
 
@@ -127,28 +122,34 @@ public class Rex4jTransformation extends DPLParserBaseVisitor<Node> {
         return new StepNode(rex4jStep);
     }
 
-    @Override public Node visitT_rex4j_fieldParameter(DPLParser.T_rex4j_fieldParameterContext ctx) {
+    @Override
+    public Node visitT_rex4j_fieldParameter(DPLParser.T_rex4j_fieldParameterContext ctx) {
         String s = ctx.getChild(1).getText();
         s = new UnquotedText(new TextString(s)).read();
-        StringNode rv =  new StringNode(new Token(Type.STRING, s));
+        StringNode rv = new StringNode(new Token(Type.STRING, s));
         return rv;
     }
 
-    @Override public Node visitT_rex4j_maxMatchParameter(DPLParser.T_rex4j_maxMatchParameterContext ctx) {
+    @Override
+    public Node visitT_rex4j_maxMatchParameter(DPLParser.T_rex4j_maxMatchParameterContext ctx) {
         String s = ctx.getChild(1).getText();
         s = new UnquotedText(new TextString(s)).read();
-        StringNode rv =  new StringNode(new Token(Type.STRING,s));
-        LOGGER.info("visitT_rex4j_maxMatchParameter: return=<{}>" , rv);
+        StringNode rv = new StringNode(new Token(Type.STRING, s));
+        LOGGER.info("visitT_rex4j_maxMatchParameter: return=<{}>", rv);
         return rv;
     }
-    @Override public Node visitT_rex4j_modeSedParameter(DPLParser.T_rex4j_modeSedParameterContext ctx) {
+
+    @Override
+    public Node visitT_rex4j_modeSedParameter(DPLParser.T_rex4j_modeSedParameterContext ctx) {
         TerminalNode sedMode = (TerminalNode) ctx.getChild(1);
         //DPLLexer.COMMAND_REX4J_MODE_REGEXP_REPLACE
-        return  new StringNode(new Token(Type.STRING, sedMode.getSymbol().toString()));
+        return new StringNode(new Token(Type.STRING, sedMode.getSymbol().toString()));
     }
-    @Override public Node visitT_rex4j_offsetFieldParameter(DPLParser.T_rex4j_offsetFieldParameterContext ctx) {
+
+    @Override
+    public Node visitT_rex4j_offsetFieldParameter(DPLParser.T_rex4j_offsetFieldParameterContext ctx) {
         throw new RuntimeException("rex4j_offsetFieldParameter not supported yet");
-//        return visitChildren(ctx);
+        //        return visitChildren(ctx);
     }
 
 }

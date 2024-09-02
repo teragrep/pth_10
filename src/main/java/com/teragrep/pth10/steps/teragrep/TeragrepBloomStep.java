@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
@@ -68,12 +67,9 @@ import java.util.SortedMap;
  * teragrep exec bloom
  */
 public class TeragrepBloomStep extends AbstractStep {
+
     public enum BloomMode {
-        UPDATE,
-        CREATE,
-        ESTIMATE,
-        AGGREGATE,
-        DEFAULT
+        UPDATE, CREATE, ESTIMATE, AGGREGATE, DEFAULT
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepBloomStep.class);
@@ -91,8 +87,13 @@ public class TeragrepBloomStep extends AbstractStep {
     public final static String BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM = "dpl.pth_06.bloom.db.fields";
     public final static Double MAX_FPP = 0.01;
 
-    public TeragrepBloomStep(Config zeppelinConfig, BloomMode mode,
-                             String inputCol, String outputCol, String estimateCol) {
+    public TeragrepBloomStep(
+            Config zeppelinConfig,
+            BloomMode mode,
+            String inputCol,
+            String outputCol,
+            String estimateCol
+    ) {
         this.zeppelinConfig = zeppelinConfig;
         this.mode = mode;
         this.inputCol = inputCol;
@@ -122,9 +123,10 @@ public class TeragrepBloomStep extends AbstractStep {
                 rv = aggregate(dataset);
                 break;
             default:
-                throw new UnsupportedOperationException("Selected bloom command is not supported. " +
-                        "Supported commands: exec bloom create, exec bloom update, exec bloom estimate," +
-                        ".");
+                throw new UnsupportedOperationException(
+                        "Selected bloom command is not supported. "
+                                + "Supported commands: exec bloom create, exec bloom update, exec bloom estimate," + "."
+                );
         }
 
         return rv;
@@ -132,6 +134,7 @@ public class TeragrepBloomStep extends AbstractStep {
 
     /**
      * Create and store a bloom filter byte generated from Datasets rows _raw column (Ignores duplicates)
+     * 
      * @param dataset Dataset that is used to update database
      * @return Dataset unmodified
      */
@@ -146,6 +149,7 @@ public class TeragrepBloomStep extends AbstractStep {
 
     /**
      * Create and store a bloom filter byte arrays generated from Datasets rows _raw column (Replaces duplicates)
+     * 
      * @param dataset Dataset that is used to update database
      * @return Dataset unmodified
      */
@@ -159,28 +163,19 @@ public class TeragrepBloomStep extends AbstractStep {
     }
 
     private Dataset<Row> estimateSize(Dataset<Row> dataset) {
-        return dataset.select(
-                        functions.col("partition"),
-                        functions.explode(
-                                functions.col(inputCol)
-                        ).as("token")
-                )
+        return dataset
+                .select(functions.col("partition"), functions.explode(functions.col(inputCol)).as("token"))
                 .groupBy("partition")
-                .agg(
-                        functions.approxCountDistinct("token")
-                                .as(outputCol)
-                );
+                .agg(functions.approxCountDistinct("token").as(outputCol));
     }
 
     public Dataset<Row> aggregate(Dataset<Row> dataset) {
 
         FilterSizes filterSizes = new FilterSizes(this.zeppelinConfig);
 
-        BloomFilterAggregator agg =
-                new BloomFilterAggregator(inputCol, estimateCol, filterSizes.asSortedMap());
+        BloomFilterAggregator agg = new BloomFilterAggregator(inputCol, estimateCol, filterSizes.asSortedMap());
 
-        return dataset.groupBy("partition")
-                .agg(agg.toColumn().as("bloomfilter"));
+        return dataset.groupBy("partition").agg(agg.toColumn().as("bloomfilter"));
 
     }
 
@@ -190,9 +185,12 @@ public class TeragrepBloomStep extends AbstractStep {
         Connection connection = new LazyConnection(config).get();
         SortedMap<Long, Double> filterSizeMap = filterSizes.asSortedMap();
 
-        for(Map.Entry<Long,Double> entry : filterSizeMap.entrySet()) {
-            LOGGER.info("Writing filtertype[expected: <{}>, fpp: <{}>] to bloomdb.filtertype",
-                    entry.getKey(), entry.getValue());
+        for (Map.Entry<Long, Double> entry : filterSizeMap.entrySet()) {
+            LOGGER
+                    .info(
+                            "Writing filtertype[expected: <{}>, fpp: <{}>] to bloomdb.filtertype", entry.getKey(),
+                            entry.getValue()
+                    );
 
             String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`) VALUES (?, ?)";
 
@@ -205,8 +203,13 @@ public class TeragrepBloomStep extends AbstractStep {
 
                 connection.commit();
 
-            } catch (SQLException e) {
-                LOGGER.error("Error writing filter[expected: <{}>, fpp: <{}>] into database", entry.getKey(), entry.getValue());
+            }
+            catch (SQLException e) {
+                LOGGER
+                        .error(
+                                "Error writing filter[expected: <{}>, fpp: <{}>] into database", entry.getKey(),
+                                entry.getValue()
+                        );
                 throw new RuntimeException(e);
             }
         }

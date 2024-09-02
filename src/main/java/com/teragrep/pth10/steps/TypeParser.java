@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps;
 
 import java.io.Serializable;
@@ -53,10 +52,12 @@ import scala.collection.mutable.WrappedArray;
 import java.util.List;
 
 public class TypeParser implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     /**
      * Checks if the Object contains a String, Double or a Long value and returns it as a ParsedResult object.
+     * 
      * @param input Object to parse
      * @return String, Double or Long wrapped in a ParsedResult
      */
@@ -69,43 +70,54 @@ public class TypeParser implements Serializable {
             try {
                 // try to parse into long
                 parsedResult = new ParsedResult(Long.valueOf((String) input));
-            } catch (NumberFormatException nfe) {
+            }
+            catch (NumberFormatException nfe) {
                 try {
                     // try to parse into double
                     parsedResult = new ParsedResult(Double.valueOf((String) input));
-                } catch (NumberFormatException ignored) {
+                }
+                catch (NumberFormatException ignored) {
                     // returns as String
                 }
             }
-        } else if (input instanceof Long) {
+        }
+        else if (input instanceof Long) {
             parsedResult = new ParsedResult((Long) input);
-        } else if (input instanceof WrappedArray) {
+        }
+        else if (input instanceof WrappedArray) {
             WrappedArray<String> wr = (WrappedArray<String>) input;
             if (wr.length() == 1) {
                 // reparse arrays with one item
                 parsedResult = parse(wr.head());
-            } else if (wr.isEmpty()) {
+            }
+            else if (wr.isEmpty()) {
                 // empty arrays will be empty string
                 parsedResult = new ParsedResult("");
-            } else {
+            }
+            else {
                 // arrays with more than one item will be LIST
                 parsedResult = new ParsedResult(JavaConversions.bufferAsJavaList(wr.toBuffer()));
             }
 
-        } else if (input instanceof List) {
+        }
+        else if (input instanceof List) {
             List<String> l = (List<String>) input;
             if (l.size() == 1) {
                 parsedResult = new ParsedResult(String.valueOf(l.get(0)));
-            } else if (l.isEmpty()) {
+            }
+            else if (l.isEmpty()) {
                 parsedResult = new ParsedResult("");
-            } else {
+            }
+            else {
                 parsedResult = new ParsedResult(l);
             }
-        } else {
+        }
+        else {
             try {
                 // Turns integers into double as well
                 parsedResult = new ParsedResult(Double.valueOf(input.toString()));
-            } catch (NumberFormatException ignored) {
+            }
+            catch (NumberFormatException ignored) {
                 // returns as String
             }
         }

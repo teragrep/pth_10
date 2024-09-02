@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -63,73 +63,77 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BloomFilterOperationsTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterOperationsTest.class);
-	private final String testFile = "src/test/resources/xmlWalkerTestDataStreaming/bloomTeragrepStep_data*.json";
 
-	private final StructType testSchema = new StructType(
-			new StructField[] {
-					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-					new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-					new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-					new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-			}
-	);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterOperationsTest.class);
+    private final String testFile = "src/test/resources/xmlWalkerTestDataStreaming/bloomTeragrepStep_data*.json";
 
-	private StreamingTestUtil streamingTestUtil;
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
-	@org.junit.jupiter.api.BeforeAll
-	void setEnv() {
-		streamingTestUtil = new StreamingTestUtil(this.testSchema);
-		streamingTestUtil.setEnv();
-		/*
-		Class.forName ("org.h2.Driver");
-		this.conn = DriverManager.getConnection("jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE", "sa", "");
-		org.h2.tools.RunScript.execute(conn, new FileReader("src/test/resources/bloomdb/bloomdb.sql"));
-		 */
-	}
+    private StreamingTestUtil streamingTestUtil;
 
-	@org.junit.jupiter.api.BeforeEach
-	void setUp() {
-		streamingTestUtil.setUp();
-		/*
-		conn.prepareStatement("TRUNCATE TABLE filter_expected_100000_fpp_001").execute();
-		conn.prepareStatement("TRUNCATE TABLE filter_expected_1000000_fpp_003").execute();
-		conn.prepareStatement("TRUNCATE TABLE filter_expected_2500000_fpp_005").execute();
-		 */
-	}
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        streamingTestUtil.setEnv();
+        /*
+        Class.forName ("org.h2.Driver");
+        this.conn = DriverManager.getConnection("jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE", "sa", "");
+        org.h2.tools.RunScript.execute(conn, new FileReader("src/test/resources/bloomdb/bloomdb.sql"));
+         */
+    }
 
-	@org.junit.jupiter.api.AfterEach
-	void tearDown() {
-		streamingTestUtil.tearDown();
-	}
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        streamingTestUtil.setUp();
+        /*
+        conn.prepareStatement("TRUNCATE TABLE filter_expected_100000_fpp_001").execute();
+        conn.prepareStatement("TRUNCATE TABLE filter_expected_1000000_fpp_003").execute();
+        conn.prepareStatement("TRUNCATE TABLE filter_expected_2500000_fpp_005").execute();
+         */
+    }
 
-	// ----------------------------------------
-	// Tests
-	// ----------------------------------------
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        streamingTestUtil.tearDown();
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void estimateTest() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z | teragrep exec tokenizer | teragrep exec bloom estimate",
-				testFile,
-				ds -> {
-					assertEquals("[partition, estimate(tokens)]", Arrays.toString(ds.columns()),
-							"Batch handler dataset contained an unexpected column arrangement !");
-					List<Integer> results = ds.select("estimate(tokens)")
-							.collectAsList().stream()
-							.map(r -> Integer.parseInt(r.get(0).toString()))
-							.collect(Collectors.toList());
+    // ----------------------------------------
+    // Tests
+    // ----------------------------------------
 
-					assertEquals(results.get(0), 1);
-					assertTrue(results.get(1) > 1);
-				}
-		);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void estimateTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z | teragrep exec tokenizer | teragrep exec bloom estimate",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[partition, estimate(tokens)]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                            List<Integer> results = ds
+                                    .select("estimate(tokens)")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> Integer.parseInt(r.get(0).toString()))
+                                    .collect(Collectors.toList());
+
+                            assertEquals(results.get(0), 1);
+                            assertTrue(results.get(1) > 1);
+                        }
+                );
+    }
 }
-

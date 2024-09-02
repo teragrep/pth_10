@@ -1,34 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <packaging>jar</packaging>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+  <groupId>com.teragrep</groupId>
   <artifactId>pth_10</artifactId>
   <version>${revision}${sha1}${changelist}</version>
+  <packaging>jar</packaging>
   <name>pth_10</name>
   <description>Data Processing Language (DPL) translator for Apache Spark</description>
   <url>https://teragrep.com</url>
-  <groupId>com.teragrep</groupId>
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-    <java.version>1.8</java.version>
-    <revision>0.0.1</revision>
-    <changelist>-SNAPSHOT</changelist>
-    <sha1/>
-    <junit.jupiter.version>5.7.1</junit.jupiter.version>
-    <teragrep.rlp_01.version>4.0.1</teragrep.rlp_01.version>
-    <teragrep.rlp_03.version>1.7.6</teragrep.rlp_03.version>
-    <teragrep.pth_03.version>6.1.4</teragrep.pth_03.version>
-    <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
-    <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
-    <teragrep.pth_06.version>3.1.2</teragrep.pth_06.version>
-    <teragrep.dpf_02.version>3.0.0</teragrep.dpf_02.version>
-    <teragrep.dpf_03.version>10.0.1</teragrep.dpf_03.version>
-    <teragrep.jpr_01.version>3.1.1</teragrep.jpr_01.version>
-  </properties>
   <licenses>
     <license>
       <name>GNU Affero General Public License v3.0</name>
@@ -60,6 +39,25 @@
     <developerConnection>scm:git:git@github.com:teragrep/pth_10.git</developerConnection>
     <url>https://github.com/teragrep/pth_10/tree/master</url>
   </scm>
+  <properties>
+    <changelist>-SNAPSHOT</changelist>
+    <java.version>1.8</java.version>
+    <junit.jupiter.version>5.7.1</junit.jupiter.version>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <revision>0.0.1</revision>
+    <sha1></sha1>
+    <teragrep.dpf_02.version>3.0.0</teragrep.dpf_02.version>
+    <teragrep.dpf_03.version>10.0.1</teragrep.dpf_03.version>
+    <teragrep.jpr_01.version>3.1.1</teragrep.jpr_01.version>
+    <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
+    <teragrep.pth_03.version>6.1.4</teragrep.pth_03.version>
+    <teragrep.pth_06.version>3.1.2</teragrep.pth_06.version>
+    <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
+    <teragrep.rlp_01.version>4.0.1</teragrep.rlp_01.version>
+    <teragrep.rlp_03.version>1.7.6</teragrep.rlp_03.version>
+  </properties>
   <dependencies>
     <!--DPL-dependencies -->
     <dependency>
@@ -165,11 +163,11 @@
       <version>1.6.2</version>
     </dependency>
     <!-- sendemail pdf generation (Apache PDFBox wrapper) -->
-	  <dependency>
-	    <groupId>com.github.dhorions</groupId>
-	    <artifactId>boxable</artifactId>
-	    <version>1.7.0</version>
-	  </dependency>
+    <dependency>
+      <groupId>com.github.dhorions</groupId>
+      <artifactId>boxable</artifactId>
+      <version>1.7.0</version>
+    </dependency>
     <!-- avro dataformat for testing -->
     <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-avro -->
     <dependency>
@@ -329,7 +327,7 @@
                 <requireJavaVersion>
                   <version>[1.8,1.9)</version>
                 </requireJavaVersion>
-                <banDynamicVersions/>
+                <banDynamicVersions></banDynamicVersions>
                 <requirePluginVersions>
                   <message>All plugins are required to contain specific version.</message>
                   <unCheckedPluginList>org.apache.maven.plugins:maven-site-plugin,org.apache.maven.plugins:maven-resources-plugin,org.apache.maven.plugins:maven-clean-plugin,org.apache.maven.plugins:maven-install-plugin,org.apache.maven.plugins:maven-deploy-plugin</unCheckedPluginList>
@@ -376,14 +374,6 @@
         <artifactId>apache-rat-plugin</artifactId>
         <version>0.15</version>
         <inherited>false</inherited>
-        <executions>
-          <execution>
-            <phase>test</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
         <configuration>
           <addDefaultLicenseMatchers>false</addDefaultLicenseMatchers>
           <licenses>
@@ -417,6 +407,14 @@
             <exclude>src/test/resources/csv/**</exclude>
           </excludes>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <phase>test</phase>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -450,18 +448,18 @@
         </configuration>
         <executions>
           <execution>
-            <id>flatten</id>
-            <phase>process-resources</phase>
-            <goals>
-              <goal>flatten</goal>
-            </goals>
-          </execution>
-          <execution>
             <id>flatten.clean</id>
-            <phase>clean</phase>
             <goals>
               <goal>clean</goal>
             </goals>
+            <phase>clean</phase>
+          </execution>
+          <execution>
+            <id>flatten</id>
+            <goals>
+              <goal>flatten</goal>
+            </goals>
+            <phase>process-resources</phase>
           </execution>
         </executions>
       </plugin>
@@ -472,10 +470,10 @@
         <executions>
           <execution>
             <id>add-source</id>
-            <phase>process-sources</phase>
             <goals>
               <goal>add-source</goal>
             </goals>
+            <phase>process-sources</phase>
             <configuration>
               <sources>
                 <source>target/generated-sources/antlr4</source>
@@ -504,10 +502,10 @@
         <version>1.0.0</version>
         <executions>
           <execution>
-            <phase>generate-resources</phase>
             <goals>
               <goal>write-project-properties</goal>
             </goals>
+            <phase>generate-resources</phase>
             <configuration>
               <outputFile>${project.build.outputDirectory}/maven.properties</outputFile>
             </configuration>
@@ -519,44 +517,17 @@
   <profiles>
     <profile>
       <id>publish-maven-central</id>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.6</version>
-            <executions>
-              <execution>
-                <id>sign-artifacts</id>
-                <phase>verify</phase>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-                <configuration>
-                  <gpgArguments>
-                    <arg>--pinentry-mode</arg>
-                    <arg>loopback</arg>
-                  </gpgArguments>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
       <distributionManagement>
-        <snapshotRepository>
-          <id>ossrh</id>
-          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
         <repository>
           <id>ossrh</id>
           <name>Central Repository OSSRH</name>
           <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
         </repository>
+        <snapshotRepository>
+          <id>ossrh</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
       </distributionManagement>
-    </profile>
-    <profile>
-      <id>publish-github-packages</id>
       <build>
         <plugins>
           <plugin>
@@ -566,10 +537,10 @@
             <executions>
               <execution>
                 <id>sign-artifacts</id>
-                <phase>verify</phase>
                 <goals>
                   <goal>sign</goal>
                 </goals>
+                <phase>verify</phase>
                 <configuration>
                   <gpgArguments>
                     <arg>--pinentry-mode</arg>
@@ -581,6 +552,9 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>publish-github-packages</id>
       <distributionManagement>
         <repository>
           <id>github</id>
@@ -588,6 +562,30 @@
           <url>https://maven.pkg.github.com/teragrep/pth_10</url>
         </repository>
       </distributionManagement>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.6</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+                <phase>verify</phase>
+                <configuration>
+                  <gpgArguments>
+                    <arg>--pinentry-mode</arg>
+                    <arg>loopback</arg>
+                  </gpgArguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
     </profile>
   </profiles>
 </project>

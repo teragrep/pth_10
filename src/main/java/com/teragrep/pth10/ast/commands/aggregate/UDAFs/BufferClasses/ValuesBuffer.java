@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
 import java.io.Serializable;
@@ -51,54 +50,57 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Java Bean compliant class to enclose the array with helper methods
- * Used as a buffer for ValuesAggregator
+ * Java Bean compliant class to enclose the array with helper methods Used as a buffer for ValuesAggregator
+ * 
  * @author eemhu
- *
  */
 public class ValuesBuffer extends ListBuffer<String> implements Serializable {
-	private static final long serialVersionUID = 1L;
-	
-	// Helper methods
 
-	/**
-	 * Sort the internal list using lexicographical sorting and remove duplicates
-	 */
-	public void sortInternalList() {
-		this.list = this.list.stream().distinct().sorted(String::compareTo).collect(Collectors.toList());
-	}
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * Merge list with another
-	 * @param another list to merge with
-	 */
-	public void mergeList(List<String> another) {
-		this.list.addAll(another);
-	}
+    // Helper methods
 
-	/**
-	 * Add string data
-	 * @param data to add to the buffer
-	 */
-	public void add(String data) {
-		this.list.add(data);
-	}
+    /**
+     * Sort the internal list using lexicographical sorting and remove duplicates
+     */
+    public void sortInternalList() {
+        this.list = this.list.stream().distinct().sorted(String::compareTo).collect(Collectors.toList());
+    }
 
-	/**
-	 * Form the final result
-	 * @return final result as string, separated by a new line <pre>\n</pre>
-	 */
-	public String toString() {
-		String rv = "";
-		int len = this.getSize();
-		
-		for (int i = 0; i < len; ++i) {
-			rv = rv.concat(this.list.get(i));
-			if (i != len - 1) {
-				rv = rv.concat("\n");
-			}
-		}
-		
-		return rv;
-	}
+    /**
+     * Merge list with another
+     * 
+     * @param another list to merge with
+     */
+    public void mergeList(List<String> another) {
+        this.list.addAll(another);
+    }
+
+    /**
+     * Add string data
+     * 
+     * @param data to add to the buffer
+     */
+    public void add(String data) {
+        this.list.add(data);
+    }
+
+    /**
+     * Form the final result
+     * 
+     * @return final result as string, separated by a new line <pre>\n</pre>
+     */
+    public String toString() {
+        String rv = "";
+        int len = this.getSize();
+
+        for (int i = 0; i < len; ++i) {
+            rv = rv.concat(this.list.get(i));
+            if (i != len - 1) {
+                rv = rv.concat("\n");
+            }
+        }
+
+        return rv;
+    }
 }

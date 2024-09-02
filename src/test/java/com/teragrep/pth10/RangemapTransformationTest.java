@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -63,21 +63,20 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RangemapTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RangemapTransformationTest.class);
 
     private final String testFile = "src/test/resources/numberData_0*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -102,105 +101,117 @@ public class RangemapTransformationTest {
     // ----------------------------------------
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void rangemapTest0() {
-        streamingTestUtil.performDPLTest(
-            "index=* | rangemap field=_raw",
-            testFile,
-            ds -> {
-                List<Row> result = ds.select("range").distinct().collectAsList();
-                assertEquals(1, result.size());
-                assertEquals("None", result.get(0).getList(0).get(0));
-            }
-        );
+        streamingTestUtil.performDPLTest("index=* | rangemap field=_raw", testFile, ds -> {
+            List<Row> result = ds.select("range").distinct().collectAsList();
+            assertEquals(1, result.size());
+            assertEquals("None", result.get(0).getList(0).get(0));
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void rangemapTest1() {
-        streamingTestUtil.performDPLTest(
-            "index=* | rangemap field=_raw default=xyz",
-            testFile,
-            ds -> {
-                List<Row> result = ds.select("range").distinct().collectAsList();
-                assertEquals(1, result.size());
-                assertEquals("xyz", result.get(0).getList(0).get(0));
-            }
-        );
+        streamingTestUtil.performDPLTest("index=* | rangemap field=_raw default=xyz", testFile, ds -> {
+            List<Row> result = ds.select("range").distinct().collectAsList();
+            assertEquals(1, result.size());
+            assertEquals("xyz", result.get(0).getList(0).get(0));
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void rangemapTest2() {
-        streamingTestUtil.performDPLTest(
-            "index=* | rangemap field=_raw lo=0-5 med=6-34 hi=35-48 vlo=-20--10",
-            testFile,
-            ds -> {
-                List<Row> result = ds.select("_raw", "range").collectAsList();
-                assertEquals(5, result.size());
-                result.forEach(r -> {
-                    double val = Double.parseDouble(r.getAs(0).toString());
-                    if (val == 35d) {
-                        assertEquals("hi", r.getList(1).get(0));
-                    } else if (val == 10d) {
-                        assertEquals("med", r.getList(1).get(0));
-                    } else if (val == -10d) {
-                        assertEquals("vlo", r.getList(1).get(0));
-                    } else if (val == 0d) {
-                        assertEquals("lo", r.getList(1).get(0));
-                    } else if (val == 47.2d) {
-                        assertEquals("hi", r.getList(1).get(0));
-                    } else {
-                        fail("Unexpected _raw value: " + val);
-                    }
+        streamingTestUtil
+                .performDPLTest("index=* | rangemap field=_raw lo=0-5 med=6-34 hi=35-48 vlo=-20--10", testFile, ds -> {
+                    List<Row> result = ds.select("_raw", "range").collectAsList();
+                    assertEquals(5, result.size());
+                    result.forEach(r -> {
+                        double val = Double.parseDouble(r.getAs(0).toString());
+                        if (val == 35d) {
+                            assertEquals("hi", r.getList(1).get(0));
+                        }
+                        else if (val == 10d) {
+                            assertEquals("med", r.getList(1).get(0));
+                        }
+                        else if (val == -10d) {
+                            assertEquals("vlo", r.getList(1).get(0));
+                        }
+                        else if (val == 0d) {
+                            assertEquals("lo", r.getList(1).get(0));
+                        }
+                        else if (val == 47.2d) {
+                            assertEquals("hi", r.getList(1).get(0));
+                        }
+                        else {
+                            fail("Unexpected _raw value: " + val);
+                        }
+                    });
                 });
-            }
-        );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void rangemapTest3() {
-        IllegalArgumentException iae = this.streamingTestUtil.performThrowingDPLTest(IllegalArgumentException.class, "index=* | rangemap", testFile, ds -> {});
+        IllegalArgumentException iae = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, "index=* | rangemap", testFile, ds -> {
+                });
         assertEquals("Field parameter is required!", iae.getMessage());
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void rangemapTest4() {
-        streamingTestUtil.performDPLTest(
-            "| makeresults | eval _raw = \"string\" | rangemap field=_raw r0=0-10 r1=11-20",
-            testFile,
-            ds -> {
-                // strings result in default value
-                List<Row> result = ds.select("range").distinct().collectAsList();
-                assertEquals(1, result.size());
-                assertEquals("None", result.get(0).getList(0).get(0));
-            }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults | eval _raw = \"string\" | rangemap field=_raw r0=0-10 r1=11-20", testFile,
+                        ds -> {
+                            // strings result in default value
+                            List<Row> result = ds.select("range").distinct().collectAsList();
+                            assertEquals(1, result.size());
+                            assertEquals("None", result.get(0).getList(0).get(0));
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void rangemapMultiValueTest() {
-        streamingTestUtil.performDPLTest(
-            "index=* | eval a = mvappend(\"1\",\"3\",\"3\",\"a\") |rangemap field=a lo=1-2 hi=3-4",
-            testFile,
-            ds -> {
-                List<Row> result = ds.select("range").distinct().collectAsList();
-                assertEquals(1, result.size());
-                List<String> resultList = result.get(0).getList(0);
-                assertEquals(2, resultList.size());
-                List<String> expected = Arrays.asList("lo", "hi");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=* | eval a = mvappend(\"1\",\"3\",\"3\",\"a\") |rangemap field=a lo=1-2 hi=3-4",
+                        testFile, ds -> {
+                            List<Row> result = ds.select("range").distinct().collectAsList();
+                            assertEquals(1, result.size());
+                            List<String> resultList = result.get(0).getList(0);
+                            assertEquals(2, resultList.size());
+                            List<String> expected = Arrays.asList("lo", "hi");
 
-                for (String res : resultList) {
-                    if (!expected.contains(res)) {
-                        fail("Expected values did not contain result value: " + res);
-                    }
-                }
-            }
-        );
+                            for (String res : resultList) {
+                                if (!expected.contains(res)) {
+                                    fail("Expected values did not contain result value: " + res);
+                                }
+                            }
+                        }
+                );
     }
 }
-
-

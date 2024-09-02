@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -60,7 +60,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class XmlkvUDF implements UDF1<String, Map<String, String>> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlkvUDF.class);
+
     @Override
     public Map<String, String> call(String input) throws Exception {
         Map<String, String> m = new HashMap<>();
@@ -72,19 +74,24 @@ public class XmlkvUDF implements UDF1<String, Map<String, String>> {
             Node n = doc.getDocumentElement();
             buildMapFromXmlNodes(n, m);
 
-        } catch (SAXParseException spe) {
+        }
+        catch (SAXParseException spe) {
             // don't catch other than parse errors
-            LOGGER.warn("Could not parse col <{}> on line <{}>, returning empty.", spe.getColumnNumber(), spe.getLineNumber());
+            LOGGER
+                    .warn(
+                            "Could not parse col <{}> on line <{}>, returning empty.", spe.getColumnNumber(),
+                            spe.getLineNumber()
+                    );
         }
 
         return m;
     }
 
     /**
-     * Gets all latest occurrences of tag-contents pairs
-     * <pre>deepest node => its contents</pre>
+     * Gets all latest occurrences of tag-contents pairs <pre>deepest node => its contents</pre>
+     * 
      * @param rootNode root node (Main Document Element)
-     * @param map Final map to be returned out of the UDF
+     * @param map      Final map to be returned out of the UDF
      */
     private void buildMapFromXmlNodes(final Node rootNode, final Map<String, String> map) {
         // RootNode is text

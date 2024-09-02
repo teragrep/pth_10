@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -84,7 +83,8 @@ public final class TeragrepHdfsDeleteStep extends AbstractStep {
         String reason = "Unknown failure";
         Dataset<Row> generated;
         try {
-            org.apache.hadoop.fs.FileSystem fs = org.apache.hadoop.fs.FileSystem.get(catCtx.getSparkSession().sparkContext().hadoopConfiguration());
+            org.apache.hadoop.fs.FileSystem fs = org.apache.hadoop.fs.FileSystem
+                    .get(catCtx.getSparkSession().sparkContext().hadoopConfiguration());
             org.apache.hadoop.fs.Path path = new org.apache.hadoop.fs.Path(pathStr);
 
             if (fs.exists(path)) {
@@ -103,15 +103,12 @@ public final class TeragrepHdfsDeleteStep extends AbstractStep {
 
         Row r = RowFactory.create(pathStr, "delete", String.valueOf(success), reason);
 
-        final StructType schema =
-                new StructType(
-                        new StructField[] {
-                                new StructField("path", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                new StructField("operation", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                new StructField("success", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                new StructField("reason", DataTypes.StringType, true, new MetadataBuilder().build())
-                        }
-                );
+        final StructType schema = new StructType(new StructField[] {
+                new StructField("path", DataTypes.StringType, true, new MetadataBuilder().build()),
+                new StructField("operation", DataTypes.StringType, true, new MetadataBuilder().build()),
+                new StructField("success", DataTypes.StringType, true, new MetadataBuilder().build()),
+                new StructField("reason", DataTypes.StringType, true, new MetadataBuilder().build())
+        });
 
         // make a streaming dataset
         SparkSession ss = catCtx.getSparkSession();
@@ -122,17 +119,17 @@ public final class TeragrepHdfsDeleteStep extends AbstractStep {
         generated = rowMemoryStream.toDS();
 
         // create hdfs writer and query
-        final String queryName = "delete_hdfs_file" + ((int)(Math.random() * 100000));
-        DataStreamWriter<Row> deleteHdfsWriter = generated.
-                writeStream().outputMode("append").format("memory");
-        StreamingQuery deleteHdfsQuery = catCtx.getInternalStreamingQueryListener().registerQuery(queryName, deleteHdfsWriter);
+        final String queryName = "delete_hdfs_file" + ((int) (Math.random() * 100000));
+        DataStreamWriter<Row> deleteHdfsWriter = generated.writeStream().outputMode("append").format("memory");
+        StreamingQuery deleteHdfsQuery = catCtx
+                .getInternalStreamingQueryListener()
+                .registerQuery(queryName, deleteHdfsWriter);
 
         // add all the generated data to the memory stream
         rowMemoryStream.addData(JavaConversions.asScalaBuffer(Collections.singletonList(r)));
 
         // wait for it to be done and then return it
         deleteHdfsQuery.awaitTermination();
-
 
         return generated;
     }

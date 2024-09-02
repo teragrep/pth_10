@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -56,31 +55,28 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Contains the visitor methods for the <code>top</code> command <br>
  * Limits the dataset to n results
  */
 public class TopTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TopTransformation.class);
 
     DPLParserCatalystContext catCtx = null;
 
     public TopStep topStep = null;
 
-    public TopTransformation(DPLParserCatalystContext catCtx)
-    {
+    public TopTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
     }
 
     public Node visitTopTransformation(DPLParser.TopTransformationContext ctx) {
-        LOGGER.info("TopTransformation incoming: children=<{}> text=<{}>",ctx.getChildCount(), ctx.getText());
+        LOGGER.info("TopTransformation incoming: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
         return topTransformationEmitCatalyst(ctx);
     }
-
 
     public Node topTransformationEmitCatalyst(DPLParser.TopTransformationContext ctx) {
         int limit = 10; // Default limit
@@ -98,12 +94,13 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
                 LOGGER.info("param= <{}>", o.t_top_limitParameter().getChild(1).getText());
                 limit = Integer.parseInt(o.t_top_limitParameter().integerType().getText());
             }
-        };
+        }
+        ;
         // Get field list
         List<String> fields = null;
         if (ctx.fieldListType() != null) {
             Node ret = visitFieldListType(ctx.fieldListType());
-            fields = ((StringListNode)ret).asList();
+            fields = ((StringListNode) ret).asList();
         }
 
         // step
@@ -113,12 +110,11 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
         return new StepNode(topStep);
     }
 
-
     @Override
     public Node visitFieldListType(DPLParser.FieldListTypeContext ctx) {
         List<String> fields = new ArrayList<>();
-        ctx.children.forEach(f ->{
-            String fieldType =visit(f).toString();
+        ctx.children.forEach(f -> {
+            String fieldType = visit(f).toString();
             fields.add(fieldType);
         });
         return new StringListNode(fields);

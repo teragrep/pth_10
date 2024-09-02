@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -66,29 +66,27 @@ import java.util.function.Consumer;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for | teragrep exec syslog stream
- * Uses streaming datasets
+ * Tests for | teragrep exec syslog stream Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SyslogStreamTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SyslogStreamTest.class);
 
     private final String testFile = "src/test/resources/regexTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -108,14 +106,16 @@ public class SyslogStreamTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
-    @Disabled (value = "RLP-03 has to be updated") /* FIXME: Update rlp_03 library to work with new rlp_01 version! */
+    @Disabled(value = "RLP-03 has to be updated") /* FIXME: Update rlp_03 library to work with new rlp_01 version! */
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // teragrep exec syslog stream
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // teragrep exec syslog stream
     public void syslogStreamSendingTest() {
         final int expectedSyslogs = 10;
         AtomicInteger numberOfSyslogMessagesSent = new AtomicInteger();
@@ -131,35 +131,41 @@ public class SyslogStreamTest {
         final Server server = new Server(port, new SyslogFrameProcessor(cbFunction));
         assertDoesNotThrow(server::start);
 
-        streamingTestUtil.performDPLTest(
-                "index=index_A | teragrep exec syslog stream host 127.0.0.1 port " + port,
-                testFile,
-                ds -> {
-                    LOGGER.debug("Syslog msgs = <{}>", numberOfSyslogMessagesSent.get());
-                    assertEquals(expectedSyslogs, numberOfSyslogMessagesSent.get());
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec syslog stream host 127.0.0.1 port " + port, testFile, ds -> {
+                            LOGGER.debug("Syslog msgs = <{}>", numberOfSyslogMessagesSent.get());
+                            assertEquals(expectedSyslogs, numberOfSyslogMessagesSent.get());
 
-                    for (int i = 0; i < expectedSyslogs; i++) {
-                        String s = arrayOfSyslogs.get(i);
-                        for (int j = 0; j < expectedSyslogs; j++) {
-                            if (i == j) continue;
-                            assertFalse(arrayOfSyslogs.compareAndSet(j, s, s));
+                            for (int i = 0; i < expectedSyslogs; i++) {
+                                String s = arrayOfSyslogs.get(i);
+                                for (int j = 0; j < expectedSyslogs; j++) {
+                                    if (i == j)
+                                        continue;
+                                    assertFalse(arrayOfSyslogs.compareAndSet(j, s, s));
+                                }
+
+                            }
+                            assertAll("stop server", server::stop);
                         }
-
-                    }
-                    assertAll("stop server", server::stop);
-                }
-        );
+                );
     }
 
     @Disabled(value = "RLP-03 has to be updated") // FIXME: update rlp_03
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // teragrep exec syslog stream, with preceding aggregation command
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // teragrep exec syslog stream, with preceding aggregation command
     public void syslogStreamSendingFailureTest() {
-        assertThrows(StreamingQueryException.class, () -> streamingTestUtil.performDPLTest(
-                "index=index_A | stats count(_raw) as craw | teragrep exec syslog stream host 127.0.0.1 port 9998",
-                testFile,
-                ds -> {
-                }
-        ));
+        assertThrows(
+                StreamingQueryException.class,
+                () -> streamingTestUtil
+                        .performDPLTest(
+                                "index=index_A | stats count(_raw) as craw | teragrep exec syslog stream host 127.0.0.1 port 9998",
+                                testFile, ds -> {
+                                }
+                        )
+        );
     }
 }

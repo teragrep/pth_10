@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.iplocation;
 
 import com.maxmind.geoip2.DatabaseReader;
@@ -72,6 +71,7 @@ import java.util.Map;
  * Requires either a GeoIP2-City or GeoIP2-Country (or GeoLite) MaxMind database to function.
  */
 public class IplocationGeoIPDataMapper implements UDF3<String, String, Boolean, Map<String, String>> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IplocationGeoIPDataMapper.class);
     private DatabaseReader reader;
     private final String path;
@@ -100,7 +100,8 @@ public class IplocationGeoIPDataMapper implements UDF3<String, String, Boolean, 
         InetAddress inetAddress;
         try {
             inetAddress = InetAddress.getByName(ipString);
-        } catch (UnknownHostException uhe) {
+        }
+        catch (UnknownHostException uhe) {
             LOGGER.warn("Unknown host exception: <{}>. Returning null result.", uhe);
             result = new HashMap<>();
             result.put("lat", nullValue.value());
@@ -151,6 +152,7 @@ public class IplocationGeoIPDataMapper implements UDF3<String, String, Boolean, 
 
     /**
      * Gets the location information for a CountryResponse
+     * 
      * @param resp CountryResponse
      * @param lang Language, for example 'en', 'ja' or 'zh-CN'.
      * @return Map containing location data
@@ -190,6 +192,7 @@ public class IplocationGeoIPDataMapper implements UDF3<String, String, Boolean, 
 
     /**
      * Gets the location information for a CityResponse
+     * 
      * @param resp CityResponse
      * @param lang Language, for example 'en', 'ja' or 'zh-CN'
      * @return Map of the location information
@@ -283,7 +286,8 @@ public class IplocationGeoIPDataMapper implements UDF3<String, String, Boolean, 
 
     /**
      * Reads a file from HDFS and prepares an InputStream of it
-     * @param path HDFS (or local) file path
+     * 
+     * @param path       HDFS (or local) file path
      * @param hadoopConf Hadoop configuration item required for HDFS reading
      * @return Java IO InputStream of the file
      */
@@ -301,7 +305,8 @@ public class IplocationGeoIPDataMapper implements UDF3<String, String, Boolean, 
             else {
                 throw new RuntimeException("Invalid database file path given for iplocation command.");
             }
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -310,6 +315,7 @@ public class IplocationGeoIPDataMapper implements UDF3<String, String, Boolean, 
 
     /**
      * Assembles the Hadoop configuration object based on the key-value mapping of internal hadoop config map<br>
+     * 
      * @param hadoopCfgMap Map containing key-value pairs of hadoop configuration
      * @return Hadoop configuration object
      */

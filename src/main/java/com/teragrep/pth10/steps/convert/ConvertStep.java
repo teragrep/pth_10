@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.convert;
 
 import com.teragrep.pth10.ast.commands.transformstatement.convert.*;
@@ -58,15 +57,18 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class ConvertStep extends AbstractConvertStep{
+public final class ConvertStep extends AbstractConvertStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertStep.class);
     private SparkSession sparkSession;
+
     public ConvertStep() {
         super();
     }
 
     /**
      * Perform the <code>| convert</code> command and return result dataset
+     * 
      * @return resulting dataset after command
      */
     @Override
@@ -81,11 +83,14 @@ public final class ConvertStep extends AbstractConvertStep{
 
         // Process all of the convert commands
         for (ConvertCommand cmd : this.listOfCommands) {
-            LOGGER.info("Processing convert command <[{}]> using field <[{}]> renamed as <[{}]>",cmd.getCommandType(),cmd.getFieldParam(),cmd.getRenameField());
+            LOGGER
+                    .info(
+                            "Processing convert command <[{}]> using field <[{}]> renamed as <[{}]>",
+                            cmd.getCommandType(), cmd.getFieldParam(), cmd.getRenameField()
+                    );
 
             // Get wildcarded fields
-            List<String> fields = getWildcardFields(cmd.getFieldParam(),
-                    rv.columns(), this.listOfFieldsToOmit);
+            List<String> fields = getWildcardFields(cmd.getFieldParam(), rv.columns(), this.listOfFieldsToOmit);
 
             // Process each field with the given conversion function
             for (String field : fields) {
@@ -129,8 +134,9 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Check for wildcard and omit fields given in none() command if present
-     * @param wc Wildcard
-     * @param cols Array of column names present in data
+     * 
+     * @param wc       Wildcard
+     * @param cols     Array of column names present in data
      * @param omitList List of column names to omit
      * @return List of column names that fit the wildcard
      */
@@ -157,10 +163,11 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Process conversion function auto()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
-     * @param cancelOnNull  On null value, cancel and don't return
+     * 
+     * @param dataset      Input dataset
+     * @param field        Field, where source data is
+     * @param renameField  AS new-field-name
+     * @param cancelOnNull On null value, cancel and don't return
      * @return Input dataset with added result column
      */
     private Dataset<Row> auto(Dataset<Row> dataset, String field, String renameField, boolean cancelOnNull) {
@@ -176,9 +183,10 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Process conversion function auto() with cancelOnNull=true (default struck behaviour)
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> auto(Dataset<Row> dataset, String field, String renameField) {
@@ -187,9 +195,10 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Process conversion function num()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> num(Dataset<Row> dataset, String field, String renameField) {
@@ -198,41 +207,44 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Process conversion function mktime()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> mktime(Dataset<Row> dataset, String field, String renameField) {
         UserDefinedFunction mktimeUDF = functions.udf(new Mktime(), DataTypes.StringType);
         sparkSession.udf().register("UDF_Mktime", mktimeUDF);
 
-        Column udfResult = functions.callUDF("UDF_Mktime",
-                functions.col(field).cast(DataTypes.StringType), functions.lit(this.timeformat));
+        Column udfResult = functions
+                .callUDF("UDF_Mktime", functions.col(field).cast(DataTypes.StringType), functions.lit(this.timeformat));
         return dataset.withColumn(renameField == null ? field : renameField, udfResult);
     }
 
     /**
      * Process conversion function ctime()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> ctime(Dataset<Row> dataset, String field, String renameField) {
         UserDefinedFunction ctimeUDF = functions.udf(new Ctime(), DataTypes.StringType);
         sparkSession.udf().register("UDF_Ctime", ctimeUDF);
 
-        Column udfResult = functions.callUDF("UDF_Ctime", functions.col(field).cast(DataTypes.StringType),
-                functions.lit(timeformat));
+        Column udfResult = functions
+                .callUDF("UDF_Ctime", functions.col(field).cast(DataTypes.StringType), functions.lit(timeformat));
         return dataset.withColumn(renameField == null ? field : renameField, udfResult);
     }
 
     /**
      * Process conversion function dur2sec()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> dur2sec(Dataset<Row> dataset, String field, String renameField) {
@@ -245,9 +257,10 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Process conversion function memk()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> memk(Dataset<Row> dataset, String field, String renameField) {
@@ -260,9 +273,10 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Process conversion function mstime()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> mstime(Dataset<Row> dataset, String field, String renameField) {
@@ -275,20 +289,23 @@ public final class ConvertStep extends AbstractConvertStep{
 
     /**
      * Process conversion function rmcomma()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> rmcomma(Dataset<Row> dataset, String field, String renameField) {
-        return dataset.withColumn(renameField == null ? field : renameField, functions.regexp_replace(functions.col(field), ",", ""));
+        return dataset
+                .withColumn(renameField == null ? field : renameField, functions.regexp_replace(functions.col(field), ",", ""));
     }
 
     /**
      * Process conversion function rmunit()
-     * @param dataset   Input dataset
-     * @param field Field, where source data is
-     * @param renameField   AS new-field-name
+     * 
+     * @param dataset     Input dataset
+     * @param field       Field, where source data is
+     * @param renameField AS new-field-name
      * @return Input dataset with added result column
      */
     private Dataset<Row> rmunit(Dataset<Row> dataset, String field, String renameField) {

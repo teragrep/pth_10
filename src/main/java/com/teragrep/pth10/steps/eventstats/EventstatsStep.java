@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.eventstats;
 
 import org.apache.spark.sql.*;
@@ -64,12 +63,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class EventstatsStep extends AbstractEventstatsStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EventstatsStep.class);
 
     public EventstatsStep() {
         super();
         this.properties.add(CommandProperty.AGGREGATE);
     }
+
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
         // perform aggregation
@@ -99,7 +100,14 @@ public class EventstatsStep extends AbstractEventstatsStep {
         final String checkpointPath = pathForSave + "checkpoint/" + rndId;
         final String path = pathForSave + "data/" + rndId + ".avro";
 
-        LOGGER.info(String.format("Initializing a stream query for eventstats: name: '%s', Path(avro): '%s', Checkpoint path: '%s'", queryName, path, checkpointPath));
+        LOGGER
+                .info(
+                        String
+                                .format(
+                                        "Initializing a stream query for eventstats: name: '%s', Path(avro): '%s', Checkpoint path: '%s'",
+                                        queryName, path, checkpointPath
+                                )
+                );
 
         // save ds to HDFS, and perform join on that
         DataStreamWriter<Row> writer = dataset
@@ -146,7 +154,8 @@ public class EventstatsStep extends AbstractEventstatsStep {
             }
         }
 
-        Seq<Column> rearranged = JavaConversions.asScalaBuffer(schemaFields.stream().map(functions::col).collect(Collectors.toList()));
+        Seq<Column> rearranged = JavaConversions
+                .asScalaBuffer(schemaFields.stream().map(functions::col).collect(Collectors.toList()));
         resultDs = resultDs.select(rearranged); // rearrange to look more like original dataset
 
         return resultDs;

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,64 +43,68 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
 import java.io.Serializable;
 import java.util.Map;
 
 /**
- * Buffer used by the
- * {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ModeAggregator#ModeAggregator(String) ModeAggregator}
+ * Buffer used by the {@link com.teragrep.pth10.ast.commands.aggregate.UDAFs.ModeAggregator#ModeAggregator(String)
+ * ModeAggregator}
  */
 public class ModeBuffer extends MapBuffer<String, Long> implements Serializable {
-	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Adds a key with currentValue + 1 if it was already in the map, otherwise 1.
-	 * @param key Key to add
-	 */
-	public void add(String key) {
-		if (this.map.containsKey(key)) {
-			Long currentValue = this.map.get(key);
-			this.map.put(key, currentValue + 1L);
-		}
-		else {
-			this.map.put(key, 1L);
-		}
-	}
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * Merge internal map with another
-	 * @param another map to merge with
-	 */
-	public void mergeMap(Map<String, Long> another) {
-		another.forEach((key, value) -> {
-			this.map.merge(key, value, (v1, v2) -> {
-				// This gets called for possible duplicates
-				// In that case, add them together
-				return v1 + v2;
-			});
-		});
-	}
+    /**
+     * Adds a key with currentValue + 1 if it was already in the map, otherwise 1.
+     * 
+     * @param key Key to add
+     */
+    public void add(String key) {
+        if (this.map.containsKey(key)) {
+            Long currentValue = this.map.get(key);
+            this.map.put(key, currentValue + 1L);
+        }
+        else {
+            this.map.put(key, 1L);
+        }
+    }
 
-	/**
-	 * Returns the most frequent entry in the buffer
-	 * @return most frequent entry as a string
-	 */
-	public String mode() {
-		Map.Entry<String, Long> mostFrequentEntry = null;
-		
-		for (Map.Entry<String, Long> entry : this.map.entrySet()) {
-			if (mostFrequentEntry == null) {
-				mostFrequentEntry = entry;
-			}
-			else if (mostFrequentEntry != null && entry.getValue() > mostFrequentEntry.getValue()) {
-				mostFrequentEntry = entry;
-			}
-		}
-		
-		return mostFrequentEntry.getKey();
-	}
-	
+    /**
+     * Merge internal map with another
+     * 
+     * @param another map to merge with
+     */
+    public void mergeMap(Map<String, Long> another) {
+        another.forEach((key, value) -> {
+            this.map
+                    .merge(key, value, (v1, v2) -> {
+                        // This gets called for possible duplicates
+                        // In that case, add them together
+                        return v1 + v2;
+                    });
+        });
+    }
+
+    /**
+     * Returns the most frequent entry in the buffer
+     * 
+     * @return most frequent entry as a string
+     */
+    public String mode() {
+        Map.Entry<String, Long> mostFrequentEntry = null;
+
+        for (Map.Entry<String, Long> entry : this.map.entrySet()) {
+            if (mostFrequentEntry == null) {
+                mostFrequentEntry = entry;
+            }
+            else if (mostFrequentEntry != null && entry.getValue() > mostFrequentEntry.getValue()) {
+                mostFrequentEntry = entry;
+            }
+        }
+
+        return mostFrequentEntry.getKey();
+    }
+
 }

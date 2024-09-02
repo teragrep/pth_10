@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -57,20 +56,17 @@ import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 /**
- * Base transformation class for explain command.
- * Allows to view the Spark physical plan of the dataset
+ * Base transformation class for explain command. Allows to view the Spark physical plan of the dataset
  */
 public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplainTransformation.class);
     DPLParserCatalystContext catCtx = null;
 
     public ExplainStep explainStep = null;
 
-    public ExplainTransformation(DPLParserCatalystContext catCtx)
-    {
+    public ExplainTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
     }
 
@@ -82,6 +78,7 @@ public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Gets the physical plan and puts in into a dataset to view
+     * 
      * @param ctx explainTransformationContext
      * @return catalystnode containing result dataset
      */

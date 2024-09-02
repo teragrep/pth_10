@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth10.steps.ParsedResult;
@@ -58,6 +57,7 @@ import java.util.List;
  * UDF for comparing two fields.
  */
 public class EvalOperation implements UDF3<Object, Integer, Object, Boolean> {
+
     @Override
     public Boolean call(Object l, Integer operationType, Object r) throws Exception {
         // Parse in case a number has been set to a String
@@ -72,8 +72,12 @@ public class EvalOperation implements UDF3<Object, Integer, Object, Boolean> {
         boolean rv;
 
         // Only two numbers or two strings allowed. Throw error if mixed.
-        if ((leftType == ParsedResult.Type.STRING && (rightType == ParsedResult.Type.DOUBLE || rightType == ParsedResult.Type.LONG))
-                    || (rightType == ParsedResult.Type.STRING && (leftType == ParsedResult.Type.DOUBLE || leftType == ParsedResult.Type.LONG))) {
+        if (
+            (leftType == ParsedResult.Type.STRING
+                    && (rightType == ParsedResult.Type.DOUBLE || rightType == ParsedResult.Type.LONG))
+                    || (rightType == ParsedResult.Type.STRING
+                            && (leftType == ParsedResult.Type.DOUBLE || leftType == ParsedResult.Type.LONG))
+        ) {
             throw new IllegalArgumentException("Eval comparisons only allow using two numbers or two strings.");
         }
         // If both are Strings
@@ -113,10 +117,15 @@ public class EvalOperation implements UDF3<Object, Integer, Object, Boolean> {
             }
         }
         // If both are numbers
-        else if ((leftType == ParsedResult.Type.DOUBLE || leftType == ParsedResult.Type.LONG) && (rightType == ParsedResult.Type.DOUBLE || rightType == ParsedResult.Type.LONG)) {
+        else if (
+            (leftType == ParsedResult.Type.DOUBLE || leftType == ParsedResult.Type.LONG)
+                    && (rightType == ParsedResult.Type.DOUBLE || rightType == ParsedResult.Type.LONG)
+        ) {
             // change left and right numbers into BigDecimal
-            BigDecimal leftNumber = left.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(left.getDouble()) : BigDecimal.valueOf(left.getLong());
-            BigDecimal rightNumber = right.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(right.getDouble()) : BigDecimal.valueOf(right.getLong());
+            BigDecimal leftNumber = left.getType() == ParsedResult.Type.DOUBLE ? BigDecimal
+                    .valueOf(left.getDouble()) : BigDecimal.valueOf(left.getLong());
+            BigDecimal rightNumber = right.getType() == ParsedResult.Type.DOUBLE ? BigDecimal
+                    .valueOf(right.getDouble()) : BigDecimal.valueOf(right.getLong());
 
             switch (operationType) {
                 case DPLLexer.EVAL_LANGUAGE_MODE_EQ:
@@ -148,14 +157,18 @@ public class EvalOperation implements UDF3<Object, Integer, Object, Boolean> {
                     throw new RuntimeException("EvalStatement: Unknown operation in EvalOperation");
                 }
             }
-        } else if (leftType == ParsedResult.Type.LIST && rightType == ParsedResult.Type.LIST) {
+        }
+        else if (leftType == ParsedResult.Type.LIST && rightType == ParsedResult.Type.LIST) {
             // both lists; check internal elements to match
             List<?> leftList = left.getList();
             List<?> rightList = right.getList();
             rv = leftList.equals(rightList);
 
-        } else if ((leftType == ParsedResult.Type.LIST && rightType == ParsedResult.Type.STRING) ||
-                (leftType == ParsedResult.Type.STRING && rightType == ParsedResult.Type.LIST)) {
+        }
+        else if (
+            (leftType == ParsedResult.Type.LIST && rightType == ParsedResult.Type.STRING)
+                    || (leftType == ParsedResult.Type.STRING && rightType == ParsedResult.Type.LIST)
+        ) {
             // one is list, other string
             // in this case check if list contains string
             List<?> list;
@@ -163,13 +176,15 @@ public class EvalOperation implements UDF3<Object, Integer, Object, Boolean> {
             if (leftType == ParsedResult.Type.LIST) {
                 list = left.getList();
                 str = right.getString();
-            } else {
+            }
+            else {
                 list = right.getList();
                 str = left.getString();
             }
 
             rv = list.contains(str);
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Eval comparison: Unsupported datatype detected");
         }
 

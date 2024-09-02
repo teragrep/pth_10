@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -71,7 +71,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeragrepTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTest.class);
+
     @Test
     void testTeragrepTranslation() {
         final String query = "| teragrep exec syslog stream host 127.0.0.123 port 1337";
@@ -85,7 +87,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepSyslogStep.class, step.getClass());
@@ -108,7 +111,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepSyslogStep.class, step.getClass());
@@ -141,7 +145,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepSyslogStep.class, step.getClass());
@@ -164,7 +169,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
@@ -189,7 +195,8 @@ public class TeragrepTest {
         LOGGER.debug(tree.toStringTree(parser));
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
@@ -214,7 +221,8 @@ public class TeragrepTest {
         LOGGER.debug(tree.toStringTree(parser));
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
@@ -238,7 +246,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepHdfsLoadStep.class, step.getClass());
@@ -260,7 +269,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepKafkaStep.class, step.getClass());
@@ -282,7 +292,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepHdfsListStep.class, step.getClass());
@@ -304,7 +315,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepNode stepNode = (StepNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         AbstractStep step = stepNode.get();
 
         assertEquals(TeragrepHdfsDeleteStep.class, step.getClass());
@@ -326,7 +338,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepListNode stepNode = (StepListNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepListNode stepNode = (StepListNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.asList().get(0); // first is an aggregation step
         final AbstractStep step1 = stepNode.asList().get(1); // second is bloom create
 
@@ -352,7 +365,8 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepListNode stepNode = (StepListNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        StepListNode stepNode = (StepListNode) ct
+                .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.asList().get(0); // first is an aggregation step
         final AbstractStep step1 = stepNode.asList().get(1); // second is bloom update
 
@@ -365,4 +379,3 @@ public class TeragrepTest {
         assertEquals(TeragrepBloomStep.BloomMode.UPDATE, bloomStep1.mode);
     }
 }
-

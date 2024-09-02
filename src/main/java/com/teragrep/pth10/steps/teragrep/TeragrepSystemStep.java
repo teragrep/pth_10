@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -62,10 +61,11 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * teragrep get system version:
- * Returns a dataset containing the various version numbers of the components used in Teragrep
+ * teragrep get system version: Returns a dataset containing the various version numbers of the components used in
+ * Teragrep
  */
 public final class TeragrepSystemStep extends AbstractStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepSystemStep.class);
 
     private final DPLParserCatalystContext catCtx;
@@ -89,15 +89,19 @@ public final class TeragrepSystemStep extends AbstractStep {
             GeneratedDatasource datasource = new GeneratedDatasource(catCtx);
             try {
                 dataset = datasource.constructStream(versions, explainStr);
-            } catch (InterruptedException | UnknownHostException e) {
+            }
+            catch (InterruptedException | UnknownHostException e) {
                 throw new RuntimeException(e);
             }
 
         }
         else {
             // getComponentVersions() requires jar packaging
-            LOGGER.error("Teragrep get system version: Versions list was NULL, meaning the version properties could " +
-                    "not be fetched. This might be caused by running this command in a development environment.");
+            LOGGER
+                    .error(
+                            "Teragrep get system version: Versions list was NULL, meaning the version properties could "
+                                    + "not be fetched. This might be caused by running this command in a development environment."
+                    );
         }
 
         return dataset;
@@ -105,13 +109,18 @@ public final class TeragrepSystemStep extends AbstractStep {
 
     /**
      * Gets the various Teragrep component versions
+     * 
      * @return component versions as a list
      */
     private List<String> getComponentVersions() {
         final List<String> rv = new ArrayList<>();
 
         LOGGER.info("programmatically resolved package: <{}>", TeragrepSystemStep.class.getPackage());
-        LOGGER.info("programmatically resolved: <{}>", TeragrepSystemStep.class.getPackage().getImplementationVersion());
+        LOGGER
+                .info(
+                        "programmatically resolved: <{}>",
+                        TeragrepSystemStep.class.getPackage().getImplementationVersion()
+                );
 
         java.io.InputStream is = TeragrepSystemStep.class.getClassLoader().getResourceAsStream("maven.properties");
         java.util.Properties p = new Properties();
@@ -128,7 +137,8 @@ public final class TeragrepSystemStep extends AbstractStep {
                     rv.add(splitProperty[1] + " version: " + p.getProperty(property));
                 }
             });
-        } catch (IOException | NullPointerException e) {
+        }
+        catch (IOException | NullPointerException e) {
             e.printStackTrace();
         }
         return rv;

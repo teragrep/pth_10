@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.bo;
 
 import org.apache.spark.sql.Column;
@@ -55,34 +54,38 @@ import org.apache.spark.sql.catalyst.expressions.Expression;
  * Node that can contain a Column
  */
 public class ColumnNode extends Node {
-	Column val = null;
-	public ColumnNode() {
-		super();
-	}
-	public ColumnNode(Token token) {
-		super(token);
-	}
-	public ColumnNode(Column col) {
-		this.val = col;
-	}
 
-	public Column getColumn(){
-		return val;
-	}
+    Column val = null;
 
-	public String toString() {
-		String str = val.toString();
-		return str;
-	}
+    public ColumnNode() {
+        super();
+    }
 
-	public Expression asExpression(){
-		return val.expr();
-	}
+    public ColumnNode(Token token) {
+        super(token);
+    }
 
-	public Dataset<Row> asDataset(Dataset<Row>ds){
-		Dataset<Row>rv = null;
-		if(ds != null)
-			rv = ds.where(val);
-		return rv;
-	}
+    public ColumnNode(Column col) {
+        this.val = col;
+    }
+
+    public Column getColumn() {
+        return val;
+    }
+
+    public String toString() {
+        String str = val.toString();
+        return str;
+    }
+
+    public Expression asExpression() {
+        return val.expr();
+    }
+
+    public Dataset<Row> asDataset(Dataset<Row> ds) {
+        Dataset<Row> rv = null;
+        if (ds != null)
+            rv = ds.where(val);
+        return rv;
+    }
 }

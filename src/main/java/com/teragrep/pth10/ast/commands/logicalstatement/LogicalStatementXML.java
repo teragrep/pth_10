@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.logicalstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -68,17 +67,21 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * <p>Contains the visitor functions for logicalStatement, which is used
- * for the main search function of the language. </p>
- * <p>These functions help to build the necessary archive query and Spark actions.</p>
- * Example:
- * <pre>index=cinnamon earliest=-1y latest=-1d</pre>
- * <p>After the main logicalStatement, multiple
- * {@link com.teragrep.pth10.ast.commands.transformstatement.TransformStatement transformStatements}
- * that contain aggregations and other functions can be chained, or left unused if the user wants
- * to perform a basic search.</p>
+ * <p>
+ * Contains the visitor functions for logicalStatement, which is used for the main search function of the language.
+ * </p>
+ * <p>
+ * These functions help to build the necessary archive query and Spark actions.
+ * </p>
+ * Example: <pre>index=cinnamon earliest=-1y latest=-1d</pre>
+ * <p>
+ * After the main logicalStatement, multiple
+ * {@link com.teragrep.pth10.ast.commands.transformstatement.TransformStatement transformStatements} that contain
+ * aggregations and other functions can be chained, or left unused if the user wants to perform a basic search.
+ * </p>
  */
 public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LogicalStatementXML.class);
     private final DPLParserCatalystContext catCtx;
     private final boolean isMetadataQuery;
@@ -97,8 +100,9 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Visits the parse tree for SearchTransformationRoot and returns a LogicalXMLStep that can be added to
-     * Steptree in DPLParserCatalystVisitor.
+     * Visits the parse tree for SearchTransformationRoot and returns a LogicalXMLStep that can be added to Steptree in
+     * DPLParserCatalystVisitor.
+     * 
      * @param ctx SearchTransformationRootContext
      * @return LogicalXMLStep
      */
@@ -113,18 +117,22 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * The main visitor function for searchTransformation, used for the main search function.
-     * <pre>
+     * The main visitor function for searchTransformation, used for the main search function. <pre>
      *     root : searchTransformationRoot transformStatement?
      *     searchTransformationRoot : logicalStatement
      * </pre>
+     * 
      * @param ctx SearchTransformationRoot context
      * @return logicalStatement columnNode
      */
     @Override
     public Node visitSearchTransformationRoot(DPLParser.SearchTransformationRootContext ctx) {
         ElementNode archiveQuery;
-        LOGGER.info("[SearchTransformationRoot XML] Visiting: <{}> with <{}> children", ctx.getText(), ctx.getChildCount());
+        LOGGER
+                .info(
+                        "[SearchTransformationRoot XML] Visiting: <{}> with <{}> children", ctx.getText(),
+                        ctx.getChildCount()
+                );
 
         if (ctx.getChildCount() == 1) {
             // just a single directoryStatement -or- logicalStatement
@@ -132,8 +140,9 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         }
         else {
             ParseTree secondChild = ctx.getChild(1);
-            if (secondChild instanceof TerminalNode &&
-                    ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR) {
+            if (
+                secondChild instanceof TerminalNode && ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR
+            ) {
                 // case: directoryStmt OR logicalStmt
                 ElementNode dirStatArchiveQuery = (ElementNode) visit(ctx.directoryStatement());
                 ElementNode logiStatArchiveQuery = (ElementNode) visit(ctx.logicalStatement(0));
@@ -157,7 +166,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
                     if (firstLogicalStmt) {
                         andElem.appendChild(logiStatArchiveQuery.getElement());
                         firstLogicalStmt = false;
-                    } else {
+                    }
+                    else {
                         Element newAndElem = doc.createElement("AND");
                         newAndElem.appendChild(andElem);
                         newAndElem.appendChild(logiStatArchiveQuery.getElement());
@@ -169,8 +179,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
             }
         }
 
-
-        if (archiveQuery != null) this.catCtx.setArchiveQuery(archiveQuery.toString());
+        if (archiveQuery != null)
+            this.catCtx.setArchiveQuery(archiveQuery.toString());
         LOGGER.info("XML archive query: <{}>", archiveQuery);
 
         return archiveQuery;
@@ -197,8 +207,9 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
             ParseTree secondChild = ctx.getChild(1);
 
             // check if directoryStmt OR directoryStmt
-            if (secondChild instanceof TerminalNode &&
-                    ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR)  {
+            if (
+                secondChild instanceof TerminalNode && ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR
+            ) {
                 LOGGER.debug("[DirStmt] OR detected");
                 orMode = true;
             }
@@ -225,7 +236,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
                 if (n instanceof SubSearchNode) {
                     SubSearchNode ssn = (SubSearchNode) n;
                     el.appendChild(ssn.asElement(doc));
-                } else {
+                }
+                else {
                     Element e = ((ElementNode) n).getElement();
                     el.appendChild(e);
                 }
@@ -271,7 +283,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         // Visit leftmost child if it is not a terminal node
         if (!(ctx.getChild(0) instanceof TerminalNode)) {
             left = visit(ctx.getChild(0));
-        } else {
+        }
+        else {
             // TerminalNode can only be "NOT"
             leftIsTerminal = (TerminalNode) ctx.getChild(0);
             if (leftIsTerminal.getSymbol().getType() != DPLLexer.NOT) {
@@ -283,7 +296,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         if (ctx.getChildCount() == 1) {
             // leaf
             rv = left;
-        } else if (ctx.getChildCount() == 2) {
+        }
+        else if (ctx.getChildCount() == 2) {
             // Two children, visit rightmost child
             Node right = visit(ctx.getChild(1));
             Element el;
@@ -291,7 +305,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
             if (leftIsTerminal != null) {
                 // Should be NOT
                 el = doc.createElement(leftIsTerminal.getText().toUpperCase());
-            } else {
+            }
+            else {
                 // Add missing AND between elements
                 el = doc.createElement("AND");
             }
@@ -305,7 +320,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
 
             rv = new ElementNode(el);
 
-        } else if (ctx.getChildCount() == 3) {
+        }
+        else if (ctx.getChildCount() == 3) {
             // Three children; logicalStmt AND/OR logicalStmt
             TerminalNode operation = (TerminalNode) ctx.getChild(1);
             Node right = visit(ctx.getChild(2));
@@ -320,7 +336,7 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
 
         if (rv instanceof SubSearchNode) {
             LOGGER.info("[XML] [LogiStat] Return value was SubsearchNode. Converting to ElementNode!");
-            return new ElementNode(((SubSearchNode)rv).asElement(doc));
+            return new ElementNode(((SubSearchNode) rv).asElement(doc));
         }
 
         LOGGER.debug("visitLogicalStatement outgoing: <{}>", rv);
@@ -358,11 +374,10 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * searchQualifier : INDEX (EQ|NEQ) stringType WILDCARD? | SOURCETYPE (EQ|NEQ)
-     * stringType WILDCARD? | HOST (EQ|NEQ) stringType WILDCARD? | SOURCE (EQ|NEQ)
-     * stringType WILDCARD? | SAVEDSEARCH (EQ|NEQ) stringType WILDCARD? | EVENTTYPE
-     * (EQ|NEQ) stringType WILDCARD? | EVENTTYPETAG (EQ|NEQ) stringType WILDCARD? |
-     * HOSTTAG (EQ|NEQ) stringType WILDCARD? | TAG (EQ|NEQ) stringType WILDCARD? ;
+     * searchQualifier : INDEX (EQ|NEQ) stringType WILDCARD? | SOURCETYPE (EQ|NEQ) stringType WILDCARD? | HOST (EQ|NEQ)
+     * stringType WILDCARD? | SOURCE (EQ|NEQ) stringType WILDCARD? | SAVEDSEARCH (EQ|NEQ) stringType WILDCARD? |
+     * EVENTTYPE (EQ|NEQ) stringType WILDCARD? | EVENTTYPETAG (EQ|NEQ) stringType WILDCARD? | HOSTTAG (EQ|NEQ)
+     * stringType WILDCARD? | TAG (EQ|NEQ) stringType WILDCARD? ;
      */
     @Override
     public Node visitSearchQualifier(DPLParser.SearchQualifierContext ctx) {
@@ -379,7 +394,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         // check whether operation is '=' or '!='
         if (operation.getSymbol().getType() == DPLLexer.EQ) {
             comparisonToken = new Token(Type.EQUALS);
-        } else {
+        }
+        else {
             comparisonToken = new Token(Type.NOT_EQUALS);
         }
 
@@ -408,7 +424,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
             // other column=value qualifier
             value = new UnquotedText(new TextString(ctx.getChild(2).getText().toLowerCase())).read();
             el = doc.createElement(ctx.getChild(0).getText().toLowerCase());
-            LOGGER.debug("custom qualifier: field=<{}> = value=<{}>", ctx.getChild(0).getText(), ctx.getChild(2).getText());
+            LOGGER
+                    .debug("custom qualifier: field=<{}> = value=<{}>", ctx.getChild(0).getText(), ctx.getChild(2).getText());
         }
 
         if (listOfIndices.isEmpty()) {
@@ -437,7 +454,6 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
                     outerOR.appendChild(indexElem);
                     el = outerOR;
                 }
-
 
             }
         }
@@ -488,9 +504,9 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
 
     /**
      * {@inheritDoc}
-     *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public Node visitComparisonStatement(DPLParser.ComparisonStatementContext ctx) {

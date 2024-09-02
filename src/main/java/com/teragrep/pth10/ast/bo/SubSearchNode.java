@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.bo;
 
 import org.apache.spark.sql.Column;
@@ -63,88 +62,86 @@ import java.util.stream.Collectors;
  * Node to contain information of subsearches
  */
 public class SubSearchNode extends ColumnNode {
-	private static final Logger LOGGER = LoggerFactory.getLogger(SubSearchNode.class);
 
-	private List<String> valList = new ArrayList<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(SubSearchNode.class);
 
-	/**
-	 * Empty constructor, values needs to be filled up.
-	 */
-	public SubSearchNode() {
-		super.val = null;
-	}
+    private List<String> valList = new ArrayList<>();
 
-	public SubSearchNode(Token token)
-	{
-		super(token);
-	}
+    /**
+     * Empty constructor, values needs to be filled up.
+     */
+    public SubSearchNode() {
+        super.val = null;
+    }
 
-	public SubSearchNode(Column col) {
-		super.val = col;
-	}
+    public SubSearchNode(Token token) {
+        super(token);
+    }
 
-	public SubSearchNode(String str) {
-		valList.add(str);
-		val=new Column("_raw").like("%"+str+"%");
-	}
+    public SubSearchNode(Column col) {
+        super.val = col;
+    }
 
+    public SubSearchNode(String str) {
+        valList.add(str);
+        val = new Column("_raw").like("%" + str + "%");
+    }
 
-	public Column getColumn(){
-		return val;
-	}
+    public Column getColumn() {
+        return val;
+    }
 
-	public String getStrVal(){
-		return valList.stream().collect(Collectors.joining(","));
-	}
+    public String getStrVal() {
+        return valList.stream().collect(Collectors.joining(","));
+    }
 
-	public String toString() {
-		String str = val.expr().sql();
-		return str;
-	}
+    public String toString() {
+        String str = val.expr().sql();
+        return str;
+    }
 
-	public Expression asExpression(){
-		return val.expr();
-	}
+    public Expression asExpression() {
+        return val.expr();
+    }
 
-	public void addValue(String valStr){
-		valList.add(valStr);
-//		valStr="%"+valStr+"%";
-		valStr="(?i)^*"+valStr+"*";
-		if(this.val == null){
-			this.val = new Column("_raw").rlike(valStr);
-		} else {
-			this.val = this.val.and(new Column("_raw").rlike(valStr));
-		}
-		LOGGER.info("subSearchNode current val: <{}>", val.expr().sql());
-	}
+    public void addValue(String valStr) {
+        valList.add(valStr);
+        //		valStr="%"+valStr+"%";
+        valStr = "(?i)^*" + valStr + "*";
+        if (this.val == null) {
+            this.val = new Column("_raw").rlike(valStr);
+        }
+        else {
+            this.val = this.val.and(new Column("_raw").rlike(valStr));
+        }
+        LOGGER.info("subSearchNode current val: <{}>", val.expr().sql());
+    }
 
+    public Element asElement(Document d) {
+        Element el = d.createElement("indexstatement");
+        el.setAttribute("OPERATION", "EQUALS");
+        el.setAttribute("value", "%" + valList.get(0) + "%");
+        LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
+        if (valList.size() > 1) {
+            for (int i = 1; i < valList.size(); i++) {
+                Element e = d.createElement("indexstatement");
+                e.setAttribute("OPERATION", "EQUALS");
+                e.setAttribute("value", "%" + valList.get(i) + "%");
+                LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
+                Element andE = d.createElement("AND");
+                andE.appendChild(el);
+                andE.appendChild(e);
+                el = andE;
+            }
+        }
+        LOGGER.info("SubNode=<{}>", new ElementNode(el));
+        return el;
+    }
 
-	public Element asElement(Document d)
-	{
- 		Element el = d.createElement("indexstatement");
-		el.setAttribute("OPERATION", "EQUALS");
-		el.setAttribute("value", "%" + valList.get(0) + "%");
-		LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
-		if(valList.size()>1) {
-			for(int i=1;i<valList.size();i++){
-				Element e = d.createElement("indexstatement");
-				e.setAttribute("OPERATION", "EQUALS");
-				e.setAttribute("value", "%" + valList.get(i) + "%");
-				LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
-				Element andE = d.createElement("AND");
-				andE.appendChild(el);
-				andE.appendChild(e);
-				el=andE;
-			}
-		}
-		LOGGER.info("SubNode=<{}>", new ElementNode(el));
-		return el;
-	}
-
-	public Dataset<Row> asDataset(Dataset<Row>ds){
-		Dataset<Row>rv = null;
-		if(ds != null)
-			rv = ds.where(val);
-		return rv;
-	}
+    public Dataset<Row> asDataset(Dataset<Row> ds) {
+        Dataset<Row> rv = null;
+        if (ds != null)
+            rv = ds.where(val);
+        return rv;
+    }
 }

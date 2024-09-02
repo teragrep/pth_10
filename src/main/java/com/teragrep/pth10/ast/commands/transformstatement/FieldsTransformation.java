@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -55,25 +54,21 @@ import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
 
 /**
- * Base transformation class for the fields command.
- * Allows the user to decide, which fields to retain or drop from the result set.
+ * Base transformation class for the fields command. Allows the user to decide, which fields to retain or drop from the
+ * result set.
  */
 public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldsTransformation.class);
     DPLParserCatalystContext catCtx = null;
     public FieldsStep fieldsStep = null;
 
-    public FieldsTransformation(DPLParserCatalystContext catCtx)
-    {
+    public FieldsTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
     }
 
@@ -87,30 +82,33 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
         String oper = ctx.getChild(1).getText();
 
         if ("-".equals(oper)) {
-            StringListNode sln = (StringListNode)visit(ctx.fieldListType());
+            StringListNode sln = (StringListNode) visit(ctx.fieldListType());
             LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
 
             this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
             this.fieldsStep.setListOfFields(sln.asList());
-        } else {
-            StringListNode sln = (StringListNode)visit(ctx.fieldListType());
+        }
+        else {
+            StringListNode sln = (StringListNode) visit(ctx.fieldListType());
             this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
             this.fieldsStep.setListOfFields(sln.asList());
         }
         return new StepNode(fieldsStep);
     }
 
-
     @Override
     public Node visitFieldListType(DPLParser.FieldListTypeContext ctx) {
         List<String> fields = new ArrayList<>();
-        ctx.children.forEach(f ->{
-            // skip non-fieldType children
-            if (f instanceof DPLParser.FieldTypeContext) {
-                String fieldType = visit(f).toString();
-                fields.add(fieldType);
-            }
-        });
+        ctx.children
+                .forEach(
+                        f -> {
+                            // skip non-fieldType children
+                            if (f instanceof DPLParser.FieldTypeContext) {
+                                String fieldType = visit(f).toString();
+                                fields.add(fieldType);
+                            }
+                        }
+                );
         return new StringListNode(fields);
     }
 

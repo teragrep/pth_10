@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.join;
 
 import com.teragrep.pth10.steps.subsearch.AbstractSubsearchStep;
@@ -62,7 +61,9 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class JoinStep extends AbstractJoinStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(JoinStep.class);
+
     public JoinStep() {
         super();
     }
@@ -73,7 +74,6 @@ public final class JoinStep extends AbstractJoinStep {
             LOGGER.error("JoinStep was given a null dataset");
             return null;
         }
-
 
         // prepare subsearchStep and get the dataset
         this.subsearchStep.setListener(this.catCtx.getInternalStreamingQueryListener());
@@ -104,22 +104,23 @@ public final class JoinStep extends AbstractJoinStep {
 
         // Create subsearch to disk writer and start query
         final StructType subSchema = convertedSubSearchDataset.schema();
-        DataStreamWriter<Row> subToDiskWriter =
-                convertedSubSearchDataset
-                        .writeStream()
-                        .format("avro")
-                        .trigger(Trigger.ProcessingTime(0))
-                      //  .option("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                        .option("checkpointLocation", checkpointPath)
-                        .option("path", path)
-                        .outputMode("append");
+        DataStreamWriter<Row> subToDiskWriter = convertedSubSearchDataset
+                .writeStream()
+                .format("avro")
+                .trigger(Trigger.ProcessingTime(0))
+                //  .option("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
+                .option("checkpointLocation", checkpointPath)
+                .option("path", path)
+                .outputMode("append");
 
         // Use StreamingQueryListener to stop query when no progress is detected
-        StreamingQuery subToDiskQuery = this.getCatCtx().getInternalStreamingQueryListener().registerQuery(queryName, subToDiskWriter);
+        StreamingQuery subToDiskQuery = this
+                .getCatCtx()
+                .getInternalStreamingQueryListener()
+                .registerQuery(queryName, subToDiskWriter);
 
         // Await for StreamingQueryListener to call stop()
         subToDiskQuery.awaitTermination();
-
 
         // Read from disk to dataframe
         Dataset<Row> readFromDisk = ss.sqlContext().read().format("avro").schema(subSchema).load(path);
@@ -168,10 +169,20 @@ public final class JoinStep extends AbstractJoinStep {
 
                 // Check that join on field is present on both datasets
                 if (Arrays.stream(dataset.schema().fields()).noneMatch(x -> x.name().equals(fieldName))) {
-                    throw new RuntimeException("Join command encountered an error: main dataset (left side) missing expected field '" + fieldName + "'");
+                    throw new RuntimeException(
+                            "Join command encountered an error: main dataset (left side) missing expected field '"
+                                    + fieldName + "'"
+                    );
                 }
-                else if (Arrays.stream(out.schema().fields()).noneMatch(x -> x.name().equals(subSearchPrefix.concat(fieldName)))){
-                    throw new RuntimeException("Join command encountered an error: Subsearch dataset (right side) missing expected field '" + fieldName + "'");
+                else if (
+                    Arrays
+                            .stream(out.schema().fields())
+                            .noneMatch(x -> x.name().equals(subSearchPrefix.concat(fieldName)))
+                ) {
+                    throw new RuntimeException(
+                            "Join command encountered an error: Subsearch dataset (right side) missing expected field '"
+                                    + fieldName + "'"
+                    );
                 }
 
                 if (joinExpr == null) {
@@ -181,10 +192,10 @@ public final class JoinStep extends AbstractJoinStep {
                     joinExpr = joinExpr.and(dataset.col(fieldName).equalTo(out.col(subSearchPrefix + fieldName)));
                 }
             }
-        } else {
+        }
+        else {
             throw new IllegalStateException("Join command was not provided with the necessary field(s) to join on!");
         }
-
 
         // If parameters usetime=true, earlier=true
         if (usetime != null && usetime && earlier != null && earlier) {
@@ -211,8 +222,12 @@ public final class JoinStep extends AbstractJoinStep {
         // and use coalesce to overwrite
         if (overwrite != null && overwrite) {
             for (String colName : originalLeftSideCols) {
-                if (Arrays.toString(originalRightSideCols).contains(subSearchPrefix + colName) && !listOfFields.contains(colName)) {
-                    result = result.withColumn(colName, functions.coalesce(functions.col(colName), functions.col(subSearchPrefix + colName))).drop(subSearchPrefix + colName);
+                if (
+                    Arrays.toString(originalRightSideCols).contains(subSearchPrefix + colName)
+                            && !listOfFields.contains(colName)
+                ) {
+                    result = result
+                            .withColumn(colName, functions.coalesce(functions.col(colName), functions.col(subSearchPrefix + colName))).drop(subSearchPrefix + colName);
                 }
             }
         }

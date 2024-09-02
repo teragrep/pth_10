@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.convert;
 
 import org.apache.spark.sql.api.java.UDF1;
@@ -51,37 +50,38 @@ import org.apache.spark.sql.api.java.UDF1;
 /**
  * UDF for convert command 'mstime'<br>
  * Human readable time ([MM:]SS.SSS) to epoch using given timeformat<br>
+ * 
  * @author eemhu
- *
  */
 public class Mstime implements UDF1<String, String> {
-	
-	private static final long serialVersionUID = 1L;
 
-	@Override
-	public String call(String duration) throws Exception {		
-		// duration is in format [MM:]SS.SSS
-		// split based on colon (':') and period ('.')
-	
-		String[] parts = duration.split("\\."); // MM:SS and SSS parts
-		String[] minutesAndSeconds = parts[0].split(":"); // separate MM and SS
-		
-		long min = 0; long sec = 0;
-		if (minutesAndSeconds.length > 1) { // if minutes present
-			min = Long.valueOf(minutesAndSeconds[0]);
-			sec = Long.valueOf(minutesAndSeconds[1]);
-		}
-		else { // no minutes, just sec and millisec
-			sec = Long.valueOf(minutesAndSeconds[0]);
-		}
+    private static final long serialVersionUID = 1L;
 
-		long ms = Long.valueOf(parts[1]);
-		
-		// add everything up to milliseconds
-		ms += min * 60L * 1000L;
-		ms += sec * 1000L;
-		
-		return String.valueOf(ms);
-	}
+    @Override
+    public String call(String duration) throws Exception {
+        // duration is in format [MM:]SS.SSS
+        // split based on colon (':') and period ('.')
+
+        String[] parts = duration.split("\\."); // MM:SS and SSS parts
+        String[] minutesAndSeconds = parts[0].split(":"); // separate MM and SS
+
+        long min = 0;
+        long sec = 0;
+        if (minutesAndSeconds.length > 1) { // if minutes present
+            min = Long.valueOf(minutesAndSeconds[0]);
+            sec = Long.valueOf(minutesAndSeconds[1]);
+        }
+        else { // no minutes, just sec and millisec
+            sec = Long.valueOf(minutesAndSeconds[0]);
+        }
+
+        long ms = Long.valueOf(parts[1]);
+
+        // add everything up to milliseconds
+        ms += min * 60L * 1000L;
+        ms += sec * 1000L;
+
+        return String.valueOf(ms);
+    }
 
 }

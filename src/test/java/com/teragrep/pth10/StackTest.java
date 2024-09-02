@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -61,156 +61,178 @@ import java.util.Arrays;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for the new ProcessingStack implementation
- * Uses streaming datasets
+ * Tests for the new ProcessingStack implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class StackTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(StackTest.class);
 
-	private final String testFile = "src/test/resources/predictTransformationTest_data*.json"; // * to make the path into a directory path
-	private final StructType testSchema = new StructType(
-			new StructField[] {
-					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-					new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-					new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-			}
-	);
+    private static final Logger LOGGER = LoggerFactory.getLogger(StackTest.class);
 
-	private StreamingTestUtil streamingTestUtil;
+    private final String testFile = "src/test/resources/predictTransformationTest_data*.json"; // * to make the path into a directory path
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
-	@org.junit.jupiter.api.BeforeAll
-	void setEnv() {
-		this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
-		this.streamingTestUtil.setEnv();
-	}
+    private StreamingTestUtil streamingTestUtil;
 
-	@org.junit.jupiter.api.BeforeEach
-	void setUp() {
-		this.streamingTestUtil.setUp();
-	}
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
+    }
 
-	@org.junit.jupiter.api.AfterEach
-	void tearDown() {
-		this.streamingTestUtil.tearDown();
-	}
-	
-	
-	// ----------------------------------------
-	// Tests
-	// ----------------------------------------
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* chart -> chart */
-	public void stackTest_Streaming_ChartChart() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | chart count(offset) as c_offset by partition | chart count(c_offset) as final",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !");
-			}
-		);
-	}
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void stackTest_Streaming_1() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-						"Batch handler dataset contained an unexpected column arrangement !");
-			});
-	}
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* eval */
-	public void stackTest_Streaming_Eval() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | eval newField = offset * 5",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset, newField]",
-						"Batch handler dataset contained an unexpected column arrangement !");
-			}
-			);
-	}
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* stats -> chart */
-	public void stackTest_Streaming_StatsChart() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | stats count(_raw) as raw_count | chart count(raw_count) as count",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[count]",
-						"Batch handler dataset contained an unexpected column arrangement !");
-			}
-			);
-	}
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* stats -> stats */
-	public void stackTest_Streaming_StatsStats() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | stats avg(offset) as avg1 count(offset) as c_offset dc(offset) as dc | stats count(avg1) as c_avg count(c_offset) as c_count count(dc) as c_dc",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[c_avg, c_count, c_dc]",
-						"Batch handler dataset contained an unexpected column arrangement !");
-			}
-			);
-	}
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* stats -> chart -> eval */
-	public void stackTest_Streaming_StatsChartEval() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | stats avg(offset) as avg_offset | chart count(avg_offset) as c_avg_offset | eval final=c_avg_offset * 5",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[c_avg_offset, final]",
-						"Batch handler dataset contained an unexpected column arrangement !");
-			}
-			);
-	}
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* eval -> eval -> eval -> stats -> chart */
-	public void stackTest_Streaming_EvalEvalEvalStatsChart() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval x = a + b | stats var(x) as field | chart count(field) as final",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[final]",
-						"Batch handler dataset contained an unexpected column arrangement !");
-			}
-			);
-	}
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        this.streamingTestUtil.setUp();
+    }
 
-	// TODO: remove disabled annotation when pth-03 issue #125 is closed
-	// Fails because c is parsed as count() command, not a column
-	@Test
-	@Disabled(value = "requires parser fixes")
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* eval -> eval -> eval -> stats -> chart */
-	public void stackTest_Streaming_EvalEvalEvalStatsChart_with_c() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval c = a + b | stats var(c) as field | chart count(field) as final",
-			testFile,
-			ds -> {
-				assertEquals(Arrays.toString(ds.columns()), "[final]",
-						"Batch handler dataset contained an unexpected column arrangement !");
-			}
-		);
-	}
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        this.streamingTestUtil.tearDown();
+    }
+
+    // ----------------------------------------
+    // Tests
+    // ----------------------------------------
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) /* chart -> chart */
+    public void stackTest_Streaming_ChartChart() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | chart count(offset) as c_offset by partition | chart count(c_offset) as final",
+                        testFile, ds -> {
+                            assertEquals(
+                                    Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void stackTest_Streaming_1() {
+        streamingTestUtil.performDPLTest("index=index_A", testFile, ds -> {
+            assertEquals(
+                    Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) /* eval */
+    public void stackTest_Streaming_Eval() {
+        streamingTestUtil.performDPLTest("index=index_A | eval newField = offset * 5", testFile, ds -> {
+            assertEquals(
+                    Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset, newField]", "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) /* stats -> chart */
+    public void stackTest_Streaming_StatsChart() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats count(_raw) as raw_count | chart count(raw_count) as count", testFile,
+                        ds -> {
+                            assertEquals(
+                                    Arrays.toString(ds.columns()), "[count]", "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) /* stats -> stats */
+    public void stackTest_Streaming_StatsStats() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats avg(offset) as avg1 count(offset) as c_offset dc(offset) as dc | stats count(avg1) as c_avg count(c_offset) as c_count count(dc) as c_dc",
+                        testFile, ds -> {
+                            assertEquals(
+                                    Arrays.toString(ds.columns()), "[c_avg, c_count, c_dc]", "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) /* stats -> chart -> eval */
+    public void stackTest_Streaming_StatsChartEval() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats avg(offset) as avg_offset | chart count(avg_offset) as c_avg_offset | eval final=c_avg_offset * 5",
+                        testFile, ds -> {
+                            assertEquals(
+                                    Arrays.toString(ds.columns()), "[c_avg_offset, final]", "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) /* eval -> eval -> eval -> stats -> chart */
+    public void stackTest_Streaming_EvalEvalEvalStatsChart() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval x = a + b | stats var(x) as field | chart count(field) as final",
+                        testFile, ds -> {
+                            assertEquals(
+                                    Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                        }
+                );
+    }
+
+    // TODO: remove disabled annotation when pth-03 issue #125 is closed
+    // Fails because c is parsed as count() command, not a column
+    @Test
+    @Disabled(value = "requires parser fixes")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) /* eval -> eval -> eval -> stats -> chart */
+    public void stackTest_Streaming_EvalEvalEvalStatsChart_with_c() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval c = a + b | stats var(c) as field | chart count(field) as final",
+                        testFile, ds -> {
+                            assertEquals(
+                                    Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                        }
+                );
+    }
 }
- 

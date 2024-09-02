@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -62,233 +62,350 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SearchTransformationTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(SearchTransformationTest.class);
-	private final StructType testSchema = new StructType(
-			new StructField[] {
-					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-					new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-					new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-			}
-	);
 
-	private StreamingTestUtil streamingTestUtil;
+    private static final Logger LOGGER = LoggerFactory.getLogger(SearchTransformationTest.class);
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
-	@org.junit.jupiter.api.BeforeAll
-	void setEnv() {
-		this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
-		this.streamingTestUtil.setEnv();
-	}
+    private StreamingTestUtil streamingTestUtil;
 
-	@org.junit.jupiter.api.BeforeEach
-	void setUp() {
-		this.streamingTestUtil.setUp();
-	}
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
+    }
 
-	@org.junit.jupiter.api.AfterEach
-	void tearDown() {
-		this.streamingTestUtil.tearDown();
-	}
-	
-	
-	// ----------------------------------------
-	// Tests
-	// ----------------------------------------
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        this.streamingTestUtil.setUp();
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchTest_FieldComparison() {
-		String query = "index=index_A | search sourcetype!=stream2";
-		String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        this.streamingTestUtil.tearDown();
+    }
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> listOfResult = ds.select("sourcetype").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expectedValues = Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1");
-			assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
-		});
-	}
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchTest_Boolean() {
-		String query = "index=index_A | search sourcetype=stream1 AND (id = 1 OR id = 3)";
-		String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
+    // ----------------------------------------
+    // Tests
+    // ----------------------------------------
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> listOfResult = ds.select("sourcetype").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expectedValues = Arrays.asList("stream1", "stream1");
-			assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
-		});
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchTest_FieldComparison() {
+        String query = "index=index_A | search sourcetype!=stream2";
+        String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchTest_TextSearchFromRaw() {
-		String query = "index=index_A | search \"nothing\"";
-		String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("sourcetype")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expectedValues = Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1");
+            assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
+        });
+    }
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> listOfResult = ds.select("sourcetype").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expectedValues = Collections.emptyList();
-			assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
-		});
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchTest_Boolean() {
+        String query = "index=index_A | search sourcetype=stream1 AND (id = 1 OR id = 3)";
+        String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
 
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("sourcetype")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expectedValues = Arrays.asList("stream1", "stream1");
+            assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
+        });
+    }
 
-	// Tests compareStatement after spath (spath makes all data into String)
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchAfterSpath_ComparisonTest() {
-		String query = "index=index_A | spath path= json | search json > 40";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchTest_TextSearchFromRaw() {
+        String query = "index=index_A | search \"nothing\"";
+        String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> json = ds.select("json").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = new ArrayList<>(Arrays.asList("50", "60", "70", "80", "90", "100"));
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("sourcetype")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expectedValues = Collections.emptyList();
+            assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
+        });
+    }
 
-			assertEquals(expected, json);
-		});
-	}
+    // Tests compareStatement after spath (spath makes all data into String)
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchAfterSpath_ComparisonTest() {
+        String query = "index=index_A | spath path= json | search json > 40";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests compareStatement after spath (spath makes all data into String)
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchAfterSpath_ComparisonTest2() {
-		String query = "index=index_A | spath path= json | search json <= 40";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> json = ds
+                    .select("json")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = new ArrayList<>(Arrays.asList("50", "60", "70", "80", "90", "100"));
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> json = ds.select("json").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = new ArrayList<>(Arrays.asList("7", "8", "9", "40"));
+            assertEquals(expected, json);
+        });
+    }
 
-			assertEquals(expected, json);
-		});
-	}
+    // Tests compareStatement after spath (spath makes all data into String)
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchAfterSpath_ComparisonTest2() {
+        String query = "index=index_A | spath path= json | search json <= 40";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests search with equals
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonEqTest() {
-		String query = "index=index_A | search sourcetype = stream1";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> json = ds
+                    .select("json")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = new ArrayList<>(Arrays.asList("7", "8", "9", "40"));
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> sourcetype = ds.select("sourcetype").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1");
+            assertEquals(expected, json);
+        });
+    }
 
-			assertEquals(expected, sourcetype);
-		});
-	}
+    // Tests search with equals
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonEqTest() {
+        String query = "index=index_A | search sourcetype = stream1";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests search with equals and wildcard
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonEqWildcardTest() {
-		String query = "index=index_A | search sourcetype = stream*";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> sourcetype = ds
+                    .select("sourcetype")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1");
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> sourcetype = ds.select("sourcetype").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Arrays.asList("stream1", "stream2", "stream1", "stream2", "stream1", "stream2", "stream1", "stream2", "stream1", "stream2");
+            assertEquals(expected, sourcetype);
+        });
+    }
 
-			assertEquals(expected, sourcetype);
-		});
-	}
+    // Tests search with equals and wildcard
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonEqWildcardTest() {
+        String query = "index=index_A | search sourcetype = stream*";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Test search with not equals
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonNeqTest() {
-		String query = "index=index_A | search id != 10";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> sourcetype = ds
+                    .select("sourcetype")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Arrays
+                    .asList(
+                            "stream1", "stream2", "stream1", "stream2", "stream1", "stream2", "stream1", "stream2",
+                            "stream1", "stream2"
+                    );
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> id = ds.select("id").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7","8", "9");
+            assertEquals(expected, sourcetype);
+        });
+    }
 
-			assertEquals(expected, id);
-		});
-	}
+    // Test search with not equals
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonNeqTest() {
+        String query = "index=index_A | search id != 10";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests search with greater than
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonGtTest() {
-		String query = "index=index_A | search id > 9";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> id = ds
+                    .select("id")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9");
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> id = ds.select("id").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Collections.singletonList("10");
+            assertEquals(expected, id);
+        });
+    }
 
-			assertEquals(expected, id);
-		});
-	}
+    // Tests search with greater than
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonGtTest() {
+        String query = "index=index_A | search id > 9";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests search with greater than or equal to
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonGteTest() {
-		String query = "index=index_A | search id >= 9";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> id = ds
+                    .select("id")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Collections.singletonList("10");
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> id = ds.select("id").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Arrays.asList("9", "10");
+            assertEquals(expected, id);
+        });
+    }
 
-			assertEquals(expected, id);
-		});
-	}
+    // Tests search with greater than or equal to
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonGteTest() {
+        String query = "index=index_A | search id >= 9";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests search with less than
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonLtTest() {
-		String query = "index=index_A | search id < 10";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> id = ds
+                    .select("id")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Arrays.asList("9", "10");
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> id = ds.select("id").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7","8", "9");
+            assertEquals(expected, id);
+        });
+    }
 
-			assertEquals(expected, id);
-		});
-	}
+    // Tests search with less than
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonLtTest() {
+        String query = "index=index_A | search id < 10";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests search with less than or equal to
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonLteTest() {
-		String query = "index=index_A | search id <= 10";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> id = ds
+                    .select("id")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9");
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> id = ds.select("id").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7","8", "9", "10");
+            assertEquals(expected, id);
+        });
+    }
 
-			assertEquals(expected, id);
-		});
-	}
+    // Tests search with less than or equal to
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonLteTest() {
+        String query = "index=index_A | search id <= 10";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
-	// Tests search compare with a string and a number. Should be a lexicographical comparison
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void searchComparisonMixedInputTest() {
-		String query = "index=index_A | search \"source\" < 2";
-		String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> id = ds
+                    .select("id")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
 
-		streamingTestUtil.performDPLTest(query, testFile, ds -> {
-			List<String> json = ds.select("source").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			List<String> expected = Arrays.asList("127.0.0.0", "127.1.1.1", "127.2.2.2", "127.3.3.3", "127.4.4.4",
-					"127.5.5.5", "127.6.6.6", "127.7.7.7", "127.8.8.8", "127.9.9.9");
+            assertEquals(expected, id);
+        });
+    }
 
-			assertEquals(expected, json);
-		});
-	}
+    // Tests search compare with a string and a number. Should be a lexicographical comparison
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void searchComparisonMixedInputTest() {
+        String query = "index=index_A | search \"source\" < 2";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            List<String> json = ds
+                    .select("source")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            List<String> expected = Arrays
+                    .asList(
+                            "127.0.0.0", "127.1.1.1", "127.2.2.2", "127.3.3.3", "127.4.4.4", "127.5.5.5", "127.6.6.6",
+                            "127.7.7.7", "127.8.8.8", "127.9.9.9"
+                    );
+
+            assertEquals(expected, json);
+        });
+    }
 }
- 

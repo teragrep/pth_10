@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,36 +43,38 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
 /**
- * Collection of enumerables to change the mode of certain Aggregators
- * (Some Aggregators can produce different results based on the mode it is operating in)
+ * Collection of enumerables to change the mode of certain Aggregators (Some Aggregators can produce different results
+ * based on the mode it is operating in)
+ * 
  * @author eemhu
- *
  */
 public class AggregatorMode {
-	
-	/** Used for ValuesAggregator<br>
-	* ValuesAggregator can produce the results for commands list() and values()
-	*/
-	 public enum ValuesAggregatorMode {
-		LIST, VALUES
-	}
-	
-	/** Used for EarliestLatestAggregator<br>
-	* EarliestLatestAggregator can produce the results for commands earliest(),<br>
-	* latest(), earliest_time(), latest_time(), rate()
-	*/
-	public enum EarliestLatestAggregatorMode {
-		EARLIEST, LATEST, EARLIEST_TIME, LATEST_TIME, RATE
-	}
 
-	/** Used for MinMaxAggregator<br>
-	* min(), max(), range()
-	*/
-	public enum MinMaxAggregatorMode {
-		MIN, MAX, RANGE
-	}
+    /**
+     * Used for ValuesAggregator<br>
+     * ValuesAggregator can produce the results for commands list() and values()
+     */
+    public enum ValuesAggregatorMode {
+        LIST, VALUES
+    }
+
+    /**
+     * Used for EarliestLatestAggregator<br>
+     * EarliestLatestAggregator can produce the results for commands earliest(),<br>
+     * latest(), earliest_time(), latest_time(), rate()
+     */
+    public enum EarliestLatestAggregatorMode {
+        EARLIEST, LATEST, EARLIEST_TIME, LATEST_TIME, RATE
+    }
+
+    /**
+     * Used for MinMaxAggregator<br>
+     * min(), max(), range()
+     */
+    public enum MinMaxAggregatorMode {
+        MIN, MAX, RANGE
+    }
 }
