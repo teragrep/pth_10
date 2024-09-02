@@ -155,7 +155,12 @@ public class StreamingTestUtil {
                 .config("spark.driver.extraJavaOptions", "-Duser.timezone=EET")
                 .config("spark.executor.extraJavaOptions", "-Duser.timezone=EET")
                 .config("spark.sql.session.timeZone", "UTC")
-                .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.11:2.4.5") // added for kafka tests
+                .config("spark.network.timeout", "5s")
+                .config("spark.network.timeoutInterval", "5s") // should be less than or equal to spark.network.timeout
+                .config("spark.executor.heartbeatInterval", "2s") // should be "significantly less" than spark.network.timeout
+                .config("spark.driver.host", "localhost")
+                .config("spark.driver.bindAddress", "localhost")
+                .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0") // added for kafka tests
                 .getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
     }
