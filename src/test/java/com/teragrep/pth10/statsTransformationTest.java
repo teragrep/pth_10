@@ -414,6 +414,21 @@ public class statsTransformationTest {
                     assertEquals(Collections.singletonList("11"), destAsList);
                 });
     }
+
+    // Test dc() with NULL data
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    void statsTransform_AggDc_NoData_Test() {
+        // rex4j is used to produce nulls here
+        streamingTestUtil.performDPLTest("| makeresults | eval raw=\"kissa@1\"| rex4j field=raw \"koira@(?<koira>\\d)\" | stats dc(koira)",
+                testFile,
+                ds -> {
+                    assertEquals("[dc(koira)]", Arrays.toString(ds.columns()));
+
+                    List<String> destAsList = ds.select("dc(koira)").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    assertEquals(Collections.singletonList("0"), destAsList);
+                });
+    }
     
     // Test estdc()
     @Test

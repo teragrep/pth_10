@@ -311,7 +311,7 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
         String resultColumnName = String.format("dc(%s)", colName);
 
         // Use aggregator
-        Column col = new DistinctCountAggregator(colName).toColumn();
+        Column col = new DistinctCountAggregator(colName, catCtx.nullValue).toColumn();
 
         rv = new ColumnNode(col.as(resultColumnName));
 
