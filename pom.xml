@@ -380,7 +380,7 @@
             <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
               <notes>Also allow the license url to be https.</notes>
               <patterns>
-                <pattern>https://github.com/teragrep/teragrep/blob/main/LICENSE</pattern>
+                <pattern>Copyright (C) 2019-2024 Suomen Kanuuna Oy</pattern>
               </patterns>
             </license>
           </licenses>
@@ -405,6 +405,7 @@
             <!-- dummy files -->
             <exclude>src/test/resources/hdfslist/**</exclude>
             <exclude>src/test/resources/csv/**</exclude>
+            <exclude>eclipse-java-formatter.xml</exclude>
           </excludes>
         </configuration>
         <executions>
