@@ -54,7 +54,7 @@ import java.util.regex.Pattern;
 /**
  * Positive int or float to kilobytes.<br>
  * Default is kb to kb, can be k, m or g
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Memk implements UDF1<String, String> {

@@ -47,8 +47,6 @@
 package com.teragrep.pth10.steps.strcat;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -91,8 +89,8 @@ public abstract class AbstractStrcatStep extends AbstractStep {
     protected boolean allRequired = false;
     protected int numberOfSrcFieldsOriginally = -1;
 
-    public AbstractStrcatStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractStrcatStep() {
+        super();
     }
 
 }

@@ -45,44 +45,19 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.StreamingQueryListener;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -91,15 +66,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class statsTransformationStreamingTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(statsTransformationStreamingTest.class);
 
-	DPLParserCatalystContext ctx = null;
-	DPLParserCatalystVisitor visitor = null;
-	SparkSession sparkSession = null;
-	SQLContext sqlContext = null;
-	ExpressionEncoder<Row> encoder = null;
-	MemoryStream<Row> rowMemoryStream = null;
-	Dataset<Row> rowDataset = null;
-
-	private static final StructType testSchema = new StructType(
+	private final String testFile = "src/test/resources/predictTransformationTest_data*.json"; // * to make the path into a directory path
+	private final StructType testSchema = new StructType(
 			new StructField[] {
 					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
 					new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
@@ -112,238 +80,155 @@ public class statsTransformationStreamingTest {
 					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
 			}
 	);
-	
+
+	private StreamingTestUtil streamingTestUtil;
+
 	@org.junit.jupiter.api.BeforeAll
 	void setEnv() {
-		
+		this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+		this.streamingTestUtil.setEnv();
 	}
-	
+
 	@org.junit.jupiter.api.BeforeEach
 	void setUp() {
-		sparkSession = SparkSession.builder()
-				.master("local[*]")
-				.config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-				.config("checkpointLocation","/tmp/pth_10/test/StackTest/checkpoints/" + UUID.randomUUID() + "/")
-				.getOrCreate();
-		
-		sqlContext = sparkSession.sqlContext();
-		ctx = new DPLParserCatalystContext(sparkSession);
-		
-		sparkSession.sparkContext().setLogLevel("ERROR");
-		
-		encoder = RowEncoder.apply(testSchema);
-		rowMemoryStream =
-				new MemoryStream<>(1, sqlContext, encoder);
-		
-		// Create a spark structured streaming dataset and start writing the stream
-		rowDataset = rowMemoryStream.toDS(); 
-		ctx.setDs(rowDataset);	// for stream ds
+		this.streamingTestUtil.setUp();
 	}
-	
+
 	@org.junit.jupiter.api.AfterEach
 	void tearDown() {
-		visitor = null;
+		this.streamingTestUtil.tearDown();
 	}
 	
 	
 	// ----------------------------------------
 	// Tests
 	// ----------------------------------------
-	// TODO Keep these disabled for now, used mainly for debugging.
-	// When all okay, enable.
 	
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-	public void statsTransform_Streaming_AggDistinctCount_Test() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				/* DPL Query = */		"index=index_A | stats dc(offset) AS stats_test_result",
-				/* Expected result = */	Arrays.asList("12")
-				);
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void statsTransform_Streaming_AggDistinctCount_Test() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats dc(offset) AS stats_test_result",
+				testFile,
+				ds -> {
+					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+					assertEquals(Arrays.asList("25"), listOfResult, "Batch consumer dataset did not contain the expected values !");
+				});
 	}
-	
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-	public void statsTransform_Streaming_AggEarliest_Test() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				/* DPL Query = */		"index=index_A | stats earliest(offset) AS stats_test_result",
-				/* Expected result = */	Arrays.asList("1")
-				);
-	}
-	
-	@Disabled
-	@Test
-	public void statsTransform_Streaming_AggValues_Test() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				/* DPL Query = */		"index=index_A | stats values(offset) AS stats_test_result",
-				/* Expected result = */	Arrays.asList("TODO Change to expected")
-				);
-	}
-	
-	@Disabled
-	@Test
-	public void statsTransform_Streaming_AggExactPerc_Test() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				/* DPL Query = */		"index=index_A | stats exactperc50(offset) AS stats_test_result",
-				/* Expected result = */	Arrays.asList("TODO Change to expected")
-				);
-	}
-	
-	
-	// ----------------------------------------
-	// Helper methods
-	// ----------------------------------------
-	
-	
-	private void performStreamingDPLTest(String query, List<String> expectedValues) throws StreamingQueryException, InterruptedException {	
-		// Start performing the dpl query
-		performDPLQuery(query, expectedValues);
-		
-		// the names of the queries for source
-		final String nameOfSourceStream = "test_source_data";
-		
-		// start streams for rowDataset (source)
-		StreamingQuery sourceStreamingQuery = startStream(rowDataset, "append", nameOfSourceStream);
 
-		// listener for source stream, this allows stopping the stream when all processing is done
-		// without the use of thread.sleep()
-		sparkSession.streams().addListener(new StreamingQueryListener() {
-		    @Override
-		    public void onQueryStarted(QueryStartedEvent queryStarted) {
-		        LOGGER.info("Query started: " + queryStarted.id());
-		    }
-		    @Override
-		    public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-		        LOGGER.info("Query terminated: " + queryTerminated.id());
-		    }
-		    @Override
-		    public void onQueryProgress(QueryProgressEvent queryProgress) {
-		    	Double progress = queryProgress.progress().processedRowsPerSecond();
-		    	String nameOfStream = queryProgress.progress().name();
-		    	
-		    	LOGGER.info("Processed rows/sec: " + progress);
-		        
-		    	// Check if progress has stopped (progress becomes NaN at the end)
-		    	// and end the query if that is the case
-		        if (Double.isNaN(progress) && nameOfStream == nameOfSourceStream) {
-		        	LOGGER.info("No progress on source stream");
-		        	
-		        	sourceStreamingQuery.processAllAvailable();
-		        	sourceStreamingQuery.stop();
-		        	sparkSession.streams().removeListener(this);
-		        }
-		       
-		        
-		    }
-		}); // end listener
-		
-		
-		// Keep adding data to stream until enough runs are done
-		long run = 0L, counter = 0L, id = 0L;
-		long maxCounter = 12L, maxRuns = 10L; /* You can use these two variables to customize the amount of data */
-		
-		while (sourceStreamingQuery.isActive()) {
-			Timestamp time = Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
-			
-			if (run < maxRuns) {
-				rowMemoryStream.addData(
-						makeRows(
-								time, 					// _time
-								++id, 					// id
-								"data data", 			// _raw
-								"index_A", 				// index
-								"stream", 				// sourcetype
-								"host", 				// host
-								"input", 				// source
-								String.valueOf(run), 	// partition
-								++counter, 				// offset
-								1 						// make n amount of rows
-						)
-				);
-			}
-			
-			// Run $run times, each with $counter makeRows()
-			if (counter == maxCounter) {
-				run++;
-				counter = 0;
-			}
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void statsTransform_Streaming_AggEarliest_Test() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats earliest(offset) AS stats_test_result",
+				testFile,
+				ds -> {
+					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+					assertEquals(Arrays.asList("15"), listOfResult, "Batch consumer dataset did not contain the expected values !");
+				});
+	}
 
-		}
-	
-		
-		
-		// Got streamed data
-		boolean truncateFields = false;
-		int numRowsToPreview = 20;
-		
-		// Print previews of dataframes
-		LOGGER.info(" -- Source data -- ");
-		Dataset<Row> df = sqlContext.sql("SELECT * FROM test_source_data");
-		df.show(numRowsToPreview, truncateFields);
-		
-		
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void testSplittingByTime() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats avg(offset) AS stats_test_result BY _time",
+                testFile,
+                ds -> {
+                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> expected = Arrays.asList("15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
+                            "22.0", "23.0", "24.0", "13.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
+                            "10.0", "11.0", "12.0", "13.0", "14.0"); // weird timestamps in the JSON file
+                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
+                }
+		);
 	}
-	
-	// Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-	private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-		return rowDataset
-				.writeStream()
-				.outputMode(outputMode)
-				.format("memory")
-				.queryName(queryName)
-				.start();
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void testSplittingByString() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats avg(offset) AS stats_test_result BY sourcetype",
+                testFile,
+				ds -> {
+                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> expected = Arrays.asList("3.0", "8.0", "13.0", "18.0", "23.0");
+                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
+                }
+		);
 	}
-	
-	// Performs given DPL query and returns result dataset<row>
-	private Dataset<Row> performDPLQuery(String query, List<String> expectedValues) {
-		LOGGER.info("-> Got DPL query: " + query);
-		
-		ctx.setEarliest("-1Y");
-		
-		visitor = new DPLParserCatalystVisitor(ctx);
-		CharStream inputStream = CharStreams.fromString(query);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
-		
-		visitor.setConsumer(ds -> {
-			LOGGER.info("Consumer dataset : " + ds.schema());
-			ds.show();
-			
-			List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-			assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
-		});
-		
-		CatalystNode n = (CatalystNode) visitor.visit(tree);
-		
-		DataStreamWriter<Row> dsw = n.getDataStreamWriter();
-		
-		if (dsw != null) {
-			LOGGER.info(" ! Data stream writer was found !");
-			
-			StreamingQuery sq = dsw.start();
-			sq.processAllAvailable();
-		}
-		else {
-			LOGGER.error(" !! No Data stream writer !! ");
-		}
-		
-		
-		return n.getDataset();
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void testSplittingByNumber() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats avg(offset) AS stats_test_result BY id",
+                testFile,
+				ds -> {
+                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> expected = Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
+                            "10.0", "11.0", "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
+                            "22.0", "23.0", "24.0", "25.0");
+                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
+                }
+		);
 	}
-	
-	// Make rows of given amount
-	private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host, String source, String partition, Long offset, long amount) {
-		ArrayList<Row> rowArrayList = new ArrayList<>();
-		Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
-		
-		while (amount > 0) {
-			rowArrayList.add(row);
-			amount--;
-		}
-		
-		Seq<Row> rowSeq = JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
-		return rowSeq;
+
+	// Sorts first by sourcetype and then in those sourcetypes it sorts by _time
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void testSplittingByMultipleColumns() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats avg(offset) AS stats_test_result BY sourcetype _time",
+                testFile,
+				ds -> {
+                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> expected = Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
+                            "10.0", "15.0", "11.0", "12.0", "13.0", "14.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
+                            "22.0", "23.0", "24.0", "25.0");
+                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
+                }
+		);
 	}
-	
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void testSplittingByNumericalStrings() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | eval a = offset + 0 | stats avg(offset) AS stats_test_result BY a",
+                testFile,
+				ds -> {
+                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> expected = Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
+                            "10.0", "11.0", "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
+                            "22.0", "23.0", "24.0", "25.0");
+                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
+                }
+		);
+	}
+
+	@Test
+	public void statsTransform_Streaming_AggValues_Test() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats values(offset) AS stats_test_result",
+				testFile,
+				ds -> {
+					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream()
+							.map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+					assertEquals(Collections.singletonList("1\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n2\n20\n21\n22\n23\n24\n25\n3\n4\n5\n6\n7\n8\n9"),
+							listOfResult, "Batch consumer dataset did not contain the expected values !");
+				});
+	}
+
+	@Test
+	public void statsTransform_Streaming_AggExactPerc_Test() {
+		streamingTestUtil.performDPLTest(
+				"index=index_A | stats exactperc50(offset) AS stats_test_result",
+				testFile,
+				ds -> {
+					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+					assertEquals(Collections.singletonList("13.0"), listOfResult, "Batch consumer dataset did not contain the expected values !");
+				});
+	}
 }
  

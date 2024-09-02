@@ -46,28 +46,27 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.ReplaceTransformation;
 import com.teragrep.pth10.steps.replace.ReplaceStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ReplaceTest {
 
     @Test
-    void testReplaceTranslation() throws Exception {
+    void testReplaceTranslation() {
         String query = " | replace \"a\" WITH \"b\" IN _raw";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -77,27 +76,19 @@ public class ReplaceTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ReplaceTransformation ct = new ReplaceTransformation();
+        ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(1).getChild(0));
+        ReplaceStep cs = ct.replaceStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ReplaceTransformation ct = new ReplaceTransformation(stack, ctx);
-            ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(0).getChild(1));
-            ReplaceStep cs = ct.replaceStep;
-
-            assertEquals("a", cs.getContentToReplace());
-            assertEquals("b", cs.getReplaceWith());
-            assertEquals("[_raw]", Arrays.toString(cs.getListOfFields().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(1, cs.replacements().size());
+        assertTrue(cs.replacements().containsKey("a"));
+        assertEquals("b", cs.replacements().get("a"));
+        assertEquals("[_raw]", Arrays.toString(cs.listOfFields().toArray()));
     }
 
     @Test
-    void testReplaceTranslationMultipleFields() throws Exception {
-        String query = " | replace \"a\" WITH \"b\" IN _raw anotherfield";
+    void testReplaceTranslationMultipleFields() {
+        String query = " | replace \"a\" WITH \"b\" IN _raw anotherField";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
@@ -106,22 +97,37 @@ public class ReplaceTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        ReplaceTransformation ct = new ReplaceTransformation();
+        ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(1).getChild(0));
+        ReplaceStep cs = ct.replaceStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            ReplaceTransformation ct = new ReplaceTransformation(stack, ctx);
-            ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(0).getChild(1));
-            ReplaceStep cs = ct.replaceStep;
+        assertEquals(1, cs.replacements().size());
+        assertTrue(cs.replacements().containsKey("a"));
+        assertEquals("b", cs.replacements().get("a"));
+        assertEquals("[_raw, anotherField]", Arrays.toString(cs.listOfFields().toArray()));
+    }
 
-            assertEquals("a", cs.getContentToReplace());
-            assertEquals("b", cs.getReplaceWith());
-            assertEquals("[_raw, anotherfield]", Arrays.toString(cs.getListOfFields().toArray()));
+    @Test
+    void testReplaceTranslationMultipleWiths() {
+        String query = " | replace \"a\" WITH \"b\", x WITH y IN _raw, anotherField";
+        CharStream inputStream = CharStreams.fromString(query);
+        DPLLexer lexer = new DPLLexer(inputStream);
+        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
+        ParseTree tree = parser.root();
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setEarliest("-1w");
+
+        ReplaceTransformation ct = new ReplaceTransformation();
+        ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(1).getChild(0));
+        ReplaceStep cs = ct.replaceStep;
+
+        assertEquals(2, cs.replacements().size());
+        assertTrue(cs.replacements().containsKey("a"));
+        assertEquals("b", cs.replacements().get("a"));
+        assertTrue(cs.replacements().containsKey("x"));
+        assertEquals("y", cs.replacements().get("x"));
+        assertEquals("[_raw, anotherField]", Arrays.toString(cs.listOfFields().toArray()));
     }
 }
 

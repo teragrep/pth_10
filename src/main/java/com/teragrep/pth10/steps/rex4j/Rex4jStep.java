@@ -46,8 +46,9 @@
 
 package com.teragrep.pth10.steps.rex4j;
 
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.commands.transformstatement.rex4j.NamedGroupsRex;
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -57,16 +58,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public class Rex4jStep extends AbstractRex4jStep{
+public final class Rex4jStep extends AbstractRex4jStep{
     private static final Logger LOGGER = LoggerFactory.getLogger(Rex4jStep.class);
-    public Rex4jStep(Dataset<Row> dataset) {
-        super(dataset);
+    private final DPLParserCatalystContext catCtx;
+    public Rex4jStep(DPLParserCatalystContext catCtx) {
+        super();
+        this.catCtx = catCtx;
     }
 
     // TODO Implement maxMatch parameter; however it has never been implemented before
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
@@ -92,7 +95,7 @@ public class Rex4jStep extends AbstractRex4jStep{
             }
 
             Column rex = functions.regexp_replace(new Column(field), sed[1], sed[2]);
-            return this.dataset.withColumn(field, rex);
+            return dataset.withColumn(field, rex);
         }
         else { // default mode
             Map<String, Integer> fields = NamedGroupsRex.getNamedGroups(regexStr);
@@ -103,13 +106,14 @@ public class Rex4jStep extends AbstractRex4jStep{
             }
 
             // go through multi extraction groups
-            Dataset<Row> res = this.dataset;
-            Column rex = null;
+            Dataset<Row> res = dataset;
+            Column rex;
             for (Map.Entry<String, Integer> me : fields.entrySet()) {
                 Integer in = me.getValue();
                 // perform regexp_extract
                 rex = functions.regexp_extract(functions.col(field), regexStr, in);
-                res = res.withColumn(me.getKey(), rex);
+                res = res.withColumn(me.getKey(), functions.when(rex.eqNullSafe(functions.lit("")),
+                        functions.lit(catCtx.nullValue.value())).otherwise(rex));
             }
             return res;
         }

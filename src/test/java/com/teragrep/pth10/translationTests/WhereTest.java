@@ -46,53 +46,51 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.WhereTransformation;
 import com.teragrep.pth10.steps.where.WhereStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class WhereTest {
+    SparkSession spark = null;
+    DPLParserCatalystContext ctx = null;
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        spark = SparkSession
+                .builder()
+                .appName("Java Spark SQL basic example")
+                .master("local[2]")
+                .getOrCreate();
+        spark.sparkContext().setLogLevel("ERROR");
+        ctx = new DPLParserCatalystContext(spark);
+    }
     @Test
-    void testWhereTranslation() throws Exception {
+    void testWhereTranslation() {
         final String query = " | where offset < 5";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setEarliest("-1w");
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
+        final WhereTransformation ct = new WhereTransformation(this.ctx);
+        ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
+        final WhereStep cs = ct.whereStep;
 
-        try {
-            final WhereTransformation ct = new WhereTransformation(ctx, stack, new ArrayList<>());
-            ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(0).getChild(1));
-            final WhereStep cs = ct.whereStep;
-
-            assertEquals("(offset < 5)", cs.getWhereColumn().toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_LT + ", 5)", cs.getWhereColumn().toString());
     }
 
     @Test
-    void testWhereTranslation2() throws Exception {
+    void testWhereTranslation2() {
         final String query = " | where like(field, %5%)";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -101,50 +99,31 @@ public class WhereTest {
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            final WhereTransformation ct = new WhereTransformation(ctx, stack, new ArrayList<>());
-            ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(0).getChild(1));
-            final WhereStep cs = ct.whereStep;
+        final WhereTransformation ct = new WhereTransformation(ctx);
+        ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
+        final WhereStep cs = ct.whereStep;
 
-            assertEquals("field LIKE %5%", cs.getWhereColumn().toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("field LIKE %5%", cs.getWhereColumn().toString());
     }
 
     @Test
-    void testWhereTranslation3() throws Exception {
+    void testWhereTranslation3() {
         final String query = " | where offset = 5";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setEarliest("-1w");
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
+        final WhereTransformation ct = new WhereTransformation(this.ctx);
+        ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
+        final WhereStep cs = ct.whereStep;
 
-        try {
-            final WhereTransformation ct = new WhereTransformation(ctx, stack, new ArrayList<>());
-            ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(0).getChild(1));
-            final WhereStep cs = ct.whereStep;
-
-            assertEquals("(offset = 5)", cs.getWhereColumn().toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_EQ + ", 5)", cs.getWhereColumn().toString());
     }
 
     @Test
-    void testWhereTranslation4() throws Exception {
+    void testWhereTranslation4() {
         final String query = " | where NOT like(field,%40%)";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -153,20 +132,11 @@ public class WhereTest {
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
+        final WhereTransformation ct = new WhereTransformation(ctx);
+        ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
+        final WhereStep cs = ct.whereStep;
 
-        try {
-            final WhereTransformation ct = new WhereTransformation(ctx, stack, new ArrayList<>());
-            ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(0).getChild(1));
-            final WhereStep cs = ct.whereStep;
-
-            assertEquals("(NOT field LIKE %40%)", cs.getWhereColumn().toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("(NOT field LIKE %40%)", cs.getWhereColumn().toString());
     }
 }
 

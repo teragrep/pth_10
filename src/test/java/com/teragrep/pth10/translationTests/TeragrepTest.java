@@ -47,22 +47,25 @@ package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
+import com.teragrep.pth10.ast.bo.StepListNode;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.ast.commands.transformstatement.TeragrepTransformation;
-import com.teragrep.pth10.steps.teragrep.AbstractTeragrepStep;
-import com.teragrep.pth10.steps.teragrep.TeragrepStep;
+import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.pth10.steps.teragrep.*;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -70,7 +73,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TeragrepTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTest.class);
     @Test
-    void testTeragrepTranslation() throws Exception {
+    void testTeragrepTranslation() {
         final String query = "| teragrep exec syslog stream host 127.0.0.123 port 1337";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -80,26 +83,20 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        AbstractStep step = stepNode.get();
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        assertEquals(TeragrepSyslogStep.class, step.getClass());
+        TeragrepSyslogStep syslogStep = (TeragrepSyslogStep) step;
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_SYSLOG_STREAM, cs.getCmdMode());
-            assertEquals("127.0.0.123", cs.getHost());
-            assertEquals(1337, cs.getPort());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("127.0.0.123", syslogStep.relpHost);
+        assertEquals(1337, syslogStep.relpPort);
     }
 
     @Test
-    void testTeragrepDefaultParamsTranslation() throws Exception {
+    void testTeragrepDefaultParamsTranslation() {
         final String query = "| teragrep exec syslog stream";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -109,26 +106,53 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.get();
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        assertEquals(TeragrepSyslogStep.class, step.getClass());
+        final TeragrepSyslogStep syslogStep = (TeragrepSyslogStep) step;
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_SYSLOG_STREAM, cs.getCmdMode());
-            assertEquals("127.0.0.1", cs.getHost());
-            assertEquals(601, cs.getPort());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("127.0.0.1", syslogStep.relpHost);
+        assertEquals(601, syslogStep.relpPort);
     }
 
     @Test
-    void testTeragrepHdfsSaveTranslation() throws Exception {
+    void testTeragrepSyslogConfigTranslation() {
+        final String host = "127.0.0.3";
+        final int port = 603;
+
+        final String query = "| teragrep exec syslog stream";
+        final CharStream inputStream = CharStreams.fromString(query);
+        final DPLLexer lexer = new DPLLexer(inputStream);
+        final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
+        final ParseTree tree = parser.root();
+
+        // Create config
+        HashMap<String, Object> map = new HashMap<>();
+        map.put("dpl.pth_10.transform.teragrep.syslog.parameter.host", host);
+        map.put("dpl.pth_10.transform.teragrep.syslog.parameter.port", port);
+        Config c = ConfigFactory.parseMap(map);
+
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setEarliest("-1w");
+        ctx.setConfig(c);
+        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.get();
+
+        assertEquals(TeragrepSyslogStep.class, step.getClass());
+        final TeragrepSyslogStep syslogStep = (TeragrepSyslogStep) step;
+
+        assertEquals(host, syslogStep.relpHost);
+        assertEquals(port, syslogStep.relpPort);
+    }
+
+    @Test
+    void testTeragrepHdfsSaveTranslation() {
         final String query = "| teragrep exec hdfs save /tmp/path";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -138,26 +162,20 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.get();
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
+        final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_HDFS_SAVE, cs.getCmdMode());
-            assertEquals("/tmp/path", cs.getPath());
-            assertNull(cs.getRetentionSpan());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("/tmp/path", saveStep.pathStr);
+        assertNull(saveStep.retentionSpan);
     }
 
     @Test
-    void testTeragrepHdfsSaveRetentionTranslation() throws Exception {
+    void testTeragrepHdfsSaveRetentionTranslation() {
         final String query = "| teragrep exec hdfs save \"/tmp/path\" retention=1d";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -167,27 +185,22 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
         LOGGER.debug(tree.toStringTree(parser));
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.get();
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_HDFS_SAVE, cs.getCmdMode());
-            assertEquals("/tmp/path", cs.getPath());
-            assertEquals("1d", cs.getRetentionSpan());
+        assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
+        final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("/tmp/path", saveStep.pathStr);
+        assertEquals("1d", saveStep.retentionSpan);
     }
 
     @Test
-    void testTeragrepHdfsSaveOverwriteTranslation() throws Exception {
+    void testTeragrepHdfsSaveOverwriteTranslation() {
         final String query = "| teragrep exec hdfs save \"/tmp/path\" overwrite=true";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -197,28 +210,23 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
         LOGGER.debug(tree.toStringTree(parser));
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.get();
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_HDFS_SAVE, cs.getCmdMode());
-            assertEquals("/tmp/path", cs.getPath());
-            assertTrue(cs.isOverwrite());
-            assertNull(cs.getRetentionSpan());
+        assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
+        final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("/tmp/path", saveStep.pathStr);
+        assertTrue(saveStep.overwrite);
+        assertNull(saveStep.retentionSpan);
     }
 
     @Test
-    void testTeragrepHdfsLoadTranslation() throws Exception {
+    void testTeragrepHdfsLoadTranslation() {
         final String query = "| teragrep exec hdfs load /tmp/path";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -228,26 +236,19 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.get();
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        assertEquals(TeragrepHdfsLoadStep.class, step.getClass());
+        TeragrepHdfsLoadStep loadStep = (TeragrepHdfsLoadStep) step;
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_HDFS_LOAD, cs.getCmdMode());
-            assertEquals("/tmp/path", cs.getPath());
-            assertNull(cs.getRetentionSpan());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("/tmp/path", loadStep.pathStr);
     }
 
     @Test
-    void testTeragrepTranslationKafkaSave() throws Exception {
+    void testTeragrepTranslationKafkaSave() {
         final String query = "| teragrep exec kafka save MY-TOPIC";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -257,24 +258,19 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.get();
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_KAFKA_SAVE, cs.getCmdMode());
-            assertEquals("MY-TOPIC", cs.getKafkaTopic());
+        assertEquals(TeragrepKafkaStep.class, step.getClass());
+        TeragrepKafkaStep kafkaStep = (TeragrepKafkaStep) step;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("MY-TOPIC", kafkaStep.kafkaTopic);
     }
 
     @Test
-    void testTeragrepHdfsListTranslation() throws Exception {
+    void testTeragrepHdfsListTranslation() {
         final String query = "| teragrep exec hdfs list /tmp/";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -284,24 +280,19 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        AbstractStep step = stepNode.get();
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_HDFS_LIST, cs.getCmdMode());
-            assertEquals("/tmp/", cs.getPath());
+        assertEquals(TeragrepHdfsListStep.class, step.getClass());
+        TeragrepHdfsListStep listStep = (TeragrepHdfsListStep) step;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("/tmp/", listStep.getPathStr());
     }
 
     @Test
-    void testTeragrepHdfsDeleteTranslation() throws Exception {
+    void testTeragrepHdfsDeleteTranslation() {
         final String query = "| teragrep exec hdfs delete /tmp/something";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -311,24 +302,19 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepNode stepNode = (StepNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        AbstractStep step = stepNode.get();
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_HDFS_DELETE, cs.getCmdMode());
-            assertEquals("/tmp/something", cs.getPath());
+        assertEquals(TeragrepHdfsDeleteStep.class, step.getClass());
+        TeragrepHdfsDeleteStep deleteStep = (TeragrepHdfsDeleteStep) step;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("/tmp/something", deleteStep.pathStr);
     }
 
     @Test
-    void testTeragrepBloomCreateTranslation() throws Exception {
+    void testTeragrepBloomCreateTranslation() {
         final String query = "| teragrep exec bloom create";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -338,23 +324,23 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepListNode stepNode = (StepListNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.asList().get(0); // first is an aggregation step
+        final AbstractStep step1 = stepNode.asList().get(1); // second is bloom create
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_BLOOM_CREATE, cs.getCmdMode());
+        assertEquals(TeragrepBloomStep.class, step.getClass());
+        assertEquals(TeragrepBloomStep.class, step1.getClass());
+        TeragrepBloomStep bloomStep = (TeragrepBloomStep) step;
+        TeragrepBloomStep bloomStep1 = (TeragrepBloomStep) step1;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(TeragrepBloomStep.BloomMode.AGGREGATE, bloomStep.mode);
+        assertEquals(TeragrepBloomStep.BloomMode.CREATE, bloomStep1.mode);
     }
 
     @Test
-    void testTeragrepBloomUpdateTranslation() throws Exception {
+    void testTeragrepBloomUpdateTranslation() {
         final String query = "| teragrep exec bloom update";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -364,19 +350,19 @@ public class TeragrepTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        final ProcessingStack stack = new ProcessingStack(visitor);
 
-        try {
-            final TeragrepTransformation ct = new TeragrepTransformation(ctx, stack, new ArrayList<>(), false);
-            ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(0).getChild(1));
-            final TeragrepStep cs = ct.teragrepStep;
+        final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
+        StepListNode stepNode = (StepListNode) ct.visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
+        final AbstractStep step = stepNode.asList().get(0); // first is an aggregation step
+        final AbstractStep step1 = stepNode.asList().get(1); // second is bloom update
 
-            assertEquals(AbstractTeragrepStep.TeragrepCommandMode.EXEC_BLOOM_UPDATE, cs.getCmdMode());
+        assertEquals(TeragrepBloomStep.class, step.getClass());
+        assertEquals(TeragrepBloomStep.class, step1.getClass());
+        TeragrepBloomStep bloomStep = (TeragrepBloomStep) step;
+        TeragrepBloomStep bloomStep1 = (TeragrepBloomStep) step1;
 
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(TeragrepBloomStep.BloomMode.AGGREGATE, bloomStep.mode);
+        assertEquals(TeragrepBloomStep.BloomMode.UPDATE, bloomStep1.mode);
     }
 }
 

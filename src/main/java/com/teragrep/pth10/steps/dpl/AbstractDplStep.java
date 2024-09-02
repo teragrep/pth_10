@@ -48,8 +48,6 @@ package com.teragrep.pth10.steps.dpl;
 
 import com.teragrep.pth10.datasources.GeneratedDatasource;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.List;
 
@@ -62,8 +60,8 @@ public abstract class AbstractDplStep extends AbstractStep {
     protected GeneratedDatasource generatedDatasource = null;
     protected String explainStr = "dpl";
 
-    public AbstractDplStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractDplStep() {
+        super();
     }
 
     public void setCommandType(DplCommandType commandType) {

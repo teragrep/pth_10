@@ -48,14 +48,12 @@ package com.teragrep.pth10.steps.where;
 
 import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractWhereStep extends AbstractStep {
     protected Column whereColumn = null;
 
-    public AbstractWhereStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractWhereStep() {
+        super();
     }
 
     public void setWhereColumn(Column whereColumn) {

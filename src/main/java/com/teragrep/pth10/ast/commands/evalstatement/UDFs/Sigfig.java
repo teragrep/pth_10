@@ -64,7 +64,7 @@ import java.util.List;
  * <p>The computation for sigfig is based on the type of calculation that generates the number:</p>
  * <p> * / result should have minimum number of significant figures of all of the operands<br>
  * 	+ - result should have the same amount of sigfigs as the least precise number of all of the operands</p>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double>, Serializable {
@@ -77,11 +77,8 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
 	private static final char DIVISION_CHAR = '/';
 	private static final char ADDITION_CHAR = '+';
 	private static final char SUBTRACTION_CHAR = '-';
-	
-	// Enable or disable debug printing
-	private static final boolean DEBUG_ENABLED = false;
-	
-	@Override
+
+    @Override
 	public Double call(Object calcResAsObject, String calcText, WrappedArray<Object> wrappedArrayOfColObjects) throws Exception {
 		
 		BigDecimal calcRes = new BigDecimal(calcResAsObject.toString());
@@ -121,12 +118,12 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
 		// * / result should have minimum number of significant figures of all of the operands
 		// + - result should have the same amount of sigfigs as the least precise number of all of the operands
 		
-		Double rv = null;
+		double rv;
 		BigDecimal input = calcRes; //BigDecimal.valueOf(calcRes);
 		
-		if (DEBUG_ENABLED) {
-			LOGGER.info("calc(result)= " + calcRes);
-			LOGGER.info("calc(text)= " + calcText);
+		if (LOGGER.isDebugEnabled()) {
+			LOGGER.debug("calc(result)= <{}>", calcRes);
+			LOGGER.debug("calc(text)= <{}>", calcText);
 		}
 		
 		int multiIndex = calcText.indexOf(MULTIPLICATION_CHAR);
@@ -139,13 +136,17 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
 			int minPrecision = Integer.MAX_VALUE;
 			
 			for (BigDecimal val : calculatedCols) {
-				if (DEBUG_ENABLED) LOGGER.info("val=" + val);
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug("val=<{}>", val);
+				}
 				
 				BigDecimal currentValue = val;
 				int scale = currentValue.scale();
 				int precision = currentValue.precision();
 				
-				if (DEBUG_ENABLED) LOGGER.info("scale=" + scale + " precision=" + precision);
+				if (LOGGER.isDebugEnabled()) {
+					LOGGER.debug("scale=<{}> precision=<{}>",scale,precision);
+				}
 				
 				if (precision < minPrecision) {
 					minPrecision = precision;
@@ -159,13 +160,17 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
 			int minScale = Integer.MAX_VALUE;
 			
 			for (BigDecimal val : calculatedCols) {
-				if (DEBUG_ENABLED) LOGGER.info("val=" + val);
+				if (LOGGER.isDebugEnabled()){
+					LOGGER.debug("val=<{}>", val);
+				}
 				
 				BigDecimal currentValue = val;
 				int scale = currentValue.scale();
 				int precision = currentValue.precision();
 				
-				if (DEBUG_ENABLED) LOGGER.info("scale=" + scale + " precision=" + precision);
+				if (LOGGER.isDebugEnabled()){
+					LOGGER.debug("scale=<{}> precision=<{}>", scale, precision);
+				}
 				
 				if (scale < minScale) {
 					minScale = scale;

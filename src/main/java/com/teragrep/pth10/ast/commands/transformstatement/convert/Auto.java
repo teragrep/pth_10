@@ -50,13 +50,13 @@ import org.apache.spark.sql.api.java.UDF1;
 
 /**
  * UDF used for convert command 'auto()'
- * @author p000043u
+ * @author eemhu
  */
 public class Auto implements UDF1<Object, Double> {
     /**
      * @param s Input string to be converted to a number using best conversion
      * @return Input string as a number
-     * @throws Exception
+     * @throws Exception parsing exception
      */
     @Override
     public Double call(Object s) throws Exception {

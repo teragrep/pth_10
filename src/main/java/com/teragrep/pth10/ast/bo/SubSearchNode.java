@@ -46,7 +46,6 @@
 
 package com.teragrep.pth10.ast.bo;
 
-import com.teragrep.pth10.ast.Util;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -116,7 +115,7 @@ public class SubSearchNode extends ColumnNode {
 		} else {
 			this.val = this.val.and(new Column("_raw").rlike(valStr));
 		}
-		LOGGER.info("subSearchNode current val:"+val.expr().sql());
+		LOGGER.info("subSearchNode current val: <{}>", val.expr().sql());
 	}
 
 
@@ -125,20 +124,20 @@ public class SubSearchNode extends ColumnNode {
  		Element el = d.createElement("indexstatement");
 		el.setAttribute("OPERATION", "EQUALS");
 		el.setAttribute("value", "%" + valList.get(0) + "%");
-		LOGGER.info("Construct archiveQuery:" + ElementNode.toString(el));
+		LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
 		if(valList.size()>1) {
 			for(int i=1;i<valList.size();i++){
 				Element e = d.createElement("indexstatement");
 				e.setAttribute("OPERATION", "EQUALS");
 				e.setAttribute("value", "%" + valList.get(i) + "%");
-				LOGGER.info("Construct archiveQuery:" + ElementNode.toString(el));
+				LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
 				Element andE = d.createElement("AND");
 				andE.appendChild(el);
 				andE.appendChild(e);
 				el=andE;
 			}
 		}
-		LOGGER.info("SubNode="+Util.elementAsString(el));
+		LOGGER.info("SubNode=<{}>", new ElementNode(el));
 		return el;
 	}
 

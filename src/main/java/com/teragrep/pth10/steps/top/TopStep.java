@@ -49,14 +49,14 @@ package com.teragrep.pth10.steps.top;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class TopStep extends AbstractTopStep{
-    public TopStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class TopStep extends AbstractTopStep{
+    public TopStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 

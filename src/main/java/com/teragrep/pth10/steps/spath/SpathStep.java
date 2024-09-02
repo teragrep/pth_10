@@ -46,27 +46,25 @@
 
 package com.teragrep.pth10.steps.spath;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.MapTypeColumn;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.commands.evalstatement.UDFs.Spath;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MapType;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public class SpathStep extends AbstractSpathStep {
-    public SpathStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class SpathStep extends AbstractSpathStep {
+    public SpathStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
+        if (dataset == null) {
             return null;
         }
 
@@ -76,7 +74,7 @@ public class SpathStep extends AbstractSpathStep {
         final MapType returnType = DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType);
 
         // register udf with SparkSession and get column
-        ss.udf().register("UDF_Spath", new Spath(), returnType);
+        ss.udf().register("UDF_Spath", new Spath(catCtx.nullValue), returnType);
         Column spathExpr = functions.callUDF(
                 "UDF_Spath",            // name of UDF
                 functions.col(inputColumn),   // Input column (actual data to run spath on)
@@ -87,7 +85,7 @@ public class SpathStep extends AbstractSpathStep {
 
         // Not in auto-extraction mode: can just return the first and only value from the map
         if (!autoExtractionMode) {
-            return this.dataset.withColumn(Util.stripQuotes(outputColumn), spathExpr.getItem(path));
+            return dataset.withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(path));
         }
 
 
@@ -96,47 +94,13 @@ public class SpathStep extends AbstractSpathStep {
         //
 
         // set of keys in map
-        final Set<String> keys = new HashSet<>();
+        Set<String> keys;
 
         // apply udf
-        Dataset<Row> withAppliedUdfDs = this.dataset.withColumn(outputColumn, spathExpr);
+        Dataset<Row> withAppliedUdfDs = dataset.withColumn(outputColumn, spathExpr);
 
-        if (withAppliedUdfDs.isStreaming()) { // parallel mode
-            final String id = UUID.randomUUID().toString();
-            final String name = "spath_" + id;
-            DataStreamWriter<Row> writer = withAppliedUdfDs.writeStream().foreachBatch((batchDs, batchId) -> {
-                // Get all the map's keys
-                // e.g. key->value; key2->value2 ==> key, key2
-                batchDs.select(
-                                functions.explode(
-                                        functions.map_keys(
-                                                functions.col(outputColumn)
-                                        )
-                                )
-                        )
-                        .collectAsList()
-                        .forEach(r -> keys.add(r.getString(0)));
-            });
-
-            StreamingQuery sq = this.getCatCtx().getInternalStreamingQueryListener().registerQuery(name, writer);
-
-            try {
-                sq.awaitTermination();
-            } catch (StreamingQueryException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        else { // sequential mode, no need to use forEachBatch
-            withAppliedUdfDs.select(
-                            functions.explode(
-                                    functions.map_keys(
-                                            functions.col(outputColumn)
-                                    )
-                            )
-                    )
-                    .collectAsList()
-                    .forEach(r -> keys.add(r.getString(0)));
-        }
+        MapTypeColumn mapColumn = new MapTypeColumn(withAppliedUdfDs, outputColumn, this.getCatCtx());
+        keys = mapColumn.getKeys();
 
         // Go through the list and get values for each of the keys
         // Each key is a new column with the cell contents being the value for that key

@@ -48,26 +48,17 @@ package com.teragrep.pth10.steps.chart;
 
 import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractChartStep extends AbstractStep {
-    protected List<Column> listOfExpr = new ArrayList<>();
-    protected List<Column> listOfGroupBy = new ArrayList<>();
+    protected final List<Column> listOfExpr;
+    protected final List<Column> listOfGroupBy;
 
-    public AbstractChartStep(Dataset<Row> dataset) {
-        super(dataset);
-    }
-
-    public void addAggregateExpressionOperation(Column aggCol) {
-        listOfExpr.add(aggCol);
-    }
-
-    public void addGroupByOperation(Column groupByCol) {
-        listOfGroupBy.add(groupByCol);
+    public AbstractChartStep(List<Column> listOfExpr, List<Column> listOfGroupBy) {
+        super();
+        this.listOfExpr = listOfExpr;
+        this.listOfGroupBy = listOfGroupBy;
     }
 
     public List<Column> getListOfExpr() {

@@ -45,109 +45,46 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.StreamingQueryListener;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.MetadataBuilder;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the new ProcessingStack implementation
  * Uses streaming datasets
- * @author p000043u
+ * @author eemhu
  *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DedupTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupTransformationTest.class);
 
-    DPLParserCatalystContext ctx = null;
-    DPLParserCatalystVisitor visitor = null;
+    // Use this file for  dataset initialization
+    private String testFile = "src/test/resources/dedup_test_data*.json"; // * to make the path into a directory path
 
-    SparkSession sparkSession = null;
-    SQLContext sqlContext = null;
-
-    ExpressionEncoder<Row> encoder = null;
-    MemoryStream<Row> rowMemoryStream = null;
-    Dataset<Row> rowDataset = null;
-
-    private static final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private StreamingTestUtil streamingTestUtil;
 
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-
+        this.streamingTestUtil = new StreamingTestUtil();
+        this.streamingTestUtil.setEnv();
     }
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        sparkSession = SparkSession.builder()
-                .master("local[*]")
-                .config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                .config("checkpointLocation","/tmp/pth_10/test/dedup/checkpoints/" + UUID.randomUUID() + "/")
-                .getOrCreate();
-
-        sqlContext = sparkSession.sqlContext();
-        ctx = new DPLParserCatalystContext(sparkSession);
-
-        sparkSession.sparkContext().setLogLevel("ERROR");
-
-        encoder = RowEncoder.apply(testSchema);
-        rowMemoryStream =
-                new MemoryStream<>(1, sqlContext, encoder);
-
-        // Create a spark structured streaming dataset and start writing the stream
-        rowDataset = rowMemoryStream.toDS();
-        ctx.setDs(rowDataset);	// for stream ds
+        this.streamingTestUtil.setUp();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        visitor = null;
+        this.streamingTestUtil.tearDown();
     }
 
 
@@ -156,268 +93,129 @@ public class DedupTransformationTest {
     // ----------------------------------------
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true") // basic dedup
-    public void dedupTest_NoParams() throws StreamingQueryException {
-        performStreamingDPLTest(
-                "index=index_A | dedup _raw",
-                "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                ds -> {
-                    List<Row> listOfRaw = ds.select("_raw").collectAsList();
-                    assertEquals(2, listOfRaw.size());
-                    String first = listOfRaw.get(0).get(0).toString();
-                    String second = listOfRaw.get(1).get(0).toString();
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // basic dedup
+    public void dedupTest_NoParams() {
+        this.streamingTestUtil.performDPLTest("index=index_A | dedup _raw", this.testFile, res -> {
+            List<String> expectedColumns = new ArrayList<>(
+                    Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
+            );
+            List<String> actualColumns = Arrays.asList(res.columns());
+            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
-                    assertEquals("1", first);
-                    assertEquals("2", second);
-                }, c -> c%2==0 ? "1" : "2"
-        );
+            List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
+            listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
+            assertEquals(2, listOfRaw.size());
+            String first = listOfRaw.get(0).get(0).toString();
+            String second = listOfRaw.get(1).get(0).toString();
+
+            assertEquals("1", first);
+            assertEquals("2", second);
+        });
     }
 
     @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true") // consecutive=true
-    public void dedupTest_Consecutive() throws StreamingQueryException {
-        performStreamingDPLTest(
-                "index=index_A | dedup _raw consecutive= true",
-                "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                ds -> {
-                    List<Row> listOfRaw = ds.select("_raw").collectAsList();
-                    assertEquals(10, listOfRaw.size());
-                    for (int i = 0; i < listOfRaw.size(); i = i + 2) {
-                        assertEquals("1", listOfRaw.get(i).get(0).toString());
-                        assertEquals("2", listOfRaw.get(i + 1).get(0).toString());
-                    }
-                }, c -> c%2==0 ? "1" : "2"
-        );
-    }
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // consecutive=true
+    public void dedupTest_Consecutive() {
+        String query = "index=index_A | dedup _raw consecutive= true";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> expectedColumns = new ArrayList<>(
+                    Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
+            );
+            List<String> actualColumns = Arrays.asList(res.columns());
+            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true") // sort descending as numbers
-    public void dedupTest_SortNum() throws StreamingQueryException{
-        performStreamingDPLTest(
-                "index=index_A | dedup _raw sortby - num(_raw)",
-                "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                ds -> {
-                    List<Row> listOfRaw = ds.select("_raw").collectAsList();
-                    assertEquals(2, listOfRaw.size());
-                    assertEquals("2", listOfRaw.get(0).get(0).toString());
-                    assertEquals("1", listOfRaw.get(1).get(0).toString());
-                }, c -> c%2==0 ? "1" : "2"
-        );
-    }
-
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true") // keep duplicate events with nulls
-    public void dedupTest_KeepEvents() throws StreamingQueryException {
-        performStreamingDPLTest(
-                "index=index_A | dedup _raw keepevents= true",
-                "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                ds -> {
-                    List<Row> listOfRaw = ds.select("_raw").collectAsList();
-                    assertEquals(10, listOfRaw.size());
-                    assertEquals("1", listOfRaw.get(0).get(0));
-                    assertEquals("2", listOfRaw.get(1).get(0));
-                    for (int i = 2; i < 10; i++) {
-                        assertEquals(null, listOfRaw.get(i).get(0));
-                    }
-                }, c -> c%2==0 ? "1" : "2"
-        );
-    }
-
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true") // keep null values
-    public void dedupTest_KeepEmpty() throws StreamingQueryException{
-        performStreamingDPLTest(
-                "index=index_A | dedup _raw keepempty= true",
-                "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                ds -> {
-                    List<Row> listOfRaw = ds.select("_raw").collectAsList();
-                    assertEquals(2, listOfRaw.size());
-                    assertEquals("1", listOfRaw.get(0).get(0));
-                    assertEquals(null, listOfRaw.get(1).get(0));
-                },  c -> c%2==0 ? "1" : null
-        );
-    }
-
-    @Test
-    @EnabledIfSystemProperty(named="runSparkTest", matches="true") // deduplicate based on _raw, sourcetype and partition
-    public void dedupTest_MultiColumn() throws StreamingQueryException {
-        performStreamingDPLTest(
-                "index=index_A | dedup _raw, sourcetype, partition",
-                "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                ds -> {
-                    List<Row> listOfRaw = ds.select("_raw").collectAsList();
-                    assertEquals(1, listOfRaw.size());
-                    assertEquals("1", listOfRaw.get(0).get(0));
-                },  c -> c%2==0 ? "1" : "2"
-        );
-    }
-    // ----------------------------------------
-    // Helper methods
-    // ----------------------------------------
-
-
-    private void performStreamingDPLTest(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer,
-                                         Function<Long, String> rawColumnSettingFunction) throws StreamingQueryException {
-
-        // the names of the queries for source and result
-        final String nameOfSourceStream = "pth10_dedup_test_src";
-
-        // start streams for rowDataset (source)
-        StreamingQuery sourceStreamingQuery = startStream(rowDataset, "append", nameOfSourceStream);
-        sourceStreamingQuery.processAllAvailable();
-
-        // listener for source stream, this allows stopping the stream when all processing is done
-        // without the use of thread.sleep()
-        sparkSession.streams().addListener(new StreamingQueryListener() {
-            int noProgress = 0;
-            @Override
-            public void onQueryStarted(QueryStartedEvent queryStarted) {
-                LOGGER.info("Query started: " + queryStarted.id());
-            }
-            @Override
-            public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-                LOGGER.info("Query terminated: " + queryTerminated.id());
-            }
-            @Override
-            public void onQueryProgress(QueryProgressEvent queryProgress) {
-                Double progress = queryProgress.progress().processedRowsPerSecond();
-                String nameOfStream = queryProgress.progress().name();
-
-                LOGGER.info("Processed rows/sec: " + progress);
-                // Check if progress has stopped (progress becomes NaN at the end)
-                // and end the query if that is the case
-                if (Double.isNaN(progress) && nameOfStream == nameOfSourceStream) {
-                    noProgress++;
-                    if (noProgress > 1) {
-                        LOGGER.info("No progress on source stream");
-
-                        sourceStreamingQuery.processAllAvailable();
-                        sourceStreamingQuery.stop();
-                        sparkSession.streams().removeListener(this);
-                    }
-
-                }
-
-            }
-        }); // end listener
-
-
-        // Keep adding data to stream until enough runs are done
-        long run = 0L, counter = 0L, id = 0L;
-        long maxCounter = 10L, maxRuns = 1L; /* You can use these two variables to customize the amount of data */
-
-        while (sourceStreamingQuery.isActive()) {
-            Timestamp time = Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
-
-            if (run < maxRuns) {
-                org.apache.spark.sql.execution.streaming.Offset rmsOffset = rowMemoryStream.addData(
-                        makeRows(
-                                time, 					                            // _time
-                                ++id, 					                            // id
-                                rawColumnSettingFunction.apply(counter),            // _raw
-                                "index_A", 				                            // index
-                                "stream" + (counter % 2 == 0 ? 1 : 2), 				// sourcetype
-                                "host", 				                            // host
-                                counter + "." + counter + "." + counter + "." + counter,	// source
-                                String.valueOf(run), 	                            // partition
-                                ++counter, 				                            // offset
-                                1 //500 					                        // make n amount of rows
-                        )
-                );
-                //rowMemoryStream.commit((LongOffset)rmsOffset);
-            }
-
-            // Run $run times, each with $counter makeRows()
-            if (counter == maxCounter) {
-                run++;
-                counter = 0;
-            }
-
-        }
-
-        sourceStreamingQuery.awaitTermination(); // wait for query to be over
-
-        // Got streamed data
-        boolean truncateFields = false;
-        int numRowsToPreview = 25;
-
-        // Print previews of dataframes
-        LOGGER.info(" -- Source data -- \n");
-        Dataset<Row> df = sqlContext.sql("SELECT * FROM " + nameOfSourceStream);
-        //df.show(numRowsToPreview, truncateFields);
-
-        // Start performing the dpl query
-        performDPLQuery(query, expectedColumns, assertConsumer);
-
-    }
-
-    // Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-    private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-        return rowDataset
-                .writeStream()
-                .outputMode(outputMode)
-                .format("memory")
-                .queryName(queryName)
-                .start();
-    }
-
-    // Performs given DPL query and returns result dataset<row>
-    private void performDPLQuery(String query, String expectedColumns, Consumer<Dataset<Row>> assertConsumer) {
-        LOGGER.info("-> Got DPL query: " + query);
-
-        ctx.setEarliest("-1Y");
-
-        // Visit the parse tree
-        visitor = new DPLParserCatalystVisitor(ctx);
-        CharStream inputStream = CharStreams.fromString(query);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-
-        LOGGER.info("Parse tree for the query:\n" + tree.toStringTree(parser));
-
-        // set path for join cmd
-        visitor.setHdfsPath("/tmp/pth_10/" + UUID.randomUUID());
-
-        // Set consumer for testing
-        visitor.setConsumer(ds -> {
-            LOGGER.info("Batch handler consumer called for dataset with schema: " + ds.schema());
-
-            //ds.show(50, false);
-
-            if (expectedColumns != null) {
-                assertEquals(expectedColumns, Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement!");
-            }
-
-            if (assertConsumer != null) {
-                assertConsumer.accept(ds); // more assertions, if any
+            List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
+            listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
+            assertEquals(10, listOfRaw.size());
+            for (int i = 0; i < listOfRaw.size(); i = i + 2) {
+                assertEquals("1", listOfRaw.get(i).get(0).toString());
+                assertEquals("2", listOfRaw.get(i + 1).get(0).toString());
             }
         });
-
-        assertNotNull(visitor.getConsumer(), "Consumer was not properly registered to visitor!");
-        CatalystNode n = (CatalystNode) visitor.visit(tree);
-        DataStreamWriter<Row> dsw = n.getDataStreamWriter();
-
-        assertTrue(dsw != null || !n.getDataset().isStreaming(), "DataStreamWriter was not returned from visitor!");
-        if (dsw != null) {
-            // process forEachBatch
-            StreamingQuery sq = dsw.start();
-            sq.processAllAvailable();
-        }
     }
 
-    // Make rows of given amount
-    private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host,
-                              String source, String partition, Long offset, long amount) {
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort descending as numbers
+    public void dedupTest_SortNum() {
+        String query = "index=index_A | dedup _raw sortby - num(_raw)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> expectedColumns = new ArrayList<>(
+                    Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
+            );
+            List<String> actualColumns = Arrays.asList(res.columns());
+            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
-        ArrayList<Row> rowArrayList = new ArrayList<>();
-        Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
+            List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
+            assertEquals(2, listOfRaw.size());
+            assertEquals("2", listOfRaw.get(0).get(0).toString());
+            assertEquals("1", listOfRaw.get(1).get(0).toString());
+        });
+    }
 
-        while (amount > 0) {
-            rowArrayList.add(row);
-            amount--;
-        }
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // keep duplicate events with nulls
+    public void dedupTest_KeepEvents() {
+        String query = "index=index_A | dedup _raw keepevents= true";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> expectedColumns = new ArrayList<>(
+                    Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
+            );
+            List<String> actualColumns = Arrays.asList(res.columns());
+            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
-        return JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
+            List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
+            listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
+            assertEquals(10, listOfRaw.size());
+            assertEquals("1", listOfRaw.get(0).get(0));
+            assertEquals("2", listOfRaw.get(1).get(0));
+            for (int i = 2; i < 10; i++) {
+                assertNull(listOfRaw.get(i).get(0));
+            }
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // keep null values
+    public void dedupTest_KeepEmpty() {
+        // first use keepevents=true to make null values in the dataset
+        String query = "index=index_A | dedup _raw keepevents= true | dedup _raw keepempty= true";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> expectedColumns = new ArrayList<>(
+                    Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
+            );
+            List<String> actualColumns = Arrays.asList(res.columns());
+            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+
+            List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
+            listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
+            assertEquals(3, listOfRaw.size());
+            assertEquals("1", listOfRaw.get(0).get(0));
+            assertEquals("2", listOfRaw.get(1).get(0));
+            assertNull(listOfRaw.get(2).get(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // deduplicate based on _raw, sourcetype and partition
+    public void dedupTest_MultiColumn() {
+        String query = "index=index_A | dedup _raw, sourcetype, partition";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> expectedColumns = new ArrayList<>(
+                    Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
+            );
+            List<String> actualColumns = Arrays.asList(res.columns());
+            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+
+            List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
+            listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
+            assertEquals(1, listOfRaw.size());
+            assertEquals("1", listOfRaw.get(0).get(0));
+        });
     }
 }

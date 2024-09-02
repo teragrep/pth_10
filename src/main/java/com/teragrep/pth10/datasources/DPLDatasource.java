@@ -46,23 +46,18 @@
 
 package com.teragrep.pth10.datasources;
 
-import com.teragrep.jue_01.GlobToRegEx;
-import com.teragrep.pth06.ArchiveSourceProvider;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.typesafe.config.Config;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.functions;
 import org.apache.spark.sql.streaming.DataStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.List;
 
 /**
  * DPL Datasource, used for archive and kafka queries
@@ -87,24 +82,19 @@ public class DPLDatasource {
     }
 
 
-    public Dataset<Row> constructStreams(String archiveQuery) {
-        LOGGER.info("DPL-interpreter initialize Archive stream");
-
+    public Dataset<Row> constructStreams(ArchiveQuery archiveQuery, boolean isMetadataQuery) {
         // resolve archive Query which is then used with archiveDatasource
-        LOGGER.info("DPL-interpreter archiveQuery = " + archiveQuery);
+        LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]>", archiveQuery);
 
-        Dataset<Row> archiveDS = null;    // Archive-stream
-        LOGGER.info("Construct-stream config=" + config);
+        Dataset<Row> archiveDS = null;
+        LOGGER.info("DPL Interpreter constructStream config=<[{}]>", config);
         // table name per paragraph
         if (config.getBoolean("dpl.pth_06.enabled")) {
-            LOGGER.info("Archive query used:" + archiveQuery);
             // Execute search against ArchiveDataSource
-            archiveDS = archiveStreamConsumerDataset(archiveQuery);
+            archiveDS = archiveStreamConsumerDataset(archiveQuery, isMetadataQuery);
         }
 
-        LOGGER.info("Archive dataset: " + archiveDS);
         return archiveDS;
-
     }
 
 
@@ -113,10 +103,10 @@ public class DPLDatasource {
      * @param query
      * @return streaming dataset
      */
-    private Dataset<Row> archiveStreamConsumerDataset(String query) {
+    private Dataset<Row> archiveStreamConsumerDataset(ArchiveQuery query, boolean isMetadataQuery) {
         DataStreamReader reader;
 
-        LOGGER.info("ArchiveStreamConsumerDatasource initialized with query:" + query);
+        LOGGER.info("ArchiveStreamConsumerDatasource initialized with query: <[{}]>", query);
 
         // setup s3 credentials
         final SparkContext sc = sparkSession.sparkContext();
@@ -126,15 +116,15 @@ public class DPLDatasource {
 
         // setup fallback for globally configured credential
         if (s3identity == null || s3credential == null) {
+            LOGGER.debug("Using fallback values for s3 credentials");
             s3identity = config.getString("fs.s3a.access.key");
             s3credential = config.getString("fs.s3a.secret.key");
         }
 
-
-
+        LOGGER.debug("Creating ArchiveSourceProvider");
         reader = sparkSession
                     .readStream()
-                    .format("com.teragrep.pth06.ArchiveSourceProvider")
+                    .format(com.teragrep.pth_06.TeragrepDatasource.class.getName())
                     .option("num_partitions", config.getString("dpl.pth_06.partitions"))
                     .option("S3endPoint", config.getString("fs.s3a.endpoint"))
                     .option("S3identity", s3identity)
@@ -146,9 +136,10 @@ public class DPLDatasource {
                     .option("DBjournaldbname", config.getString("dpl.pth_06.archive.db.journaldb.name"))
                     .option("hideDatabaseExceptions", config.getString("dpl.pth_06.archive.db.hideDatabaseExceptions"))
                     .option("skipNonRFC5424Files", config.getString("dpl.pth_06.archive.s3.skipNonRFC5424Files"))
-                    .option("queryXML", query);
+                    .option("queryXML", query.queryString);
         // Add auditInformation options if exists
         if( catCtx != null && catCtx.getAuditInformation() != null) {
+            LOGGER.debug("Adding auditInformation");
             reader = reader
                     .option("TeragrepAuditQuery", catCtx.getAuditInformation().getQuery())
                     .option("TeragrepAuditReason", catCtx.getAuditInformation().getReason())
@@ -157,24 +148,58 @@ public class DPLDatasource {
         }
 
         if (config.getBoolean("dpl.pth_06.archive.enabled")) {
+            LOGGER.debug("Archive is enabled");
             reader = reader
                     .option("archive.enabled", "true");
         }
         else {
+            LOGGER.debug("Archive is disabled");
             reader = reader
                     .option("archive.enabled", "false");
         }
 
+        if (config.hasPath("dpl.pth_06.archive.scheduler")) {
+            String schedulerType = config.getString("dpl.pth_06.archive.scheduler");
+            LOGGER.debug("Setting scheduler to <[{}]>", schedulerType);
+            if (schedulerType != null && !schedulerType.isEmpty()) {
+                reader = reader
+                .option("scheduler", schedulerType);
+            } else {
+                LOGGER.warn("DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty");
+            }
+        }
+
+        boolean bloomEnabled = false;
+        if (config.hasPath("dpl.pth_06.bloom.enabled")) {
+            bloomEnabled = config.getBoolean("dpl.pth_06.bloom.enabled");
+            LOGGER.debug("Found config dpl.pth_06.bloom.enabled=<[{}]>", bloomEnabled);
+            reader = reader.option("bloom.enabled", bloomEnabled);
+        }
+
+        // wildcard search check: disable bloom if wildcard present
+        if (catCtx != null && bloomEnabled) {
+            reader = reader.option("bloom.enabled", !catCtx.isWildcardSearchUsed());
+        }
+
+        if (config.hasPath("dpl.pth_06.bloom.withoutFilter")) {
+            boolean bloomWithoutFilter = config.getBoolean("dpl.pth_06.bloom.withoutFilter");
+            LOGGER.debug("Found config dpl.pth_06.bloom.withoutFilter=<[{}]>", bloomWithoutFilter);
+            reader = reader.option("bloom.withoutFilter", bloomWithoutFilter);
+        }
+
         if (config.getBoolean("dpl.pth_06.kafka.enabled")) {
+            LOGGER.debug("Kafka is enabled");
             String s3identityWithoutDomain = s3identity;
 
             int domainIndex = s3identityWithoutDomain.indexOf("@");
             if (domainIndex != -1) {
                 // found
+                LOGGER.debug("Found domainIndex, removing domain");
                 s3identityWithoutDomain = s3identityWithoutDomain.substring(0, domainIndex);
             }
             String jaasconfig = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\""+s3identityWithoutDomain+"\" password=\""+s3credential+"\";";
 
+            LOGGER.debug("Adding kafka configuration to reader");
             reader = reader
                     .option("kafka.enabled", "true")
                     .option("kafka.bootstrap.servers", config.getString("dpl.pth_06.kafka.bootstrap.servers"))
@@ -190,6 +215,7 @@ public class DPLDatasource {
 
         // transition time from kafka to archive
         if (config.getBoolean("dpl.pth_06.transition.enabled")) {
+            LOGGER.debug("Got dpl.pth_06.transition.enabled, setting configurations");
             long transitionHoursAgo = config.getLong("dpl.pth_06.transition.hoursago");
             long transitionSecondsAgo = transitionHoursAgo * 3600;
             Instant now = Instant.now();
@@ -199,9 +225,27 @@ public class DPLDatasource {
             reader = reader
                     .option("archive.includeBeforeEpoch", String.valueOf(epochHour))
                     .option("kafka.includeEpochAndAfter", String.valueOf(epochHour));
+            LOGGER.debug("Set archive.includeBeforeEpoch to <[{}]>", epochHour);
+            LOGGER.debug("Set kafka.includeEpochAndAfter to <[{}]>", epochHour);
         }
 
-        return reader.load();
+        // metadata query
+        if (isMetadataQuery) {
+            reader = reader.option("metadataQuery.enabled", "true");
+        }
+
+        LOGGER.debug("Loading reader");
+        Dataset<Row> out = reader.load();
+        LOGGER.debug("Reader loaded");
+
+        // send metrics to Consumer defined in DPLParserCatalystContext
+        if (this.catCtx != null) {
+            LOGGER.debug("catCtx wasn't null, sending metrics");
+            Dataset<Row> latestTime = out.agg(functions.max(functions.col("_time")));
+            this.catCtx.sendMetrics(latestTime);
+        }
+        LOGGER.debug("Returning from archiveStreamConsumerDataset()");
+        return out;
     }
 
 }

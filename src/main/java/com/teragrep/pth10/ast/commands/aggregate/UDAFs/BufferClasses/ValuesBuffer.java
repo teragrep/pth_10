@@ -53,7 +53,7 @@ import java.util.stream.Collectors;
 /**
  * Java Bean compliant class to enclose the array with helper methods
  * Used as a buffer for ValuesAggregator
- * @author p000043u
+ * @author eemhu
  *
  */
 public class ValuesBuffer extends ListBuffer<String> implements Serializable {

@@ -45,59 +45,29 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.steps.tokenizer.TokenizerStep;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.StreamingQueryListener;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
-
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-/**
- * Uses streaming datasets
- * @author p000043u
- *
- */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TokenizerTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenizerTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RexTransformationTest.class);
 
-    DPLParserCatalystContext ctx = null;
-    DPLParserCatalystVisitor visitor = null;
-
-    SparkSession sparkSession = null;
-    SQLContext sqlContext = null;
-
-    ExpressionEncoder<Row> encoder = null;
-    MemoryStream<Row> rowMemoryStream = null;
-    Dataset<Row> rowDataset = null;
-
-    private static final StructType testSchema = new StructType(
+    private final String testFile = "src/test/resources/rexTransformationTest_data*.json"; // * to make the path into a directory path
+    private final StructType testSchema = new StructType(
             new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
                     new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
@@ -107,193 +77,64 @@ public class TokenizerTest {
             }
     );
 
+    private StreamingTestUtil streamingTestUtil;
+
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
     }
 
     @org.junit.jupiter.api.BeforeEach
     void setUp() {
-        sparkSession = SparkSession.builder()
-                .master("local[*]")
-                .config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                .config("checkpointLocation","/tmp/pth_10/test/tokenizer/checkpoints/" + UUID.randomUUID() + "/")
-                .getOrCreate();
-
-        sqlContext = sparkSession.sqlContext();
-        ctx = new DPLParserCatalystContext(sparkSession);
-
-       sparkSession.sparkContext().setLogLevel("ERROR");
-
-        encoder = RowEncoder.apply(testSchema);
-        rowMemoryStream =
-                new MemoryStream<>(1, sqlContext, encoder);
-
-        // Create a spark structured streaming dataset and start writing the stream
-        rowDataset = rowMemoryStream.toDS();
-        ctx.setDs(rowDataset);	// for stream ds
+        this.streamingTestUtil.setUp();
     }
 
     @org.junit.jupiter.api.AfterEach
     void tearDown() {
-        visitor = null;
+        this.streamingTestUtil.tearDown();
     }
-
 
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void tokenize() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | teragrep exec tokenizer",
+                testFile,
+                ds -> {
+                    assertEquals("tokens", ds.columns()[ds.columns().length-1]);
+                });
+    }
 
     @Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-    public void tokenizer_test_1() throws StreamingQueryException {
-        runAggregatorTest(
-                Arrays.asList(
-                        /* expected content = */ "sentence", "a", "this", "is"
-                )
-        );
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void tokenize2() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | teragrep exec tokenizer format string input _raw output strtokens",
+                testFile,
+                ds -> {
+                    String row = ds.select("strtokens").first().getList(0).toString();
+                    assertTrue(row.startsWith("[{, \", rainfall"));
+                    assertEquals("strtokens", ds.columns()[ds.columns().length-1]);
+                });
     }
 
-    // ----------------------------------------
-    // Helper methods
-    // ----------------------------------------
-
-
-    private void runAggregatorTest(List<String> expected) throws StreamingQueryException {
-
-        // the names of the queries for source and result
-        final String nameOfSourceStream = "pth10_tokenizer_test_src";
-
-        // start streams for rowDataset (source)
-        StreamingQuery sourceStreamingQuery = startStream(rowDataset, "append", nameOfSourceStream);
-        sourceStreamingQuery.processAllAvailable();
-
-        // listener for source stream, this allows stopping the stream when all processing is done
-        // without the use of thread.sleep()
-        sparkSession.streams().addListener(new StreamingQueryListener() {
-            int noProgress = 0;
-            @Override
-            public void onQueryStarted(QueryStartedEvent queryStarted) {
-                LOGGER.info("Query started: " + queryStarted.id());
-            }
-            @Override
-            public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-                LOGGER.info("Query terminated: " + queryTerminated.id());
-            }
-            @Override
-            public void onQueryProgress(QueryProgressEvent queryProgress) {
-                Double progress = queryProgress.progress().processedRowsPerSecond();
-                String nameOfStream = queryProgress.progress().name();
-
-                LOGGER.info("Processed rows/sec: " + progress);
-                // Check if progress has stopped (progress becomes NaN at the end)
-                // and end the query if that is the case
-                if (Double.isNaN(progress) && Objects.equals(nameOfStream, nameOfSourceStream)) {
-                    noProgress++;
-                    if (noProgress > 1) {
-                        LOGGER.info("No progress on source stream");
-
-                        sourceStreamingQuery.processAllAvailable();
-                        sourceStreamingQuery.stop();
-                        sparkSession.streams().removeListener(this);
-                    }
-
-                }
-
-            }
-        }); // end listener
-
-
-        // Keep adding data to stream until enough runs are done
-        long run = 0L, counter = 0L, id = 0L;
-        long maxCounter = 1L, maxRuns = 1L; /* You can use these two variables to customize the amount of data */
-
-        while (sourceStreamingQuery.isActive()) {
-            Timestamp time = Timestamp.from(Instant.ofEpochSecond(rng(1300091969, 1665391969)));
-
-            if (run < maxRuns) {
-                rowMemoryStream.addData(
-                        makeRows(
-                                time, 					// _time
-                                ++id, 					// id
-                                "this is a sentence", 			// _raw
-                                "index_A", 				// index
-                                "stream" + (counter % 2 == 0 ? 1 : 2), 				// sourcetype
-                                "host", 				// host
-                                counter + "." + counter + "." + counter + "." + counter,				// source
-                                String.valueOf(run), 	// partition
-                                ++counter, 				// offset
-                                1 //500 					// make n amount of rows
-                        )
-                );
-            }
-
-            // Run $run times, each with $counter makeRows()
-            if (counter == maxCounter) {
-                run++;
-                counter = 0;
-            }
-
-        }
-
-        sourceStreamingQuery.awaitTermination(); // wait for query to be over
-
-        // Got streamed data
-        boolean truncateFields = false;
-        int numRowsToPreview = 25;
-
-        // Print previews of dataframes
-        LOGGER.info(" -- Source data -- ");
-        Dataset<Row> df = sqlContext.sql("SELECT * FROM " + nameOfSourceStream);
-        df.show(numRowsToPreview, truncateFields);
-
-        // feed directly to step
-        TokenizerStep ts = new TokenizerStep(rowDataset); // rowDataset -> streaming input
-        Dataset<Row> res = ts.get(); // res -> streaming output
-
-        System.out.println("--TokenAggregator()");
-
-        // get non-streaming ds for viewing
-        StreamingQuery sqRes = startStream(res, "complete", "tokenizerResult");
-
-        sqRes.processAllAvailable();
-        sqRes.stop();
-        sqRes.awaitTermination();
-
-        Dataset<Row> finalResult = sqlContext.sql("SELECT * FROM tokenizerResult");
-        finalResult.show(numRowsToPreview, truncateFields);
-
-        assertEquals(expected, finalResult.collectAsList().get(0).getList(0));
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void tokenize3() {
+        streamingTestUtil.performDPLTest(
+                "index=index_A | teragrep exec tokenizer format bytes input _raw output bytetokens",
+                testFile,
+                ds -> {
+                    String row = ds.select("bytetokens").first().getList(0).toString();
+                    assertTrue(row.startsWith("[[B")); // bytes start with '[[B'
+                    assertEquals("bytetokens", ds.columns()[ds.columns().length-1]);
+                });
     }
-
-    // Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-    private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-        return rowDataset
-                .writeStream()
-                .outputMode(outputMode)
-                .format("memory")
-                .queryName(queryName)
-                .start();
-    }
-
-    // Make rows of given amount
-    private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host, String source, String partition, Long offset, long amount) {
-        ArrayList<Row> rowArrayList = new ArrayList<>();
-        Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
-
-        while (amount > 0) {
-            rowArrayList.add(row);
-            amount--;
-        }
-
-        Seq<Row> rowSeq = JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
-        return rowSeq;
-    }
-
-    // generate number between a - b
-    private int rng(int a, int b) {
-        return new Random().nextInt(b-a) + a;
-    }
-
 }
+
+

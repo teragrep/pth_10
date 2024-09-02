@@ -47,15 +47,14 @@ package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.IplocationTransformation;
 import com.teragrep.pth10.steps.iplocation.IplocationStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
@@ -82,19 +81,13 @@ public class IplocationTest {
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            IplocationTransformation tf = new IplocationTransformation(stack, ctx);
-            tf.visitIplocationTransformation((DPLParser.IplocationTransformationContext) tree.getChild(0).getChild(1));
-            IplocationStep step = tf.iplocationStep;
-            assertEquals("fieldName", step.getField());
-            assertEquals("", step.getPrefix());
-            assertEquals("en", step.getLang());
-            assertFalse(step.isAllFields());
-
-        } catch (Exception ex) {
-            fail(">> An error occurred during testing: " + ex.getMessage());
-        }
+        IplocationTransformation tf = new IplocationTransformation(ctx, visitor);
+        tf.visitIplocationTransformation((DPLParser.IplocationTransformationContext) tree.getChild(1).getChild(0));
+        IplocationStep step = tf.iplocationStep;
+        assertEquals("fieldName", step.getField());
+        assertEquals("", step.getPrefix());
+        assertEquals("en", step.getLang());
+        assertFalse(step.isAllFields());
     }
 
     @Test
@@ -112,18 +105,12 @@ public class IplocationTest {
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            IplocationTransformation tf = new IplocationTransformation(stack, ctx);
-            tf.visitIplocationTransformation((DPLParser.IplocationTransformationContext) tree.getChild(0).getChild(1));
-            IplocationStep step = tf.iplocationStep;
-            assertEquals("fieldName", step.getField());
-            assertEquals("abc", step.getPrefix());
-            assertEquals("es", step.getLang());
-            assertTrue(step.isAllFields());
-
-        } catch (Exception ex) {
-            fail(">> An error occurred during testing: " + ex.getMessage());
-        }
+        IplocationTransformation tf = new IplocationTransformation(ctx, visitor);
+        tf.visitIplocationTransformation((DPLParser.IplocationTransformationContext) tree.getChild(1).getChild(0));
+        IplocationStep step = tf.iplocationStep;
+        assertEquals("fieldName", step.getField());
+        assertEquals("abc", step.getPrefix());
+        assertEquals("es", step.getLang());
+        assertTrue(step.isAllFields());
     }
 }

@@ -48,6 +48,7 @@ package com.teragrep.pth10.steps.sort;
 
 import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.functions.dpf_02.SortByClause;
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -60,26 +61,10 @@ public abstract class AbstractSortStep extends AbstractStep {
     protected List<SortByClause> listOfSortByClauses = null;
     protected BatchCollect sortingBatchCollect = null;
     protected boolean aggregatesUsed = false;
+    protected DPLParserCatalystContext catCtx = null;
 
-    public AbstractSortStep(Dataset<Row> dataset) {
-        super(dataset);
-    }
-
-    public void setDesc(boolean desc) {
-        this.desc = desc;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
-
-
-    public void setListOfSortByClauses(List<SortByClause> listOfSortByClauses) {
-        this.listOfSortByClauses = listOfSortByClauses;
-    }
-
-    public void setSortingBatchCollect(BatchCollect sortingBatchCollect) {
-        this.sortingBatchCollect = sortingBatchCollect;
+    public AbstractSortStep() {
+        super();
     }
 
     public List<SortByClause> getListOfSortByClauses() {
@@ -102,7 +87,7 @@ public abstract class AbstractSortStep extends AbstractStep {
         return aggregatesUsed;
     }
 
-    public void setAggregatesUsed(boolean aggregatesUsed) {
-        this.aggregatesUsed = aggregatesUsed;
+    public DPLParserCatalystContext getCatCtx() {
+        return catCtx;
     }
 }

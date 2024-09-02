@@ -60,8 +60,8 @@ import java.io.Serializable;
  */
 public class MinMaxAggregator extends Aggregator<Row, MinMaxBuffer, String> implements Serializable {
     private static final long serialVersionUID = 1L;
-    private String colName = null;
-    private AggregatorMode.MinMaxAggregatorMode mode = AggregatorMode.MinMaxAggregatorMode.MAX;
+    private final String colName;
+    private final AggregatorMode.MinMaxAggregatorMode mode;
 
     /**
      * Constructor for MinMaxAggregator, where the column name of the target column
@@ -94,34 +94,34 @@ public class MinMaxAggregator extends Aggregator<Row, MinMaxBuffer, String> impl
         Object inputValue = input.getAs(colName);
 
         if (inputValue instanceof Long) {
-            minMaxBuffer.getNumericList().add(((Long)inputValue).doubleValue());
+            minMaxBuffer.addNumber(((Long)inputValue).doubleValue());
         }
         else if (inputValue instanceof Double) {
-            minMaxBuffer.getNumericList().add(((Double)inputValue));
+            minMaxBuffer.addNumber(((Double)inputValue));
             minMaxBuffer.setOutputFormatType(DataTypes.DoubleType.typeName()); // set to double
         }
         else if (inputValue instanceof Float) {
-            minMaxBuffer.getNumericList().add(((Float)inputValue).doubleValue());
+            minMaxBuffer.addNumber(((Float)inputValue).doubleValue());
             minMaxBuffer.setOutputFormatType(DataTypes.DoubleType.typeName()); // set to double
         }
         else if (inputValue instanceof Integer) {
-            minMaxBuffer.getNumericList().add(((Integer)inputValue).doubleValue());
+            minMaxBuffer.addNumber(((Integer)inputValue).doubleValue());
         }
         // If input is a string...
         else if (inputValue instanceof String) {
             try { // try parsing in into an integer
                 int parsed = Integer.parseInt((String) inputValue);
-                minMaxBuffer.getNumericList().add((double) parsed);
+                minMaxBuffer.addNumber(parsed);
             }
             catch (NumberFormatException nfe) {
                 try { // if it fails, try double
                     Double parsed = Double.valueOf((String)inputValue);
-                    minMaxBuffer.getNumericList().add(parsed);
+                    minMaxBuffer.addNumber(parsed);
                     minMaxBuffer.setOutputFormatType(DataTypes.DoubleType.typeName()); // set to double
                 }
                 catch (NumberFormatException nfe2) {
                     // if that fails, add to string list
-                    minMaxBuffer.getStringList().add((String)inputValue);
+                    minMaxBuffer.addString((String)inputValue);
                 }
             }
         }
@@ -140,9 +140,14 @@ public class MinMaxAggregator extends Aggregator<Row, MinMaxBuffer, String> impl
      */
     @Override
     public MinMaxBuffer merge(MinMaxBuffer buf1, MinMaxBuffer buf2) {
-        buf1.getNumericList().addAll(buf2.getNumericList());
-        buf1.getStringList().addAll(buf2.getStringList());
+        buf1.addNumber(buf2.getMinNumber());
+        buf1.addNumber(buf2.getMaxNumber());
+
+        buf1.addString(buf2.getMinString());
+        buf1.addString(buf2.getMaxString());
+
         buf1.setOutputFormatType(buf2.getOutputFormatType()); // merge output format too
+
         return buf1;
     }
 
@@ -154,13 +159,33 @@ public class MinMaxAggregator extends Aggregator<Row, MinMaxBuffer, String> impl
     @Override
     public String finish(MinMaxBuffer minMaxBuffer) {
         if (this.mode == AggregatorMode.MinMaxAggregatorMode.MAX) {
-            return minMaxBuffer.max();
+            if (minMaxBuffer.getMaxString() != null) {
+                return minMaxBuffer.getMaxString();
+            } else if (minMaxBuffer.getOutputFormatType().equals(DataTypes.DoubleType.typeName())) {
+                return minMaxBuffer.getMaxNumber().toString();
+            } else {
+                return String.valueOf(minMaxBuffer.getMaxNumber().intValue());
+            }
         }
         else if (this.mode == AggregatorMode.MinMaxAggregatorMode.MIN) {
-            return minMaxBuffer.min();
+            if (minMaxBuffer.getMinString() != null) {
+                return minMaxBuffer.getMinString();
+            } else if (minMaxBuffer.getOutputFormatType().equals(DataTypes.DoubleType.typeName())) {
+                return minMaxBuffer.getMinNumber().toString();
+            } else {
+                return String.valueOf(minMaxBuffer.getMinNumber().intValue());
+            }
         }
         else if (this.mode == AggregatorMode.MinMaxAggregatorMode.RANGE) {
-            return minMaxBuffer.range();
+            if (minMaxBuffer.getMinString() != null || minMaxBuffer.getMaxString() != null) {
+                throw new RuntimeException("Aggregate function range() requires only numeric values, but strings were found.");
+            } else if (minMaxBuffer.getOutputFormatType().equals(DataTypes.DoubleType.typeName())) {
+                Double range = minMaxBuffer.getMaxNumber() - minMaxBuffer.getMinNumber();
+                return range.toString();
+            } else {
+                Double range = minMaxBuffer.getMaxNumber() - minMaxBuffer.getMinNumber();
+                return String.valueOf(range.intValue());
+            }
         }
         throw new IllegalArgumentException("MinMaxAggregator: Invalid aggregator mode: " + this.mode);
     }
@@ -172,7 +197,7 @@ public class MinMaxAggregator extends Aggregator<Row, MinMaxBuffer, String> impl
     @Override
     public Encoder<MinMaxBuffer> bufferEncoder() {
         // TODO kryo should speed this up
-        return Encoders.bean(MinMaxBuffer.class);
+        return Encoders.javaSerialization(MinMaxBuffer.class);
     }
 
     /**

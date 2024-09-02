@@ -59,7 +59,7 @@ import java.util.List;
  * x = mv field 1<br>
  * y = mv field 2<br>
  * z = (optional) delimiter, defaults to comma<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Mvzip implements UDF3<WrappedArray<String>, WrappedArray<String>, String, List<String>>, Serializable {

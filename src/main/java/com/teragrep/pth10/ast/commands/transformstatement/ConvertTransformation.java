@@ -46,21 +46,13 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth10.ast.bo.Node;
-import com.teragrep.pth10.ast.bo.StringNode;
-import com.teragrep.pth10.ast.bo.Token;
-import com.teragrep.pth10.steps.convert.AbstractConvertStep;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
+import com.teragrep.pth10.ast.bo.*;
+import com.teragrep.pth10.steps.convert.ConvertCommand;
 import com.teragrep.pth10.steps.convert.ConvertStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,190 +74,138 @@ import java.util.List;
  * num(x) - works like auto(x), but values that cannot be converted are ignored/removed<br>
  * rmcomma(x) - remove commas from x<br>
  * rmunit(x) - removes trailing text from x<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class ConvertTransformation extends DPLParserBaseVisitor<Node> {
-    private List<String> traceBuffer = null;
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertTransformation.class);
-
-    private Dataset<Row> ds = null;
-    private ProcessingStack processingPipe = null;
-    private boolean aggregatesUsed = false;
-    private DPLParserCatalystContext catCtx = null;
-
     public ConvertStep convertStep = null;
 
-    public ConvertTransformation(List<String> buf, ProcessingStack stack, DPLParserCatalystContext catCtx) {
-        this.traceBuffer = buf;
-        this.processingPipe = stack;
-        this.catCtx = catCtx;
-    }
+    private ConvertCommand cmd = null;
 
-    public boolean getAggregatesUsed() {
-        return this.aggregatesUsed;
-    }
+    public ConvertTransformation() {
 
-    public void setAggregatesUsed(boolean newValue) {
-        this.aggregatesUsed = newValue;
     }
 
     @Override
     public Node visitConvertTransformation(DPLParser.ConvertTransformationContext ctx) {
-        Node rv = convertTransformationEmitCatalyst(ctx);
-        return rv;
+        return convertTransformationEmitCatalyst(ctx);
     }
 
     /**
-     * This function first gets the fields to omit so they can be used in the convert functions,
-     * and also timeformat. After this the actual conversion functions will be executed.
-     * @param ctx
-     * @return
+     * Main visiting function for convert command
+     * @param ctx convert command main context
+     * @return step node
      */
     private Node convertTransformationEmitCatalyst(DPLParser.ConvertTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!processingPipe.isEmpty()) {
-            ds = processingPipe.pop();
-        }
-        this.convertStep = new ConvertStep(ds);
-
-        Node rv = null;
-        String timeformat = "%m/%d/%Y %H:%M:%S"; // default timeformat if no 'timeformat=' provided
-
-        // Which fields to omit even when matches wildcard field
-        // also known as the none() command
-        // It is gone through here so the list of fields to omit is ready for
-        // the other commands.
-        List<DPLParser.ConvertMethodNoneContext> noneContextList = ctx.convertMethodNone();
-        List<String> listOfFieldsToOmit = new ArrayList<>();
-        for (DPLParser.ConvertMethodNoneContext c : noneContextList) {
-            listOfFieldsToOmit.add(c.getChild(2).getText());
-        }
-
-        this.convertStep.setListOfFieldsToOmit(listOfFieldsToOmit);
-
-        // custom timeformat, if any
-        DPLParser.T_convert_timeformatParameterContext timeformatContext = ctx.t_convert_timeformatParameter();
-        if (timeformatContext != null) {
-            timeformat = ((StringNode) visit(timeformatContext)).toString();
-        }
-
-        this.convertStep.setTimeformat(timeformat);
-
-        // Go through all the conversion functions
-        AbstractConvertStep.ConvertCommand cmd = null;
-        for (int i = 0; i < ctx.getChildCount(); i++) {
-            ParseTree child = ctx.getChild(i);
-            if (child instanceof TerminalNode) {
-                // skip keyword 'convert'
-            }
-            else if (child instanceof DPLParser.ConvertMethodAutoContext) {
-                // auto(): convert field to numeric with best conversion
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.AUTO);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-            }
-            else if (child instanceof DPLParser.ConvertMethodNumContext) {
-                // num(): convert field to numeric with best conversion
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.NUM);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-            }
-            else if (child instanceof DPLParser.ConvertMethodMktimeContext) {
-                // mktime(): human readable time to epoch
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.MKTIME);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-            }
-            else if (child instanceof DPLParser.ConvertMethodCtimeContext) {
-                // ctime(): epoch to human readable time
-
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.CTIME);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-
-            }
-            else if (child instanceof DPLParser.ConvertMethodDur2secContext) {
-                // dur2sec(): Convert a duration format "[D+]HH:MM:SS" to seconds
-
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.DUR2SEC);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-
-            }
-            else if (child instanceof DPLParser.ConvertMethodMemkContext) {
-                // memk(): positive number followed by optional k/m/g. default k. output quantity of kilobytes
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.MEMK);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-
-            }
-            else if (child instanceof DPLParser.ConvertMethodMstimeContext) {
-                // mstime(): mm:ss.sss to milliseconds
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.MSTIME);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-
-            }
-            else if (child instanceof DPLParser.ConvertMethodRmcommaContext) {
-                // rmcomma(): remove commas from field
-                String field = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.RMCOMMA);
-                cmd.setFieldParam(field);
-                this.convertStep.addCommand(cmd);
-
-            }
-            else if (child instanceof DPLParser.ConvertMethodRmunitContext) {
-                // rmunit(): remove trailing non-numeric characters (e.g. 100sec -> 100)
-                String wcfield = Util.stripQuotes(child.getChild(2).getText());
-
-                cmd = new AbstractConvertStep.ConvertCommand();
-                cmd.setCommandType(AbstractConvertStep.ConvertCommand.ConvertCommandType.RMUNIT);
-                cmd.setFieldParam(wcfield);
-                this.convertStep.addCommand(cmd);
-
-            }
-
-            // AS <new-field-name>
-            if (child instanceof DPLParser.T_convert_fieldRenameInstructionContext) {
-                if (cmd != null) {
-                    cmd.setRenameField(child.getChild(1).getText());
-                }
-            }
-        }
-
-        ds = this.convertStep.get();
-
-        processingPipe.push(ds);
-        rv = new CatalystNode(ds);
-        return rv;
+        this.convertStep = new ConvertStep();
+        visitChildren(ctx);
+        return new StepNode(this.convertStep);
     }
 
     @Override
+    public Node visitConvertMethodAuto(DPLParser.ConvertMethodAutoContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.AUTO, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodCtime(DPLParser.ConvertMethodCtimeContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.CTIME, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodDur2sec(DPLParser.ConvertMethodDur2secContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.DUR2SEC, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodMemk(DPLParser.ConvertMethodMemkContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.MEMK, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodMktime(DPLParser.ConvertMethodMktimeContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.MKTIME, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodMstime(DPLParser.ConvertMethodMstimeContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.MSTIME, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodNone(DPLParser.ConvertMethodNoneContext ctx) {
+        // which fields to omit even when matches wildcard field
+        // also known as the none() command
+        List<String> fieldsToOmit = new ArrayList<>();
+        // Go through the fields
+        ctx.fieldListType().fieldType().forEach(ftCtx -> fieldsToOmit.add(ftCtx.getText()));
+
+        this.convertStep.setListOfFieldsToOmit(fieldsToOmit);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodNum(DPLParser.ConvertMethodNumContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.NUM, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodRmcomma(DPLParser.ConvertMethodRmcommaContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.RMCOMMA, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitConvertMethodRmunit(DPLParser.ConvertMethodRmunitContext ctx) {
+        String wcfield = new UnquotedText(new TextString(ctx.fieldListType().fieldType(0).getText())).read();
+        buildStep(ConvertCommand.ConvertCommandType.RMUNIT, wcfield);
+        return null;
+    }
+
+    @Override
+    public Node visitT_convert_timeformatParameter(DPLParser.T_convert_timeformatParameterContext ctx) {
+        this.convertStep.setTimeformat(new UnquotedText(new TextString(ctx.stringType().getText())).read());
+        return null;
+    }
+
+    @Override
+    public Node visitT_convert_fieldRenameInstruction(DPLParser.T_convert_fieldRenameInstructionContext ctx) {
+        String renameAs = ctx.fieldType().getText();
+
+        if (this.cmd != null) {
+            this.cmd.setRenameField(renameAs);
+        }
+
+        return null;
+    }
+
+
+
+   /* @Override
     public Node visitStringType(DPLParser.StringTypeContext ctx) {
-        return new StringNode(new Token(Token.Type.STRING, Util.stripQuotes(ctx.getText())));
+        return new StringNode(new Token(Token.Type.STRING, new UnquotedText(new TextString(ctx.getText())).read()));
+    }
+*/
+    private void buildStep(ConvertCommand.ConvertCommandType type, String wcfield) {
+        this.cmd = new ConvertCommand();
+        this.cmd.setCommandType(type);
+        this.cmd.setFieldParam(wcfield);
+        this.convertStep.addCommand(this.cmd);
     }
 }

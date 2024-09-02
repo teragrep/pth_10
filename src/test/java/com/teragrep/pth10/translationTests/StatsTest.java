@@ -46,30 +46,23 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.commands.transformstatement.SpathTransformation;
 import com.teragrep.pth10.ast.commands.transformstatement.StatsTransformation;
-import com.teragrep.pth10.steps.spath.SpathStep;
 import com.teragrep.pth10.steps.stats.StatsStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class StatsTest {
     @Test
-    void testStatsTranslation() throws Exception {
+    void testStatsTranslation() {
         final String query = "| stats count(_raw) by _time";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -79,26 +72,17 @@ public class StatsTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final StatsTransformation ct = new StatsTransformation(ctx);
+        ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(1).getChild(0));
+        final StatsStep cs = ct.statsStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        stack.setStackMode(ProcessingStack.StackMode.SEQUENTIAL);
-        try {
-            final StatsTransformation ct = new StatsTransformation(new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(0).getChild(1));
-            final StatsStep cs = ct.statsStep;
+        assertEquals("countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",cs.getListOfAggregationExpressions().get(0).toString());
+        assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
 
-            assertEquals("countaggregator() AS `count(_raw)`",cs.getListOfAggregationExpressions().get(0).toString());
-            assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
     @Test
-    void testStatsTranslation2() throws Exception {
+    void testStatsTranslation2() {
         final String query = "| stats count(_raw) avg(_raw) by _time";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -108,27 +92,17 @@ public class StatsTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final StatsTransformation ct = new StatsTransformation(ctx);
+        ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(1).getChild(0));
+        final StatsStep cs = ct.statsStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        stack.setStackMode(ProcessingStack.StackMode.SEQUENTIAL);
-        try {
-            final StatsTransformation ct = new StatsTransformation(new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(0).getChild(1));
-            final StatsStep cs = ct.statsStep;
-
-            assertEquals("countaggregator() AS `count(_raw)`",cs.getListOfAggregationExpressions().get(0).toString());
-            assertEquals("avg(_raw) AS `avg(_raw)`",cs.getListOfAggregationExpressions().get(1).toString());
-            assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",cs.getListOfAggregationExpressions().get(0).toString());
+        assertEquals("avg(_raw) AS `avg(_raw)`",cs.getListOfAggregationExpressions().get(1).toString());
+        assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
     }
 
     @Test
-    void testStatsTranslation3() throws Exception {
+    void testStatsTranslation3() {
         final String query = "| stats count(_raw) avg(_raw)";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -138,23 +112,13 @@ public class StatsTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final StatsTransformation ct = new StatsTransformation(ctx);
+        ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(1).getChild(0));
+        final StatsStep cs = ct.statsStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        stack.setStackMode(ProcessingStack.StackMode.SEQUENTIAL);
-        try {
-            final StatsTransformation ct = new StatsTransformation(new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(0).getChild(1));
-            final StatsStep cs = ct.statsStep;
-
-            assertEquals("countaggregator() AS `count(_raw)`",cs.getListOfAggregationExpressions().get(0).toString());
-            assertEquals("avg(_raw) AS `avg(_raw)`",cs.getListOfAggregationExpressions().get(1).toString());
-            assertEquals(null, cs.getListOfGroupBys());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",cs.getListOfAggregationExpressions().get(0).toString());
+        assertEquals("avg(_raw) AS `avg(_raw)`",cs.getListOfAggregationExpressions().get(1).toString());
+        assertEquals(0, cs.getListOfGroupBys().size());
     }
 }
 

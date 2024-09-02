@@ -53,22 +53,22 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
-public class EvalStep extends AbstractEvalStep{
-    public EvalStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class EvalStep extends AbstractEvalStep{
+    public EvalStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
+    public Dataset<Row> get(Dataset<Row> dataset) {
         if (this.leftSide == null || this.rightSide == null) {
             throw new RuntimeException("Left and/or right side of eval statement was not found");
         }
 
-        if (this.dataset == null) {
+        if (dataset == null) {
             return null;
         }
 
-        Dataset<Row> ds = this.dataset;
+        Dataset<Row> ds = dataset;
         boolean timeColumnExists = false;
 
         // ts->long

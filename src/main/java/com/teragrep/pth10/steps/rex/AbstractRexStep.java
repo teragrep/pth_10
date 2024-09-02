@@ -48,8 +48,6 @@ package com.teragrep.pth10.steps.rex;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractRexStep extends AbstractStep {
     protected String regexStr = null;
@@ -59,8 +57,8 @@ public abstract class AbstractRexStep extends AbstractStep {
     protected boolean sedMode = false;
     protected DPLParserCatalystContext catCtx = null;
 
-    public AbstractRexStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractRexStep() {
+        super();
     }
 
     public void setMaxMatch(int maxMatch) {

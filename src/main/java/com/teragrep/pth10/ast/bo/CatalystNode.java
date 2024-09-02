@@ -64,6 +64,10 @@ public class CatalystNode extends Node {
 		this.val = ds;
 	}
 
+	public CatalystNode(DataStreamWriter<Row> dsw) {
+		this.dsw = dsw;
+	}
+
 	public Dataset<Row> getDataset(){
 		return val;
 	}

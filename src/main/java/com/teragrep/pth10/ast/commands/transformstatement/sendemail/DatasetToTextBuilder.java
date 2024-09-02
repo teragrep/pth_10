@@ -57,7 +57,7 @@ import java.util.List;
 
 /**
  * Converts Dataset to text, such as an HTML table, CSV or raw.
- * @author p000043u
+ * @author eemhu
  *
  */
 public class DatasetToTextBuilder implements Serializable {
@@ -178,8 +178,7 @@ public class DatasetToTextBuilder implements Serializable {
 					cols = cols.concat(colName);
 				}
 			}
-			//LOGGER.info("cols= " + cols);
-			
+
 			// add column headers
 			csv = csv.concat(cols);
 			csv = csv.concat(this.lineBreak);
@@ -229,7 +228,6 @@ public class DatasetToTextBuilder implements Serializable {
 					cols = cols.concat(colName);
 				}
 			}
-			//LOGGER.info("cols= " + cols);
 
 			// column headers
 			raw = raw.concat(cols); // substring to remove [ ] from string

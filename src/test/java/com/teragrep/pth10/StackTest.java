@@ -45,23 +45,6 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.streaming.StreamingQueryListener;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -69,45 +52,26 @@ import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for the new ProcessingStack implementation
  * Uses streaming datasets
- * @author p000043u
+ * @author eemhu
  *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class StackTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(StackTest.class);
 
-	DPLParserCatalystContext ctx = null;
-	DPLParserCatalystVisitor visitor = null;
-	
-	SparkSession sparkSession = null;
-	SQLContext sqlContext = null;
-	
-	ExpressionEncoder<Row> encoder = null;
-	MemoryStream<Row> rowMemoryStream = null;
-	Dataset<Row> rowDataset = null;
-
-	private static final StructType testSchema = new StructType(
+	private final String testFile = "src/test/resources/predictTransformationTest_data*.json"; // * to make the path into a directory path
+	private final StructType testSchema = new StructType(
 			new StructField[] {
 					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
 					new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
@@ -120,37 +84,23 @@ public class StackTest {
 					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
 			}
 	);
-	
+
+	private StreamingTestUtil streamingTestUtil;
+
 	@org.junit.jupiter.api.BeforeAll
 	void setEnv() {
-		
+		this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+		this.streamingTestUtil.setEnv();
 	}
-	
+
 	@org.junit.jupiter.api.BeforeEach
 	void setUp() {
-		sparkSession = SparkSession.builder()
-				.master("local[*]")
-				.config("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-				.config("checkpointLocation","/tmp/pth_10/test/StackTest/checkpoints/" + UUID.randomUUID() + "/")
-				.getOrCreate();
-		
-		sqlContext = sparkSession.sqlContext();
-		ctx = new DPLParserCatalystContext(sparkSession);
-		
-		sparkSession.sparkContext().setLogLevel("ERROR");
-		
-		encoder = RowEncoder.apply(testSchema);
-		rowMemoryStream =
-				new MemoryStream<>(1, sqlContext, encoder);
-		
-		// Create a spark structured streaming dataset and start writing the stream
-		rowDataset = rowMemoryStream.toDS(); 
-		ctx.setDs(rowDataset);	// for stream ds
+		this.streamingTestUtil.setUp();
 	}
-	
+
 	@org.junit.jupiter.api.AfterEach
 	void tearDown() {
-		visitor = null;
+		this.streamingTestUtil.tearDown();
 	}
 	
 	
@@ -159,243 +109,108 @@ public class StackTest {
 	// ----------------------------------------
 	
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") /* chart -> chart */
-	public void stackTest_Streaming_ChartChart() throws StreamingQueryException, InterruptedException {		
-		performStreamingDPLTest(
-				"index=index_A | chart count(offset) as c_offset by partition | chart count(c_offset) as final", null, "[final]"
-				);
-		
-		//"index=index_A | chart count(_raw) as countraw by offset | chart count(countraw) as final",
-		//"index=index_A | stats count(_raw) as raw_count dc(_raw) as dc_count by _time,_raw | stats count(raw_count) as final_count count(dc_count) as final_dc_count",
-		//"index=index_A | stats count(_raw) as stats_count | chart count(stats_count) as count",
-		//"index=index_A | chart count(_raw) as chart_count | stats count(chart_count) as count",
-		//"index=index_A | stats avg(offset) as avg1 count(offset) as count dc(offset) as dc | stats count(avg1) as c_avg count(count) as c_count count(dc) as c_dc",
-	}
-	
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
-	public void stackTest_Streaming_1() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest("index=index_A", null, "[_time, id, _raw, index, sourcetype, host, source, partition, offset]");
-	}
-	
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") /* eval */
-	public void stackTest_Streaming_Eval() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				"index=index_A | eval newField = offset * 5", null, "[_time, id, _raw, index, sourcetype, host, source, partition, offset, newField]"
-				);
-	}
-	
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") /* stats -> chart */
-	public void stackTest_Streaming_StatsChart() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				"index=index_A | stats count(_raw) as raw_count | chart count(raw_count) as count", null, "[count]"
-				);
-	}
-	
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") /* stats -> stats */
-	public void stackTest_Streaming_StatsStats() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				"index=index_A | stats avg(offset) as avg1 count(offset) as count dc(offset) as dc | stats count(avg1) as c_avg count(count) as c_count count(dc) as c_dc",
-				null,
-				"[c_avg, c_count, c_dc]"
-				);
-	}
-	
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") /* stats -> chart -> eval */
-	public void stackTest_Streaming_StatsChartEval() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				"index=index_A | stats avg(offset) as avg_offset | chart count(avg_offset) as c_avg_offset | eval final=c_avg_offset * 5",
-				null,
-				"[c_avg_offset, final]"
-				);
-	}
-	
-	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true") /* eval -> eval -> eval -> stats -> chart */
-	public void stackTest_Streaming_EvalEvalEvalStatsChart() throws StreamingQueryException, InterruptedException {
-		performStreamingDPLTest(
-				"index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval c = a + b | stats var(c) as field | chart count(field) as final",
-				null,
-				"[final]"
-				);
-	}
-
-	@Disabled // broken, but is not a use case
-	@Test /* chart -> chart (non-streaming) */
-	public void stackTest_NonStreaming() {
-		SparkSession curSession = sparkSession.newSession();
-        Dataset<Row> df = curSession.read().json("src/test/resources/xmlWalkerTestData.json");
-        ctx.setDs(df);
-		
-		Dataset<Row> res = performDPLQuery("( index = index_A OR index = " +
-				"index_B ) _index_earliest=\"04/16/2003:10:25:40\" | chart " +
-				"count(_raw) as rawCount by _time | chart sum(rawCount) as " +
-						"sumCount | chart avg(sumCount)",
-				"[sumCount]");
-		res.show(1, true);
-		
-		assertEquals(1, res.select("*").collectAsList().get(0).getLong(0));
-	}
-	
-	// ----------------------------------------
-	// Helper methods
-	// ----------------------------------------
-	
-	
-	private void performStreamingDPLTest(String query, List<String> expectedValues, String expectedColumns) throws StreamingQueryException, InterruptedException {	
-		
-		// the names of the queries for source and result
-		final String nameOfSourceStream = "pth10_stack_test_src";
-				
-		// start streams for rowDataset (source)
-		StreamingQuery sourceStreamingQuery = startStream(rowDataset, "append", nameOfSourceStream);
-			
-		
-		// listener for source stream, this allows stopping the stream when all processing is done
-		// without the use of thread.sleep()
-		sparkSession.streams().addListener(new StreamingQueryListener() {
-			int noProgress = 0;
-		    @Override
-		    public void onQueryStarted(QueryStartedEvent queryStarted) {
-		        LOGGER.info("Query started: " + queryStarted.id());
-		    }
-		    @Override
-		    public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-		        LOGGER.info("Query terminated: " + queryTerminated.id());
-		    }
-		    @Override
-		    public void onQueryProgress(QueryProgressEvent queryProgress) {
-		    	Double progress = queryProgress.progress().processedRowsPerSecond();
-		    	String nameOfStream = queryProgress.progress().name();
-		    	
-		    	LOGGER.info("Processed rows/sec: " + progress);
-		    	// Check if progress has stopped (progress becomes NaN at the end)
-		    	// and end the query if that is the case
-		        if (Double.isNaN(progress) && nameOfStream == nameOfSourceStream) {
-		        	noProgress++;
-		        	if (noProgress > 1) {
-		        		LOGGER.info("No progress on source stream");
-			        	
-		        		sourceStreamingQuery.processAllAvailable();
-		        		sourceStreamingQuery.stop();
-			        	sparkSession.streams().removeListener(this);
-		        	}
-		        	
-		        }
-	        
-		    }
-		}); // end listener
-		
-		
-		// Keep adding data to stream until enough runs are done
-		long run = 0L, counter = 0L, id = 0L;
-		long maxCounter = 100L, maxRuns = 5L; /* You can use these two variables to customize the amount of data */
-		
-		while (sourceStreamingQuery.isActive()) {
-			Timestamp time = Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC));
-			
-			if (run < maxRuns) {
-				 org.apache.spark.sql.execution.streaming.Offset rmsOffset = rowMemoryStream.addData(
-						makeRows(
-								time, 					// _time
-								++id, 					// id
-								"data data", 			// _raw
-								"index_A", 				// index
-								"stream", 				// sourcetype
-								"host", 				// host
-								"input", 				// source
-								String.valueOf(run), 	// partition
-								++counter, 				// offset
-								1 //500 					// make n amount of rows
-						)
-				);
-				//rowMemoryStream.commit((LongOffset)rmsOffset);
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* chart -> chart */
+	public void stackTest_Streaming_ChartChart() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A | chart count(offset) as c_offset by partition | chart count(c_offset) as final",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !");
 			}
-			
-			// Run $run times, each with $counter makeRows()
-			if (counter == maxCounter) {
-				run++;
-				counter = 0;
+		);
+	}
+	
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	public void stackTest_Streaming_1() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
+						"Batch handler dataset contained an unexpected column arrangement !");
+			});
+	}
+	
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* eval */
+	public void stackTest_Streaming_Eval() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A | eval newField = offset * 5",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset, newField]",
+						"Batch handler dataset contained an unexpected column arrangement !");
 			}
+			);
+	}
+	
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* stats -> chart */
+	public void stackTest_Streaming_StatsChart() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A | stats count(_raw) as raw_count | chart count(raw_count) as count",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[count]",
+						"Batch handler dataset contained an unexpected column arrangement !");
+			}
+			);
+	}
+	
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* stats -> stats */
+	public void stackTest_Streaming_StatsStats() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A | stats avg(offset) as avg1 count(offset) as c_offset dc(offset) as dc | stats count(avg1) as c_avg count(c_offset) as c_count count(dc) as c_dc",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[c_avg, c_count, c_dc]",
+						"Batch handler dataset contained an unexpected column arrangement !");
+			}
+			);
+	}
+	
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* stats -> chart -> eval */
+	public void stackTest_Streaming_StatsChartEval() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A | stats avg(offset) as avg_offset | chart count(avg_offset) as c_avg_offset | eval final=c_avg_offset * 5",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[c_avg_offset, final]",
+						"Batch handler dataset contained an unexpected column arrangement !");
+			}
+			);
+	}
+	
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* eval -> eval -> eval -> stats -> chart */
+	public void stackTest_Streaming_EvalEvalEvalStatsChart() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval x = a + b | stats var(x) as field | chart count(field) as final",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[final]",
+						"Batch handler dataset contained an unexpected column arrangement !");
+			}
+			);
+	}
 
-		}
-				
-		// Start performing the dpl query 
-		performDPLQuery(query, expectedColumns);
-
-		// Got streamed data
-		boolean truncateFields = false;
-		int numRowsToPreview = 10;
-		
-		// Print previews of dataframes
-		LOGGER.info(" -- Source data -- ");
-		Dataset<Row> df = sqlContext.sql("SELECT * FROM " + nameOfSourceStream);
-		df.show(numRowsToPreview, truncateFields);
-		
-		
+	// TODO: remove disabled annotation when pth-03 issue #125 is closed
+	// Fails because c is parsed as count() command, not a column
+	@Test
+	@Disabled(value = "requires parser fixes")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") /* eval -> eval -> eval -> stats -> chart */
+	public void stackTest_Streaming_EvalEvalEvalStatsChart_with_c() {
+		streamingTestUtil.performDPLTest(
+			"index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval c = a + b | stats var(c) as field | chart count(field) as final",
+			testFile,
+			ds -> {
+				assertEquals(Arrays.toString(ds.columns()), "[final]",
+						"Batch handler dataset contained an unexpected column arrangement !");
+			}
+		);
 	}
-	
-	// Starts the stream for streaming dataframe rowDataset in outputMode and sets the queryName
-	private StreamingQuery startStream(Dataset<Row> rowDataset, String outputMode, String queryName) {
-		return rowDataset
-				.writeStream()
-				.outputMode(outputMode)
-				.format("memory")
-				.queryName(queryName)
-				.start();
-	}
-	
-	// Performs given DPL query and returns result dataset<row>
-	private Dataset<Row> performDPLQuery(String query, String expectedColumns) {
-		LOGGER.info("-> Got DPL query: " + query);
-		
-		ctx.setEarliest("-1Y");
-		
-		// Visit the parse tree
-		visitor = new DPLParserCatalystVisitor(ctx);
-		CharStream inputStream = CharStreams.fromString(query);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
-		
-		// Set consumer for testing
-		visitor.setConsumer(ds -> {
-			LOGGER.info("Batch handler consumer called for ds with schema: " + ds.schema());
-			ds.show();
-			assertEquals(Arrays.toString(ds.columns()), expectedColumns, "Batch handler dataset contained an unexpected column arrangement !");
-		});
-		
-		assertTrue(visitor.getConsumer() != null, "Consumer was not properly registered to visitor !");		
-		CatalystNode n = (CatalystNode) visitor.visit(tree);
-		DataStreamWriter<Row> dsw = n.getDataStreamWriter();
-		
-		assertTrue(dsw != null || !n.getDataset().isStreaming(), "DataStreamWriter was not returned from visitor !");
-		if (dsw != null) {
-			// process forEachBatch
-			StreamingQuery sq = dsw.start();
-			sq.processAllAvailable();
-		}
-		
-		return n.getDataset();
-	}
-	
-	// Make rows of given amount
-	private Seq<Row> makeRows(Timestamp _time, Long id, String _raw, String index, String sourcetype, String host, String source, String partition, Long offset, long amount) {
-		ArrayList<Row> rowArrayList = new ArrayList<>();
-		Row row = RowFactory.create(_time, id, _raw, index, sourcetype, host, source, partition, offset);
-		
-		while (amount > 0) {
-			rowArrayList.add(row);
-			amount--;
-		}
-		
-		Seq<Row> rowSeq = JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
-		return rowSeq;
-	}
-	
 }
  

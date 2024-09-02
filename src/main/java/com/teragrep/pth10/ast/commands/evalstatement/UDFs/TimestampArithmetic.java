@@ -57,9 +57,6 @@ public class TimestampArithmetic implements UDF3<Object, Object, String, Timesta
         Long left = null;
         Long right = null;
 
-        //LOGGER.debug("l = " + o.toString());
-        //LOGGER.debug("r = " + o2.toString());
-
         // Left side
         if (o instanceof Timestamp) {
             left = ((Timestamp)o).getTime()/1000L;

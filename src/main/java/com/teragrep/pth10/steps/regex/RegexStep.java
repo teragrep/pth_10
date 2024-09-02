@@ -50,14 +50,14 @@ import com.teragrep.pth10.ast.commands.transformstatement.regex.RegexMatch;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 
-public class RegexStep extends AbstractRegexStep {
-    public RegexStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class RegexStep extends AbstractRegexStep {
+    public RegexStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
@@ -67,6 +67,6 @@ public class RegexStep extends AbstractRegexStep {
 
         // apply udf
         Column regexCol = functions.callUDF("UDF_Regex", functions.col(fromField), functions.lit(regexString), functions.lit(equals));
-        return this.dataset.where(regexCol); // apply as where statement
+        return dataset.where(regexCol); // apply as where statement
     }
 }

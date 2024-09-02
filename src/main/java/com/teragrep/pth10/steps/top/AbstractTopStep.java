@@ -47,16 +47,14 @@
 package com.teragrep.pth10.steps.top;
 
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.List;
 
 public abstract class AbstractTopStep extends AbstractStep {
     protected int limit = 10;
     private List<String> listOfFields = null;
-    public AbstractTopStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractTopStep() {
+        super();
     }
 
     public void setLimit(int limit) {

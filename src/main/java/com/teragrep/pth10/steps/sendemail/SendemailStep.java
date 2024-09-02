@@ -46,28 +46,40 @@
 
 package com.teragrep.pth10.steps.sendemail;
 
+import com.teragrep.pth10.ast.commands.transformstatement.sendemail.SendemailResultsProcessor;
+import com.teragrep.pth10.steps.Flushable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class SendemailStep extends AbstractSendemailStep{
-    public SendemailStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class SendemailStep extends AbstractSendemailStep implements Flushable {
+    public SendemailStep() {
+        super();
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public void flush() {
+        try {
+            this.sendemailResultsProcessor.flush();
+        } catch (Exception e) {
+            throw new RuntimeException("Error flushing sendemail: " + e);
+        }
+    }
+
+    @Override
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
-        else if (this.dataset.isEmpty()) {
+        else if (dataset.isEmpty()) {
             // don't send email with an empty dataset
-            return this.dataset;
+            return dataset;
         }
 
         try {
             // only collect if results need to be sent
             if (this.sendResults) {
-                this.sendemailResultsProcessor.call(this.dataset.collectAsList());
+                this.sendemailResultsProcessor.call(dataset.collectAsList());
             } else if (!this.sendemailResultsProcessor.getIsCalledBefore()) {
                 this.sendemailResultsProcessor.call();
             }
@@ -75,6 +87,6 @@ public class SendemailStep extends AbstractSendemailStep{
             throw new RuntimeException(e);
         }
 
-        return this.dataset;
+        return dataset;
     }
 }

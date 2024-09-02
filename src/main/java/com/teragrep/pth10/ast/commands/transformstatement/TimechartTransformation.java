@@ -46,20 +46,15 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserConfig;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.TimeRange;
+import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.aggregate.AggregateFunction;
 import com.teragrep.pth10.steps.timechart.TimechartStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.apache.spark.unsafe.types.CalendarInterval;
 import org.slf4j.Logger;
@@ -67,8 +62,6 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,35 +73,22 @@ import java.util.regex.Pattern;
  */
 public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTransformation.class);
-    private boolean debugEnabled = false;
-    private List<String> traceBuffer = null;
     private DPLParserCatalystContext catCtx = null;
-
+    private DPLParserCatalystVisitor catVisitor;
     private Document doc;
-    ProcessingStack processingStack = null;
 
     EvalTransformation evalTransformation;
     AggregateFunction aggregateFunction;
-    private boolean aggregatesUsed = false;
     private String aggregateField = null;
-
-    // Symbol table for mapping DPL default column names
-    private Map<String, String> symbolTable = new HashMap<>();
 
     public TimechartStep timechartStep = null;
 
-    public TimechartTransformation(DPLParserCatalystContext catCtx, ProcessingStack processingStack, List<String> buf) {
+    public TimechartTransformation(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
         this.doc = null;
-        this.traceBuffer = buf;
         this.catCtx = catCtx;
-        this.processingStack = processingStack;
-        this.evalTransformation = new EvalTransformation(catCtx, processingStack, buf);
-        this.aggregateFunction = new AggregateFunction(processingStack, buf);
-        traceBuffer.add("Init chartTransformation stack:" + processingStack);
-    }
-
-    public boolean getAggregatesUsed() {
-        return this.aggregatesUsed;
+        this.catVisitor = catVisitor;
+        this.evalTransformation = new EvalTransformation(catCtx);
+        this.aggregateFunction = new AggregateFunction(catCtx);
     }
 
     public String getAggregateField() {
@@ -132,25 +112,17 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
      ;
 	*/
     @Override public Node visitTimechartTransformation(DPLParser.TimechartTransformationContext ctx) {
-        Node rv = timechartTransformationEmitCatalyst(ctx);
-        traceBuffer.add("visitChartTransformation returns:");
-        return rv;
+        return timechartTransformationEmitCatalyst(ctx);
     }
 
     private Node timechartTransformationEmitCatalyst(DPLParser.TimechartTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!processingStack.isEmpty()) {
-            ds = processingStack.pop();
-        }
-        this.timechartStep = new TimechartStep(ds);
+        this.timechartStep = new TimechartStep();
 
-        Dataset<Row> finalDs = null;
         Column span = null;
 
-        traceBuffer.add("TimechartTransformation(Catalyst) incoming:" + ctx.getText());
 
         if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty())  {
-            LOGGER.info("Timechart Optional parameters: " + ctx.t_timechart_binOptParameter().get(0).getText());
+            LOGGER.info("Timechart Optional parameters: <[{}]>", ctx.t_timechart_binOptParameter().get(0).getText());
 
             ColumnNode spanNode = (ColumnNode) visit(ctx.t_timechart_binOptParameter().get(0));
             if (spanNode != null) {
@@ -191,7 +163,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
             span = createDefaultSpan();
         }
 
-        timechartStep.setHdfsPath(this.processingStack.getCatVisitor().getHdfsPath());
+        timechartStep.setHdfsPath(this.catVisitor.getHdfsPath());
         timechartStep.setCatCtx(catCtx);
         timechartStep.setSpan(span);
         timechartStep.setAggCols(listOfAggFunCols);
@@ -200,14 +172,11 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         // span
         this.catCtx.setTimeChartSpanSeconds(getSpanSeconds(span));
 
-        LOGGER.debug("span= " + timechartStep.getSpan().toString());
-        LOGGER.debug("aggcols= " + Arrays.toString(timechartStep.getAggCols().toArray()));
-        LOGGER.debug("divby= " + Arrays.toString(timechartStep.getDivByInsts().toArray()));
+        LOGGER.debug("span= <[{}]>", timechartStep.getSpan().toString());
+        LOGGER.debug("aggcols= <[{}]>", Arrays.toString(timechartStep.getAggCols().toArray()));
+        LOGGER.debug("divby= <[{}]>", Arrays.toString(timechartStep.getDivByInsts().toArray()));
 
-        finalDs = timechartStep.get();
-        this.aggregatesUsed=true;
-        processingStack.push(finalDs);
-        return new CatalystNode(finalDs);
+        return new StepNode(timechartStep);
 
         //throw new RuntimeException("Chart transformation operation not supported yet");
     }
@@ -253,7 +222,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_timechart_divideByInstruction(DPLParser.T_timechart_divideByInstructionContext ctx ){
-//        LOGGER.info(ctx.getChildCount()+"--visitT_chart_divideByInstruction incoming" + ctx.getText());
+//        LOGGER.info(ctx.getChildCount()+"--visitT_chart_divideByInstruction incoming{}", ctx.getText());
         if(ctx.getChildCount() == 0){
             return null;
         }
@@ -264,7 +233,6 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 el.setAttribute("field", target);
                 return new ElementNode(el);
         } else {
-                traceBuffer.add("--visitT_timechart_divideByInstruction field=" + target);
                 return new StringNode(new Token(Type.STRING, target));
         }
     }
@@ -272,7 +240,6 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_timechart_fieldRenameInstruction(DPLParser.T_timechart_fieldRenameInstructionContext ctx) {
         String field = ctx.getChild(1).getText();
-        traceBuffer.add("fieldRename:" + field);
         if (doc != null) {
             Element el = doc.createElement("fieldRename");
             el.setAttribute("field", field);
@@ -283,12 +250,12 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     @Override public Node visitT_timechart_binOptParameter(DPLParser.T_timechart_binOptParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binOptParameter:"+ctx.getText());
+        LOGGER.info("visitT_timechart_binOptParameter:<{}>",ctx.getText());
         return visitChildren(ctx);
     }
 
     @Override public Node visitT_timechart_binSpanParameter(DPLParser.T_timechart_binSpanParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binSpanParameter:"+ctx.getText());
+        LOGGER.info("visitT_timechart_binSpanParameter:<{}>",ctx.getText());
         CalendarInterval ival = getSpanLength(ctx.getChild(1).getText());
         Column col = new Column("_time");
         Column span = functions.window(col, String.valueOf(ival));
@@ -349,8 +316,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 throw new RuntimeException("timechart span duration greater that month is not supported");
             }
         }
-       //LOGGER.info("DefaultSpan sec="+sec+" range:"+catCtx.getTimeRange()+ " Duration="+duration);
-       CalendarInterval ival = new CalendarInterval(0,sec*1000*1000);
+       CalendarInterval ival = new CalendarInterval(0,0, sec*1000*1000);
        return functions.window(new Column("_time"), String.valueOf(ival), duration, "0 minutes");
     }
 
@@ -359,7 +325,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
      * @param value span as string
      * @return CalendarInterval
      */
-    public static CalendarInterval getSpanLength(String value){
+    private CalendarInterval getSpanLength(String value){
         // incoming span-length consist of
         // <int>[<timescale>]
         // default timescale is sec
@@ -376,7 +342,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 timescale = parts[1].trim();
         }
         else {
-            LOGGER.error("Error, missing numerical value:" + value);
+            LOGGER.error("Span length error: missing numerical value:<{}>", value);
             throw new RuntimeException("getSpanLength, missing numerical value:"+value);
         }
         // Calculate value
@@ -433,7 +399,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 break;
             }
         }
-        return new CalendarInterval(month,sec*1000*1000L);
+        return new CalendarInterval(month, 0, sec*1000*1000L);
     }
 
     @Override public Node visitT_timechart_binsParameter(DPLParser.T_timechart_binsParameterContext ctx) { return visitChildren(ctx); }
@@ -461,8 +427,8 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         if(oper.equalsIgnoreCase("count") || oper.equalsIgnoreCase("c")) {
             aggregateField = "count"; // use default name
             col = org.apache.spark.sql.functions.count(defaultField);
-//            LOGGER.info("T_timechart_singleAggregation (Catalyst):" + col.expr().sql()+" default field="+defaultField);
-            traceBuffer.add("Visit AggregateMethodCount(Catalyst):" + col.expr().sql());
+//            LOGGER.info("T_timechart_singleAggregation (Catalyst):{}", col.expr().sql()+" default field="+defaultField);
+            traceBuffer.add("Visit AggregateMethodCount(Catalyst):{}", col.expr().sql());
             rv = new ColumnNode(col);
         }else {
             rv = this.aggregateFunction.visitAggregateFunction(ctx.aggregateFunction());

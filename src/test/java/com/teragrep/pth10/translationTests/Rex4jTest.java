@@ -46,28 +46,23 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.rex4j.Rex4jTransformation;
 import com.teragrep.pth10.steps.rex4j.Rex4jStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class Rex4jTest {
     @Test
-    void testRex4jTranslation() throws Exception {
+    void testRex4jTranslation()  {
         String query = " | rex4j field=host mode=sed \"s/from/to/g\"";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -76,28 +71,18 @@ public class Rex4jTest {
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
+        Rex4jTransformation ct = new Rex4jTransformation(ctx);
+        ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
+        Rex4jStep cs = ct.rex4jStep;
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            Rex4jTransformation ct = new Rex4jTransformation(new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(0).getChild(1));
-            Rex4jStep cs = ct.rex4jStep;
-
-            assertEquals("host", cs.getField());
-            assertEquals("s/from/to/g", cs.getRegexStr());
-            assertNotNull(cs.getSedMode());
-            assertNull(cs.getMaxMatch());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("host", cs.getField());
+        assertEquals("s/from/to/g", cs.getRegexStr());
+        assertNotNull(cs.getSedMode());
+        assertNull(cs.getMaxMatch());
     }
 
     @Test
-    void testRex4jTranslation_LineBreak() throws Exception {
+    void testRex4jTranslation_LineBreak() {
         String query = " | rex4j field=host mode=sed \"s/,/\\n/g\"";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -107,27 +92,18 @@ public class Rex4jTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        Rex4jTransformation ct = new Rex4jTransformation(ctx);
+        ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
+        Rex4jStep cs = ct.rex4jStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            Rex4jTransformation ct = new Rex4jTransformation(new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(0).getChild(1));
-            Rex4jStep cs = ct.rex4jStep;
-
-            assertEquals("host", cs.getField());
-            assertEquals("s/,/\\n/g", cs.getRegexStr());
-            assertNotNull(cs.getSedMode());
-            assertNull(cs.getMaxMatch());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("host", cs.getField());
+        assertEquals("s/,/\\n/g", cs.getRegexStr());
+        assertNotNull(cs.getSedMode());
+        assertNull(cs.getMaxMatch());
     }
 
     @Test
-    void testRex4jTranslation_NoField() throws Exception {
+    void testRex4jTranslation_NoField() {
         String query = " | rex4j mode=sed \"s/from/to/g\"";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -137,27 +113,19 @@ public class Rex4jTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        Rex4jTransformation ct = new Rex4jTransformation(ctx);
+        ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
+        Rex4jStep cs = ct.rex4jStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            Rex4jTransformation ct = new Rex4jTransformation(new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(0).getChild(1));
-            Rex4jStep cs = ct.rex4jStep;
+        assertEquals("_raw", cs.getField());
+        assertEquals("s/from/to/g", cs.getRegexStr());
+        assertNotNull(cs.getSedMode());
+        assertNull(cs.getMaxMatch());
 
-            assertEquals("_raw", cs.getField());
-            assertEquals("s/from/to/g", cs.getRegexStr());
-            assertNotNull(cs.getSedMode());
-            assertNull(cs.getMaxMatch());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
     @Test
-    void testRex4jTranslation_ExtractionMode() throws Exception {
+    void testRex4jTranslation_ExtractionMode() {
         String query = " | rex4j \".*key_in_json\\\":\\s(?<keyInJson>\\d+.\\d+\\\")\" ";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -167,23 +135,14 @@ public class Rex4jTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        Rex4jTransformation ct = new Rex4jTransformation(ctx);
+        ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
+        Rex4jStep cs = ct.rex4jStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            Rex4jTransformation ct = new Rex4jTransformation(new HashMap<>(), new ArrayList<>(), stack);
-            ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(0).getChild(1));
-            Rex4jStep cs = ct.rex4jStep;
-
-            assertEquals("_raw", cs.getField());
-            assertEquals(".*key_in_json\\\":\\s(?<keyInJson>\\d+.\\d+\\\")", cs.getRegexStr());
-            assertNull(cs.getSedMode());
-            assertNull(cs.getMaxMatch());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("_raw", cs.getField());
+        assertEquals(".*key_in_json\\\":\\s(?<keyInJson>\\d+.\\d+\\\")", cs.getRegexStr());
+        assertNull(cs.getSedMode());
+        assertNull(cs.getMaxMatch());
     }
 }
 

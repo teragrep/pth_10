@@ -46,30 +46,26 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.DPLTransformation;
 import com.teragrep.pth10.steps.dpl.AbstractDplStep;
 import com.teragrep.pth10.steps.dpl.DplStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DplTest {
     @Test
-    void testDplTranslation() throws Exception {
+    void testDplTranslation() {
         String query = "| dpl parsetree ";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -79,22 +75,13 @@ public class DplTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        DPLTransformation ct = new DPLTransformation(ctx);
+        ct.visitDplTransformation((DPLParser.DplTransformationContext) tree.getChild(1).getChild(0));
+        DplStep cs = ct.dplStep;
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            DPLTransformation ct = new DPLTransformation(ctx, stack, new ArrayList<>(), new HashMap<>());
-            ct.visitDplTransformation((DPLParser.DplTransformationContext) tree.getChild(0).getChild(1));
-            DplStep cs = ct.dplStep;
-
-            assertEquals(AbstractDplStep.DplCommandType.PARSETREE, cs.getCommandType());
-            assertEquals("dpl", cs.getExplainStr());
-            assertEquals("[]", Arrays.toString(cs.getLines().toArray()));
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals(AbstractDplStep.DplCommandType.PARSETREE, cs.getCommandType());
+        assertEquals("dpl", cs.getExplainStr());
+        assertEquals("[]", Arrays.toString(cs.getLines().toArray()));
     }
 }
 

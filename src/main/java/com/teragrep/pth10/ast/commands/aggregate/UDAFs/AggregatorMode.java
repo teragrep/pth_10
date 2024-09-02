@@ -49,7 +49,7 @@ package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 /**
  * Collection of enumerables to change the mode of certain Aggregators
  * (Some Aggregators can produce different results based on the mode it is operating in)
- * @author p000043u
+ * @author eemhu
  *
  */
 public class AggregatorMode {

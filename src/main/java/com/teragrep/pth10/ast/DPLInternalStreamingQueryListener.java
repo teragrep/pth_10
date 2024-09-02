@@ -46,6 +46,7 @@
 
 package com.teragrep.pth10.ast;
 
+import com.teragrep.pth_06.ArchiveMicroStreamReader;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.DataStreamWriter;
@@ -58,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 
 /**
@@ -124,7 +126,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Emit on query start
-     * @param queryStartedEvent
+     * @param queryStartedEvent Spark calls on query start
      */
     @Override
     public void onQueryStarted(QueryStartedEvent queryStartedEvent) {
@@ -140,7 +142,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Emit on query progress
-     * @param queryProgressEvent
+     * @param queryProgressEvent Spark calls on query progress
      */
     @Override
     public void onQueryProgress(QueryProgressEvent queryProgressEvent) {
@@ -181,7 +183,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
                 internalKeyValueMap.put("status", "complete");
 
                 if (!wasRemoved) {
-                    LOGGER.error("> Removing the query: '" + nameOfQuery + "' from the internal DPLStreamingQuery listener was unsuccessful.");
+                    LOGGER.error("Removing the query <{}> from the internal DPLStreamingQuery listener was unsuccessful!", nameOfQuery);
                 }
             }
         }
@@ -196,7 +198,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Emit on query termination
-     * @param queryTerminatedEvent
+     * @param queryTerminatedEvent Spark calls on query termination
      */
     @Override
     public void onQueryTerminated(QueryTerminatedEvent queryTerminatedEvent) {
@@ -225,7 +227,12 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
             throw new RuntimeException("A query was already registered with the given name: " + name);
         }
         else {
-            this._queries.put(name, new DPLInternalStreamingQuery(dsw.queryName(name).start()));
+            try {
+                this._queries.put(name, new DPLInternalStreamingQuery(dsw.queryName(name).start()));
+            } catch (TimeoutException e) {
+                LOGGER.error("Exception occurred on query start <{}>", e.getMessage(), e);
+                throw new RuntimeException("Could not register query: " + e.getMessage());
+            }
         }
 
         return this._queries.get(name).getQuery();
@@ -244,10 +251,15 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
 
     /**
      * Stop query
-     * @param name
+     * @param name Name of the query to stop
      */
     public void stopQuery(String name) {
-        this._queries.get(name).getQuery().stop();
+        try {
+            this._queries.get(name).getQuery().stop();
+        } catch (TimeoutException e) {
+            LOGGER.error("Exception occurred on query stop <{}>", e.getMessage(), e);
+            throw new RuntimeException("Exception occurred on query stop: " + e.getMessage());
+        }
     }
 
     /**
@@ -314,7 +326,8 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
         for (int i = 0; i < sq.lastProgress().sources().length; i++) {
             SourceProgress progress = sq.lastProgress().sources()[i];
 
-            if (progress.description() != null && !progress.description().startsWith("com.teragrep.pth06.ArchiveMicroBatchReader@")) {
+
+            if (progress.description() != null && !progress.description().startsWith(ArchiveMicroStreamReader.class.getName().concat("@"))) {
                 // ignore others than archive
                 continue;
             }

@@ -76,7 +76,7 @@ public class ModeAggregator extends Aggregator<Row, ModeBuffer, String> implemen
 	@Override
 	public Encoder<ModeBuffer> bufferEncoder() {
 		// TODO kryo should speed this up
-		return Encoders.bean(ModeBuffer.class);
+		return Encoders.javaSerialization(ModeBuffer.class);
 	}
 
 	/**

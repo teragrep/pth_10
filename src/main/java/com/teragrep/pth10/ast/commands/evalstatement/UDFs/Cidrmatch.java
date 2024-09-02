@@ -46,7 +46,8 @@
 
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import org.apache.spark.sql.api.java.UDF2;
 
 import java.io.Serializable;
@@ -64,7 +65,7 @@ import java.net.UnknownHostException;
  * Until 255.255.x.x netmask=16<br>
  * Until 255.255.255.x netmask=24<br>
  * Until 255.255.255.255 netmask=32<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Cidrmatch implements UDF2<String, String, Boolean>, Serializable {
@@ -75,8 +76,8 @@ public class Cidrmatch implements UDF2<String, String, Boolean>, Serializable {
 	public Boolean call(String ip, String subnet) throws Exception {
 		
 		// Strip quotes, if any
-		subnet = Util.stripQuotes(subnet);
-    	ip = Util.stripQuotes(ip);
+		subnet = new UnquotedText(new TextString(subnet)).read();
+    	ip = new UnquotedText(new TextString(ip)).read();
     	
     	int nMaskBits;
     	InetAddress requiredAdd = null;

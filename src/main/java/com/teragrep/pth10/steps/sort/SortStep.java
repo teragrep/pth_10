@@ -47,24 +47,43 @@
 package com.teragrep.pth10.steps.sort;
 
 import com.teragrep.functions.dpf_02.BatchCollect;
+import com.teragrep.functions.dpf_02.SortByClause;
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SortStep extends AbstractSortStep {
+import java.util.List;
+
+public final class SortStep extends AbstractSortStep {
     private static final Logger LOGGER = LoggerFactory.getLogger(SortStep.class);
-    public SortStep(Dataset<Row> dataset) {
-        super(dataset);
+    public SortStep(DPLParserCatalystContext catCtx, List<SortByClause> listOfSortByClauses, int limit, boolean desc) {
+        super();
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
+        this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
+
+        this.catCtx = catCtx;
+        this.listOfSortByClauses = listOfSortByClauses;
+        this.limit = limit;
+        this.desc = desc;
+        this.sortingBatchCollect = new BatchCollect(null, limit, listOfSortByClauses);
     }
 
+
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        return sort(this.dataset);
+        if (this.aggregatesUsedBefore) {
+            LOGGER.info("Aggregates used: using regular sorting");
+            return aggregatedSort(dataset);
+        } else {
+            LOGGER.info("Aggregates not used: using BatchCollect to sort");
+            return sort(dataset);
+        }
     }
 
     /**
@@ -76,17 +95,13 @@ public class SortStep extends AbstractSortStep {
     private Dataset<Row> sort(Dataset<Row> unsortedDs) {
         // sort command sorting for streaming dataset
         if (this.listOfSortByClauses != null && !this.listOfSortByClauses.isEmpty()) {
-            if (this.sortingBatchCollect == null || this.aggregatesUsed) {
-                LOGGER.info("Batch collect used for sorting was not found in the context, creating it now");
-                this.sortingBatchCollect = new BatchCollect(null, this.limit, this.listOfSortByClauses);
-            }
-            else {
-                LOGGER.info("Batch collect used for sorting was found in the context, assigning it to be in use");
-            }
-
-            assert this.sortingBatchCollect != null;
-            return this.sortingBatchCollect.call(unsortedDs, 0L, this.aggregatesUsed);
+            return this.sortingBatchCollect.call(unsortedDs, 0L, false);
         }
         throw new RuntimeException("SortBy clauses were empty! Cannot perform sorting");
+    }
+
+    private Dataset<Row> aggregatedSort(Dataset<Row> unsortedDs) {
+        AggregatedSort aggSort = new AggregatedSort(this.limit, this.listOfSortByClauses);
+        return aggSort.sort(unsortedDs);
     }
 }

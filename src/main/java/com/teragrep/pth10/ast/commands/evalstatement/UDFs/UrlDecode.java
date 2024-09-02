@@ -53,7 +53,7 @@ import java.io.Serializable;
 /**
  * UDF for command urldecode(x)<br>
  * Returns a decoded URL string.
- * @author p000043u
+ * @author eemhu
  *
  */
 public class UrlDecode implements UDF1<String, String>, Serializable {
@@ -62,7 +62,7 @@ public class UrlDecode implements UDF1<String, String>, Serializable {
 
 	@Override
 	public String call(String encodedUrl) throws Exception {
-		String decodedUrl = null;
+		String decodedUrl;
 		
 		try {
 			decodedUrl = java.net.URLDecoder.decode(encodedUrl, java.nio.charset.StandardCharsets.UTF_8.name());

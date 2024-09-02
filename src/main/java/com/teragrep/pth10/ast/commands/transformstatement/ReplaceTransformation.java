@@ -46,109 +46,70 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.Util;
-import com.teragrep.pth10.ast.bo.CatalystNode;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.Node;
-import com.teragrep.pth10.ast.bo.StringListNode;
+import com.teragrep.pth10.ast.bo.NullNode;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.ast.commands.transformstatement.replace.ReplaceCmd;
 import com.teragrep.pth10.steps.replace.ReplaceStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * The base transformation class used for the command <code>replace</code>
  */
 public class ReplaceTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ReplaceTransformation.class);
-    private DPLParserCatalystContext catCtx = null;
-    private ProcessingStack processingStack = null;
-    public ReplaceStep replaceStep = null;
+    private final Map<String, String> replacements;
+    private final List<String> listOfFields;
+    public ReplaceStep replaceStep;
 
-    public ReplaceTransformation(ProcessingStack processingStack, DPLParserCatalystContext catCtx) {
-        this.processingStack = processingStack;
-        this.catCtx = catCtx;
+    public ReplaceTransformation() {
+        this.replacements = new HashMap<>();
+        this.listOfFields = new ArrayList<>();
     }
 
     /**
      * Gets all the parameters from given command and applies the {@link ReplaceCmd}
-     * @param ctx
-     * @return
+     * @param ctx ReplaceTransformationContext
+     * @return StepNode with Step for replace command
      */
     @Override
     public Node visitReplaceTransformation(DPLParser.ReplaceTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!this.processingStack.isEmpty()) {
-            ds = processingStack.pop();
-        }
-        this.replaceStep = new ReplaceStep(ds);
+        visitChildren(ctx);
 
-        // replace field WITH field IN fieldList
-        String contentToReplace = null;
-        String replaceWith = null;
-        boolean afterWith = false;
+        this.replaceStep = new ReplaceStep(listOfFields, replacements);
 
-        List<String> listOfFields = null;
+        return new StepNode(this.replaceStep);
+    }
 
-        // Get the necessary parameters from the given DPL command
-        for (int i = 1; i < ctx.getChildCount(); i++) {
-            ParseTree child = ctx.getChild(i);
-            if (child instanceof DPLParser.FieldTypeContext) {
-                if (afterWith) {
-                    // after "WITH" keyword is the WITH clause
-                    replaceWith = Util.stripQuotes(child.getText());
-                    afterWith = false;
-                }
-                else {
-                    // before "WITH" is the content to replace
-                    contentToReplace = Util.stripQuotes(child.getText());
-                }
-            }
-            else if (child instanceof DPLParser.FieldListTypeContext) {
-                // fields given in "IN" clause
-                listOfFields = ((StringListNode)visit(child)).asList();
-            }
-            else {
-                if (child.getText().equalsIgnoreCase("WITH")) {
-                    // Next fieldtype must be the WITH clause in this case
-                    afterWith = true;
-                }
-            }
-        }
+    @Override
+    public Node visitT_replace_withInstruction(DPLParser.T_replace_withInstructionContext ctx) {
+        // field WITH field
+        String contentToReplace = new UnquotedText(new TextString(ctx.fieldType(0).getText())).read();
+        String replaceWith = new UnquotedText(new TextString(ctx.fieldType(1).getText())).read();
+        replacements.put(contentToReplace, replaceWith);
 
-        replaceStep.setReplaceWith(replaceWith);
-        replaceStep.setContentToReplace(contentToReplace);
-        replaceStep.setListOfFields(listOfFields);
-        ds = replaceStep.get();
-
-        processingStack.push(ds);
-        return new CatalystNode(ds);
+        return new NullNode();
     }
 
     /**
      * Gets the list of field names from the parse tree / command
      * @param ctx fieldList context
-     * @return StringListNode of field names
+     * @return NullNode
      */
     @Override
     public Node visitFieldListType(DPLParser.FieldListTypeContext ctx) {
-        List<String> listOfFields = new ArrayList<>();
-        ctx.children.forEach(c -> {
-            if (!(c instanceof TerminalNode)) {
-                listOfFields.add(Util.stripQuotes(c.getText()));
-            }
-        });
+        ctx.fieldType().forEach(c -> listOfFields.add(new UnquotedText(new TextString(c.getText())).read()));
 
-        return new StringListNode(listOfFields);
+        return new NullNode();
     }
 }

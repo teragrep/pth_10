@@ -46,14 +46,16 @@
 
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.pth10.ast.time.RelativeTimeParser;
+import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import org.apache.spark.sql.api.java.UDF2;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 /**
  * UDF for command relative_time(unixtime, modifier)<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Relative_time implements UDF2<Long, String, Long>, Serializable {
@@ -62,7 +64,9 @@ public class Relative_time implements UDF2<Long, String, Long>, Serializable {
 
 	@Override
 	public Long call(Long unixtime, String modifier) throws Exception {
-		return Util.relativeTimeModifier(new java.sql.Timestamp(unixtime*1000L), modifier);
+		RelativeTimeParser rtParser = new RelativeTimeParser();
+		RelativeTimestamp rtTimestamp = rtParser.parse(modifier);
+		return rtTimestamp.calculate(new Timestamp(unixtime*1000L));
 	}
 
 }

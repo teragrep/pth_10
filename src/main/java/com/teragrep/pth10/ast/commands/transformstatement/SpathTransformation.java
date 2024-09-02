@@ -46,18 +46,11 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth10.ast.bo.Node;
-import com.teragrep.pth10.ast.bo.StringNode;
-import com.teragrep.pth10.ast.bo.Token;
+import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.steps.spath.SpathStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,21 +69,14 @@ public class SpathTransformation extends DPLParserBaseVisitor<Node>
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpathTransformation.class);
     private final DPLParserCatalystContext catCtx;
-    private final ProcessingStack processingStack;
     public SpathStep spathStep = null;
-    public SpathTransformation(ProcessingStack processingStack, DPLParserCatalystContext catCtx) {
+    public SpathTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
-        this.processingStack = processingStack;
     }
 
     @Override
     public Node visitSpathTransformation(DPLParser.SpathTransformationContext ctx) {
-        // Pop dataset from stack
-        Dataset<Row> ds = null;
-        if (!this.processingStack.isEmpty()) {
-            ds = processingStack.pop();
-        }
-        this.spathStep = new SpathStep(ds);
+        this.spathStep = new SpathStep();
 
         String inputCol = "_raw";
         String outputCol = null;
@@ -121,9 +107,7 @@ public class SpathTransformation extends DPLParserBaseVisitor<Node>
             }
         }
 
-        LOGGER.info("input= " + (inputCol != null ? inputCol : "NULL") +
-                " output= " + (outputCol != null ? outputCol : "NULL") +
-                " path=" + (path != null ? path : "NULL"));
+        LOGGER.debug("input=<[{}]>, output=<[{}]>, path=<[{}]>", inputCol, outputCol, path);
 
         // set parameters for spathStep and use get() to perform the action
         this.spathStep.setPath(path);
@@ -131,11 +115,8 @@ public class SpathTransformation extends DPLParserBaseVisitor<Node>
         this.spathStep.setOutputColumn(outputCol);
         this.spathStep.setAutoExtractionMode(autoExtractionMode);
         this.spathStep.setCatCtx(catCtx);
-        ds = this.spathStep.get();
 
-        // Push back to stack
-        processingStack.push(ds);
-        return new CatalystNode(ds);
+        return new StepNode(spathStep);
     }
 
     @Override

@@ -46,24 +46,17 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.EvalTransformation;
-import com.teragrep.pth10.ast.commands.transformstatement.StatsTransformation;
 import com.teragrep.pth10.steps.eval.EvalStep;
-import com.teragrep.pth10.steps.stats.StatsStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -82,7 +75,7 @@ public class EvalTest {
         ctx = new DPLParserCatalystContext(spark);
     }
     @Test
-    void testEvalTranslation() throws Exception {
+    void testEvalTranslation() {
         final String query = "| eval a = abs(-3)";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -92,25 +85,17 @@ public class EvalTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final EvalTransformation ct = new EvalTransformation(ctx);
+        ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
+        final EvalStep cs = ct.evalStatement.evalStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            final EvalTransformation ct = new EvalTransformation(ctx, stack, new ArrayList<>());
-            ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(0).getChild(1));
-            final EvalStep cs = ct.evalStatement.evalStep;
+        assertEquals("a",cs.getLeftSide());
+        assertEquals("abs(-3)", cs.getRightSide().toString());
 
-            assertEquals("a",cs.getLeftSide());
-            assertEquals("abs(-3)", cs.getRightSide().toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
     }
 
     @Test
-    void testEvalTranslation2() throws Exception {
+    void testEvalTranslation2() {
         final String query = "| eval a = (3+4)*7";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -120,26 +105,16 @@ public class EvalTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final EvalTransformation ct = new EvalTransformation(ctx);
+        ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
+        final EvalStep cs = ct.evalStatement.evalStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            final EvalTransformation ct = new EvalTransformation(ctx, stack, new ArrayList<>());
-            ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(0).getChild(1));
-            final EvalStep cs = ct.evalStatement.evalStep;
-
-            assertEquals("a",cs.getLeftSide());
-            assertEquals("EvalArithmetic(EvalArithmetic(3, +, 4), *, 7)",cs.getRightSide().toString());
-            //assertEquals("((3 + 4) * 7)", cs.getRightSide().toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("a",cs.getLeftSide());
+        assertEquals("EvalArithmetic(EvalArithmetic(3, +, 4), *, 7)",cs.getRightSide().toString());
     }
 
     @Test
-    void testEvalTranslation3() throws Exception {
+    void testEvalTranslation3() {
         final String query = "| eval a = \"string\"";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -149,21 +124,12 @@ public class EvalTest {
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        final EvalTransformation ct = new EvalTransformation(ctx);
+        ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
+        final EvalStep cs = ct.evalStatement.evalStep;
 
-        final ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            final EvalTransformation ct = new EvalTransformation(ctx, stack, new ArrayList<>());
-            ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(0).getChild(1));
-            final EvalStep cs = ct.evalStatement.evalStep;
-
-            assertEquals("a",cs.getLeftSide());
-            assertEquals("string", cs.getRightSide().toString());
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("a",cs.getLeftSide());
+        assertEquals("string", cs.getRightSide().toString());
     }
 }
 

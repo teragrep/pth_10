@@ -72,6 +72,7 @@ public class Token {
 		TRANSFORM_STATEMENT,
 		STRING,
 		STRINGLIST,
+		STEP,
 		IF_STATEMENT
 	}
 

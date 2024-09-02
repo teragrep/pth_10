@@ -47,17 +47,15 @@ package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
+import com.teragrep.pth10.ast.DPLTimeFormat;
 import com.teragrep.pth10.ast.bo.CatalystNode;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.AnalysisException;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -65,167 +63,136 @@ import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.util.List;
+import java.text.ParseException;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.teragrep.pth10.ast.TimestampToEpochConversion.unixEpochFromString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class chartTransformationTest {
 	private static final Logger LOGGER = LoggerFactory.getLogger(chartTransformationTest.class);
 
-	DPLParserCatalystContext ctx = null;
-	DPLParserCatalystVisitor catalystVisitor;
-	// Use this file for  dataset initialization
-	String testFile = "src/test/resources/xmlWalkerTestData.json";
+	String testFile = "src/test/resources/xmlWalkerTestDataStreaming/xmlWalkerTestDataStreaming*";
 	SparkSession spark = null;
+	StreamingTestUtil streamingTestUtil;
 
 	@org.junit.jupiter.api.BeforeAll
 	void setEnv() {
-		spark = SparkSession
-				.builder()
-				.appName("Java Spark SQL basic example")
-				.master("local[2]")
-				.config("spark.driver.extraJavaOptions", "-Duser.timezone=EET")
-				.config("spark.executor.extraJavaOptions", "-Duser.timezone=EET")
-				.config("spark.sql.session.timeZone", "UTC")
-				.getOrCreate();
-        spark.sparkContext().setLogLevel("ERROR");
-		ctx = new DPLParserCatalystContext(spark);
+		this.streamingTestUtil = new StreamingTestUtil();
+		this.streamingTestUtil.setEnv();
 	}
 
 	@org.junit.jupiter.api.BeforeEach
 	void setUp() {
-//        ctx = new DPLParserCatalystContext(spark);
-		// initialize test dataset
-		SparkSession curSession = spark.newSession();
-		Dataset<Row> df = curSession.read().json(testFile);
-		ctx.setDs(df);
+		this.streamingTestUtil.setUp();
 	}
-
 
 	@org.junit.jupiter.api.AfterEach
 	void tearDown() {
-		catalystVisitor = null;
-	}
-
-	@Disabled
-	@Test
-	public void parseTest() throws Exception {
-
-		File testFile = new File("src/test/resources/antlr4/mytest.txt");
-
-		String[] args = new String[] { "com.teragrep.pth_03.antlr.DPL", "root", "-tree",
-				testFile.getAbsoluteFile().toString() };
-
-		LOGGER.info("Show parse-tree test");
-
-		//TestRig chartRig = new TestRig(args);
-		//chartRig.process();
-	}
-
-	@Disabled
-	@Test
-	public void parseTimeformatTreeTest() throws Exception {
-
-		File testFile = new File("src/test/resources/antlr4/timeformat.txt");
-
-		String[] args = new String[] { "com.teragrep.pth_03.antlr.DPL", "root", "-tree",
-				testFile.getAbsoluteFile().toString() };
-
-		LOGGER.info("Show parse-timeformat tree");
-
-		//TestRig chartRig = new TestRig(args);
-		//chartRig.process();
+		this.streamingTestUtil.tearDown();
 	}
 
 
 	// transformation operation test for count
 	// index =* |chart count(_raw) by host
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void parseChartcountTest() throws AnalysisException {
-		String q = "index = voyager | chart count(_raw) as count";
-		String e = "SELECT count(_raw) AS count FROM `temporaryDPLView` WHERE index LIKE \"voyager\"";
+		String q = "index = cinnamon | chart count(_raw) as count";
+		String e = "SELECT count(_raw) AS count FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
 		String result = utils.getQueryAnalysis(q);
 		assertEquals(e,result);
 	}
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void parseChartCountColumNameTest() throws AnalysisException {
 		String q,e,result;
 		// Define column name for count
-		q = "index=voyager _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw_) as cnt";
-		long indexEarliestEpoch = unixEpochFromString("04/16/2020:10:25:40", "MM/dd/yyyy:HH:mm:ss");
-		e = "SELECT count(_raw_) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND _time >= from_unixtime("+indexEarliestEpoch+")";
-		result = utils.getQueryAnalysis(q);
-		assertEquals(e,result);
+		q = "index=cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw_) as cnt";
+
+		try {
+			long indexEarliestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("04/16/2020:10:25:40");
+			e = "SELECT count(_raw_) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("+indexEarliestEpoch+")";
+			result = utils.getQueryAnalysis(q);
+			assertEquals(e,result);
+		} catch (ParseException exception) {
+			fail(exception.getMessage());
+		}
 	}
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void parseChartCountWithLogicalOperationAndColumNameTest() throws AnalysisException {
 		String q,e,result;
 		// logical AND-part and named column
-		q = "index=voyager _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\" | chart count(_raw) as count by timestamp";
-		long indexEarliestEpoch2 = unixEpochFromString("04/16/2020:10:25:40", "MM/dd/yyyy:HH:mm:ss");
-		long indexLatestEpoch2 = unixEpochFromString("04/16/2020:10:25:42", "MM/dd/yyyy:HH:mm:ss");
-		e = "SELECT timestamp,count(_raw) AS count FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND _time >= from_unixtime("+indexEarliestEpoch2+") AND _time <= from_unixtime("+indexLatestEpoch2+") GROUP BY timestamp";
-		result = utils.getQueryAnalysis(q);
-		assertEquals(e,result);
+		q = "index=cinnamon _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\" | chart count(_raw) as count by timestamp";
+
+		try {
+			long indexEarliestEpoch2 = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("04/16/2020:10:25:40");
+			long indexLatestEpoch2 = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("04/16/2020:10:25:40");
+			e = "SELECT timestamp,count(_raw) AS count FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("+indexEarliestEpoch2+") AND _time <= from_unixtime("+indexLatestEpoch2+") GROUP BY timestamp";
+			result = utils.getQueryAnalysis(q);
+			assertEquals(e,result);
+		} catch (ParseException exception) {
+			fail(exception.getMessage());
+		}
 	}
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void parseChartCountDefaultNameTest() throws AnalysisException {
 		String q,e,result;
 		// Test autogenerated column names
-		q = "index = voyager | chart count(_raw) by host";
-		e = "SELECT host,count(_raw) AS `count(_raw)` FROM `temporaryDPLView` WHERE index LIKE \"voyager\" GROUP BY host";
+		q = "index = cinnamon | chart count(_raw) by host";
+		e = "SELECT host,count(_raw) AS `count(_raw)` FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" GROUP BY host";
 		result = utils.getQueryAnalysis(q);
 		assertEquals(e,result);
 	}
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void parseChartCountDefaultName1Test() throws AnalysisException {
 		String q,e,result;
-		q = "index=voyager _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\" | chart count(_raw)";
-		long earliestEpoch = unixEpochFromString("04/16/2020:10:25:40", "MM/dd/yyyy:HH:mm:ss");
-		long latestEpoch = unixEpochFromString("04/16/2020:10:25:42", "MM/dd/yyyy:HH:mm:ss");
-		e = "SELECT count(_raw) AS `count(_raw)` FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND _time >= from_unixtime("+earliestEpoch+") AND _time <= from_unixtime("+latestEpoch+")";
-		result = utils.getQueryAnalysis(q);
-		assertEquals(e,result);
+		q = "index=cinnamon _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\" | chart count(_raw)";
+
+		try {
+			long earliestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("04/16/2020:10:25:40");
+			long latestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("04/16/2020:10:25:42");
+			e = "SELECT count(_raw) AS `count(_raw)` FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("+earliestEpoch+") AND _time <= from_unixtime("+latestEpoch+")";
+			result = utils.getQueryAnalysis(q);
+			assertEquals(e,result);
+		} catch (ParseException exception) {
+			fail(exception.getMessage());
+		}
 	}
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test
 	public void parseChainedTransformationTest() {
 		String q = "index=fs_mon host=\"$form.host$\" sourcetype=\"fs:mon-01:pid-cpu:0\" earliest=\"09/24/2018:00:00:00\" latest=\"9/24/2018:04:00:00\"  | where 'usr-ms'!=\"184467440737095516160\" | where 'system-ms'!=\"184467440737095516160\" | eval ProcessWithPID=Command+\"@\"+PID | timechart useother=f sum(usr-ms) by ProcessWithPID";
-		String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"voyager\" AND GROUP BY ProcessWithPID";
+		String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND GROUP BY ProcessWithPID";
 		String result = null;
 		assertEquals(e,result,q);
 	}
 
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test
 	public void streamListWithTimeLimitsTest() {
-		String q = "earliest=-24h AND ( index = haproxy AND (sourcetype = \"example:haproxy:haproxy\" ) AND ( host = \"loadbalancer.example.com\" ) OR ( index = * AND host = \"firewall.example.com\" AND earliest = -90d Denied))";
-		String e = "SELECT * FROM `haproxy` WHERE index LIKE \"haproxy\" AND _time >= from_unixtime(1618144982) AND ( AND (sourcetype LIKE \"example:haproxy:haproxy\") AND (host LIKE \"loadbalancer.example.com\") OR ( AND host LIKE \"firewall.example.com\" AND timestamp >= from_unixtime(1610455382) AND _raw LIKE '%Denied%'))";
+		String q = "earliest=-24h AND ( index = strawberry AND (sourcetype = \"example:strawberry:strawberry\" ) AND ( host = \"loadbalancer.example.com\" ) OR ( index = * AND host = \"firewall.example.com\" AND earliest = -90d Denied))";
+		String e = "SELECT * FROM `strawberry` WHERE index LIKE \"strawberry\" AND _time >= from_unixtime(1618144982) AND ( AND (sourcetype LIKE \"example:strawberry:strawberry\") AND (host LIKE \"loadbalancer.example.com\") OR ( AND host LIKE \"firewall.example.com\" AND timestamp >= from_unixtime(1610455382) AND _raw LIKE '%Denied%'))";
 		String result = null;
 		assertEquals(e,result,q);
 	}
 
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
 	public void countParsingTest() throws AnalysisException {
 		String q,e,result;
@@ -235,200 +202,113 @@ public class chartTransformationTest {
 		assertEquals(e, result,q);
 	}
 
-//	@Test
-	public void countXmlParsingTest() throws AnalysisException {
-		String q,e,result;
-		q = "index=cpu sourcetype=log:cpu:0 (host=sc-99-99-11-48 OR host=sc-99-99-13-164) | chart count(_raw) as cnt by host";
-	    e = "<root><!--index=cpu sourcetype=log:cpu:0 (host=sc-99-99-11-48 OR host=sc-99-99-13-164) | chart count(_raw) as cnt by host--><search root=\"true\"><logicalStatement><AND><AND><index operation=\"EQUALS\" value=\"cpu\"/><sourcetype operation=\"EQUALS\" value=\"log:cpu:0\"/></AND><OR><host operation=\"EQUALS\" value=\"sc-99-99-11-48\"/><host operation=\"EQUALS\" value=\"sc-99-99-13-164\"/></OR></AND><transformStatements><transform><divideBy field=\"host\"><chart field=\"_raw\" fieldRename=\"cnt\" function=\"count\"/></divideBy></transform></transformStatements></logicalStatement></search></root>";
-		result = utils.getQueryAnalysis(q);
-		LOGGER.info("DPL      =<" + q + ">");
-		utils.printDebug(e,result);
-		assertEquals(e, result);
-	}
-
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void endToEnd2Test() {
-		String q, e;
-		// First parse incoming DPL
-		q = "( index = index_A OR index = index_B ) _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count by _time";
-		e = "[_time: string, count: bigint]"; // At least schema is correct
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
+		String q = "( index = index_A OR index = index_B ) _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count by offset";
 
-		DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-		// Use this file for  dataset initialization
-		String testFile = "src/test/resources/xmlWalkerTestData.json";
-		Dataset<Row> inDs = spark.read().json(testFile);
-		ctx.setDs(inDs);
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
-		try {
-			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			Dataset<Row> res = n.getDataset();
+			String e = "[offset: bigint, count: bigint]"; // At least schema is correct
 			assertEquals(e, res.toString());
-			// Check full result
-			e = "+---------------------------------------------------+\n" +
-					"|value                                              |\n" +
-					"+---------------------------------------------------+\n" +
-					"|{\"_time\":\"2009-09-09T09:09:09.090+03:00\",\"count\":1}|\n" +
-					"|{\"_time\":\"2010-10-10T10:10:10.100+03:00\",\"count\":1}|\n" +
-					"|{\"_time\":\"2008-08-08T08:08:08.080+03:00\",\"count\":1}|\n" +
-					"|{\"_time\":\"2007-07-07T07:07:07.070+03:00\",\"count\":1}|\n" +
-					"|{\"_time\":\"2005-05-05T05:05:05.050+03:00\",\"count\":1}|\n" +
-					"|{\"_time\":\"2004-04-04T04:04:04.040+03:00\",\"count\":1}|\n" +
-					"|{\"_time\":\"2006-06-06T06:06:06.060+03:00\",\"count\":1}|\n" +
-					"+---------------------------------------------------+\n";
 
-			String jsonStr = res.toJSON().showString(7, 0, false);
-			assertEquals(e, jsonStr);
-			res.printSchema();
-			boolean aggregates = visitor.getAggregatesUsed();
+			// 3 first rows are earlier than where _index_earliest is set to
+			List<String> expectedValues = new ArrayList<>();
+			for (int i = 4; i < 11; i++) {
+				expectedValues.add(i + ",1");
+			}
+
+			List<String> resultList = res.collectAsList().stream().map(r -> r.mkString(",")).collect(Collectors.toList());
+
+			// sort the lists, as the order of rows doesn't matter with this aggregation
+			Collections.sort(expectedValues);
+			Collections.sort(resultList);
+
+			assertEquals(expectedValues, resultList);
+			boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
 			assertTrue(aggregates);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}
+		});
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void endToEnd3Test() {
-		String q, e;
-		// First parse incoming DPL
-		q = "index = index_A _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count by _time | where count > 0";
-		e = "StructType(StructField(_time,StringType,true), StructField(count,LongType,true))"; // At least schema is correct
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
+		String q = "index = index_A _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count by offset | where count > 0";
 
-		DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-		// Use this file for  dataset initialization
-		String testFile = "src/test/resources/xmlWalkerTestData.json";
-		Dataset<Row> inDs = spark.read().json(testFile);
-		ctx.setDs(inDs);
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-		try {
-			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			LOGGER.info("logicalPart="+visitor.getLogicalPart());
-			Dataset<Row> res = n.getDataset();
-//			res.show();
-			String schema=res.schema().toString();
-			// check that incoming stream schema is right
-			assertEquals(e, schema);
-			// Check full result
-			e = "+---------------------------------------------------+\n" +
-					"|value                                              |\n" +
-					"+---------------------------------------------------+\n" +
-					"|{\"_time\":\"2005-05-05T05:05:05.050+03:00\",\"count\":1}|\n" +
-					"|{\"_time\":\"2004-04-04T04:04:04.040+03:00\",\"count\":1}|\n" +
-					"+---------------------------------------------------+\n";
-			String jsonStr = res.toJSON().showString(2, 0, false);
-			assertEquals(e, jsonStr);
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}
+			String e = "[offset: bigint, count: bigint]"; // At least schema is correct
+			assertEquals(e, res.toString());
+
+			List<String> expectedValues = new ArrayList<>();
+			// Only first 5 rows have index: index_A
+			// and only the latter 2 have _time after index_earliest
+			expectedValues.add(4 + ",1");
+			expectedValues.add(5 + ",1");
+
+			List<String> resultList = res.collectAsList().stream().map(r -> r.mkString(",")).collect(Collectors.toList());
+
+			// sort the lists, as the order of rows doesn't matter with this aggregation
+			Collections.sort(expectedValues);
+			Collections.sort(resultList);
+
+			assertEquals(expectedValues, resultList);
+			res.printSchema();
+			boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
+			assertTrue(aggregates);
+		});
 	}
 
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void endToEnd4Test() {
-		String q, e;
-		// First parse incoming DPL
-		q = "index = index_A _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw)";
-//		q = "index = index_A _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count";
-		e = "[count(_raw): bigint]"; // At least schema is correct
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
+		String q = "index = index_B _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw)";
 
-		DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-		// Use this file for  dataset initialization
-		String testFile = "src/test/resources/xmlWalkerTestData.json";
-		Dataset<Row> inDs = spark.read().json(testFile);
-		ctx.setDs(inDs);
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
-		try {
-			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			Dataset<Row> res = n.getDataset();
-			LOGGER.info("Results after query");
-			LOGGER.info("-------------------");
-			res.show();
-			res.printSchema();
-			res.orderBy("count(_raw)").show();
-			LOGGER.info(" Parsed logicalPart:" + visitor.getLogicalPart());
+			String e = "[count(_raw): bigint]"; // At least schema is correct
 			assertEquals(e, res.toString());
-			// Check full result
-			e = "+-----------------+\n"
-					+ "|value            |\n"
-					+ "+-----------------+\n"
-					+ "|{\"count(_raw)\":2}|\n"
-					+ "+-----------------+\n";
-			String jsonStr = res.toJSON().showString(7, 0, false);
-			assertEquals(e, jsonStr);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}
+
+			List<String> expectedValues = new ArrayList<>();
+			expectedValues.add("5"); // only last 5 rows have index: index_B
+
+			List<String> resultList = res.collectAsList().stream().map(r -> r.mkString(",")).collect(Collectors.toList());
+
+			// sort the lists, as the order of rows doesn't matter with this aggregation
+			Collections.sort(expectedValues);
+			Collections.sort(resultList);
+
+			assertEquals(expectedValues, resultList);
+			res.printSchema();
+			boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
+			assertTrue(aggregates);
+		});
 	}
 	
 	// multiple chart aggregations
 	// specifically for issue #184
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void chart_multipleAggs_issue184_Test() {
-		String q, e;
-		// First parse incoming DPL
-		q = "index = index_A | chart count(_raw), min(offset), max(offset) by sourcetype";
-		
-		final StructType expectedSchema = new StructType(
-				new StructField[] {
-						new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-						new StructField("count(_raw)", DataTypes.LongType, true, new MetadataBuilder().build()),
-						new StructField("min(offset)", DataTypes.StringType, true, new MetadataBuilder().build()),
-						new StructField("max(offset)", DataTypes.StringType, true, new MetadataBuilder().build())
-				}
-		);
+		String q = "index=* | chart count(_raw), min(offset), max(offset) by index";
 
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			final StructType expectedSchema = new StructType(
+					new StructField[] {
+							new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+							new StructField("count(_raw)", DataTypes.LongType, true, new MetadataBuilder().build()),
+							new StructField("min(offset)", DataTypes.StringType, true, new MetadataBuilder().build()),
+							new StructField("max(offset)", DataTypes.StringType, true, new MetadataBuilder().build())
+					}
+			);
 
-		DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-		// Use this file for  dataset initialization
-		String testFile = "src/test/resources/xmlWalkerTestData.json";
-		Dataset<Row> inDs = spark.read().json(testFile);
-		ctx.setDs(inDs);
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-
-		try {
-			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			Dataset<Row> res = n.getDataset();
-			LOGGER.info("Results after query");
-			LOGGER.info("-------------------");
-			res.show();
-			LOGGER.info(" Parsed logicalPart:" + visitor.getLogicalPart());
-			
-			// assert schema
 			assertEquals(expectedSchema, res.schema());
-			
+
 			// assert contents
 			List<Row> count = res.select("count(_raw)").collectAsList();
 			List<Row> min = res.select("min(offset)").collectAsList();
 			List<Row> max = res.select("max(offset)").collectAsList();
-			
+
 			Row cr = count.get(0);
 			Row minr = min.get(0);
 			Row maxr = max.get(0);
@@ -437,53 +317,145 @@ public class chartTransformationTest {
 			Row minr2 = min.get(1);
 			Row maxr2 = max.get(1);
 
-			assertEquals("3",cr.getAs(0).toString());
-			assertEquals("3",minr.getAs(0).toString());
+			assertEquals("5",cr.getAs(0).toString());
+			assertEquals("1",minr.getAs(0).toString());
 			assertEquals("5",maxr.getAs(0).toString());
-			
-			assertEquals("2",cr2.getAs(0).toString());
-			assertEquals("1",minr2.getAs(0).toString());
-			assertEquals("2",maxr2.getAs(0).toString());
-			
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}
+
+			assertEquals("5",cr2.getAs(0).toString());
+			assertEquals("6",minr2.getAs(0).toString());
+			assertEquals("10",maxr2.getAs(0).toString());
+		});
 	}
 	
 	// Check that is AggregatesUsed returns true
 	@Test
-	@EnabledIfSystemProperty(named="runSparkTest", matches="true")
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
 	void endToEnd5Test() {
-		String q;
-		// First parse incoming DPL
-		// timechart span=1m count(_raw) by host
-		q = "index = jla02logger | chart count(_raw)";
-		CharStream inputStream = CharStreams.fromString(q);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		ParseTree tree = parser.root();
+		String q = "index = jla02logger | chart count(_raw)";
 
-		DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark);
-		// Use this file for  dataset initialization
-		String testFile = "src/test/resources/xmlWalkerTestData.json";
-		Dataset<Row> inDs = spark.read().json(testFile);
-		ctx.setDs(inDs);
-		ctx.setEarliest("-1Y");
-		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-
-		try {
-			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			Dataset<Row> res = n.getDataset();
-			res.show();
-			boolean aggregates = visitor.getAggregatesUsed();
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
 			assertTrue(aggregates);
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}
+		});
 	}
-	@Disabled
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	void testSplittingByTime() {
+		String q = "index=* | chart avg(offset) by _time";
+
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			final StructType expectedSchema = new StructType(
+					new StructField[] {
+							new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+							new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+					}
+			);
+
+			assertEquals(expectedSchema, res.schema());
+
+			List<Row> time = res.select("_time").collectAsList();
+			List<Row> offset = res.select("avg(offset)").collectAsList();
+
+			System.out.println(time.stream().map(r -> r.getAs(0).toString()).toArray());
+
+			// assert correct ordering, old to new
+			String[] expectedTime = new String[]{
+				"2001-01-01T01:01:01.010+03:00", "2002-02-02T02:02:02.020+03:00",
+				"2003-03-03T03:03:03.030+03:00", "2004-04-04T04:04:04.040+03:00",
+				"2005-05-05T05:05:05.050+03:00", "2006-06-06T06:06:06.060+03:00",
+				"2007-07-07T07:07:07.070+03:00", "2008-08-08T08:08:08.080+03:00",
+				"2009-09-09T09:09:09.090+03:00", "2010-10-10T10:10:10.100+03:00"
+			};
+			String[] expectedOffset = new String[]{ "1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0" };
+
+			assertArrayEquals(expectedTime, time.stream().map(r -> r.getAs(0).toString()).toArray());
+			assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+		});
+	}
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	void testSplittingByString() {
+		String q = "index=* | chart avg(offset) by sourcetype";
+
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			final StructType expectedSchema = new StructType(
+					new StructField[] {
+							new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+							new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+					}
+			);
+
+			assertEquals(expectedSchema, res.schema());
+
+			List<Row> sourcetype = res.select("sourcetype").collectAsList();
+			List<Row> offset = res.select("avg(offset)").collectAsList();
+
+			// ascending ordering for strings
+			String[] expectedSourcetype = new String[]{"A:X:0", "A:Y:0", "B:X:0", "B:Y:0"};
+			String[] expectedOffset = new String[]{"1.5", "4.0", "7.0", "9.5"};
+
+			assertArrayEquals(expectedSourcetype, sourcetype.stream().map(r -> r.getAs(0).toString()).toArray());
+			assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+		});
+	}
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	void testSplittingByNumber() {
+		String q = "index=* | chart count(offset) by offset";
+
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			final StructType expectedSchema = new StructType(
+					new StructField[] {
+							new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+							new StructField("count(offset)", DataTypes.LongType, true, new MetadataBuilder().build()),
+					}
+			);
+
+			assertEquals(expectedSchema, res.schema());
+
+			List<Row> offset = res.select("offset").collectAsList();
+			List<Row> count = res.select("count(offset)").collectAsList();
+
+			// assert correct ascending ordering
+			String[] expectedOffset = new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+			String[] expectedCount = new String[]{"1", "1", "1", "1", "1", "1", "1", "1", "1", "1"};
+
+			assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+			assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
+		});
+	}
+
+	@Test
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+	void testSplittingByNumericalString() {
+		String q = "index=* | eval a = offset + 0 | chart count(offset) by a";
+
+		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+			final StructType expectedSchema = new StructType(
+					new StructField[] {
+							new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+							new StructField("count(offset)", DataTypes.LongType, true, new MetadataBuilder().build()),
+					}
+			);
+
+			assertEquals(expectedSchema, res.schema());
+
+			List<Row> a = res.select("a").collectAsList();
+			List<Row> count = res.select("count(offset)").collectAsList();
+
+			// assert correct ascending ordering
+			String[] expectedA = new String[]{"1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+			String[] expectedCount = new String[]{"1", "1", "1", "1", "1", "1", "1", "1", "1", "1"};
+
+			assertArrayEquals(expectedA, a.stream().map(r -> r.getAs(0).toString()).toArray());
+			assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
+		});
+	}
+
+    @Disabled(value="Should be converted to a dataframe test")
 	@Test
 	void endToEnd7Test() {
 		String q;
@@ -503,16 +475,8 @@ public class chartTransformationTest {
 		ctx.setEarliest("-1Y");
 		DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-		try {
-			CatalystNode n = (CatalystNode) visitor.visit(tree);
-			Dataset<Row> res = n.getDataset();
-			res.show();
-			boolean aggregates = visitor.getAggregatesUsed();
-			assertTrue(aggregates,visitor.getTraceBuffer().toString());
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			throw ex;
-		}
+		CatalystNode n = (CatalystNode) visitor.visit(tree);
+		boolean aggregates = visitor.getAggregatesUsed();
+		assertTrue(aggregates,visitor.getTraceBuffer().toString());
 	}
-
 }

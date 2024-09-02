@@ -46,28 +46,28 @@
 
 package com.teragrep.pth10.steps.rex;
 
+import com.teragrep.jpr_01.JavaPcre;
 import com.teragrep.pth10.ast.commands.transformstatement.rex.RexExtractModeUDF;
 import com.teragrep.pth10.ast.commands.transformstatement.rex.RexSedModeUDF;
-import com.teragrep.pth10.ast.commands.transformstatement.rex4j.NamedGroupsRex;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.util.Map;
 
-public class RexStep extends AbstractRexStep {
-    public RexStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class RexStep extends AbstractRexStep {
+    public RexStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
         final SparkSession ss = SparkSession.builder().getOrCreate();
-        Dataset<Row> res = this.dataset;
+        Dataset<Row> res = dataset;
 
         if (this.isSedMode()) {
             // sed mode
@@ -85,20 +85,27 @@ public class RexStep extends AbstractRexStep {
             final String outputCol = "$$dpl_internal_rex_result$$";
             res = res.withColumn(outputCol, udfResult);
 
-            // get capture groups from regex string
-            Map<String, Integer> namedGroups = NamedGroupsRex.getNamedGroups(this.regexStr);
+            // compile regex pattern to get name table
+            final JavaPcre pcre = new JavaPcre();
+            pcre.compile_java(regexStr);
+            Map<String, Integer> nameTable = pcre.get_name_table();
 
-            // go through the capture group names and if value is null, apply empty string, otherwise value
-            for (String name : namedGroups.keySet()) {
+            // go through the capture group names and if value is null, apply NullValue, otherwise value
+            for (String name : nameTable.keySet()) {
                 res = res.withColumn(
                         name,
                         functions.when(
                                 functions.isnull(res.col(outputCol).getItem(name)),
-                                functions.lit("")).otherwise(res.col(outputCol).getItem(name)));
+                                functions.lit(catCtx.nullValue.value()).cast(DataTypes.StringType)).otherwise(res.col(outputCol).getItem(name)));
             }
 
             // drop intermediate result column
             res = res.drop(outputCol);
+
+            // clean compile
+            // Note: Can throw IllegalStateException if nothing to free but should
+            // realistically never happen as it is only called after compile
+            pcre.jcompile_free();
         }
 
         return res;

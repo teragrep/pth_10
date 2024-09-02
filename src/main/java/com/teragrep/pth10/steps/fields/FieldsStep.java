@@ -50,22 +50,22 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import scala.collection.JavaConversions;
 
-public class FieldsStep extends AbstractFieldsStep{
-    public FieldsStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class FieldsStep extends AbstractFieldsStep{
+    public FieldsStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
         if (this.mode.equals(FieldMode.KEEP_FIELDS)) {
-            return this.dataset.selectExpr(JavaConversions.asScalaBuffer(this.listOfFields));
+            return dataset.selectExpr(JavaConversions.asScalaBuffer(this.listOfFields));
         }
         else if (this.mode.equals(FieldMode.REMOVE_FIELDS)) {
-            return this.dataset.drop(JavaConversions.asScalaBuffer(this.listOfFields));
+            return dataset.drop(JavaConversions.asScalaBuffer(this.listOfFields));
         }
         else {
             throw new UnsupportedOperationException("Invalid FieldMode: " + this.mode);

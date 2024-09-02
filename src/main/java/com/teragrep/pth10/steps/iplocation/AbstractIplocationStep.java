@@ -48,8 +48,6 @@ package com.teragrep.pth10.steps.iplocation;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.Arrays;
 import java.util.List;
@@ -68,8 +66,8 @@ public abstract class AbstractIplocationStep extends AbstractStep {
     protected final List<String> columnsRirData = Arrays.asList("country", "operator");
     protected final List<String> columnsCountryData = Arrays.asList("country", "continent");
 
-    public AbstractIplocationStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractIplocationStep() {
+        super();
     }
 
     public void setField(String field) {

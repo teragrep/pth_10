@@ -48,27 +48,18 @@ package com.teragrep.pth10.steps.stats;
 
 import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractStatsStep extends AbstractStep {
 
-    protected List<Column> listOfAggregationExpressions = null;
-    protected List<Column> listOfGroupBys = null;
+    protected final List<Column> listOfAggregationExpressions;
+    protected final List<Column> listOfGroupBys;
 
-    public AbstractStatsStep(Dataset<Row> dataset) {
-        super(dataset);
-    }
-
-    public void setListOfGroupBys(List<Column> listOfGroupBys) {
-        this.listOfGroupBys = listOfGroupBys;
-    }
-
-    public void setListOfAggregationExpressions(List<Column> listOfAggregationExpressions) {
+    public AbstractStatsStep(List<Column> listOfAggregationExpressions, List<Column> listOfGroupBys) {
+        super();
         this.listOfAggregationExpressions = listOfAggregationExpressions;
+        this.listOfGroupBys = listOfGroupBys;
     }
 
     public List<Column> getListOfGroupBys() {

@@ -47,19 +47,17 @@ package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.commands.transformstatement.JoinTransformation;
 import com.teragrep.pth10.steps.join.JoinStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
-import org.antlr.v4.runtime.CharStream;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,7 +72,7 @@ public class JoinTest {
 		Integer max = 1;
      */
     @Test
-    void testJoinTranslation() throws Exception {
+    void testJoinTranslation() {
         String query = "| join offset [ | eval offset=1 ]";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -86,29 +84,22 @@ public class JoinTest {
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            JoinTransformation ct = new JoinTransformation(new ArrayList<>(), stack, ctx);
-            ct.visitJoinTransformation((DPLParser.JoinTransformationContext) tree.getChild(0).getChild(1));
-            JoinStep cs = ct.joinStep;
 
-            assertEquals("inner", cs.getJoinMode());
-            assertEquals(1, cs.getMax());
-            assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
-            assertTrue(cs.getEarlier());
-            assertNotNull(cs.getPathForSubsearchSave());
-            assertTrue(cs.getOverwrite());
-            assertFalse(cs.getUsetime());
+        JoinTransformation ct = new JoinTransformation(visitor, ctx);
+        ct.visitJoinTransformation((DPLParser.JoinTransformationContext) tree.getChild(1).getChild(0));
+        JoinStep cs = ct.joinStep;
 
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("inner", cs.getJoinMode());
+        assertEquals(1, cs.getMax());
+        assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
+        assertTrue(cs.getEarlier());
+        assertNotNull(cs.getPathForSubsearchSave());
+        assertTrue(cs.getOverwrite());
+        assertFalse(cs.getUsetime());
     }
 
     @Test
-    void testJoinTranslation2() throws Exception {
+    void testJoinTranslation2() {
         String query = "| join type=left offset [ | eval offset=1 ]";
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
@@ -120,25 +111,17 @@ public class JoinTest {
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        ProcessingStack stack = new ProcessingStack(visitor);
-        try {
-            JoinTransformation ct = new JoinTransformation(new ArrayList<>(), stack, ctx);
-            ct.visitJoinTransformation((DPLParser.JoinTransformationContext) tree.getChild(0).getChild(1));
-            JoinStep cs = ct.joinStep;
+        JoinTransformation ct = new JoinTransformation(visitor, ctx);
+        ct.visitJoinTransformation((DPLParser.JoinTransformationContext) tree.getChild(1).getChild(0));
+        JoinStep cs = ct.joinStep;
 
-            assertEquals("left", cs.getJoinMode());
-            assertEquals(1, cs.getMax());
-            assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
-            assertTrue(cs.getEarlier());
-            assertNotNull(cs.getPathForSubsearchSave());
-            assertTrue(cs.getOverwrite());
-            assertFalse(cs.getUsetime());
-
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw ex;
-        }
+        assertEquals("left", cs.getJoinMode());
+        assertEquals(1, cs.getMax());
+        assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
+        assertTrue(cs.getEarlier());
+        assertNotNull(cs.getPathForSubsearchSave());
+        assertTrue(cs.getOverwrite());
+        assertFalse(cs.getUsetime());
     }
 }
 

@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
  * 
  * Aggregator types: IN=Row, BUF=Values, OUT=String
  * Serializable
- * @author p000043u
+ * @author eemhu
  *
  */
 public class ValuesAggregator extends Aggregator<Row, ValuesBuffer, String> implements Serializable {
@@ -94,7 +94,7 @@ public class ValuesAggregator extends Aggregator<Row, ValuesBuffer, String> impl
 		if (debugEnabled) LOGGER.info("Buffer encoder");
 		
 		// TODO using kryo should speed this up
-		return Encoders.bean(ValuesBuffer.class);
+		return Encoders.javaSerialization(ValuesBuffer.class);
 	}
 
 	/** Encoder for the output (String of all the values in column, lexicographically sorted)

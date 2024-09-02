@@ -46,6 +46,8 @@
 
 package com.teragrep.pth10.steps.dedup;
 
+import com.teragrep.functions.dpf_02.BatchCollect;
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -60,19 +62,36 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-public class DedupStep extends AbstractDedupStep {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDedupStep.class);
-    public DedupStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class DedupStep extends AbstractDedupStep {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DedupStep.class);
+    public DedupStep(List<String> listOfFields, int maxDuplicates, boolean keepEmpty, boolean keepEvents, boolean consecutive,
+                     DPLParserCatalystContext catCtx, boolean completeOutputMode) {
+        super();
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
+        this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
+
+        this.listOfFields = listOfFields;
+        this.maxDuplicates = maxDuplicates;
+        this.keepEmpty = keepEmpty;
+        this.keepEvents = keepEvents;
+        this.consecutive = consecutive;
+        this.catCtx = catCtx;
+        this.completeOutputMode = completeOutputMode;
+
+        this.intBc = new BatchCollect(null, catCtx.getDplRecallSize());
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) {
+        if (dataset == null) {
             return null;
         }
 
-        final List<Row> listOfRows = this.dataset.collectAsList();
+        dataset = intBc.call(dataset, 1L, true);
+
+        this.fieldsProcessed = new ConcurrentHashMap<>();
+
+        final List<Row> listOfRows = dataset.collectAsList();
         final int origSize = listOfRows.size();
         final AtomicReference<Row> previousRow = new AtomicReference<>();
 
@@ -80,7 +99,7 @@ public class DedupStep extends AbstractDedupStep {
         final List<Row> output;
         if (keepEvents) {
             output = listOfRows;
-            final StructType schema = this.dataset.schema();
+            final StructType schema = dataset.schema();
             // keepEvents
             for (int i = 0; i < output.size(); i++) {
                 for (final String fieldName : listOfFields) {
@@ -137,7 +156,7 @@ public class DedupStep extends AbstractDedupStep {
                         }
                     } else {
                         // the field was not encountered yet, add to map
-                        final Map<String, Long> newMap = Collections.synchronizedMap(new ConcurrentHashMap<>());
+                        final Map<String, Long> newMap = new ConcurrentHashMap<>();
                         newMap.put(fieldValue, 1L);
                         fieldsProcessed.put(fieldName, newMap);
                     }
@@ -215,10 +234,8 @@ public class DedupStep extends AbstractDedupStep {
             }).collect(Collectors.toList());
         }
 
-        LOGGER.info("Output contains " + output.size() + "/" + origSize + " row(s)");
-        final Dataset<Row> out = SparkSession.getActiveSession().get().createDataFrame(output, this.dataset.schema());
-        //out.show();
-        return out;
+        LOGGER.info("Output contains <{}> out of <{}> row(s)", output.size(), origSize);
+        return SparkSession.getActiveSession().get().createDataFrame(output, dataset.schema());
     }
 
     /**
@@ -228,7 +245,6 @@ public class DedupStep extends AbstractDedupStep {
      * @return row with the field nullified
      */
     private Row nullifyRowField(final Row r, final StructType schema,  String fieldName) {
-        //LOGGER.debug("Nullifying field: " + fieldName);
         final List<Object> newRowValues = new ArrayList<>();
 
         for (final StructField field : schema.fields()) {
@@ -237,10 +253,10 @@ public class DedupStep extends AbstractDedupStep {
             }
             else {
                 if (field.nullable()) {
-                    newRowValues.add(null);
+                    newRowValues.add(catCtx.nullValue.value());
                 }
                 else {
-                    newRowValues.add("null");
+                    throw new IllegalStateException("Field was not nullable! field=<" + field.name() +">");
                 }
 
             }

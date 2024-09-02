@@ -48,8 +48,6 @@ package com.teragrep.pth10.steps.makeresults;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,8 +60,8 @@ public abstract class AbstractMakeresultsStep extends AbstractStep {
 
     protected DPLParserCatalystContext catCtx = null;
 
-    public AbstractMakeresultsStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractMakeresultsStep() {
+        super();
     }
 
     public void setAnnotate(boolean annotate) {

@@ -63,18 +63,18 @@ import java.util.Map;
  * Uses a GeoIP2 or rir-data MaxMind database to map IP addresses to location information,
  * such as latitude, longitude, city, region, country, metro code and et cetera.
  */
-public class IplocationStep extends AbstractIplocationStep{
+public final class IplocationStep extends AbstractIplocationStep{
     private static final Logger LOGGER = LoggerFactory.getLogger(IplocationStep.class);
-    public IplocationStep(Dataset<Row> dataset) {
-        super(dataset);
+    public IplocationStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
+    public Dataset<Row> get(Dataset<Row> dataset) {
         // Define the udf, and register it to the SparkSession
         // "/usr/share/GeoIP/GeoLite2-City.mmdb"
         // "/home/x/rir-data/rir-data.mmdb"
-        if (this.dataset == null) {
+        if (dataset == null) {
             return null;
         }
 
@@ -95,14 +95,14 @@ public class IplocationStep extends AbstractIplocationStep{
             LOGGER.info("Detected GeoIP database");
 
             udf = functions.udf(
-                    new IplocationGeoIPDataMapper(this.pathToDb,
+                    new IplocationGeoIPDataMapper(this.pathToDb, this.catCtx.nullValue,
                             extractMapFromHadoopCfg(this.catCtx.getSparkSession().sparkContext().hadoopConfiguration())),
                     DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType, true));
         }
         else {
             LOGGER.info("Detected rir database");
 
-            udf = functions.udf(new IplocationRirDataMapper(this.pathToDb,
+            udf = functions.udf(new IplocationRirDataMapper(this.pathToDb, this.catCtx.nullValue,
                             extractMapFromHadoopCfg(this.catCtx.getSparkSession().sparkContext().hadoopConfiguration())),
                     DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType, true));
         }
@@ -117,27 +117,27 @@ public class IplocationStep extends AbstractIplocationStep{
         List<String> mapKeys;
         if (this.allFields && isGeoIPDatabase && isGeoCityDatabase) {
             // allfields=true, GeoIP2 City
-            LOGGER.info("Get all columns from GeoIP City DB");
+            LOGGER.debug("Get all columns from GeoIP City DB");
             mapKeys = this.columnsFull;
         }
         else if (isGeoIPDatabase && isGeoCityDatabase) {
             // allfields=false, GeoIP2 City
-            LOGGER.info("Get minimal columns from GeoIP City DB");
+            LOGGER.debug("Get minimal columns from GeoIP City DB");
             mapKeys = this.columnsMinimal;
         }
         else if (isGeoIPDatabase) {
             // allfields=true/false, GeoIP2 Country
-            LOGGER.info("Get all columns from GeoIP Country DB");
+            LOGGER.debug("Get all columns from GeoIP Country DB");
             mapKeys = this.columnsCountryData;
         }
         else {
             // allfields=true/false, rir-data
-            LOGGER.info("Get all columns from rir DB");
+            LOGGER.debug("Get all columns from rir DB");
             mapKeys = this.columnsRirData;
         }
 
         // Apply udf result to dataset and extract to columns (with prefix, if any)
-        Dataset<Row> res = this.dataset.withColumn(this.internalMapColumnName, udfResult);
+        Dataset<Row> res = dataset.withColumn(this.internalMapColumnName, udfResult);
         for (String key : mapKeys) {
             res = res.withColumn(prefix + key, res.col(this.internalMapColumnName).getItem(key));
         }

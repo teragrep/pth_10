@@ -47,18 +47,15 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.TreeUtils;
-import com.teragrep.pth10.ast.bo.CatalystNode;
+import com.teragrep.pth10.ast.PrettyTree;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.datasources.GeneratedDatasource;
 import com.teragrep.pth10.steps.dpl.AbstractDplStep;
 import com.teragrep.pth10.steps.dpl.DplStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.ParserRuleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,41 +67,26 @@ import java.util.*;
  */
 public class DPLTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLTransformation.class);
-
-    private List<String> traceBuffer = null;
     DPLParserCatalystContext catCtx = null;
-    private Map<String, Object> symbolTable = new HashMap<>();
-    ProcessingStack processingPipe = null;
 
     public DplStep dplStep = null;
 
-    public DPLTransformation(DPLParserCatalystContext catCtx, ProcessingStack processingPipe, List<String> buf, Map<String, Object> symbolTable) {
-        this.processingPipe = processingPipe;
-        this.traceBuffer = buf;
+    public DPLTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
-        this.symbolTable = symbolTable;
     }
 
     public Node visitDplTransformation(DPLParser.DplTransformationContext ctx) {
-        traceBuffer.add(ctx.getChildCount() + " DPLTransformation:" + ctx.getText());
-        LOGGER.info(ctx.getChildCount() + " DPLTransformation:" + ctx.getText());
-        Node rv = dplTransformationEmitCatalyst(ctx);
-        traceBuffer.add("visitDPLTransformation returns:" + rv.toString());
+        LOGGER.info("DPLTransformation: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
 
-        return rv;
+        return dplTransformationEmitCatalyst(ctx);
     }
 
     public Node dplTransformationEmitCatalyst(DPLParser.DplTransformationContext ctx) {
-        Dataset<Row> rv = null;
-        if (!this.processingPipe.isEmpty()) {
-            rv = processingPipe.pop();
-        }
-        this.dplStep = new DplStep(rv);
+        this.dplStep = new DplStep();
 
         String explainStr;
         List<String> lines = new ArrayList<>();
 
-        traceBuffer.add(ctx.getChildCount() + " dplTransformation:" + ctx.getText());
 
         explainStr = "dpl";
         if (ctx.t_dpl_basefilenameParameter() != null) {
@@ -123,28 +105,28 @@ public class DPLTransformation extends DPLParserBaseVisitor<Node> {
                     curr = curr.getParent();
                 }
 
-                lines.add(TreeUtils.toPrettyTree(curr.getChild(0), Arrays.asList(catCtx.getRuleNames())));
+                PrettyTree prettyTree = new PrettyTree(curr.getChild(0), Arrays.asList(catCtx.getRuleNames()));
+                lines.add(prettyTree.getTree());
             }
         }
 
-        if(ctx.t_dpl_subsearchParameter()!= null ){
+
+        // FIXME: This has never been functional, seemingly it was supposed to print subsearch parse tree.
+       /* if(ctx.t_dpl_subsearchParameter()!= null ){
             //add subsearch result
             if (ctx.t_dpl_subsearchParameter().getChild(1).getText().equalsIgnoreCase("true")) {
                 if (symbolTable.containsKey("SubsearchParseTree")) {
                     lines.addAll ((List<String>)symbolTable.get("SubsearchParseTree"));
                 }
             }
-        }
+        }*/
 
         // step
         this.dplStep.setCommandType(AbstractDplStep.DplCommandType.PARSETREE); // no other option
         this.dplStep.setExplainStr(explainStr);
         this.dplStep.setLines(lines);
         this.dplStep.setGeneratedDatasource(new GeneratedDatasource(catCtx));
-        rv = this.dplStep.get();
 
-        // Put back result
-        processingPipe.push(rv);
-        return new CatalystNode(rv);
+        return new StepNode(this.dplStep);
     }
 }

@@ -46,7 +46,12 @@
 
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
+import com.teragrep.pth10.steps.ParsedResult;
+import com.teragrep.pth10.steps.TypeParser;
 import org.apache.spark.sql.api.java.UDF3;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Checks if left and right side are longs/doubles, and performs basic arithmetic on them if they are,
@@ -56,54 +61,41 @@ public class EvalArithmetic implements UDF3<Object, String, Object, String> {
     @Override
     public String call(Object l, String op, Object r) throws Exception {
         // try long
-        //LOGGER.debug("l=" + l.toString() + " op= " + op + " r= " + r.toString());
-        try {
-            Long leftNumber = Long.parseLong(l.toString());
-            Long rightNumber = Long.parseLong(r.toString());
-            switch (op) {
-                case "+":
-                    return String.valueOf(leftNumber + rightNumber);
-                case "-":
-                    return String.valueOf(leftNumber - rightNumber);
-                case "*":
-                    return String.valueOf(leftNumber * rightNumber);
-                case "/":
-                    if (leftNumber % rightNumber != 0) {
-                        return String.valueOf(leftNumber * 1f / rightNumber);
-                    }
-                    else {
-                        return String.valueOf(leftNumber / rightNumber);
-                    }
-                case "%":
-                    return String.valueOf(leftNumber % rightNumber);
-                default:
-                    throw new UnsupportedOperationException("Unsupported operation: " + op);
+        TypeParser typeParser = new TypeParser();
+        ParsedResult left = typeParser.parse(l);
+        ParsedResult right = typeParser.parse(r);
+
+        // Check for Strings, concatenate if found
+        if (left.getType() == ParsedResult.Type.STRING || right.getType() == ParsedResult.Type.STRING) {
+            if (op.equals("+")) {
+                return l.toString().concat(r.toString());
+            } else {
+                throw new IllegalArgumentException("Eval arithmetics only allow Strings for the + operator.");
             }
         }
-        catch (NumberFormatException nfe) {
-            try {
-                // try double
-                Double leftNumber = Double.parseDouble(l.toString());
-                Double rightNumber = Double.parseDouble(r.toString());
-                switch (op) {
-                    case "+":
-                        return String.valueOf(leftNumber + rightNumber);
-                    case "-":
-                        return String.valueOf(leftNumber - rightNumber);
-                    case "*":
-                        return String.valueOf(leftNumber * rightNumber);
-                    case "/":
-                        return String.valueOf(leftNumber / rightNumber);
-                    case "%":
-                        return String.valueOf(leftNumber % rightNumber);
-                    default:
-                        throw new UnsupportedOperationException("Unsupported operation: " + op);
+
+        // change left and right numbers into BigDecimal
+        BigDecimal leftNumber = left.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(left.getDouble()) : BigDecimal.valueOf(left.getLong());
+        BigDecimal rightNumber = right.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(right.getDouble()) : BigDecimal.valueOf(right.getLong());
+
+        switch (op) {
+            case "+":
+                return leftNumber.add(rightNumber).stripTrailingZeros().toPlainString();
+            case "-":
+                return leftNumber.subtract(rightNumber).stripTrailingZeros().toPlainString();
+            case "*":
+                return leftNumber.multiply(rightNumber).stripTrailingZeros().toPlainString();
+            case "/":
+                try {
+                    return leftNumber.divide(rightNumber).stripTrailingZeros().toPlainString();
+                } catch (ArithmeticException e) {
+                    // show 7 first decimals if the result of the division is a repeating number
+                    return leftNumber.divide(rightNumber, 7, RoundingMode.HALF_UP).toPlainString();
                 }
-            }
-            catch (NumberFormatException nfe2) {
-                // number fail, string concat
-                return l.toString().concat(r.toString());
-            }
+            case "%":
+                return leftNumber.remainder(rightNumber).stripTrailingZeros().toPlainString();
+            default:
+                throw new UnsupportedOperationException("Unsupported operation: " + op);
         }
     }
 }

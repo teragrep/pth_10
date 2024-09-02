@@ -51,7 +51,7 @@ import org.apache.spark.sql.api.java.UDF1;
 /**
  * UDF for convert command 'mstime'<br>
  * Human readable time ([MM:]SS.SSS) to epoch using given timeformat<br>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class Mstime implements UDF1<String, String> {

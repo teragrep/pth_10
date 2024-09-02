@@ -46,7 +46,6 @@
 
 package com.teragrep.pth10.steps.makeresults;
 
-import com.teragrep.pth10.ast.DPLInternalStreamingQuery;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
@@ -58,6 +57,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import scala.Option;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
 
@@ -68,19 +68,18 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MakeresultsStep extends AbstractMakeresultsStep{
-    public MakeresultsStep(Dataset<Row> dataset) {
-        super(dataset);
+public final class MakeresultsStep extends AbstractMakeresultsStep{
+    public MakeresultsStep() {
+        super();
     }
-
     @Override
-    public Dataset<Row> get() {
-        /*if (this.dataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
+        /*if (dataset == null) {
             return null;
         }*/
 
         // change schema based on annotate parameter
-        StructType schema = null;
+        StructType schema;
         if (annotate) {
             schema =
                     new StructType(
@@ -108,7 +107,7 @@ public class MakeresultsStep extends AbstractMakeresultsStep{
         SparkSession ss = SparkSession.builder().getOrCreate();
         SQLContext sqlCtx = ss.sqlContext();
         ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
-        MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlCtx, encoder);
+        MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlCtx, Option.apply(1), encoder);
         Dataset<Row> generated = rowMemoryStream.toDS();
 
         final String queryName = "makeresults_" + ((int)(Math.random() * 100000));
@@ -121,11 +120,7 @@ public class MakeresultsStep extends AbstractMakeresultsStep{
         // add row $count times
         rowMemoryStream.addData(makeRows(count, annotate));
 
-        try {
-            makeResultsQuery.awaitTermination();
-        } catch (StreamingQueryException e) {
-            throw new RuntimeException(e);
-        }
+        makeResultsQuery.awaitTermination();
 
         return generated;
     }
@@ -139,13 +134,23 @@ public class MakeresultsStep extends AbstractMakeresultsStep{
      */
     private Seq<Row> makeRows(int amount, boolean annotate) {
         List<Row> rowsList = new ArrayList<>();
-        Row row = null;
+        Row row;
 
         if (annotate) {
-            row = RowFactory.create(Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault())), "null", "null", "null", "null", "null", "null");
+            row = RowFactory.create(
+                    Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault())),
+                    catCtx.nullValue.value(),
+                    catCtx.nullValue.value(),
+                    catCtx.nullValue.value(),
+                    catCtx.nullValue.value(),
+                    catCtx.nullValue.value(),
+                    catCtx.nullValue.value()
+            );
         }
         else {
-            row = RowFactory.create(Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault())));
+            row = RowFactory.create(
+                    Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault()))
+            );
         }
 
         while (amount > 0) {

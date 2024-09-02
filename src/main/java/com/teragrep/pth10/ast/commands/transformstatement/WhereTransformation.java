@@ -47,23 +47,19 @@
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
 import com.teragrep.pth10.ast.bo.ColumnNode;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.ast.commands.evalstatement.EvalStatement;
 import com.teragrep.pth10.steps.where.WhereStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
 
 import java.util.List;
 
@@ -74,13 +70,7 @@ import java.util.List;
  */
 public class WhereTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(WhereTransformation.class);
-    private boolean debugEnabled = false;
-    private List<String> traceBuffer = null;
-    private Document doc;
-    private ProcessingStack transformPipe = null;
     DPLParserCatalystContext catCtx = null;
-    private boolean aggregatesUsed = false;
-    private String aggregateField = null;
 
     public WhereStep whereStep = null;
 
@@ -88,48 +78,27 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
     EvalStatement evalStatement = null;
 
     // emit catalyst
-    public WhereTransformation(DPLParserCatalystContext catCtx, ProcessingStack transformPipe, List<String> buf) {
-        this.traceBuffer = buf;
-        this.doc = null;
+    public WhereTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
-        this.transformPipe = transformPipe;
-        this.evalStatement = new EvalStatement(catCtx, transformPipe, buf);
+        this.evalStatement = new EvalStatement(catCtx);
     }
-
-    // Parameters for Groupmapper queries
-
-    public boolean getAggregatesUsed() {
-        return this.aggregatesUsed;
-    }
-
-    public String getAggregateField() {
-        return this.aggregateField;
-    }
-
 
     /**
      * whereTransformation : WHERE evalStatement ;
      */
     @Override
     public Node visitWhereTransformation(DPLParser.WhereTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!this.transformPipe.isEmpty()) {
-            ds = this.transformPipe.pop();
-        }
-        this.whereStep = new WhereStep(ds);
+        this.whereStep = new WhereStep();
 
         ColumnNode cn = (ColumnNode)whereTransformationEmitCatalyst(ctx);
 
         this.whereStep.setWhereColumn(cn.getColumn());
-        LOGGER.info("Set whereStep column to: " + cn.getColumn().expr().sql());
+        LOGGER.info("Set whereStep column to: <{}>", cn.getColumn().expr().sql());
 
-        this.transformPipe.push(this.whereStep.get());
-        return cn;
+        return new StepNode(whereStep);
     }
 
     private Node whereTransformationEmitCatalyst(DPLParser.WhereTransformationContext ctx) {
-        traceBuffer.add(ctx.getChildCount() + " WhereTransformation(Catalyst) " + ctx.getText()+ " stackIsEmpty:"+transformPipe.isEmpty());
-
         boolean isNot = false;
         // where NOT like(field, something)
         if (ctx.getChild(1).getChild(0) instanceof TerminalNode) {
@@ -148,8 +117,7 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
                 n = new ColumnNode(functions.not(whereCol));
             }
             sql = whereCol.expr().sql();
-            traceBuffer.add(ctx.getChildCount() + " WhereTransformation(Catalyst) out:" + sql);
-            LOGGER.info(ctx.getChildCount() + " WhereTransformation(Catalyst) out:" + sql);
+            LOGGER.info("WhereTransformation(Catalyst) out: children=<{}> sql=<{}>", ctx.getChildCount(), sql);
         } else {
             if (n != null)
                 throw new RuntimeException(

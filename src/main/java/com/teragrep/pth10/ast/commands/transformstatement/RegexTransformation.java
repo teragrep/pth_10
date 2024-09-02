@@ -46,18 +46,14 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.ProcessingStack;
-import com.teragrep.pth10.ast.bo.CatalystNode;
 import com.teragrep.pth10.ast.bo.Node;
+import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.steps.regex.RegexStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,13 +62,10 @@ import org.slf4j.LoggerFactory;
  */
 public class RegexTransformation extends DPLParserBaseVisitor<Node> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RegexTransformation.class);
-    private ProcessingStack processingStack = null;
-    private DPLParserCatalystContext catCtx = null;
     public RegexStep regexStep = null;
 
-    public RegexTransformation(ProcessingStack processingStack, DPLParserCatalystContext catCtx) {
-        this.processingStack = processingStack;
-        this.catCtx = catCtx;
+    public RegexTransformation() {
+
     }
 
     /*
@@ -87,11 +80,7 @@ public class RegexTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitRegexTransformation(DPLParser.RegexTransformationContext ctx) {
-        Dataset<Row> ds = null;
-        if (!this.processingStack.isEmpty()) {
-            ds = processingStack.pop();
-        }
-        regexStep = new RegexStep(ds);
+        regexStep = new RegexStep();
         // 0 regex 1 fieldType 2 EQ/NEQ 3 regexStringType
         // -- OR --
         // 0 regex 1 regexStringType
@@ -132,14 +121,12 @@ public class RegexTransformation extends DPLParserBaseVisitor<Node> {
             regexStatement = ctx.getChild(1).getText();
         }
 
-        LOGGER.debug("from= " + fromField + " regex= " + regexStatement + " equals= " + equals);
+        LOGGER.debug("from=<{}> regex=<{}> equals=<{}>", fromField, regexStatement, equals);
 
         regexStep.setRegexString(regexStatement);
         regexStep.setEquals(equals);
         regexStep.setFromField(fromField);
-        ds = regexStep.get();
 
-        processingStack.push(ds);
-        return new CatalystNode(ds);
+        return new StepNode(regexStep);
     }
 }

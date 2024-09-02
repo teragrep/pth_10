@@ -67,9 +67,6 @@ public class RexExtractModeUDF implements UDF2<String, String, Map<String, Strin
         final Map<Integer, String> matchTable = pcre.get_match_table();
         final Map<String, Integer> nameTable = pcre.get_name_table();
 
-        // clean compile
-        pcre.jcompile_free();
-
         // save results on name, value map
         final Map<String, String> results = new HashMap<>();
         for (final Map.Entry<String, Integer> me : nameTable.entrySet()) {
@@ -77,6 +74,11 @@ public class RexExtractModeUDF implements UDF2<String, String, Map<String, Strin
             final String name = me.getKey();
             results.put(name, value);
         }
+
+        // clean compile
+        // Note: Can throw IllegalStateException if nothing to free but should
+        // realistically never happen as it is only called after compile
+        pcre.jcompile_free();
 
         return results;
     }

@@ -48,15 +48,13 @@ package com.teragrep.pth10.steps.eval;
 
 import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 
 public abstract class AbstractEvalStep extends AbstractStep {
     protected String leftSide = null;
     protected Column rightSide = null;
 
-    public AbstractEvalStep(Dataset<Row> dataset) {
-        super(dataset);
+    public AbstractEvalStep() {
+        super();
     }
 
     public void setLeftSide(String leftSide) {

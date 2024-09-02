@@ -197,7 +197,7 @@ public class UDAF_DistinctCount extends UserDefinedAggregateFunction {
 			}
 		}
 		catch (Exception e) {
-			LOGGER.info("UDAF_DistinctCount: Error casting Object to Long");
+			LOGGER.error("UDAF_DistinctCount: Error casting Object to Long");
 			throw e;
 		}
 		

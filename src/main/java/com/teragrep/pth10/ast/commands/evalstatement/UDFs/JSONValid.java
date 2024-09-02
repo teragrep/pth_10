@@ -58,7 +58,7 @@ import java.io.Serializable;
  * Where x is a field containing a string, either in JSON format or not.<br>
  * Returns TRUE for valid JSON, and FALSE for strings that are not considered to be valid JSON.<br>
  * The check is fairly strict, using com.google.gson.Gson.
- * @author p000043u
+ * @author eemhu
  *
  */
 public class JSONValid implements UDF1<String, Boolean>, Serializable {

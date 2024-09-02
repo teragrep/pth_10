@@ -67,7 +67,7 @@ public class TimeToUnixTime implements UDF1<Object, Long> {
     /**
      * @param time Object of type timestamp or unix time
      * @return as unix time
-     * @throws Exception
+     * @throws Exception parsing exception
      */
     @Override
     public Long call(Object time) throws Exception {
@@ -75,25 +75,25 @@ public class TimeToUnixTime implements UDF1<Object, Long> {
 
         if (time instanceof Timestamp) {
             Timestamp ts = (Timestamp)time;
-            LOGGER.info("Time was detected as TIMESTAMP, epoch: " + ts.getTime()/1000L);
+            LOGGER.debug("Time was detected as TIMESTAMP, epoch: <{}>", ts.getTime()/1000L);
             unixtime = ts.getTime() / 1000L;
         }
         else if (time instanceof Long) {
-            LOGGER.info("Time was directly a LONG/EPOCH: " + (Long)time);
+            LOGGER.debug("Time was directly a LONG/EPOCH: <{}>", time);
             unixtime = (Long)time;
         }
         else if (time instanceof Integer) {
-            LOGGER.info("Time was an INTEGER: " + (Integer)time);
+            LOGGER.debug("Time was an INTEGER: <{}>", time);
             unixtime = ((Integer)time).longValue();
         }
         else if (time instanceof String) {
-            LOGGER.info("Time was a STRING: " + (String)time);
+            LOGGER.debug("Time was a STRING: <{}>", time);
             try {
-                LOGGER.info("Attempting to use as-is (epoch)");
+                LOGGER.debug("Attempting to use as-is (epoch)");
                 unixtime = Long.parseLong(((String)time));
             }
             catch (NumberFormatException nfe) {
-                LOGGER.info("Failed, attempting to parse as a ISO_ZONED_DATE_TIME");
+                LOGGER.debug("Failed, attempting to parse as a ISO_ZONED_DATE_TIME");
                 String timeStr = (String)time;
                 LocalDateTime ldt = LocalDateTime.parse(timeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
                 ZonedDateTime zdt = ZonedDateTime.of(ldt, ZoneId.systemDefault());
@@ -106,7 +106,7 @@ public class TimeToUnixTime implements UDF1<Object, Long> {
             throw new RuntimeException("Invalid type, cannot convert to unix time");
         }
 
-        LOGGER.info("Returning unix time = " + unixtime);
+        LOGGER.debug("Returning unix time = <{}>", unixtime);
         return unixtime;
     }
 }

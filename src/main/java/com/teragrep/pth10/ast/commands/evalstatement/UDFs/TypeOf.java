@@ -64,7 +64,7 @@ import java.io.Serializable;
  *     String 		| String
  *     (Other) 		| Invalid
  * </pre>
- * @author p000043u
+ * @author eemhu
  *
  */
 public class TypeOf implements UDF1<Object, String>, Serializable {

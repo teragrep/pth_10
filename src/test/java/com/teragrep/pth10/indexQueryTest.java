@@ -48,31 +48,28 @@ package com.teragrep.pth10;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class indexQueryTest {
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseSimpleIndexQueryTest() throws Exception {
+	public void parseSimpleIndexQueryTest() {
 		String q,e,result;
-		q = "index=voyager";
-		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"voyager\"";
-		result = utils.getQueryAnalysis(q);
-		/*
-		LOGGER.info("      DPL=<" + q + ">");
-		utils.printDebug(e,result);
-		 */
+		q = "index=cinnamon";
+		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
+		result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
 		assertEquals(e,result);
 	}
 
-	@Disabled
+	@Disabled(value="Should be converted to a dataframe test")
 	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseIndexQueryWithSearchStringTest() throws Exception {
+	public void parseIndexQueryWithSearchStringTest() {
 		String q,e,result;
 		q = "index=kafka_topic conn";
 		e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%'";
-		result = utils.getQueryAnalysis(q);
+		result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
 		assertEquals(e,result);
 	}
 }

@@ -46,11 +46,10 @@
 
 package com.teragrep.pth10.ast.commands.transformstatement.regex;
 
-import com.teragrep.pth10.ast.Util;
+import com.teragrep.jpr_01.JavaPcre;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import org.apache.spark.sql.api.java.UDF3;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Used for regex command (RegexTransformation)
@@ -63,12 +62,19 @@ public class RegexMatch implements UDF3<String, String, Boolean, Boolean> {
      * @param regexString regex statement
      * @param equals = is true, != is false
      * @return boolean for where function
-     * @throws Exception
+     * @throws Exception invalid args or pcre error
      */
     @Override
     public Boolean call(String rowString, String regexString, Boolean equals) throws Exception {
-        Matcher m = Pattern.compile(Util.stripQuotes(regexString)).matcher(rowString);
-        boolean isMatch = m.matches();
+        // create JavaPCRE instance
+        final JavaPcre pcre = new JavaPcre();
+
+        // compile regex matcher for given regex pattern
+        pcre.compile_java(new UnquotedText(new TextString(regexString)).read());
+
+        // get matches from beginning of input string
+        pcre.singlematch_java(rowString, 0);
+        boolean isMatch = pcre.get_matchfound();
 
         if (isMatch && equals) {
             // Regex matches with = sign
@@ -87,6 +93,6 @@ public class RegexMatch implements UDF3<String, String, Boolean, Boolean> {
             return true;
         }
 
-        throw new RuntimeException(String.format("Invalid arguments used with regex command: row: '%s' regex: '%s' equals: '%s", rowString, regexString, equals));
+        throw new RuntimeException(String.format("Invalid arguments used with regex command: row: '%s' regex: '%s' equals: '%s'", rowString, regexString, equals));
     }
 }

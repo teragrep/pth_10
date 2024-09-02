@@ -46,30 +46,42 @@
 
 package com.teragrep.pth10.steps.join;
 
-import com.teragrep.pth10.ast.DPLInternalStreamingQuery;
+import com.teragrep.pth10.steps.subsearch.AbstractSubsearchStep;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.streaming.*;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
-public class JoinStep extends AbstractJoinStep {
+public final class JoinStep extends AbstractJoinStep {
     private static final Logger LOGGER = LoggerFactory.getLogger(JoinStep.class);
-    public JoinStep(Dataset<Row> dataset) {
-        super(dataset);
+    public JoinStep() {
+        super();
     }
 
     @Override
-    public Dataset<Row> get() {
-        if (this.dataset == null || this.subSearchDataset == null) {
+    public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
+        if (dataset == null) {
+            LOGGER.error("JoinStep was given a null dataset");
             return null;
         }
 
+
+        // prepare subsearchStep and get the dataset
+        this.subsearchStep.setListener(this.catCtx.getInternalStreamingQueryListener());
+        this.subsearchStep.setHdfsPath(this.pathForSubsearchSave);
+        this.subsearchStep.setType(AbstractSubsearchStep.SubSearchType.JOIN_COMMAND_SUBSEARCH);
+        this.subSearchDataset = this.subsearchStep.get(dataset);
+
         // for subsearch save
-        final StructType subSchema = this.subSearchDataset.schema();
         final String randomID = UUID.randomUUID().toString();
         final String checkpointPath = this.pathForSubsearchSave.concat("/checkpoint/").concat(randomID);
         final String path = this.pathForSubsearchSave.concat("/data/").concat(randomID).concat(".avro");
@@ -81,13 +93,23 @@ public class JoinStep extends AbstractJoinStep {
 
         final SparkSession ss = SparkSession.builder().getOrCreate();
 
+        // Convert to avro-friendly names before save to bypass naming restrictions
+        final Map<String, String> mapOfColumnNames = new HashMap<>();
+        Dataset<Row> convertedSubSearchDataset = this.subSearchDataset;
+        for (final StructField field : this.subSearchDataset.schema().fields()) {
+            final String encodedName = "HEX".concat(Hex.encodeHexString(field.name().getBytes(StandardCharsets.UTF_8)));
+            convertedSubSearchDataset = convertedSubSearchDataset.withColumnRenamed(field.name(), encodedName);
+            mapOfColumnNames.put(encodedName, field.name());
+        }
+
         // Create subsearch to disk writer and start query
+        final StructType subSchema = convertedSubSearchDataset.schema();
         DataStreamWriter<Row> subToDiskWriter =
-                this.subSearchDataset
+                convertedSubSearchDataset
                         .writeStream()
                         .format("avro")
                         .trigger(Trigger.ProcessingTime(0))
-                        .option("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
+                      //  .option("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
                         .option("checkpointLocation", checkpointPath)
                         .option("path", path)
                         .outputMode("append");
@@ -96,23 +118,23 @@ public class JoinStep extends AbstractJoinStep {
         StreamingQuery subToDiskQuery = this.getCatCtx().getInternalStreamingQueryListener().registerQuery(queryName, subToDiskWriter);
 
         // Await for StreamingQueryListener to call stop()
-        try {
-            subToDiskQuery.awaitTermination();
-        } catch (StreamingQueryException e1) {
-            // TODO Auto-generated catch block
-            e1.printStackTrace();
-        }
+        subToDiskQuery.awaitTermination();
+
 
         // Read from disk to dataframe
-        this.subSearchDataset = ss.sqlContext().read().format("avro").schema(subSchema).load(path);
-        LOGGER.info("subsearch ds.count= " + this.subSearchDataset.count());
+        Dataset<Row> readFromDisk = ss.sqlContext().read().format("avro").schema(subSchema).load(path);
+        // retrieve original column names
+        Dataset<Row> out = readFromDisk;
+        for (StructField field : readFromDisk.schema().fields()) {
+            out = out.withColumnRenamed(field.name(), mapOfColumnNames.get(field.name()));
+        }
 
         // max parameter
         if (max != null && max != 0) {
             // parameter is given with any other value than 0
             // max=0 will not limit
-            LOGGER.info("Sub search limit set to " + max);
-            this.subSearchDataset = this.subSearchDataset.limit(max);
+            LOGGER.info("Sub search limit set to <[{}]>", max);
+            out = out.limit(max);
         }
         else if (max != null) {
             LOGGER.info("Sub search limit set to 0 (unlimited)");
@@ -121,7 +143,7 @@ public class JoinStep extends AbstractJoinStep {
         else {
             // default value is 1 (no parameter given)
             LOGGER.info("Sub search limit set to 1 (default)");
-            this.subSearchDataset = this.subSearchDataset.limit(1);
+            out = out.limit(1);
         }
 
         // Expression for joining datasets together
@@ -129,42 +151,55 @@ public class JoinStep extends AbstractJoinStep {
 
         // Grab column names, and prefix subsearch dataset
         // to separate them from the left side
-        String[] originalLeftSideCols = this.dataset.columns();
+        String[] originalLeftSideCols = dataset.columns();
 
-        for (String colName : this.subSearchDataset.columns()) {
-            this.subSearchDataset = this.subSearchDataset.withColumnRenamed(colName, subSearchPrefix + colName);
+        for (String colName : out.columns()) {
+            out = out.withColumnRenamed(colName, subSearchPrefix + colName);
         }
 
-        String[] originalRightSideCols = this.subSearchDataset.columns();
+        String[] originalRightSideCols = out.columns();
 
         // Build joinExpr used for joining left and right side datasets
         // Also rename join fields to include a prefix for subsearch columns (default R_)
         // It is used to remove the duplicates after the join
-        for (String fieldName : this.listOfFields) {
-            LOGGER.info("Building joinExpr with field: " + fieldName);
+        if (this.listOfFields != null && !this.listOfFields.isEmpty()) {
+            for (String fieldName : this.listOfFields) {
+                LOGGER.info("Building joinExpr with field: <[{}]>", fieldName);
 
-            if (joinExpr == null) {
-                joinExpr = this.dataset.col(fieldName).equalTo(this.subSearchDataset.col(subSearchPrefix + fieldName));
+                // Check that join on field is present on both datasets
+                if (Arrays.stream(dataset.schema().fields()).noneMatch(x -> x.name().equals(fieldName))) {
+                    throw new RuntimeException("Join command encountered an error: main dataset (left side) missing expected field '" + fieldName + "'");
+                }
+                else if (Arrays.stream(out.schema().fields()).noneMatch(x -> x.name().equals(subSearchPrefix.concat(fieldName)))){
+                    throw new RuntimeException("Join command encountered an error: Subsearch dataset (right side) missing expected field '" + fieldName + "'");
+                }
+
+                if (joinExpr == null) {
+                    joinExpr = dataset.col(fieldName).equalTo(out.col(subSearchPrefix + fieldName));
+                }
+                else {
+                    joinExpr = joinExpr.and(dataset.col(fieldName).equalTo(out.col(subSearchPrefix + fieldName)));
+                }
             }
-            else {
-                joinExpr = joinExpr.and(this.dataset.col(fieldName).equalTo(this.subSearchDataset.col(subSearchPrefix + fieldName)));
-            }
+        } else {
+            throw new IllegalStateException("Join command was not provided with the necessary field(s) to join on!");
         }
+
 
         // If parameters usetime=true, earlier=true
         if (usetime != null && usetime && earlier != null && earlier) {
             LOGGER.info("usetime=true, earlier=true (with joinExpr)");
-            joinExpr = joinExpr.and(this.dataset.col("_time").geq(this.subSearchDataset.col(subSearchPrefix + "_time")));
+            joinExpr = joinExpr.and(dataset.col("_time").geq(out.col(subSearchPrefix + "_time")));
         }
         // If parameters usetime=true, earlier=false
         else if (usetime != null && usetime && earlier != null && !earlier) {
             LOGGER.info("usetime=true, earlier=false (with joinExpr)");
-            joinExpr = joinExpr.and(this.dataset.col("_time").leq(this.subSearchDataset.col(subSearchPrefix + "_time")));
+            joinExpr = joinExpr.and(dataset.col("_time").leq(out.col(subSearchPrefix + "_time")));
         }
 
-        Dataset<Row> result = null;
+        Dataset<Row> result;
         // Perform the join using the constructed joinExpr in joinMode (default joinMode is inner)
-        result = this.dataset.join(this.subSearchDataset, joinExpr, joinMode == null ? "inner" : joinMode);
+        result = dataset.join(out, joinExpr, joinMode == null ? "inner" : joinMode);
 
         // drop all subsearch fields which were used to join the dataframes together
         for (String fieldName : listOfFields) {
