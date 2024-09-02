@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,41 +43,42 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.convert;
 
 import org.apache.spark.sql.api.java.UDF1;
 
 /**
  * Converts duration to seconds
+ * 
  * @author eemhu
- *
  */
 public class Dur2Sec implements UDF1<String, String> {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public String call(String duration) throws Exception {
-		// duration is in format [D+]HH:MM:SS
-		// split based on colon (':')
-		String[] parts = duration.split(":");
+    @Override
+    public String call(String duration) throws Exception {
+        // duration is in format [D+]HH:MM:SS
+        // split based on colon (':')
+        String[] parts = duration.split(":");
 
-		long hrs = 0L, min = 0L, sec = 0L;
-		if (parts.length == 3) {
-			hrs = Long.valueOf(parts[0]);
-			min = Long.valueOf(parts[1]);
-			sec = Long.valueOf(parts[2]);
-		}
-		else {
-			throw new RuntimeException("Duration value '" + duration + "' is not of valid format. Expected: [D+]HH:MM:SS");
-		}
+        long hrs = 0L, min = 0L, sec = 0L;
+        if (parts.length == 3) {
+            hrs = Long.valueOf(parts[0]);
+            min = Long.valueOf(parts[1]);
+            sec = Long.valueOf(parts[2]);
+        }
+        else {
+            throw new RuntimeException(
+                    "Duration value '" + duration + "' is not of valid format. Expected: [D+]HH:MM:SS"
+            );
+        }
 
-		// add minutes and hours to seconds
-		sec += (min * 60L);
-		sec += (hrs * 60L * 60L);
+        // add minutes and hours to seconds
+        sec += (min * 60L);
+        sec += (hrs * 60L * 60L);
 
-		return String.valueOf(sec);
-	}
+        return String.valueOf(sec);
+    }
 
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.DPLAuditInformation;
@@ -62,8 +61,6 @@ import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.Arrays;
@@ -77,10 +74,11 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
-    StreamingTestUtil is used to perform DPL queries in streaming tests.
-    Also has functions for setting up the test and tearing down, for use in BeforeEach-annotations etc.
+ * StreamingTestUtil is used to perform DPL queries in streaming tests. Also has functions for setting up the test and
+ * tearing down, for use in BeforeEach-annotations etc.
  **/
 public class StreamingTestUtil {
+
     private DPLParserCatalystContext ctx;
     private DPLParserCatalystVisitor catalystVisitor;
     private StructType schema;
@@ -96,6 +94,7 @@ public class StreamingTestUtil {
     /**
      * Constructor with a schema parameter. If no schema is given, the dataframe's columns won't be in the same order.
      * If the test needs to take column order into account, using this constructor is crucial.
+     * 
      * @param schema schema of the test file
      */
     public StreamingTestUtil(StructType schema) {
@@ -106,6 +105,7 @@ public class StreamingTestUtil {
 
     /**
      * Set to fail tests if ANTLR encounters any lexing or parsing errors, even if it can auto-recover.
+     * 
      * @param strictParserMode Fail tests on any parsing error
      */
     public void setStrictParserMode(boolean strictParserMode) {
@@ -114,6 +114,7 @@ public class StreamingTestUtil {
 
     /**
      * Returns the boolean value indicating if strict parser mode is enabled.
+     * 
      * @return boolean value indicating if strict parser mode is enabled.
      */
     public boolean isStrictParserMode() {
@@ -122,6 +123,7 @@ public class StreamingTestUtil {
 
     /**
      * Set to print parse tree to System.out
+     * 
      * @param printParseTree boolean value
      */
     public void setPrintParseTree(boolean printParseTree) {
@@ -130,6 +132,7 @@ public class StreamingTestUtil {
 
     /**
      * Indicates if parse tree is print on test run
+     * 
      * @return boolean value
      */
     public boolean isPrintParseTree() {
@@ -190,50 +193,76 @@ public class StreamingTestUtil {
 
     /**
      * Performs a DPL query.
-     * @param query DPL Query
-     * @param assertions The function to run on the result dataset. Should contain assertions.
-     * @param testDirectory Directory path to specify which data to use in the test.
+     * 
+     * @param query              DPL Query
+     * @param assertions         The function to run on the result dataset. Should contain assertions.
+     * @param testDirectory      Directory path to specify which data to use in the test.
      * @param dataCustomizations Function to apply any data customizations for special cases such as relative timestamp
      *                           tests, where the time column of the data needs to change in order to keep the tests
      *                           functional over a longer period of time.
      */
-    public void performDPLTest(String query, String testDirectory, Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
-                               Consumer<Dataset<Row>> assertions) {
-       assertThrowsDPLTest(false, null, query, testDirectory, dataCustomizations, assertions);
+    public void performDPLTest(
+            String query,
+            String testDirectory,
+            Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
+            Consumer<Dataset<Row>> assertions
+    ) {
+        assertThrowsDPLTest(false, null, query, testDirectory, dataCustomizations, assertions);
     }
 
-    public <T extends Throwable> T performThrowingDPLTest(Class<T> clazz, String query, String testDirectory, Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
-                                            Consumer<Dataset<Row>> assertions) {
+    public <T extends Throwable> T performThrowingDPLTest(
+            Class<T> clazz,
+            String query,
+            String testDirectory,
+            Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
+            Consumer<Dataset<Row>> assertions
+    ) {
         return assertThrowsDPLTest(true, clazz, query, testDirectory, dataCustomizations, assertions);
     }
 
-    public <T extends Throwable> T performThrowingDPLTest(Class<T> clazz, String query, String testDirectory,
-                                            Consumer<Dataset<Row>> assertions) {
+    public <T extends Throwable> T performThrowingDPLTest(
+            Class<T> clazz,
+            String query,
+            String testDirectory,
+            Consumer<Dataset<Row>> assertions
+    ) {
         return assertThrowsDPLTest(true, clazz, query, testDirectory, (ds) -> ds, assertions);
     }
 
     /**
      * Performs a DPL query, without any special data customizations.
-     * @param query DPL Query
-     * @param assertions The function to run on the result dataset. Should contain assertions.
+     * 
+     * @param query         DPL Query
+     * @param assertions    The function to run on the result dataset. Should contain assertions.
      * @param testDirectory Directory path to specify which data to use in the test.
      */
     public void performDPLTest(String query, String testDirectory, Consumer<Dataset<Row>> assertions) {
         assertThrowsDPLTest(false, null, query, testDirectory, (ds) -> ds, assertions);
     }
 
-    private <T extends Throwable> T assertThrowsDPLTest(boolean doesThrow, Class<T> clazz, String query, String testDirectory, Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
-                                                        Consumer<Dataset<Row>> assertions) {
+    private <T extends Throwable> T assertThrowsDPLTest(
+            boolean doesThrow,
+            Class<T> clazz,
+            String query,
+            String testDirectory,
+            Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
+            Consumer<Dataset<Row>> assertions
+    ) {
         if (doesThrow) {
             return assertThrows(clazz, () -> internalDPLTest(query, testDirectory, dataCustomizations, assertions));
-        } else {
+        }
+        else {
             assertDoesNotThrow(() -> internalDPLTest(query, testDirectory, dataCustomizations, assertions));
         }
         return null;
     }
 
-    private void internalDPLTest(String query, String testDirectory, Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
-                                 Consumer<Dataset<Row>> assertions) throws TimeoutException {
+    private void internalDPLTest(
+            String query,
+            String testDirectory,
+            Function<Dataset<Row>, Dataset<Row>> dataCustomizations,
+            Consumer<Dataset<Row>> assertions
+    ) throws TimeoutException {
         if (this.catalystVisitor == null) {
             throw new NullPointerException("StreamingTestUtil's CatalystVisitor is null: setUp wasn't called");
         }
@@ -245,7 +274,8 @@ public class StreamingTestUtil {
             if (this.schema == null) {
                 // notice that the schema from a JSON-file might be in an unexpected order
                 schema = spark.read().json(testDirectory).schema();
-            } else {
+            }
+            else {
                 // schema was given in constructor
                 schema = this.schema;
             }
@@ -269,10 +299,17 @@ public class StreamingTestUtil {
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         if (this.strictParserMode) {
-            lexer.addErrorListener(new BaseErrorListener(){
+            lexer.addErrorListener(new BaseErrorListener() {
+
                 @Override
-                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-                                        int line, int charPosInLine, String msg, RecognitionException e){
+                public void syntaxError(
+                        Recognizer<?, ?> recognizer,
+                        Object offendingSymbol,
+                        int line,
+                        int charPosInLine,
+                        String msg,
+                        RecognitionException e
+                ) {
                     fail(String.format("Lexer error at line %s:%s due to %s %s", line, charPosInLine, msg, e));
                 }
             });
@@ -281,10 +318,17 @@ public class StreamingTestUtil {
         // parser init
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         if (this.strictParserMode) {
-            parser.addErrorListener(new BaseErrorListener(){
+            parser.addErrorListener(new BaseErrorListener() {
+
                 @Override
-                public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol,
-                                        int line, int charPosInLine, String msg, RecognitionException e){
+                public void syntaxError(
+                        Recognizer<?, ?> recognizer,
+                        Object offendingSymbol,
+                        int line,
+                        int charPosInLine,
+                        String msg,
+                        RecognitionException e
+                ) {
                     fail(String.format("Parser error at line %s:%s due to %s %s", line, charPosInLine, msg, e));
                 }
             });
@@ -301,7 +345,8 @@ public class StreamingTestUtil {
         DataStreamWriter<Row> dsw;
         try {
             dsw = n.stepList.execute();
-        } catch (StreamingQueryException e) {
+        }
+        catch (StreamingQueryException e) {
             throw new RuntimeException(e);
         }
 
@@ -317,9 +362,9 @@ public class StreamingTestUtil {
     }
 
     /**
-     * Returns the internal cause string matching the given exception
-     * or if it was not found, throws RuntimeException.
-     * @param cause StreamingQueryException's cause Throwable
+     * Returns the internal cause string matching the given exception or if it was not found, throws RuntimeException.
+     * 
+     * @param cause             StreamingQueryException's cause Throwable
      * @param internalException Class type of expected Exception
      * @throws RuntimeException If cause string could not be found
      * @return "Caused by: java.lang.Exception: Message" type string
@@ -328,12 +373,14 @@ public class StreamingTestUtil {
         if (cause != null) {
             final String causeMessage = cause.getMessage();
             final String exceptionClassName = internalException.getName();
-            final Pattern regexPattern = Pattern.compile("^Caused\\sby:\\s" + Pattern.quote(exceptionClassName) + ":\\s.*$", Pattern.MULTILINE);
+            final Pattern regexPattern = Pattern
+                    .compile("^Caused\\sby:\\s" + Pattern.quote(exceptionClassName) + ":\\s.*$", Pattern.MULTILINE);
             final Matcher regexMatcher = regexPattern.matcher(causeMessage);
 
             if (regexMatcher.find()) {
                 return regexMatcher.group();
-            } else {
+            }
+            else {
                 throw new RuntimeException("Could not get internal cause string!");
             }
         }
@@ -342,6 +389,7 @@ public class StreamingTestUtil {
 
     /**
      * Gets the test resources file path, used for testing
+     * 
      * @return absolute path to the test resources directory
      */
     public String getTestResourcesPath() {

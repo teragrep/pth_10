@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -57,13 +57,13 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the new ProcessingStack implementation
- * Uses streaming datasets
+ * Tests for the new ProcessingStack implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DedupTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupTransformationTest.class);
 
     // Use this file for  dataset initialization
@@ -87,13 +87,15 @@ public class DedupTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // basic dedup
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // basic dedup
     public void dedupTest_NoParams() {
         this.streamingTestUtil.performDPLTest("index=index_A | dedup _raw", this.testFile, res -> {
             List<String> expectedColumns = new ArrayList<>(
@@ -115,7 +117,10 @@ public class DedupTransformationTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // consecutive=true
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // consecutive=true
     public void dedupTest_Consecutive() {
         String query = "index=index_A | dedup _raw consecutive= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -137,7 +142,10 @@ public class DedupTransformationTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort descending as numbers
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // sort descending as numbers
     public void dedupTest_SortNum() {
         String query = "index=index_A | dedup _raw sortby - num(_raw)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -156,7 +164,10 @@ public class DedupTransformationTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // keep duplicate events with nulls
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // keep duplicate events with nulls
     public void dedupTest_KeepEvents() {
         String query = "index=index_A | dedup _raw keepevents= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -179,7 +190,10 @@ public class DedupTransformationTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // keep null values
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // keep null values
     public void dedupTest_KeepEmpty() {
         // first use keepevents=true to make null values in the dataset
         String query = "index=index_A | dedup _raw keepevents= true | dedup _raw keepempty= true";
@@ -201,7 +215,10 @@ public class DedupTransformationTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // deduplicate based on _raw, sourcetype and partition
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // deduplicate based on _raw, sourcetype and partition
     public void dedupTest_MultiColumn() {
         String query = "index=index_A | dedup _raw, sourcetype, partition";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {

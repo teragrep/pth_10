@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -61,14 +60,13 @@ import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 /**
  * Class containing all the visitor methods for the <code>where</code> command<br>
- * Can be piped like <code>{@literal ... | where col > 1}</code> to limit the results to only
- * the values where the statement is true
+ * Can be piped like <code>{@literal ... | where col > 1}</code> to limit the results to only the values where the
+ * statement is true
  */
 public class WhereTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(WhereTransformation.class);
     DPLParserCatalystContext catCtx = null;
 
@@ -90,7 +88,7 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitWhereTransformation(DPLParser.WhereTransformationContext ctx) {
         this.whereStep = new WhereStep();
 
-        ColumnNode cn = (ColumnNode)whereTransformationEmitCatalyst(ctx);
+        ColumnNode cn = (ColumnNode) whereTransformationEmitCatalyst(ctx);
 
         this.whereStep.setWhereColumn(cn.getColumn());
         LOGGER.info("Set whereStep column to: <{}>", cn.getColumn().expr().sql());
@@ -111,20 +109,22 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
         Node n = evalStatement.visit(ctx.getChild(1));
         String sql = null;
         if (n instanceof ColumnNode) {
-            Column whereCol = ((ColumnNode)n).getColumn();
+            Column whereCol = ((ColumnNode) n).getColumn();
             // apply NOT if it was present
             if (isNot) {
                 n = new ColumnNode(functions.not(whereCol));
             }
             sql = whereCol.expr().sql();
             LOGGER.info("WhereTransformation(Catalyst) out: children=<{}> sql=<{}>", ctx.getChildCount(), sql);
-        } else {
+        }
+        else {
             if (n != null)
                 throw new RuntimeException(
-                        "Where transformation operation not supported for type:" + n.getClass().getName()+" value="+n.toString());
+                        "Where transformation operation not supported for type:" + n.getClass().getName() + " value="
+                                + n.toString()
+                );
             else
-                throw new RuntimeException(
-                        "Where transformation operation not supported for type:" + n);
+                throw new RuntimeException("Where transformation operation not supported for type:" + n);
         }
         return n;
     }

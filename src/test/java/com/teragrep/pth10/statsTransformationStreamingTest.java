@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -64,171 +64,251 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class statsTransformationStreamingTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(statsTransformationStreamingTest.class);
 
-	private final String testFile = "src/test/resources/predictTransformationTest_data*.json"; // * to make the path into a directory path
-	private final StructType testSchema = new StructType(
-			new StructField[] {
-					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-					new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-					new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-			}
-	);
+    private static final Logger LOGGER = LoggerFactory.getLogger(statsTransformationStreamingTest.class);
 
-	private StreamingTestUtil streamingTestUtil;
+    private final String testFile = "src/test/resources/predictTransformationTest_data*.json"; // * to make the path into a directory path
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
-	@org.junit.jupiter.api.BeforeAll
-	void setEnv() {
-		this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
-		this.streamingTestUtil.setEnv();
-	}
+    private StreamingTestUtil streamingTestUtil;
 
-	@org.junit.jupiter.api.BeforeEach
-	void setUp() {
-		this.streamingTestUtil.setUp();
-	}
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
+    }
 
-	@org.junit.jupiter.api.AfterEach
-	void tearDown() {
-		this.streamingTestUtil.tearDown();
-	}
-	
-	
-	// ----------------------------------------
-	// Tests
-	// ----------------------------------------
-	
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void statsTransform_Streaming_AggDistinctCount_Test() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats dc(offset) AS stats_test_result",
-				testFile,
-				ds -> {
-					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-					assertEquals(Arrays.asList("25"), listOfResult, "Batch consumer dataset did not contain the expected values !");
-				});
-	}
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        this.streamingTestUtil.setUp();
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void statsTransform_Streaming_AggEarliest_Test() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats earliest(offset) AS stats_test_result",
-				testFile,
-				ds -> {
-					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-					assertEquals(Arrays.asList("15"), listOfResult, "Batch consumer dataset did not contain the expected values !");
-				});
-	}
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        this.streamingTestUtil.tearDown();
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void testSplittingByTime() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats avg(offset) AS stats_test_result BY _time",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    List<String> expected = Arrays.asList("15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
-                            "22.0", "23.0", "24.0", "13.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
-                            "10.0", "11.0", "12.0", "13.0", "14.0"); // weird timestamps in the JSON file
-                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
-                }
-		);
-	}
+    // ----------------------------------------
+    // Tests
+    // ----------------------------------------
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void testSplittingByString() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats avg(offset) AS stats_test_result BY sourcetype",
-                testFile,
-				ds -> {
-                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    List<String> expected = Arrays.asList("3.0", "8.0", "13.0", "18.0", "23.0");
-                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
-                }
-		);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void statsTransform_Streaming_AggDistinctCount_Test() {
+        streamingTestUtil.performDPLTest("index=index_A | stats dc(offset) AS stats_test_result", testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("stats_test_result")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(
+                    Arrays.asList("25"), listOfResult, "Batch consumer dataset did not contain the expected values !"
+            );
+        });
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void testSplittingByNumber() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats avg(offset) AS stats_test_result BY id",
-                testFile,
-				ds -> {
-                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    List<String> expected = Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
-                            "10.0", "11.0", "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
-                            "22.0", "23.0", "24.0", "25.0");
-                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
-                }
-		);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void statsTransform_Streaming_AggEarliest_Test() {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats earliest(offset) AS stats_test_result", testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("stats_test_result")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(
+                            Arrays.asList("15"), listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
+                });
+    }
 
-	// Sorts first by sourcetype and then in those sourcetypes it sorts by _time
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void testSplittingByMultipleColumns() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats avg(offset) AS stats_test_result BY sourcetype _time",
-                testFile,
-				ds -> {
-                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    List<String> expected = Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
-                            "10.0", "15.0", "11.0", "12.0", "13.0", "14.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
-                            "22.0", "23.0", "24.0", "25.0");
-                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
-                }
-		);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSplittingByTime() {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats avg(offset) AS stats_test_result BY _time", testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("stats_test_result")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    List<String> expected = Arrays
+                            .asList(
+                                    "15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0", "22.0", "23.0", "24.0",
+                                    "13.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0", "11.0",
+                                    "12.0", "13.0", "14.0"
+                            ); // weird timestamps in the JSON file
+                    assertEquals(
+                            expected, listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
+                });
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void testSplittingByNumericalStrings() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | eval a = offset + 0 | stats avg(offset) AS stats_test_result BY a",
-                testFile,
-				ds -> {
-                    List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    List<String> expected = Arrays.asList("1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0",
-                            "10.0", "11.0", "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
-                            "22.0", "23.0", "24.0", "25.0");
-                    assertEquals(expected, listOfResult, "Batch consumer dataset did not contain the expected values !");
-                }
-		);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSplittingByString() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats avg(offset) AS stats_test_result BY sourcetype", testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("stats_test_result")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            List<String> expected = Arrays.asList("3.0", "8.0", "13.0", "18.0", "23.0");
+                            assertEquals(
+                                    expected, listOfResult,
+                                    "Batch consumer dataset did not contain the expected values !"
+                            );
+                        }
+                );
+    }
 
-	@Test
-	public void statsTransform_Streaming_AggValues_Test() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats values(offset) AS stats_test_result",
-				testFile,
-				ds -> {
-					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream()
-							.map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-					assertEquals(Collections.singletonList("1\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n2\n20\n21\n22\n23\n24\n25\n3\n4\n5\n6\n7\n8\n9"),
-							listOfResult, "Batch consumer dataset did not contain the expected values !");
-				});
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSplittingByNumber() {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats avg(offset) AS stats_test_result BY id", testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("stats_test_result")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    List<String> expected = Arrays
+                            .asList(
+                                    "1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0", "11.0",
+                                    "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
+                                    "22.0", "23.0", "24.0", "25.0"
+                            );
+                    assertEquals(
+                            expected, listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
+                });
+    }
 
-	@Test
-	public void statsTransform_Streaming_AggExactPerc_Test() {
-		streamingTestUtil.performDPLTest(
-				"index=index_A | stats exactperc50(offset) AS stats_test_result",
-				testFile,
-				ds -> {
-					List<String> listOfResult = ds.select("stats_test_result").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-					assertEquals(Collections.singletonList("13.0"), listOfResult, "Batch consumer dataset did not contain the expected values !");
-				});
-	}
+    // Sorts first by sourcetype and then in those sourcetypes it sorts by _time
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSplittingByMultipleColumns() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats avg(offset) AS stats_test_result BY sourcetype _time", testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("stats_test_result")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            List<String> expected = Arrays
+                                    .asList(
+                                            "1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0",
+                                            "15.0", "11.0", "12.0", "13.0", "14.0", "16.0", "17.0", "18.0", "19.0",
+                                            "20.0", "21.0", "22.0", "23.0", "24.0", "25.0"
+                                    );
+                            assertEquals(
+                                    expected, listOfResult,
+                                    "Batch consumer dataset did not contain the expected values !"
+                            );
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSplittingByNumericalStrings() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | eval a = offset + 0 | stats avg(offset) AS stats_test_result BY a", testFile,
+                        ds -> {
+                            List<String> listOfResult = ds
+                                    .select("stats_test_result")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            List<String> expected = Arrays
+                                    .asList(
+                                            "1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0",
+                                            "11.0", "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0",
+                                            "20.0", "21.0", "22.0", "23.0", "24.0", "25.0"
+                                    );
+                            assertEquals(
+                                    expected, listOfResult,
+                                    "Batch consumer dataset did not contain the expected values !"
+                            );
+                        }
+                );
+    }
+
+    @Test
+    public void statsTransform_Streaming_AggValues_Test() {
+        streamingTestUtil.performDPLTest("index=index_A | stats values(offset) AS stats_test_result", testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("stats_test_result")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(
+                    Collections
+                            .singletonList(
+                                    "1\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n2\n20\n21\n22\n23\n24\n25\n3\n4\n5\n6\n7\n8\n9"
+                            ),
+                    listOfResult, "Batch consumer dataset did not contain the expected values !"
+            );
+        });
+    }
+
+    @Test
+    public void statsTransform_Streaming_AggExactPerc_Test() {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats exactperc50(offset) AS stats_test_result", testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("stats_test_result")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(
+                            Collections.singletonList("13.0"), listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
+                });
+    }
 }
- 

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.datasources;
 
 import org.apache.spark.SparkContext;
@@ -54,6 +53,7 @@ import org.apache.spark.sql.SparkSession;
  * Class to access S3 credentials
  */
 public class S3CredentialWallet {
+
     final private SparkSession spark;
     final private String identity;
     final private String path;
@@ -68,6 +68,7 @@ public class S3CredentialWallet {
 
     /**
      * Gets the credentials from HDFS
+     * 
      * @return credentials
      */
     public String getCredential() {
@@ -79,11 +80,12 @@ public class S3CredentialWallet {
         catch (Exception ignored) {
 
         }
-         return null;
+        return null;
     }
 
     /**
      * Gets the current identity
+     * 
      * @return system username
      */
     public String getIdentity() {

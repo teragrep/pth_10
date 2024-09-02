@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
 import java.io.Serializable;
@@ -52,70 +51,76 @@ import java.util.List;
 
 /**
  * An abstract class to be List-based aggregation buffers on
+ * 
  * @author eemhu
- *
  * @param <T> Type of data in list
  */
 public abstract class ListBuffer<T> implements Serializable {
 
-	private static final long serialVersionUID = 1L;
-	protected List<T> list;
-	
-	// Required constructors & methods for Java Bean compliance
+    private static final long serialVersionUID = 1L;
+    protected List<T> list;
 
-	/**
-	 * Initialize a ListBuffer with an arraylist of type T
-	 */
-	public ListBuffer() {
-		this.list = new ArrayList<T>();
-	}
+    // Required constructors & methods for Java Bean compliance
 
-	/**
-	 * Initialize a ListBuffer with an existing list of type T
-	 * @param list existing list to initialize the buffer with
-	 */
-	public ListBuffer(List<T> list) {
-		this.list = list;
-	}
+    /**
+     * Initialize a ListBuffer with an arraylist of type T
+     */
+    public ListBuffer() {
+        this.list = new ArrayList<T>();
+    }
 
-	/**
-	 * Gets the internal list from the buffer
-	 * @return list of type T
-	 */
-	public List<T> getList() {
-		return this.list;
-	}
+    /**
+     * Initialize a ListBuffer with an existing list of type T
+     * 
+     * @param list existing list to initialize the buffer with
+     */
+    public ListBuffer(List<T> list) {
+        this.list = list;
+    }
 
-	/**
-	 * Sets the internal list of the buffer
-	 * @param list to set it to
-	 */
-	public void setList(List<T> list) {
-		this.list = list;
-	}
+    /**
+     * Gets the internal list from the buffer
+     * 
+     * @return list of type T
+     */
+    public List<T> getList() {
+        return this.list;
+    }
 
-	/**
-	 * Gets the size of the internal list
-	 * @return size of the list as an integer
-	 */
-	public int getSize() {
-		return this.list.size();
-	}
+    /**
+     * Sets the internal list of the buffer
+     * 
+     * @param list to set it to
+     */
+    public void setList(List<T> list) {
+        this.list = list;
+    }
 
-	/**
-	 * Abstract method for sorting the internal list
-	 */
-	public abstract void sortInternalList();
+    /**
+     * Gets the size of the internal list
+     * 
+     * @return size of the list as an integer
+     */
+    public int getSize() {
+        return this.list.size();
+    }
 
-	/**
-	 * Abstract method for merging the internal list with another
-	 * @param another list to merge with
-	 */
-	public abstract void mergeList(List<T> another);
+    /**
+     * Abstract method for sorting the internal list
+     */
+    public abstract void sortInternalList();
 
-	/**
-	 * Abstract method for adding data to the buffer
-	 * @param data to add to the buffer
-	 */
-	public abstract void add(T data);
+    /**
+     * Abstract method for merging the internal list with another
+     * 
+     * @param another list to merge with
+     */
+    public abstract void mergeList(List<T> another);
+
+    /**
+     * Abstract method for adding data to the buffer
+     * 
+     * @param data to add to the buffer
+     */
+    public abstract void add(T data);
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -66,23 +66,22 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeragrepTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTransformationTest.class);
 
     private final String testFile = "src/test/resources/IplocationTransformationTest_data*.json"; // * to make the path into a directory path
     private String testResourcesPath;
-    private final StructType testSchema = new StructType(
-            new StructField[]{
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -103,336 +102,481 @@ public class TeragrepTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveLoadTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id
+                                + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("offset")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveLoadCsvTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/ format=CSV" + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id + " format=CSV",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/ format=CSV"
+                                + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id
+                                + " format=CSV",
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("offset")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsLoadEmptyAvroDatasetTest() {
         final String id = UUID.randomUUID().toString();
-        this.streamingTestUtil.performDPLTest(
-                "index=index_B | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/ format=avro" + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id + " format=avro",
-                this.testFile,
-                ds -> {
-                    Assertions.assertTrue(ds.isEmpty());
-                }
-        );
+        this.streamingTestUtil
+                .performDPLTest(
+                        "index=index_B | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/ format=avro"
+                                + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id
+                                + " format=avro",
+                        this.testFile, ds -> {
+                            Assertions.assertTrue(ds.isEmpty());
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsLoadEmptyCsvDatasetTest() {
         final String id = UUID.randomUUID().toString();
-        this.streamingTestUtil.performDPLTest(
-                "index=index_B | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/ format=CSV" + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id + " format=CSV",
-                this.testFile,
-                ds -> {
-                    Assertions.assertTrue(ds.isEmpty());
-                }
-        );
+        this.streamingTestUtil
+                .performDPLTest(
+                        "index=index_B | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/ format=CSV"
+                                + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id
+                                + " format=CSV",
+                        this.testFile, ds -> {
+                            Assertions.assertTrue(ds.isEmpty());
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsLoadCustomCsvTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
         if (!Files.exists(Paths.get(dir))) {
             fail("Expected file does not exist: " + dir);
         }
 
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load " + dir + " format=CSV header=FALSE",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("_raw").orderBy("_raw").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList(
-                                    "2023-01-01T00:00:00z,stuff,1",
-                                    "2023-01-02T00:00:00z,other stuff,2",
-                                    "2023-01-03T00:00:00z,more other stuff,3",
-                                    "2023-01-04T00:00:00z,even more stuff,4",
-                                    "2023-01-05T00:00:00z,more otherer stuff,5",
-                                    "_time,_raw,offset"),
-                            listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest("| teragrep exec hdfs load " + dir + " format=CSV header=FALSE", testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("_raw")
+                            .orderBy("_raw")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(
+                            Arrays
+                                    .asList(
+                                            "2023-01-01T00:00:00z,stuff,1", "2023-01-02T00:00:00z,other stuff,2",
+                                            "2023-01-03T00:00:00z,more other stuff,3",
+                                            "2023-01-04T00:00:00z,even more stuff,4",
+                                            "2023-01-05T00:00:00z,more otherer stuff,5", "_time,_raw,offset"
+                                    ),
+                            listOfResult
+                    );
+                });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsLoadCustomCsvWithHeaderTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
         if (!Files.exists(Paths.get(dir))) {
             fail("Expected file does not exist: " + dir);
         }
 
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load " + dir + " format=CSV header=TRUE",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("_raw").orderBy("_raw").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList(
-                                    "2023-01-01T00:00:00z,stuff,1",
-                                    "2023-01-02T00:00:00z,other stuff,2",
-                                    "2023-01-03T00:00:00z,more other stuff,3",
-                                    "2023-01-04T00:00:00z,even more stuff,4",
-                                    "2023-01-05T00:00:00z,more otherer stuff,5",
-                                    "_time,_raw,offset"),
-                            listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest("| teragrep exec hdfs load " + dir + " format=CSV header=TRUE", testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("_raw")
+                            .orderBy("_raw")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(
+                            Arrays
+                                    .asList(
+                                            "2023-01-01T00:00:00z,stuff,1", "2023-01-02T00:00:00z,other stuff,2",
+                                            "2023-01-03T00:00:00z,more other stuff,3",
+                                            "2023-01-04T00:00:00z,even more stuff,4",
+                                            "2023-01-05T00:00:00z,more otherer stuff,5", "_time,_raw,offset"
+                                    ),
+                            listOfResult
+                    );
+                });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsLoadCustomCsvWithProvidedSchemaTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
         if (!Files.exists(Paths.get(dir))) {
             fail("Expected file does not exist: " + dir);
         }
 
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load " + dir + " format=CSV header=TRUE schema=\"_time,_raw,offset\"",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "| teragrep exec hdfs load " + dir + " format=CSV header=TRUE schema=\"_time,_raw,offset\"",
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("offset")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveLoadWildcardTest() {
         final String id = UUID.randomUUID().toString();
 
-        streamingTestUtil.performDPLTest(
-                "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/" + id +
-                        " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id + "/*",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + "/" + id
+                                + " | regex _raw = \"\" | teragrep exec hdfs load /tmp/pth_10_hdfs/" + id + "/*",
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("offset")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsListTest() {
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs list ./src/test/resources/hdfslist/*",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("name").orderBy("name").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("another_dummy_file.txt", "dummy_file.txt"), listOfResult);
-                }
-        );
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs list ./src/test/resources/hdfslist/*", testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("name")
+                    .orderBy("name")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Arrays.asList("another_dummy_file.txt", "dummy_file.txt"), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsListWildcardTest() {
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs list ./src/test/resources/hdfslist/*.txt",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("name").orderBy("name").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil
+                .performDPLTest("| teragrep exec hdfs list ./src/test/resources/hdfslist/*.txt", testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("name")
+                            .orderBy("name")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(Arrays.asList("another_dummy_file.txt", "dummy_file.txt"), listOfResult);
-                }
-        );
+                });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsListInvalidPathTest() {
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs list /tmp/this/path/does/not/exist",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("name").orderBy("name").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.emptyList(), listOfResult);
-                }
-        );
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs list /tmp/this/path/does/not/exist", testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("name")
+                    .orderBy("name")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.emptyList(), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveAfterBloomEstimateTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | teragrep exec tokenizer | teragrep exec bloom estimate | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("estimate(tokens)").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("5"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec tokenizer | teragrep exec bloom estimate | teragrep exec hdfs save /tmp/pth_10_hdfs/"
+                                + id,
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("estimate(tokens)")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Collections.singletonList("5"), listOfResult);
+                        }
+                );
         this.streamingTestUtil.setUp();
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("estimate(tokens)").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("5"), listOfResult);
-                }
-        );
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("estimate(tokens)")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("5"), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveAfterAggregateTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | stats avg(offset) AS avg_offset | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("avg_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("3.0"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats avg(offset) AS avg_offset | teragrep exec hdfs save /tmp/pth_10_hdfs/"
+                                + id,
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("avg_offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Collections.singletonList("3.0"), listOfResult);
+                        }
+                );
         this.streamingTestUtil.setUp();
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("avg_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("3.0"), listOfResult);
-                }
-        );
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("avg_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("3.0"), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveAfterTwoAggregationsTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | stats avg(offset) AS avg_offset | stats values(avg_offset) AS offset_values" +
-                        " | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset_values").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("3.0"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats avg(offset) AS avg_offset | stats values(avg_offset) AS offset_values"
+                                + " | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id,
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("offset_values")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Collections.singletonList("3.0"), listOfResult);
+                        }
+                );
         this.streamingTestUtil.setUp();
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset_values").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("3.0"), listOfResult);
-                }
-        );
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("offset_values")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("3.0"), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveAfterSequentialTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | sort num(offset) | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | sort num(offset) | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id, testFile,
+                        ds -> {
+                            List<String> listOfResult = ds
+                                    .select("offset")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                        }
+                );
         this.streamingTestUtil.setUp();
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("offset")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil
+                .performDPLTest("index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id, testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("offset")
+                            .orderBy("offset")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+                });
         this.streamingTestUtil.setUp();
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("offset")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgHdfsSaveOverwriteTest() {
         final String id = UUID.randomUUID().toString();
-        streamingTestUtil.performDPLTest(
-                "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + " overwrite=true",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + " overwrite=true", testFile,
+                        ds -> {
+                            List<String> listOfResult = ds
+                                    .select("offset")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                        }
+                );
         this.streamingTestUtil.setUp();
-        streamingTestUtil.performDPLTest(
-                "| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id,
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
-                });
+        streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("offset")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named = "skipSparkTest", matches = "true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgGetArchiveSummaryTest() {
-        streamingTestUtil.performDPLTest(
-                "| teragrep get archive summary index=* offset < 3",
-                testFile,
-                ds -> {
-                    List<String> listOfResult = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1","2"), listOfResult);
-                });
+        streamingTestUtil.performDPLTest("| teragrep get archive summary index=* offset < 3", testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("offset")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Arrays.asList("1", "2"), listOfResult);
+        });
     }
 }
-

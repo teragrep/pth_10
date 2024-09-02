@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.bo;
 
 import org.w3c.dom.Element;
@@ -57,45 +56,52 @@ import java.io.StringWriter;
  * Node that can contain an (XML) element
  */
 public class ElementNode extends Node {
-	Element val = null;
-	public ElementNode(Token token) { 
-		super(token);
-	}
-	public ElementNode(Element element) { 
-		this.val = element;
-	}
 
-	public Element getElement(){
-		return val;
-	}
+    Element val = null;
 
-	public String toString() {
-		String str = null;
-		try {
-			TransformerFactory transFactory = TransformerFactory.newInstance();
-			Transformer transformer = transFactory.newTransformer();
-			StringWriter buffer = new StringWriter();
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-			transformer.transform(new DOMSource(val),
-				  new StreamResult(buffer));
-			str = buffer.toString();
-		}catch(TransformerConfigurationException tex){}
-		 catch(TransformerException ex){} 
-		return str;
-	}
+    public ElementNode(Token token) {
+        super(token);
+    }
 
-	public static String toString(Element val) {
-		String str = null;
-		try {
-			TransformerFactory transFactory = TransformerFactory.newInstance();
-			Transformer transformer = transFactory.newTransformer();
-			StringWriter buffer = new StringWriter();
-			transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-			transformer.transform(new DOMSource(val),
-					new StreamResult(buffer));
-			str = buffer.toString();
-		}catch(TransformerConfigurationException tex){}
-		catch(TransformerException ex){}
-		return str;
-	}
+    public ElementNode(Element element) {
+        this.val = element;
+    }
+
+    public Element getElement() {
+        return val;
+    }
+
+    public String toString() {
+        String str = null;
+        try {
+            TransformerFactory transFactory = TransformerFactory.newInstance();
+            Transformer transformer = transFactory.newTransformer();
+            StringWriter buffer = new StringWriter();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.transform(new DOMSource(val), new StreamResult(buffer));
+            str = buffer.toString();
+        }
+        catch (TransformerConfigurationException tex) {
+        }
+        catch (TransformerException ex) {
+        }
+        return str;
+    }
+
+    public static String toString(Element val) {
+        String str = null;
+        try {
+            TransformerFactory transFactory = TransformerFactory.newInstance();
+            Transformer transformer = transFactory.newTransformer();
+            StringWriter buffer = new StringWriter();
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.transform(new DOMSource(val), new StreamResult(buffer));
+            str = buffer.toString();
+        }
+        catch (TransformerConfigurationException tex) {
+        }
+        catch (TransformerException ex) {
+        }
+        return str;
+    }
 }

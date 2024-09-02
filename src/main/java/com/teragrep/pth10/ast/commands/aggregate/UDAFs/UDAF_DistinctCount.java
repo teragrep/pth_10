@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
 import org.apache.spark.sql.Row;
@@ -60,148 +59,160 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * UDAF for estdc_error()
- * TODO Remove this, when estdc_error can be used without it
+ * UDAF for estdc_error() TODO Remove this, when estdc_error can be used without it
  */
 public class UDAF_DistinctCount extends UserDefinedAggregateFunction {
-	private static final Logger LOGGER = LoggerFactory.getLogger(UDAF_DistinctCount.class);
-	private static final long serialVersionUID = 1L;
 
-	/**
-	 * Buffer schema using a map type of {@literal <String, Long>}
-	 * @return structType
-	 */
-	@Override
-	public StructType bufferSchema() {
-		return new StructType(new StructField[] {
-			DataTypes.createStructField("mapOfValues", DataTypes.createMapType(DataTypes.StringType, DataTypes.LongType), false)
-		});
-	}
+    private static final Logger LOGGER = LoggerFactory.getLogger(UDAF_DistinctCount.class);
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * output datatype
-	 * @return integer type
-	 */
-	@Override
-	public DataType dataType() {
-		return DataTypes.IntegerType;
-	}
+    /**
+     * Buffer schema using a map type of {@literal <String, Long>}
+     * 
+     * @return structType
+     */
+    @Override
+    public StructType bufferSchema() {
+        return new StructType(new StructField[] {
+                DataTypes
+                        .createStructField(
+                                "mapOfValues", DataTypes.createMapType(DataTypes.StringType, DataTypes.LongType), false
+                        )
+        });
+    }
 
-	/**
-	 * Same input returns the same output every time
-	 * @return boolean true
-	 */
-	@Override
-	public boolean deterministic() {
-		return true;
-	}
+    /**
+     * output datatype
+     * 
+     * @return integer type
+     */
+    @Override
+    public DataType dataType() {
+        return DataTypes.IntegerType;
+    }
 
-	/**
-	 * Return the final result
-	 * @param buffer Row buffer
-	 * @return result as an integer
-	 */
-	@Override
-	public Integer evaluate(Row buffer) {
-		// getJavaMap() returns map with Object,Object K,V pair
-		java.util.Map<Object, Object> map = buffer.getJavaMap(0);
-		
-		// the size of the map is the distinct count
-		return map.size();
-	}
+    /**
+     * Same input returns the same output every time
+     * 
+     * @return boolean true
+     */
+    @Override
+    public boolean deterministic() {
+        return true;
+    }
 
-	/**
-	 * Init buffers used for processing (see bufferSchema())
-	 * @param buffer buffer to initialize
-	 */
-	@Override
-	public void initialize(MutableAggregationBuffer buffer) {
-		// Update first index with value (index, value)
-		buffer.update(0, new HashMap<String, Long>());
-	}
+    /**
+     * Return the final result
+     * 
+     * @param buffer Row buffer
+     * @return result as an integer
+     */
+    @Override
+    public Integer evaluate(Row buffer) {
+        // getJavaMap() returns map with Object,Object K,V pair
+        java.util.Map<Object, Object> map = buffer.getJavaMap(0);
 
-	/** Schema used for input column */
-	@Override
-	public StructType inputSchema() {
-		return new StructType(new StructField[] {
-			DataTypes.createStructField("input", DataTypes.StringType, true)
-		});
-	}
+        // the size of the map is the distinct count
+        return map.size();
+    }
 
-	/**
-	 * Merge two buffers
-	 * @param buffer1 original
-	 * @param buffer2 another
-	 */
-	@Override
-	public void merge(MutableAggregationBuffer buffer1, Row buffer2) {
-		// Buffer and row to be merged
-		java.util.Map<Object, Object> map1 = buffer1.getJavaMap(0);
-		java.util.Map<Object, Object> map2 = buffer2.getJavaMap(0);
-		
-		// Result map
-		java.util.Map<Object, Object> map3 = new HashMap<>(map1);
-		
-		// Go through each k,v pair on map2; merge with map3 and process duplicates
-		map2.forEach((key, value) -> {
-			map3.merge(key, value, (v1, v2) -> {
-				// This gets called for possible duplicates in map2 and map3.
-				// In that case, add the values together
-				return castObjectToLong(v1) + castObjectToLong(v2);
-			});
-		});
-		
-		// Update buffer with result map
-		buffer1.update(0, map3);
-	}
+    /**
+     * Init buffers used for processing (see bufferSchema())
+     * 
+     * @param buffer buffer to initialize
+     */
+    @Override
+    public void initialize(MutableAggregationBuffer buffer) {
+        // Update first index with value (index, value)
+        buffer.update(0, new HashMap<String, Long>());
+    }
 
-	/**
-	 * Add more data to the buffer
-	 * @param buffer buffer
-	 * @param input input data
-	 */
-	@Override
-	public void update(MutableAggregationBuffer buffer, Row input) {
-		// getJavaMap() returns a Scala Map wrapped in an Java Object,
-		// which does not support put(). the map must be copied to a new map for put() to work
-		Map<Object, Object> javaWrappedScalaMap = buffer.getJavaMap(0);
-		Map<Object, Object> current = new HashMap<>(javaWrappedScalaMap);
-		String inputString = input.getString(0);
-		// current.put(inputString, current.containsKey(inputString) ? current.get(inputString) );
-		
-		if (current.containsKey((Object)inputString)) {
-			Long currentValue = castObjectToLong(current.get(inputString));
-			current.put((Object)inputString, (Object)(currentValue + 1L));
-		}
-		else {
-			current.put((Object)inputString, (Object)1L);
-		}
-		
-		
-		buffer.update(0, current);
-	}
-	
-	/** getJavaMap() returns as {@literal Map<Object,Object>} even though it is more like {@literal Map<String, Long>}
-	 thus we need a helper method to cast Object->Long. For Object->String, Object.toString() can be used */
-	private Long castObjectToLong(Object o) {
-		Long rv = null;
-		try {
-			if (o instanceof Long) {
-				rv = ((Long) o).longValue();
-			}
-			else if (o instanceof Integer) {
-				rv = ((Integer) o).longValue();
-			}
-			else if (o instanceof String) {
-				rv = Long.valueOf(((String) o));
-			}
-		}
-		catch (Exception e) {
-			LOGGER.error("UDAF_DistinctCount: Error casting Object to Long");
-			throw e;
-		}
-		
-		return rv;
-	}
+    /** Schema used for input column */
+    @Override
+    public StructType inputSchema() {
+        return new StructType(new StructField[] {
+                DataTypes.createStructField("input", DataTypes.StringType, true)
+        });
+    }
+
+    /**
+     * Merge two buffers
+     * 
+     * @param buffer1 original
+     * @param buffer2 another
+     */
+    @Override
+    public void merge(MutableAggregationBuffer buffer1, Row buffer2) {
+        // Buffer and row to be merged
+        java.util.Map<Object, Object> map1 = buffer1.getJavaMap(0);
+        java.util.Map<Object, Object> map2 = buffer2.getJavaMap(0);
+
+        // Result map
+        java.util.Map<Object, Object> map3 = new HashMap<>(map1);
+
+        // Go through each k,v pair on map2; merge with map3 and process duplicates
+        map2.forEach((key, value) -> {
+            map3
+                    .merge(key, value, (v1, v2) -> {
+                        // This gets called for possible duplicates in map2 and map3.
+                        // In that case, add the values together
+                        return castObjectToLong(v1) + castObjectToLong(v2);
+                    });
+        });
+
+        // Update buffer with result map
+        buffer1.update(0, map3);
+    }
+
+    /**
+     * Add more data to the buffer
+     * 
+     * @param buffer buffer
+     * @param input  input data
+     */
+    @Override
+    public void update(MutableAggregationBuffer buffer, Row input) {
+        // getJavaMap() returns a Scala Map wrapped in an Java Object,
+        // which does not support put(). the map must be copied to a new map for put() to work
+        Map<Object, Object> javaWrappedScalaMap = buffer.getJavaMap(0);
+        Map<Object, Object> current = new HashMap<>(javaWrappedScalaMap);
+        String inputString = input.getString(0);
+        // current.put(inputString, current.containsKey(inputString) ? current.get(inputString) );
+
+        if (current.containsKey((Object) inputString)) {
+            Long currentValue = castObjectToLong(current.get(inputString));
+            current.put((Object) inputString, (Object) (currentValue + 1L));
+        }
+        else {
+            current.put((Object) inputString, (Object) 1L);
+        }
+
+        buffer.update(0, current);
+    }
+
+    /**
+     * getJavaMap() returns as {@literal Map<Object,Object>} even though it is more like {@literal Map<String, Long>}
+     * thus we need a helper method to cast Object->Long. For Object->String, Object.toString() can be used
+     */
+    private Long castObjectToLong(Object o) {
+        Long rv = null;
+        try {
+            if (o instanceof Long) {
+                rv = ((Long) o).longValue();
+            }
+            else if (o instanceof Integer) {
+                rv = ((Integer) o).longValue();
+            }
+            else if (o instanceof String) {
+                rv = Long.valueOf(((String) o));
+            }
+        }
+        catch (Exception e) {
+            LOGGER.error("UDAF_DistinctCount: Error casting Object to Long");
+            throw e;
+        }
+
+        return rv;
+    }
 
 }

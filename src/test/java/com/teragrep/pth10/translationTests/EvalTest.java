@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -62,18 +62,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EvalTest {
+
     SparkSession spark = null;
     DPLParserCatalystContext ctx = null;
+
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-        spark = SparkSession
-                .builder()
-                .appName("Java Spark SQL basic example")
-                .master("local[2]")
-                .getOrCreate();
+        spark = SparkSession.builder().appName("Java Spark SQL basic example").master("local[2]").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
         ctx = new DPLParserCatalystContext(spark);
     }
+
     @Test
     void testEvalTranslation() {
         final String query = "| eval a = abs(-3)";
@@ -89,7 +88,7 @@ public class EvalTest {
         ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
         final EvalStep cs = ct.evalStatement.evalStep;
 
-        assertEquals("a",cs.getLeftSide());
+        assertEquals("a", cs.getLeftSide());
         assertEquals("abs(-3)", cs.getRightSide().toString());
 
     }
@@ -109,8 +108,8 @@ public class EvalTest {
         ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
         final EvalStep cs = ct.evalStatement.evalStep;
 
-        assertEquals("a",cs.getLeftSide());
-        assertEquals("EvalArithmetic(EvalArithmetic(3, +, 4), *, 7)",cs.getRightSide().toString());
+        assertEquals("a", cs.getLeftSide());
+        assertEquals("EvalArithmetic(EvalArithmetic(3, +, 4), *, 7)", cs.getRightSide().toString());
     }
 
     @Test
@@ -128,8 +127,7 @@ public class EvalTest {
         ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
         final EvalStep cs = ct.evalStatement.evalStep;
 
-        assertEquals("a",cs.getLeftSide());
+        assertEquals("a", cs.getLeftSide());
         assertEquals("string", cs.getRightSide().toString());
     }
 }
-

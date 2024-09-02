@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AddtotalsTransformation extends DPLParserBaseVisitor<Node> {
+
     private final DPLParserCatalystContext catCtx;
     private AddtotalsStep addtotalsStep;
     private boolean row;
@@ -97,9 +98,11 @@ public class AddtotalsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_addtotals_rowParameter(DPLParser.T_addtotals_rowParameterContext ctx) {
         if (ctx.booleanType().GET_BOOLEAN_FALSE() != null) {
             row = false;
-        } else if (ctx.booleanType().GET_BOOLEAN_TRUE() != null) {
+        }
+        else if (ctx.booleanType().GET_BOOLEAN_TRUE() != null) {
             row = true;
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Unexpected 'row' booleanType: " + ctx.getText());
         }
         return new NullNode();
@@ -109,9 +112,11 @@ public class AddtotalsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_addtotals_colParameter(DPLParser.T_addtotals_colParameterContext ctx) {
         if (ctx.booleanType().GET_BOOLEAN_FALSE() != null) {
             col = false;
-        } else if (ctx.booleanType().GET_BOOLEAN_TRUE() != null) {
+        }
+        else if (ctx.booleanType().GET_BOOLEAN_TRUE() != null) {
             col = true;
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Unexpected 'col' booleanType: " + ctx.getText());
         }
         return new NullNode();
@@ -125,7 +130,7 @@ public class AddtotalsTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_addtotals_labelfieldParameter(DPLParser.T_addtotals_labelfieldParameterContext ctx) {
-       labelField = new UnquotedText(new TextString(ctx.fieldType().getText())).read();
+        labelField = new UnquotedText(new TextString(ctx.fieldType().getText())).read();
         return new NullNode();
     }
 

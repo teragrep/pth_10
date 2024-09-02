@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -62,18 +62,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class WhereTest {
+
     SparkSession spark = null;
     DPLParserCatalystContext ctx = null;
+
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
-        spark = SparkSession
-                .builder()
-                .appName("Java Spark SQL basic example")
-                .master("local[2]")
-                .getOrCreate();
+        spark = SparkSession.builder().appName("Java Spark SQL basic example").master("local[2]").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
         ctx = new DPLParserCatalystContext(spark);
     }
+
     @Test
     void testWhereTranslation() {
         final String query = " | where offset < 5";
@@ -86,7 +85,9 @@ public class WhereTest {
         ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
         final WhereStep cs = ct.whereStep;
 
-        assertEquals("EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_LT + ", 5)", cs.getWhereColumn().toString());
+        assertEquals(
+                "EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_LT + ", 5)", cs.getWhereColumn().toString()
+        );
     }
 
     @Test
@@ -119,7 +120,9 @@ public class WhereTest {
         ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
         final WhereStep cs = ct.whereStep;
 
-        assertEquals("EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_EQ + ", 5)", cs.getWhereColumn().toString());
+        assertEquals(
+                "EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_EQ + ", 5)", cs.getWhereColumn().toString()
+        );
     }
 
     @Test
@@ -139,4 +142,3 @@ public class WhereTest {
         assertEquals("(NOT field LIKE %40%)", cs.getWhereColumn().toString());
     }
 }
-

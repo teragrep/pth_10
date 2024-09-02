@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.TextString;
@@ -66,9 +65,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PredictTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PredictTransformation.class);
 
     public PredictStep predictStep = null;
+
     public PredictTransformation() {
 
     }
@@ -89,16 +90,15 @@ public class PredictTransformation extends DPLParserBaseVisitor<Node> {
         String upperField = null;
         String lowerField = null;
 
-
         for (int i = 0; i < ctx.getChildCount(); i++) {
             ParseTree child = ctx.getChild(i);
 
             if (child instanceof DPLParser.FieldTypeContext) {
-                ParseTree nextChild = ctx.getChild(i+1);
+                ParseTree nextChild = ctx.getChild(i + 1);
                 // <field> AS <new-name>
                 if (nextChild instanceof DPLParser.T_predict_fieldRenameInstructionContext) {
-                    listOfColumnsToPredict.add(functions.col(new UnquotedText(new TextString(child.getText())).read())
-                            .as(new UnquotedText(new TextString(nextChild.getChild(1).getText())).read()));
+                    listOfColumnsToPredict
+                            .add(functions.col(new UnquotedText(new TextString(child.getText())).read()).as(new UnquotedText(new TextString(nextChild.getChild(1).getText())).read()));
                     i++; // Skip next child, as it would be the same fieldRenameInstruction again
                 }
                 // <field>
@@ -132,19 +132,23 @@ public class PredictTransformation extends DPLParserBaseVisitor<Node> {
                 }
             }
             else if (child instanceof DPLParser.T_predict_pdCorrelateOptionParameterContext) {
-                DPLParser.FieldTypeContext ftCtx = ((DPLParser.T_predict_pdCorrelateOptionParameterContext)child).fieldType();
+                DPLParser.FieldTypeContext ftCtx = ((DPLParser.T_predict_pdCorrelateOptionParameterContext) child)
+                        .fieldType();
                 correlateField = new UnquotedText(new TextString(ftCtx.getText())).read();
             }
             else if (child instanceof DPLParser.T_predict_pdFutureTimespanOptionParameterContext) {
-                DPLParser.NumberTypeContext ntCtx = ((DPLParser.T_predict_pdFutureTimespanOptionParameterContext)child).numberType();
+                DPLParser.NumberTypeContext ntCtx = ((DPLParser.T_predict_pdFutureTimespanOptionParameterContext) child)
+                        .numberType();
                 futureTimespan = Integer.parseInt(ntCtx.getText());
             }
             else if (child instanceof DPLParser.T_predict_pdHoldbackOptionParameterContext) {
-                DPLParser.NumberTypeContext ntCtx = ((DPLParser.T_predict_pdHoldbackOptionParameterContext)child).numberType();
+                DPLParser.NumberTypeContext ntCtx = ((DPLParser.T_predict_pdHoldbackOptionParameterContext) child)
+                        .numberType();
                 holdback = Integer.parseInt(ntCtx.getText());
             }
             else if (child instanceof DPLParser.T_predict_pdPeriodOptionParameterContext) {
-                DPLParser.NumberTypeContext ntCtx = ((DPLParser.T_predict_pdPeriodOptionParameterContext)child).numberType();
+                DPLParser.NumberTypeContext ntCtx = ((DPLParser.T_predict_pdPeriodOptionParameterContext) child)
+                        .numberType();
                 period = Integer.parseInt(ntCtx.getText());
             }
             else if (child instanceof DPLParser.T_predict_pdUpperOptionParameterContext) {
@@ -158,7 +162,11 @@ public class PredictTransformation extends DPLParserBaseVisitor<Node> {
                 lowerField = new UnquotedText(new TextString(lopCtx.fieldType().getText())).read();
             }
             else if (child instanceof DPLParser.T_predict_pdSuppressOptionParameterContext) {
-                suppressField = new UnquotedText(new TextString(((DPLParser.T_predict_pdSuppressOptionParameterContext)child).fieldType().getText())).read();
+                suppressField = new UnquotedText(
+                        new TextString(
+                                ((DPLParser.T_predict_pdSuppressOptionParameterContext) child).fieldType().getText()
+                        )
+                ).read();
             }
             else if (child instanceof TerminalNode) {
                 // skip TerminalNode

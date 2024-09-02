@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.bo;
 
 import org.apache.spark.sql.Dataset;
@@ -54,39 +53,41 @@ import org.apache.spark.sql.streaming.DataStreamWriter;
  * Node that can contain a Dataset and a DataStreamWriter
  */
 public class CatalystNode extends Node {
-	Dataset<Row> val = null;
-	DataStreamWriter<Row> dsw = null;
-	
-	public CatalystNode(Token token) {
-		super(token);
-	}
-	public CatalystNode(Dataset<Row> ds) {
-		this.val = ds;
-	}
 
-	public CatalystNode(DataStreamWriter<Row> dsw) {
-		this.dsw = dsw;
-	}
+    Dataset<Row> val = null;
+    DataStreamWriter<Row> dsw = null;
 
-	public Dataset<Row> getDataset(){
-		return val;
-	}
-	
-	public void setDataStreamWriter(DataStreamWriter<Row> dsw) {
-		this.dsw = dsw;
-	}
-	
-	public DataStreamWriter<Row> getDataStreamWriter() {
-		return dsw;
-	}
+    public CatalystNode(Token token) {
+        super(token);
+    }
 
-	public String toString() {
-		if (val != null) {
-			String str = val.toString();
-			return str;
-		}
-		else {
-			return "null";
-		}
-	}
+    public CatalystNode(Dataset<Row> ds) {
+        this.val = ds;
+    }
+
+    public CatalystNode(DataStreamWriter<Row> dsw) {
+        this.dsw = dsw;
+    }
+
+    public Dataset<Row> getDataset() {
+        return val;
+    }
+
+    public void setDataStreamWriter(DataStreamWriter<Row> dsw) {
+        this.dsw = dsw;
+    }
+
+    public DataStreamWriter<Row> getDataStreamWriter() {
+        return dsw;
+    }
+
+    public String toString() {
+        if (val != null) {
+            String str = val.toString();
+            return str;
+        }
+        else {
+            return "null";
+        }
+    }
 }

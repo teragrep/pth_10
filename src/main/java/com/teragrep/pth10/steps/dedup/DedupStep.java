@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.dedup;
 
 import com.teragrep.functions.dpf_02.BatchCollect;
@@ -63,9 +62,18 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 public final class DedupStep extends AbstractDedupStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupStep.class);
-    public DedupStep(List<String> listOfFields, int maxDuplicates, boolean keepEmpty, boolean keepEvents, boolean consecutive,
-                     DPLParserCatalystContext catCtx, boolean completeOutputMode) {
+
+    public DedupStep(
+            List<String> listOfFields,
+            int maxDuplicates,
+            boolean keepEmpty,
+            boolean keepEvents,
+            boolean consecutive,
+            DPLParserCatalystContext catCtx,
+            boolean completeOutputMode
+    ) {
         super();
         this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
         this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
@@ -110,12 +118,13 @@ public final class DedupStep extends AbstractDedupStep {
                     if (fieldValueObject == null && !keepEmpty) {
                         output.set(i, nullifyRowField(r, schema, fieldName));
                         continue;// filter out
-                    } else if (fieldValueObject == null) {
+                    }
+                    else if (fieldValueObject == null) {
                         fieldValue = "null";
-                    } else {
+                    }
+                    else {
                         fieldValue = fieldValueObject.toString();
                     }
-
 
                     // consecutive=true
                     // return at end of if clause, because consecutive=true ignores
@@ -125,9 +134,12 @@ public final class DedupStep extends AbstractDedupStep {
                         if (previousRow.get() == null) {
                             //LOGGER.debug("-> Applying row as previous row");
                             previousRow.set(r);
-                        } else {
-                            final String prevValue = previousRow.get()
-                                    .get(previousRow.get().fieldIndex(fieldName)).toString();
+                        }
+                        else {
+                            final String prevValue = previousRow
+                                    .get()
+                                    .get(previousRow.get().fieldIndex(fieldName))
+                                    .toString();
                             if (prevValue.equals(fieldValue)) {
                                 //LOGGER.debug("-> Filtering");
                                 output.set(i, nullifyRowField(r, schema, fieldName));
@@ -142,19 +154,22 @@ public final class DedupStep extends AbstractDedupStep {
                         if (!fieldsProcessed.get(fieldName).containsKey(fieldValue)) {
                             // specific field value was not encountered yet, add to map
                             fieldsProcessed.get(fieldName).put(fieldValue, 1L);
-                        } else {
+                        }
+                        else {
                             // field:value present in map, check if amount of duplicates is too high
                             long newValue = fieldsProcessed.get(fieldName).get(fieldValue) + 1L;
                             if (newValue > maxDuplicates) {
                                 // too many duplicates, filter out
                                 output.set(i, nullifyRowField(r, schema, fieldName));
                                 continue;
-                            } else {
+                            }
+                            else {
                                 // duplicates within given max value, ok to be present
                                 fieldsProcessed.get(fieldName).put(fieldValue, newValue);
                             }
                         }
-                    } else {
+                    }
+                    else {
                         // the field was not encountered yet, add to map
                         final Map<String, Long> newMap = new ConcurrentHashMap<>();
                         newMap.put(fieldValue, 1L);
@@ -181,7 +196,6 @@ public final class DedupStep extends AbstractDedupStep {
                         fieldValue = fieldValueObject.toString();
                     }
 
-
                     // consecutive=true
                     // return at end of if clause, because consecutive=true ignores
                     // maxDuplicates
@@ -192,11 +206,13 @@ public final class DedupStep extends AbstractDedupStep {
                             previousRow.set(r);
                         }
                         else {
-                            final String prevValue = previousRow.get()
-                                    .get(previousRow.get().fieldIndex(fieldName)).toString();
+                            final String prevValue = previousRow
+                                    .get()
+                                    .get(previousRow.get().fieldIndex(fieldName))
+                                    .toString();
                             if (prevValue.equals(fieldValue)) {
                                 //LOGGER.debug("-> Filtering");
-                                doNotFilter=false;
+                                doNotFilter = false;
                             }
                             previousRow.set(r);
                         }
@@ -215,7 +231,7 @@ public final class DedupStep extends AbstractDedupStep {
                             long newValue = fieldsProcessed.get(fieldName).get(fieldValue) + 1L;
                             if (newValue > maxDuplicates) {
                                 // too many duplicates, filter out
-                                doNotFilter=false;
+                                doNotFilter = false;
                             }
                             else {
                                 // duplicates within given max value, ok to be present
@@ -240,11 +256,12 @@ public final class DedupStep extends AbstractDedupStep {
 
     /**
      * Takes the row and generates a new one with the given field nullified
-     * @param r row
+     * 
+     * @param r         row
      * @param fieldName field to nullify
      * @return row with the field nullified
      */
-    private Row nullifyRowField(final Row r, final StructType schema,  String fieldName) {
+    private Row nullifyRowField(final Row r, final StructType schema, String fieldName) {
         final List<Object> newRowValues = new ArrayList<>();
 
         for (final StructField field : schema.fields()) {
@@ -256,7 +273,7 @@ public final class DedupStep extends AbstractDedupStep {
                     newRowValues.add(catCtx.nullValue.value());
                 }
                 else {
-                    throw new IllegalStateException("Field was not nullable! field=<" + field.name() +">");
+                    throw new IllegalStateException("Field was not nullable! field=<" + field.name() + ">");
                 }
 
             }

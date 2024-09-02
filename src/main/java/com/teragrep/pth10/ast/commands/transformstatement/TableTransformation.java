@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.TextString;
@@ -64,6 +63,7 @@ import java.util.List;
  * Used to generate a table with the same order and fields as given in the command
  */
 public class TableTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TableTransformation.class);
     List<String> fieldList = null;
     public TableStep tableStep = null;
@@ -91,7 +91,7 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
         List<String> listOfFields = new ArrayList<>();
 
         ctx.t_table_fieldType().forEach(fieldType -> {
-            String fieldName = ((StringNode)visit(fieldType)).toString();
+            String fieldName = ((StringNode) visit(fieldType)).toString();
 
             if (!fieldName.equals("")) {
                 listOfFields.addAll(Arrays.asList(fieldName.split(",")));
@@ -111,6 +111,5 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
 
         return new StringNode(new Token(Token.Type.STRING, fieldName));
     }
-
 
 }

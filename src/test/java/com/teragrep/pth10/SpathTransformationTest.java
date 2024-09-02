@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -64,28 +64,26 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for spath command
- * Uses streaming datasets
+ * Tests for spath command Uses streaming datasets
  *
  * @author eemhu
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SpathTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SpathTransformationTest.class);
 
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -105,7 +103,6 @@ public class SpathTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
@@ -119,252 +116,381 @@ public class SpathTransformationTest {
     final String INVALID_DATA = "src/test/resources/spath/spathTransformationTest_invalid*.json";
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestXml() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath input=_raw path=\"main.sub.item\"",
-                XML_DATA_1,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, main.sub.item]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil.performDPLTest("index=index_A | spath input=_raw path=\"main.sub.item\"", XML_DATA_1, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, main.sub.item]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
 
-                    String result = ds.select("`main.sub.item`").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("Hello world", result);
-                }
-        );
+            String result = ds
+                    .select("`main.sub.item`")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("Hello world", result);
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestXmlWithOutput() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath input=_raw output=OUT path=\"main.sub.item\"",
-                XML_DATA_1,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | spath input=_raw output=OUT path=\"main.sub.item\"", XML_DATA_1, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-                    String result = ds.select("OUT").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("Hello world", result);
-                }
-        );
+                            String result = ds
+                                    .select("OUT")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList())
+                                    .get(0);
+                            assertEquals("Hello world", result);
+                        }
+                );
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestXmlWithOutput_MultipleTagsOnSameLevel() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath input=_raw output=OUT path=\"main.sub[1].item\"",
-                XML_DATA_2,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | spath input=_raw output=OUT path=\"main.sub[1].item\"", XML_DATA_2, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-                    String result = ds.select("OUT").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("Hello", result);
-                }
-        );
+                            String result = ds
+                                    .select("OUT")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList())
+                                    .get(0);
+                            assertEquals("Hello", result);
+                        }
+                );
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestJson() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath input=_raw path=json",
-                JSON_DATA_1,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, json]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    String result = ds.select("json").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("debugo", result);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath input=_raw path=json", JSON_DATA_1, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            String result = ds
+                    .select("json")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("debugo", result);
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestJsonWithOutput() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath input=_raw output=OUT path=json",
-                JSON_DATA_1,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    String result = ds.select("OUT").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("debugo", result);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath input=_raw output=OUT path=json", JSON_DATA_1, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            String result = ds
+                    .select("OUT")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("debugo", result);
+        });
     }
 
     @Disabled
-	@Test
+    @Test
     // output without path is invalid syntax
     public void spathTestJsonNoPath() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath input=_raw output=OUT",
-                JSON_DATA_1,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    String result = ds.select("OUT").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("debugo\nxml", result);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath input=_raw output=OUT", JSON_DATA_1, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            String result = ds
+                    .select("OUT")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("debugo\nxml", result);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void spathTestJsonInvalidInput()  {
-        RuntimeException sqe = this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class, "index=index_A | eval a = \"12.34\" | spath input=a", JSON_DATA_1, ds -> {
-            assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset]", Arrays.toString(ds.schema().fieldNames()));
-        });
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void spathTestJsonInvalidInput() {
+        RuntimeException sqe = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        RuntimeException.class, "index=index_A | eval a = \"12.34\" | spath input=a", JSON_DATA_1,
+                        ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
+                                    Arrays.toString(ds.schema().fieldNames())
+                            );
+                        }
+                );
 
         String causeStr = this.streamingTestUtil.getInternalCauseString(sqe.getCause(), IllegalStateException.class);
         assertEquals("Caused by: java.lang.IllegalStateException: Not a JSON Object: 12.34", causeStr);
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     // auto extract with xml and makeresults in front
     public void spathTestXmlWithMakeResultsAndAutoExtraction() {
-        streamingTestUtil.performDPLTest(
-                "| makeresults count=10 | eval a = \"<main><sub>Hello</sub><sub>World</sub></main>\" | spath input=a",
-                XML_DATA_2,
-                ds -> {
-                    assertEquals("[_time, a, main.sub]", Arrays.toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !");
-                    String result = ds.select("`main.sub`").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("Hello\nWorld", result);
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=10 | eval a = \"<main><sub>Hello</sub><sub>World</sub></main>\" | spath input=a",
+                        XML_DATA_2, ds -> {
+                            assertEquals(
+                                    "[_time, a, main.sub]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
+                            String result = ds
+                                    .select("`main.sub`")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList())
+                                    .get(0);
+                            assertEquals("Hello\nWorld", result);
+                        }
+                );
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestAutoExtractionXml() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath",
-                XML_DATA_2,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, main.sub.item]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    String result = ds.select("`main.sub.item`").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("Hello\nHello2\n1", result);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath", XML_DATA_2, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, main.sub.item]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            String result = ds
+                    .select("`main.sub.item`")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("Hello\nHello2\n1", result);
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestAutoExtractionJson() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath",
-                JSON_DATA_1,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    String result = ds.select("lil").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("xml", result);
-                    String result2 = ds.select("json").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("debugo", result2);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath", JSON_DATA_1, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            String result = ds
+                    .select("lil")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("xml", result);
+            String result2 = ds
+                    .select("json")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("debugo", result2);
+        });
     }
 
-   @Test
-   @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestNestedJsonData() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath output=log path=.log",
-                JSON_DATA_NESTED,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, log]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                    String result = ds.select("log").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                    assertEquals("{\"auditID\":\"x\",\"requestURI\":\"/path\",\"user\":{\"name\":\"sys\",\"group\":[\"admins\",\"nosucherror\"]},\"method\":\"GET\",\"remoteAddr\":\"127.0.0.123:1025\",\"requestTimestamp\":\"2022-12-14T11:56:13Z\",\"responseTimestamp\":\"2022-12-14T11:56:13Z\",\"responseCode\":503,\"requestHeader\":{\"Accept-Encoding\":[\"gzip\"],\"User-Agent\":[\"Go-http-client/2.0\"]}}", result);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath output=log path=.log", JSON_DATA_NESTED, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, log]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            String result = ds
+                    .select("log")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals(
+                    "{\"auditID\":\"x\",\"requestURI\":\"/path\",\"user\":{\"name\":\"sys\",\"group\":[\"admins\",\"nosucherror\"]},\"method\":\"GET\",\"remoteAddr\":\"127.0.0.123:1025\",\"requestTimestamp\":\"2022-12-14T11:56:13Z\",\"responseTimestamp\":\"2022-12-14T11:56:13Z\",\"responseCode\":503,\"requestHeader\":{\"Accept-Encoding\":[\"gzip\"],\"User-Agent\":[\"Go-http-client/2.0\"]}}",
+                    result
+            );
+        });
     }
 
     // FIXME: Seems like struck unescapes in eval, and the unescaped _raw is given to spath.
     @Disabled
-	@Test
+    @Test
     //@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void spathTestEvaledJsonData() {
-        streamingTestUtil.performDPLTest(
-                "| eval _raw = \"{\\\"kissa\\\" : \\\"fluff\\\"}\" | spath input=_raw output=otus path=kissa",
-                "empty _raw",
-                ds -> {
-                    // TODO Assertions
-                }
-        );
+        streamingTestUtil
+                .performDPLTest(
+                        "| eval _raw = \"{\\\"kissa\\\" : \\\"fluff\\\"}\" | spath input=_raw output=otus path=kissa",
+                        "empty _raw", ds -> {
+                            // TODO Assertions
+                        }
+                );
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTest_invalidInput() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath path=abc",
-                INVALID_DATA,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, abc]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                   Object result = ds
-                           .select("abc")
-                           .dropDuplicates()
-                           .collectAsList()
-                           .stream().map(r -> r.getAs(0))
-                           .collect(Collectors.toList()).get(0);
-                    assertNull(result);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath path=abc", INVALID_DATA, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, abc]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            Object result = ds
+                    .select("abc")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0))
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertNull(result);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTest_invalidInputAutoExtraction() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath",
-                INVALID_DATA,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath", INVALID_DATA, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTest_invalidInputManualExtraction() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath path=\"randomPathThatDoesNotExist\"",
-                INVALID_DATA,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, randomPathThatDoesNotExist]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+        streamingTestUtil
+                .performDPLTest("index=index_A | spath path=\"randomPathThatDoesNotExist\"", INVALID_DATA, ds -> {
+                    assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, randomPathThatDoesNotExist]",
+                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                    );
                     // all should be nulls, so distinct() returns 1 row
                     List<Row> rows = ds.select("randomPathThatDoesNotExist").distinct().collectAsList();
                     assertEquals(1, rows.size());
                     // make sure it is null
                     assertEquals(streamingTestUtil.getCtx().nullValue.value(), rows.get(0).get(0));
-                }
-        );
+                });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTest_ImplicitPath() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | spath json",
-                JSON_DATA_1,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
-                  String json = ds.select("json").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                  String lil = ds.select("lil").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList()).get(0);
-                  assertEquals("debugo", json);
-                  assertEquals("xml", lil);
-                }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | spath json", JSON_DATA_1, ds -> {
+            assertEquals(
+                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]",
+                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+            );
+            String json = ds
+                    .select("json")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            String lil = ds
+                    .select("lil")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            assertEquals("debugo", json);
+            assertEquals("xml", lil);
+        });
     }
 }

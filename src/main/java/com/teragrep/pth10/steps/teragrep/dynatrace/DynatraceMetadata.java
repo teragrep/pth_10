@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -48,6 +48,7 @@ package com.teragrep.pth10.steps.teragrep.dynatrace;
 import java.io.Serializable;
 
 public class DynatraceMetadata implements Serializable {
+
     private static final long serialVersionUID = 1L;
     private String displayName;
     private String description;
@@ -60,13 +61,13 @@ public class DynatraceMetadata implements Serializable {
         this.unit = "unspecified";
         this.metricKey = "";
     }
+
     public DynatraceMetadata(String dispName, String metricKey) {
         this.displayName = dispName;
         this.description = "Query Statistics";
         this.unit = "unspecified";
         this.metricKey = metricKey;
     }
-
 
     public void setDescription(String description) {
         this.description = description;
@@ -102,18 +103,8 @@ public class DynatraceMetadata implements Serializable {
 
     @Override
     public String toString() {
-        final String s = '#' +
-                metricKey +
-                ' ' +
-                "gauge" +
-                ' ' +
-                "dt.meta.displayName=\"" +
-                displayName +
-                "\", dt.meta.description=\"" +
-                description +
-                "\", dt.meta.unit=\"" +
-                unit +
-                "\"";
+        final String s = '#' + metricKey + ' ' + "gauge" + ' ' + "dt.meta.displayName=\"" + displayName
+                + "\", dt.meta.description=\"" + description + "\", dt.meta.unit=\"" + unit + "\"";
         return s;
     }
 }

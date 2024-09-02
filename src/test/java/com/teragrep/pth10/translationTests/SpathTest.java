@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -61,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SpathTest {
+
     @Test
     void testSpathTranslation() {
         final String query = "| spath input=_raw output=out path=this.is.a.path";
@@ -76,10 +77,10 @@ public class SpathTest {
         ct.visitSpathTransformation((DPLParser.SpathTransformationContext) tree.getChild(1).getChild(0));
         final SpathStep cs = ct.spathStep;
 
-       assertEquals("this.is.a.path",cs.getPath());
-       assertEquals("_raw", cs.getInputColumn());
-       assertFalse(cs.getAutoExtractionMode());
-       assertEquals("out", cs.getOutputColumn());
+        assertEquals("this.is.a.path", cs.getPath());
+        assertEquals("_raw", cs.getInputColumn());
+        assertFalse(cs.getAutoExtractionMode());
+        assertEquals("out", cs.getOutputColumn());
     }
 
     @Test
@@ -105,4 +106,3 @@ public class SpathTest {
         assertEquals("$$dpl_pth10_internal_column_spath_output$$", cs.getOutputColumn());
     }
 }
-

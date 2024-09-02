@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.time;
 
 import java.sql.Timestamp;
@@ -61,6 +60,7 @@ public class RelativeTimestamp {
 
     /**
      * Calculate epoch time from relative time modifier. IE. now()- time range
+     * 
      * @param timestamp A moment in time, usually the current time
      * @return Calculated time as epoch milliseconds
      */
@@ -68,10 +68,13 @@ public class RelativeTimestamp {
         Instant time = timestamp.toInstant();
 
         // if both are null, "now" option is left. Therefore, returns current time.
-        if (offset == null && snapToTime == null) time = new Timestamp(System.currentTimeMillis()).toInstant();
+        if (offset == null && snapToTime == null)
+            time = new Timestamp(System.currentTimeMillis()).toInstant();
 
-        if (offset != null) time = offset.addOffset(time);
-        if (snapToTime != null) time = snapToTime.snap(time);
+        if (offset != null)
+            time = offset.addOffset(time);
+        if (snapToTime != null)
+            time = snapToTime.snap(time);
         return time.getEpochSecond();
     }
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.functions.dpf_02.SortByClause;
@@ -69,6 +68,7 @@ import java.util.stream.Collectors;
  * Base visitor class for the chart command
  */
 public class ChartTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ChartTransformation.class);
     DPLParserCatalystContext catCtx;
 
@@ -79,6 +79,7 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Initialize the class to use in TransformStatement
+     * 
      * @param catCtx catalyst context
      */
     public ChartTransformation(DPLParserCatalystContext catCtx) {
@@ -87,13 +88,13 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
         this.aggregateFunction = new AggregateFunction(catCtx);
     }
 
-    public String getAggregateField() {return this.aggregateField;}
+    public String getAggregateField() {
+        return this.aggregateField;
+    }
 
     /**
-     * chartTransformation : CHART
-     * (sepChartParameter|formatParameter|contParameter|limitParameter|aggParameter)*
-     * (aggregationInstruction|sparklineAggregationInstruction|PARENTHESIS_L *
-     * evalStatement PARENTHESIS_R)+
+     * chartTransformation : CHART (sepChartParameter|formatParameter|contParameter|limitParameter|aggParameter)*
+     * (aggregationInstruction|sparklineAggregationInstruction|PARENTHESIS_L * evalStatement PARENTHESIS_R)+
      * ((overInstruction(divideByInstruction)?)|(divideByInstruction))? ;
      */
 
@@ -106,44 +107,54 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Goes through all the chart command's parameters and performs the aggregation via the stack
+     * 
      * @param ctx
      * @return
      */
     private Node visitChartTransformationEmitCatalyst(DPLParser.ChartTransformationContext ctx) {
-    	LOGGER.info("ChartTransformation incoming: text=<{}>", ctx.getText());
+        LOGGER.info("ChartTransformation incoming: text=<{}>", ctx.getText());
 
-    	ArrayList<Column> listOfExpr = new ArrayList<>();
-    	// aggregate function and its field renaming instruction
-    	for (DPLParser.T_chart_aggregationInstructionContext c : ctx.t_chart_aggregationInstruction()) {    		
-    		// Visit aggregation function
-    		Node aggFunction = visit(c.getChild(0));
-    		Column aggCol = ((ColumnNode) aggFunction).getColumn();
-    		
-    		// Get field rename instruction if exists, and apply the rename to aggCol
-    		if (c.t_chart_fieldRenameInstruction() != null) {
-    			String fieldName = visit(c.t_chart_fieldRenameInstruction()).toString();
-    			aggCol = aggCol.as(fieldName);
-    		}
-    		
-    		// add to list of expressions
-    		listOfExpr.add(aggCol);
-    	}
+        ArrayList<Column> listOfExpr = new ArrayList<>();
+        // aggregate function and its field renaming instruction
+        for (DPLParser.T_chart_aggregationInstructionContext c : ctx.t_chart_aggregationInstruction()) {
+            // Visit aggregation function
+            Node aggFunction = visit(c.getChild(0));
+            Column aggCol = ((ColumnNode) aggFunction).getColumn();
+
+            // Get field rename instruction if exists, and apply the rename to aggCol
+            if (c.t_chart_fieldRenameInstruction() != null) {
+                String fieldName = visit(c.t_chart_fieldRenameInstruction()).toString();
+                aggCol = aggCol.as(fieldName);
+            }
+
+            // add to list of expressions
+            listOfExpr.add(aggCol);
+        }
 
         final List<Column> listOfGroupBys = new ArrayList<>();
         ArrayList<SortByClause> listOfSbc = new ArrayList<>();
-    	// groupBy given column
-    	if (ctx.t_chart_by_column_rowOptions() != null && !ctx.t_chart_by_column_rowOptions().isEmpty()) {
+        // groupBy given column
+        if (ctx.t_chart_by_column_rowOptions() != null && !ctx.t_chart_by_column_rowOptions().isEmpty()) {
             ctx.t_chart_by_column_rowOptions().forEach(opt -> {
                 if (opt.t_column_Parameter() != null && opt.t_column_Parameter().fieldType() != null) {
                     listOfGroupBys.add(functions.col(opt.t_column_Parameter().fieldType().getText()));
                 }
 
                 if (opt.t_row_Parameter() != null && !opt.t_row_Parameter().fieldType().isEmpty()) {
-                    listOfGroupBys.addAll(opt.t_row_Parameter().fieldType().stream().map(field -> functions.col(field.getText())).collect(Collectors.toList()));
-                    listOfSbc.addAll(opt.t_row_Parameter().fieldType().stream().map(this::createSbc).collect(Collectors.toList()));
+                    listOfGroupBys
+                            .addAll(
+                                    opt
+                                            .t_row_Parameter()
+                                            .fieldType()
+                                            .stream()
+                                            .map(field -> functions.col(field.getText()))
+                                            .collect(Collectors.toList())
+                            );
+                    listOfSbc
+                            .addAll(opt.t_row_Parameter().fieldType().stream().map(this::createSbc).collect(Collectors.toList()));
                 }
             });
-    	}
+        }
 
         chartStep = new ChartStep(listOfExpr, listOfGroupBys);
         SortStep sortStep = new SortStep(catCtx, listOfSbc, this.catCtx.getDplRecallSize(), false);
@@ -152,24 +163,26 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
         steps.add(chartStep);
         steps.add(sortStep);
 
-    	return new StepListNode(steps);
+        return new StepListNode(steps);
     }
 
     @Override
     public Node visitAggregateFunction(DPLParser.AggregateFunctionContext ctx) {
         Node rv = aggregateFunction.visitAggregateFunction(ctx);
-        if(aggregateField == null)
+        if (aggregateField == null)
             aggregateField = aggregateFunction.getAggregateField();
         return rv;
     }
 
-    @Override public Node visitT_row_Parameter(DPLParser.T_row_ParameterContext ctx) {
+    @Override
+    public Node visitT_row_Parameter(DPLParser.T_row_ParameterContext ctx) {
         String target = ctx.getText();
 
         return new StringNode(new Token(Type.STRING, target));
     }
 
-    @Override public Node visitT_column_Parameter(DPLParser.T_column_ParameterContext ctx) {
+    @Override
+    public Node visitT_column_Parameter(DPLParser.T_column_ParameterContext ctx) {
         String target = ctx.getText();
         return new StringNode(new Token(Type.STRING, target));
     }
@@ -180,17 +193,17 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
         List<String> divInsts = new ArrayList<>();
         ctxList.forEach(c -> {
             // grammar: t_row_Parameter? t_column_Parameter?
-            String f= null;
+            String f = null;
             Node rn = null;
             // Check row-parameter
-            if(c.t_row_Parameter() != null) {
+            if (c.t_row_Parameter() != null) {
                 rn = visit(c.t_row_Parameter());
                 // Node n = visitT_chart_divideByInstruction(c);
                 f = rn.toString();
                 divInsts.add(f);
             }
             // Check also optional column-parameter
-            if(c.t_column_Parameter() != null) {
+            if (c.t_column_Parameter() != null) {
                 rn = visit(c.t_column_Parameter());
                 if (rn != null) {
                     f = rn.toString();
@@ -198,7 +211,6 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
                 }
             }
         });
-
 
         if (divInsts.size() != 0) {
 
@@ -208,8 +220,6 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
         }
         return null;
     }
-
-
 
     @Override
     public Node visitT_chart_fieldRenameInstruction(DPLParser.T_chart_fieldRenameInstructionContext ctx) {

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import org.apache.spark.sql.api.java.UDF1;
@@ -51,29 +50,28 @@ import scala.collection.mutable.WrappedArray;
 
 import java.io.Serializable;
 
-
 /**
  * Takes in an multivalue field and returns a multivalue field without duplicates.<br>
+ * 
  * @author eemhu
- *
  */
 public class Mvdedup implements UDF1<WrappedArray<String>, scala.collection.immutable.List<String>>, Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public scala.collection.immutable.List<String> call(WrappedArray<String> input) throws Exception {
-		// MV field is taken into UDF as Scala WrappedArray,
-		// and returned as Scala List
-		
-		// 1 or less values -> can't have any duplicates
-		if (input.size() <= 1) {
-			return input.toList();
-		}
-		
-		// Otherwise, create stream and collect distinct values
-		// and return the collected list
-		return input.toStream().distinct().toList();
-	}
+    @Override
+    public scala.collection.immutable.List<String> call(WrappedArray<String> input) throws Exception {
+        // MV field is taken into UDF as Scala WrappedArray,
+        // and returned as Scala List
+
+        // 1 or less values -> can't have any duplicates
+        if (input.size() <= 1) {
+            return input.toList();
+        }
+
+        // Otherwise, create stream and collect distinct values
+        // and return the collected list
+        return input.toStream().distinct().toList();
+    }
 
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -63,219 +63,280 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests for the new ProcessingStack implementation
- * Uses streaming datasets
+ * Tests for the new ProcessingStack implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class JoinTransformationTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(JoinTransformationTest.class);
 
-	private String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
-	private final StructType testSchema = new StructType(
-			new StructField[] {
-					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-					new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-					new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-			}
-	);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JoinTransformationTest.class);
 
-	private StreamingTestUtil streamingTestUtil;
+    private String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
-	@org.junit.jupiter.api.BeforeAll
-	void setEnv() {
-		this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
-		this.streamingTestUtil.setEnv();
-	}
+    private StreamingTestUtil streamingTestUtil;
 
-	@org.junit.jupiter.api.BeforeEach
-	void setUp() {
-		this.streamingTestUtil.setUp();
-	}
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
+    }
 
-	@org.junit.jupiter.api.AfterEach
-	void tearDown() {
-		this.streamingTestUtil.tearDown();
-	}
-	
-	
-	// ----------------------------------------
-	// Tests
-	// ----------------------------------------
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        this.streamingTestUtil.setUp();
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinRightSideHdfsLoadTest() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A earliest=-100y | eval a=12345 | teragrep exec hdfs save /tmp/join0 overwrite=true",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        this.streamingTestUtil.tearDown();
+    }
 
-				Row r = ds.select("a").distinct().first();
-				assertEquals("12345", r.getAs(0).toString());
-			}
-		);
-		this.streamingTestUtil.setUp(); // reset for another run
-		streamingTestUtil.performDPLTest(
-			"index=index_A earliest=-100y | join partition [ | teragrep exec hdfs load /tmp/join0 | where partition >= 0 ]",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+    // ----------------------------------------
+    // Tests
+    // ----------------------------------------
 
-				Row r = ds.select("R_a").distinct().first();
-				assertEquals("12345", r.getAs(0).toString());
-			}
-		);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinRightSideHdfsLoadTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=-100y | eval a=12345 | teragrep exec hdfs save /tmp/join0 overwrite=true",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-	// type=left max=3
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinTypeLeftMax3Test() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | join type=left max=3 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ] <!--| fields + _time offset a ]-->",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+                            Row r = ds.select("a").distinct().first();
+                            assertEquals("12345", r.getAs(0).toString());
+                        }
+                );
+        this.streamingTestUtil.setUp(); // reset for another run
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=-100y | join partition [ | teragrep exec hdfs load /tmp/join0 | where partition >= 0 ]",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-				List<Row> listOfRows = ds.collectAsList();
+                            Row r = ds.select("R_a").distinct().first();
+                            assertEquals("12345", r.getAs(0).toString());
+                        }
+                );
+    }
 
-				// 3 rows should be not null, since only three subsearch matches are requested using max=3
-				int notNulls = 0;
-				for (Row r : listOfRows) {
-					if (r.getAs("R_a") != null) {
-						notNulls++;
-					}
-				}
+    // type=left max=3
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinTypeLeftMax3Test() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | join type=left max=3 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ] <!--| fields + _time offset a ]-->",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-				assertEquals(3, notNulls, "subsearch limit 3, so 3 should be not null");
-			}
-		);
-	}
+                            List<Row> listOfRows = ds.collectAsList();
 
-	// max=2
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinMax2TypeImplicitTest() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | join max=2 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+                            // 3 rows should be not null, since only three subsearch matches are requested using max=3
+                            int notNulls = 0;
+                            for (Row r : listOfRows) {
+                                if (r.getAs("R_a") != null) {
+                                    notNulls++;
+                                }
+                            }
 
-				assertEquals(2, ds.count(), "Should return 2 rows");
-			}
-		);
-	}
+                            assertEquals(3, notNulls, "subsearch limit 3, so 3 should be not null");
+                        }
+                );
+    }
 
-	// max=0 overwrite=true
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void join0MaxOverwriteExplicitTest() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream3\", \"2\") | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+    // max=2
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinMax2TypeImplicitTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | join max=2 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-				assertEquals(10, ds.count(), "Should return 10 rows");
+                            assertEquals(2, ds.count(), "Should return 2 rows");
+                        }
+                );
+    }
 
-				List<Row> listOfAColumn = ds.select("a").collectAsList();
+    // max=0 overwrite=true
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void join0MaxOverwriteExplicitTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream3\", \"2\") | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-				for (Row r : listOfAColumn) {
-					String val = r.getString(0);
-					assertTrue(val != null, "All rows should have a valid value (non-null) !");
-				}
-			}
-		);
-	}
+                            assertEquals(10, ds.count(), "Should return 10 rows");
 
-	// no params
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinNoExtraParamsTest() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | join offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+                            List<Row> listOfAColumn = ds.select("a").collectAsList();
 
-				assertEquals(1, ds.count(), "Should return 1 row");
-			}
-		);
-	}
+                            for (Row r : listOfAColumn) {
+                                String val = r.getString(0);
+                                assertTrue(val != null, "All rows should have a valid value (non-null) !");
+                            }
+                        }
+                );
+    }
 
+    // no params
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinNoExtraParamsTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | join offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinNoExtraCommandsOnMainSearchTest() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+                            assertEquals(1, ds.count(), "Should return 1 row");
+                        }
+                );
+    }
 
-				List<Row> listOfRows = ds.collectAsList();
-				assertEquals(10, listOfRows.size(), "Should return 10 rows, instead returned: " + listOfRows.size());
-			}
-		);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinNoExtraCommandsOnMainSearchTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-	// max=0, usetime=true, earlier=true
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinMax0UsetimeTrueEarlierTrueTest() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | join max=0 usetime=true earlier=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+                            List<Row> listOfRows = ds.collectAsList();
+                            assertEquals(
+                                    10, listOfRows.size(),
+                                    "Should return 10 rows, instead returned: " + listOfRows.size()
+                            );
+                        }
+                );
+    }
 
-				assertEquals(10, ds.count(), "Should return 10 rows");
-			}
-		);
-	}
-	
-	// max=0, usetime=true, earlier=false, overwrite=false
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinMax0UsetimeTrueEarlierFalseOverwriteFalseTest() {
-		streamingTestUtil.performDPLTest(
-			"index=index_A | join max=0 usetime=true earlier=false overwrite=false offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
-			testFile,
-			ds -> {
-				assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, R__time, R_id, R__raw, R_index, R_sourcetype, R_host, R_source, R_partition, R_a]",
-						Arrays.toString(ds.columns()),
-						"Batch handler dataset contained an unexpected column arrangement !");
+    // max=0, usetime=true, earlier=true
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinMax0UsetimeTrueEarlierTrueTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | join max=0 usetime=true earlier=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
+                                            .toString(ds.columns()),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-				List<Row> listOfRows = ds.collectAsList();
-				assertEquals(10, listOfRows.size(), "Should return 10 rows, instead returned: " + listOfRows.size());
-			}
-		);
-	}
+                            assertEquals(10, ds.count(), "Should return 10 rows");
+                        }
+                );
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void joinInvalidRightSideTest() {
-		RuntimeException rte = this.streamingTestUtil.performThrowingDPLTest(RuntimeException.class,
-				"| makeresults count=1 | eval a=1 | join a [search]" , testFile, ds -> {});
+    // max=0, usetime=true, earlier=false, overwrite=false
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinMax0UsetimeTrueEarlierFalseOverwriteFalseTest() {
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | join max=0 usetime=true earlier=false overwrite=false offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
+                        testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R__time, R_id, R__raw, R_index, R_sourcetype, R_host, R_source, R_partition, R_a]",
+                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
 
-		Assertions.assertEquals("Join command encountered an error: Subsearch dataset (right side) missing expected field 'a'", rte.getMessage());
-	}
+                            List<Row> listOfRows = ds.collectAsList();
+                            assertEquals(
+                                    10, listOfRows.size(),
+                                    "Should return 10 rows, instead returned: " + listOfRows.size()
+                            );
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void joinInvalidRightSideTest() {
+        RuntimeException rte = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        RuntimeException.class, "| makeresults count=1 | eval a=1 | join a [search]", testFile, ds -> {
+                        }
+                );
+
+        Assertions
+                .assertEquals(
+                        "Join command encountered an error: Subsearch dataset (right side) missing expected field 'a'",
+                        rte.getMessage()
+                );
+    }
 }

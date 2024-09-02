@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import org.apache.spark.sql.api.java.UDF3;
@@ -51,6 +50,7 @@ import org.apache.spark.sql.api.java.UDF3;
 import java.sql.Timestamp;
 
 public class TimestampArithmetic implements UDF3<Object, Object, String, Timestamp> {
+
     @Override
     public Timestamp call(Object o, Object o2, String op) throws Exception {
         // Convert all of them to long
@@ -59,19 +59,19 @@ public class TimestampArithmetic implements UDF3<Object, Object, String, Timesta
 
         // Left side
         if (o instanceof Timestamp) {
-            left = ((Timestamp)o).getTime()/1000L;
+            left = ((Timestamp) o).getTime() / 1000L;
         }
         else if (o instanceof Long) {
-            left = (Long)o;
+            left = (Long) o;
         }
         else if (o instanceof String) {
-            left = Long.parseLong(((String)o));
+            left = Long.parseLong(((String) o));
         }
         else if (o instanceof Double) {
-            left = ((Double)o).longValue();
+            left = ((Double) o).longValue();
         }
         else if (o instanceof Integer) {
-            left = ((Integer)o).longValue();
+            left = ((Integer) o).longValue();
         }
         else {
             throw new RuntimeException("Left side of timestamp arithmetic was of unsupported type: " + o.toString());
@@ -79,19 +79,19 @@ public class TimestampArithmetic implements UDF3<Object, Object, String, Timesta
 
         // Right side
         if (o2 instanceof Timestamp) {
-            right = ((Timestamp)o2).getTime()/1000L;
+            right = ((Timestamp) o2).getTime() / 1000L;
         }
         else if (o2 instanceof Long) {
-            right = (Long)o2;
+            right = (Long) o2;
         }
         else if (o2 instanceof String) {
-            right = Long.parseLong(((String)o2));
+            right = Long.parseLong(((String) o2));
         }
         else if (o2 instanceof Double) {
-            right = ((Double)o2).longValue();
+            right = ((Double) o2).longValue();
         }
         else if (o2 instanceof Integer) {
-            right = ((Integer)o2).longValue();
+            right = ((Integer) o2).longValue();
         }
         else {
             throw new RuntimeException("Right side of timestamp arithmetic was of unsupported type: " + o2.toString());

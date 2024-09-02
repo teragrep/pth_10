@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10;
 
 import com.salesforce.kafka.test.junit5.SharedKafkaTestResource;
@@ -82,25 +81,24 @@ public class TeragrepKafkaTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepKafkaTest.class);
 
     private final String testFile = "src/test/resources/IplocationTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
     // automatically started and stopped via the annotation
     @RegisterExtension
-    public static final SharedKafkaTestResource sharedKafkaTestResource = new SharedKafkaTestResource().registerListener(new PlainListener().onPorts(42649));
+    public static final SharedKafkaTestResource sharedKafkaTestResource = new SharedKafkaTestResource()
+            .registerListener(new PlainListener().onPorts(42649));
 
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
@@ -114,7 +112,11 @@ public class TeragrepKafkaTest {
 
         // Create config for kafka
         HashMap<String, Object> map = new HashMap<>();
-        map.put("dpl.pth_10.transform.teragrep.kafka.save.bootstrap.servers", sharedKafkaTestResource.getKafkaConnectString().split("//")[1]);
+        map
+                .put(
+                        "dpl.pth_10.transform.teragrep.kafka.save.bootstrap.servers",
+                        sharedKafkaTestResource.getKafkaConnectString().split("//")[1]
+                );
         map.put("dpl.pth_10.transform.teragrep.kafka.save.security.protocol", "PLAINTEXT");
         map.put("dpl.pth_10.transform.teragrep.kafka.save.sasl.mechanism", "SASL_PLAINTEXT");
         map.put("fs.s3a.access.key", "empty");
@@ -138,7 +140,10 @@ public class TeragrepKafkaTest {
 
     // test teragrep exec kafka save
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void teragrepKafkaSaveTest() {
         String topic = "topic1";
         String query = "index=index_A | teragrep exec kafka save " + topic;
@@ -147,11 +152,14 @@ public class TeragrepKafkaTest {
             LOGGER.info("Consumer dataset : <{}>", ds.schema());
 
             // Create kafka consumer
-            try (final KafkaConsumer<String, String> kafkaConsumer =
-                         sharedKafkaTestResource.getKafkaTestUtils().getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)) {
+            try (
+                    final KafkaConsumer<String, String> kafkaConsumer = sharedKafkaTestResource
+                            .getKafkaTestUtils()
+                            .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
+            ) {
 
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
-                for (final PartitionInfo partitionInfo: kafkaConsumer.partitionsFor(topic)) {
+                for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
@@ -163,7 +171,7 @@ public class TeragrepKafkaTest {
                 do {
                     records = kafkaConsumer.poll(2000L);
 
-                    for (ConsumerRecord<String, String> record: records) {
+                    for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka
                         assertTrue(record.value().contains("\"source\":\"" + "127." + i + "." + i + "." + i + "\""));
                         i++;
@@ -176,7 +184,13 @@ public class TeragrepKafkaTest {
             }
 
             // test the returned dataset
-            List<String> offsets = ds.select("offset").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> offsets = ds
+                    .select("offset")
+                    .orderBy("id")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
             assertEquals(actualOffsets, offsets);
         });
@@ -184,7 +198,10 @@ public class TeragrepKafkaTest {
 
     // test with an aggregation before the command
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void teragrepKafkaSaveTest_aggregation() {
         String topic = "topic2";
         String query = "index=index_A | stats count by offset | teragrep exec kafka save " + topic;
@@ -196,11 +213,14 @@ public class TeragrepKafkaTest {
             this.streamingTestUtil.getCtx().flush();
 
             // Create kafka consumer
-            try (final KafkaConsumer<String, String> kafkaConsumer =
-                         sharedKafkaTestResource.getKafkaTestUtils().getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)) {
+            try (
+                    final KafkaConsumer<String, String> kafkaConsumer = sharedKafkaTestResource
+                            .getKafkaTestUtils()
+                            .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
+            ) {
 
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
-                for (final PartitionInfo partitionInfo: kafkaConsumer.partitionsFor(topic)) {
+                for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
@@ -212,7 +232,7 @@ public class TeragrepKafkaTest {
                 do {
                     records = kafkaConsumer.poll(2000L);
 
-                    for (ConsumerRecord<String, String> record: records) {
+                    for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (all offsets)
                         for (int j = 1; j < 6; j++) {
                             assertTrue(record.value().contains("\"offset\":" + j));
@@ -228,7 +248,13 @@ public class TeragrepKafkaTest {
             }
 
             // test the returned dataset
-            List<String> offsets = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> offsets = ds
+                    .select("offset")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
             assertEquals(actualOffsets, offsets);
         });
@@ -236,10 +262,14 @@ public class TeragrepKafkaTest {
 
     // test with two aggregations before the command
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void teragrepKafkaSaveTest_twoAggregations() {
         String topic = "topic3";
-        String query = "index=index_A | stats count by offset | stats count by offset | teragrep exec kafka save " + topic;
+        String query = "index=index_A | stats count by offset | stats count by offset | teragrep exec kafka save "
+                + topic;
 
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
             LOGGER.info("Consumer dataset : <{}>", ds.schema());
@@ -247,11 +277,14 @@ public class TeragrepKafkaTest {
             this.streamingTestUtil.getCtx().flush();
 
             // Create kafka consumer
-            try (final KafkaConsumer<String, String> kafkaConsumer =
-                         sharedKafkaTestResource.getKafkaTestUtils().getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)) {
+            try (
+                    final KafkaConsumer<String, String> kafkaConsumer = sharedKafkaTestResource
+                            .getKafkaTestUtils()
+                            .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
+            ) {
 
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
-                for (final PartitionInfo partitionInfo: kafkaConsumer.partitionsFor(topic)) {
+                for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
@@ -263,7 +296,7 @@ public class TeragrepKafkaTest {
                 do {
                     records = kafkaConsumer.poll(2000L);
 
-                    for (ConsumerRecord<String, String> record: records) {
+                    for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (all offsets)
                         for (int j = 1; j < 6; j++) {
                             assertTrue(record.value().contains("\"offset\":" + j));
@@ -278,7 +311,13 @@ public class TeragrepKafkaTest {
             }
 
             // test the returned dataset
-            List<String> offsets = ds.select("offset").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> offsets = ds
+                    .select("offset")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
             assertEquals(actualOffsets, offsets);
         });
@@ -286,7 +325,10 @@ public class TeragrepKafkaTest {
 
     // test with a "sequential_only" before the command
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void teragrepKafkaSaveTest_sequential() {
         String topic = "topic4";
         String query = "index=index_A | sort num(offset) | teragrep exec kafka save " + topic;
@@ -297,11 +339,14 @@ public class TeragrepKafkaTest {
             this.streamingTestUtil.getCtx().flush();
 
             // Create kafka consumer
-            try (final KafkaConsumer<String, String> kafkaConsumer =
-                         sharedKafkaTestResource.getKafkaTestUtils().getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)) {
+            try (
+                    final KafkaConsumer<String, String> kafkaConsumer = sharedKafkaTestResource
+                            .getKafkaTestUtils()
+                            .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
+            ) {
 
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
-                for (final PartitionInfo partitionInfo: kafkaConsumer.partitionsFor(topic)) {
+                for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
@@ -313,7 +358,7 @@ public class TeragrepKafkaTest {
                 do {
                     records = kafkaConsumer.poll(2000L);
 
-                    for (ConsumerRecord<String, String> record: records) {
+                    for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (test the source column)
                         assertTrue(record.value().contains("\"source\":\"" + "127." + i + "." + i + "." + i + "\""));
                         i++;
@@ -326,7 +371,13 @@ public class TeragrepKafkaTest {
             }
 
             // test the returned dataset
-            List<String> offsets = ds.select("offset").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> offsets = ds
+                    .select("offset")
+                    .orderBy("id")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
             assertEquals(actualOffsets, offsets);
         });

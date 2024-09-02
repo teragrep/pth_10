@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -53,8 +52,6 @@ import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,8 +63,10 @@ import java.util.regex.Pattern;
  * Generates $count rows with _time column. More columns can be added by setting $annotate=true
  */
 public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
+
     private final DPLParserCatalystContext catCtx;
     public MakeresultsStep makeresultsStep = null;
+
     public MakeresultsTransformation(DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
     }
@@ -78,8 +77,8 @@ public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Sets all the parameters based on the values given on the command, and generates
-     * a streaming dataset.
+     * Sets all the parameters based on the values given on the command, and generates a streaming dataset.
+     * 
      * @param ctx
      * @return
      */
@@ -105,13 +104,16 @@ public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
                 count = Integer.parseInt(countParameter);
                 if (count < 1 || count > 2_000_000) {
                     // based on local testing >2M causes memory issues and running out of heap space
-                    throw new IllegalArgumentException("Makeresults: Count parameter value must be a positive integer between 1 and 2 000 000.");
+                    throw new IllegalArgumentException(
+                            "Makeresults: Count parameter value must be a positive integer between 1 and 2 000 000."
+                    );
                 }
             }
             else {
-                throw new IllegalArgumentException("Makeresults: Invalid count parameter value provided! It must be a positive integer between 1 and 2 000 000.");
+                throw new IllegalArgumentException(
+                        "Makeresults: Invalid count parameter value provided! It must be a positive integer between 1 and 2 000 000."
+                );
             }
-
 
         }
 
@@ -124,7 +126,6 @@ public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
             // TODO implement
             server = ctx.t_makeresults_struckServerParameter().getText();
         }
-
 
         this.makeresultsStep.setAnnotate(annotate);
         this.makeresultsStep.setServer(server);
@@ -151,6 +152,5 @@ public class MakeresultsTransformation extends DPLParserBaseVisitor<Node> {
 
         return new StringNode(new Token(Token.Type.STRING, value));
     }
-
 
 }

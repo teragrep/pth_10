@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.rex4j;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -58,9 +57,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public final class Rex4jStep extends AbstractRex4jStep{
+public final class Rex4jStep extends AbstractRex4jStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(Rex4jStep.class);
     private final DPLParserCatalystContext catCtx;
+
     public Rex4jStep(DPLParserCatalystContext catCtx) {
         super();
         this.catCtx = catCtx;
@@ -83,15 +84,21 @@ public final class Rex4jStep extends AbstractRex4jStep{
             // FIXME Implement character substitute mode and Nth occurrence flag
             // y/ and /N, where N>0
             if (sed.length < 4) {
-                throw new RuntimeException("Invalid sedMode string given in rex4j: " + regexStr + "\nExpected: s/regexp/replacement/g");
+                throw new RuntimeException(
+                        "Invalid sedMode string given in rex4j: " + regexStr + "\nExpected: s/regexp/replacement/g"
+                );
             }
 
             if (!sed[0].equals("s")) {
-                throw new UnsupportedOperationException("Only replace strings mode (s/) is supported as of now. Expected: s, Actual: " + sed[0]);
+                throw new UnsupportedOperationException(
+                        "Only replace strings mode (s/) is supported as of now. Expected: s, Actual: " + sed[0]
+                );
             }
 
             if (!sed[3].equals("g")) {
-                throw new UnsupportedOperationException("Only global flag (/g) is supported as of now. Expected: g, Actual: " + sed[3]);
+                throw new UnsupportedOperationException(
+                        "Only global flag (/g) is supported as of now. Expected: g, Actual: " + sed[3]
+                );
             }
 
             Column rex = functions.regexp_replace(new Column(field), sed[1], sed[2]);
@@ -102,7 +109,9 @@ public final class Rex4jStep extends AbstractRex4jStep{
 
             // a namedGroup must exist
             if (fields.isEmpty()) {
-                throw new IllegalArgumentException("Error in rex4j command, regexp-string missing mandatory match groups.");
+                throw new IllegalArgumentException(
+                        "Error in rex4j command, regexp-string missing mandatory match groups."
+                );
             }
 
             // go through multi extraction groups
@@ -112,8 +121,8 @@ public final class Rex4jStep extends AbstractRex4jStep{
                 Integer in = me.getValue();
                 // perform regexp_extract
                 rex = functions.regexp_extract(functions.col(field), regexStr, in);
-                res = res.withColumn(me.getKey(), functions.when(rex.eqNullSafe(functions.lit("")),
-                        functions.lit(catCtx.nullValue.value())).otherwise(rex));
+                res = res
+                        .withColumn(me.getKey(), functions.when(rex.eqNullSafe(functions.lit("")), functions.lit(catCtx.nullValue.value())).otherwise(rex));
             }
             return res;
         }

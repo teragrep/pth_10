@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -65,95 +65,98 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.UUID;
 
-
 public class utils {
-	private static final Logger LOGGER = LoggerFactory.getLogger(utils.class);
 
-	public static Dataset<Row> executeQueryWithCatalystOutput(String str, SparkSession spark, Dataset<Row> testSet) {
-		// TODO change to streaming mode
-		// initializing DPLParserCatalystContext with existing dataset -> processing will not be streaming
-		DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark, testSet);
-		CharStream inputStream = CharStreams.fromString(str);
-		DPLLexer lexer = new DPLLexer(inputStream);
-		DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-		parser.addErrorListener(new BaseErrorListener() {
-			@Override
-			public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
-				throw new IllegalStateException("failed to parse at line " + line + ":" + charPositionInLine + " due to " + msg, e);
-			}
-		});
-		ParseTree tree = parser.root();
+    private static final Logger LOGGER = LoggerFactory.getLogger(utils.class);
 
-		ctx.setEarliest("-1Y");
-		com.teragrep.pth10.ast.DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-		try {
-			CatalystNode rv = (CatalystNode) visitor.visit(tree);
-		return rv.getDataset();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
-	}
+    public static Dataset<Row> executeQueryWithCatalystOutput(String str, SparkSession spark, Dataset<Row> testSet) {
+        // TODO change to streaming mode
+        // initializing DPLParserCatalystContext with existing dataset -> processing will not be streaming
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark, testSet);
+        CharStream inputStream = CharStreams.fromString(str);
+        DPLLexer lexer = new DPLLexer(inputStream);
+        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
+        parser.addErrorListener(new BaseErrorListener() {
 
-	public static boolean isUUID(String uuid) {
-		try {
-			UUID id = UUID.fromString(uuid.replace("_", "-"));
-		} catch (IllegalArgumentException ex) {
-			// Not uuid,
-			LOGGER.debug("NOT UUID: <{}>", uuid);
-			return false;
-		}
-		return true;
-	}
-	public static void printDebug(String e, String result){
-		LOGGER.debug("Spark SQL=<{}>", result);
-		LOGGER.debug("Spark EXP=<{}>", e);
-		LOGGER.debug("----------------------");
-	}
+            @Override
+            public void syntaxError(
+                    Recognizer<?, ?> recognizer,
+                    Object offendingSymbol,
+                    int line,
+                    int charPositionInLine,
+                    String msg,
+                    RecognitionException e
+            ) {
+                throw new IllegalStateException(
+                        "failed to parse at line " + line + ":" + charPositionInLine + " due to " + msg,
+                        e
+                );
+            }
+        });
+        ParseTree tree = parser.root();
 
-	public static String getQueryAnalysis(String str) {
-		StructType exampleSchema = new StructType(
-				new StructField[]{
-						new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-						new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-						new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-						new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-						new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-						new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-						new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-						new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build()),
-						new StructField("origin", DataTypes.StringType, false, new MetadataBuilder().build())
-				}
-		);
+        ctx.setEarliest("-1Y");
+        com.teragrep.pth10.ast.DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        try {
+            CatalystNode rv = (CatalystNode) visitor.visit(tree);
+            return rv.getDataset();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+    }
 
-		ArrayList<Row> rowArrayList = new ArrayList<>();
-		Row row = RowFactory.create(
-				Timestamp.from(Instant.ofEpochSecond(0L)),
-				"test data ",
-				"test_index",
-				"test:sourcetype:0",
-				"test.host.domain.example.com",
-				"source:test",
-				"partition/test/0",
-				0L,
-				"test origin"
-		);
-		rowArrayList.add(row);
+    public static boolean isUUID(String uuid) {
+        try {
+            UUID id = UUID.fromString(uuid.replace("_", "-"));
+        }
+        catch (IllegalArgumentException ex) {
+            // Not uuid,
+            LOGGER.debug("NOT UUID: <{}>", uuid);
+            return false;
+        }
+        return true;
+    }
 
-		SparkSession sparkSession = SparkSession.builder().master("local[*]").getOrCreate();
-		sparkSession = sparkSession.newSession();
-		sparkSession.sparkContext().setLogLevel("ERROR");
-		Dataset<Row> rowDataset = sparkSession.createDataFrame(rowArrayList, exampleSchema);
-		Dataset<Row> rv = executeQueryWithCatalystOutput(str, sparkSession, rowDataset);
+    public static void printDebug(String e, String result) {
+        LOGGER.debug("Spark SQL=<{}>", result);
+        LOGGER.debug("Spark EXP=<{}>", e);
+        LOGGER.debug("----------------------");
+    }
 
-		// returning canonicalized plan because the one with column names
-		// contains references to column instance which increment on each
-		// execution and therefore are not valid. check mapping of names:
-		// with rv.queryExecution().analyzed().canonicalized().numberedTreeString():
-		// 03       +- LocalRelation [none#0, none#1, none#2, none#3, none#4, none#5, none#6, none#7L, none#8]
-		// with rv.queryExecution().analyzed().numberedTreeString():
-		// 03       +- LocalRelation [_time#439, _raw#440, index#441, sourcetype#442, host#443, source#444, partition#445, offset#446L, origin#447]
-		return rv.queryExecution().analyzed().canonicalized().numberedTreeString();
-	}
+    public static String getQueryAnalysis(String str) {
+        StructType exampleSchema = new StructType(new StructField[] {
+                new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+                new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+                new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+                new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+                new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+                new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+                new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build()),
+                new StructField("origin", DataTypes.StringType, false, new MetadataBuilder().build())
+        });
+
+        ArrayList<Row> rowArrayList = new ArrayList<>();
+        Row row = RowFactory
+                .create(Timestamp.from(Instant.ofEpochSecond(0L)), "test data ", "test_index", "test:sourcetype:0", "test.host.domain.example.com", "source:test", "partition/test/0", 0L, "test origin");
+        rowArrayList.add(row);
+
+        SparkSession sparkSession = SparkSession.builder().master("local[*]").getOrCreate();
+        sparkSession = sparkSession.newSession();
+        sparkSession.sparkContext().setLogLevel("ERROR");
+        Dataset<Row> rowDataset = sparkSession.createDataFrame(rowArrayList, exampleSchema);
+        Dataset<Row> rv = executeQueryWithCatalystOutput(str, sparkSession, rowDataset);
+
+        // returning canonicalized plan because the one with column names
+        // contains references to column instance which increment on each
+        // execution and therefore are not valid. check mapping of names:
+        // with rv.queryExecution().analyzed().canonicalized().numberedTreeString():
+        // 03       +- LocalRelation [none#0, none#1, none#2, none#3, none#4, none#5, none#6, none#7L, none#8]
+        // with rv.queryExecution().analyzed().numberedTreeString():
+        // 03       +- LocalRelation [_time#439, _raw#440, index#441, sourcetype#442, host#443, source#444, partition#445, offset#446L, origin#447]
+        return rv.queryExecution().analyzed().canonicalized().numberedTreeString();
+    }
 
 }

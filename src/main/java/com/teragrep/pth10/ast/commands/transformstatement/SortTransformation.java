@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.functions.dpf_02.SortByClause;
@@ -70,6 +69,7 @@ import java.util.regex.Pattern;
  * Processes the arguments and provides it for dpf_02 (BatchCollect) for sorting purposes.
  */
 public class SortTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SortTransformation.class);
     private final DPLParserCatalystContext catCtx;
     private final DPLParserCatalystVisitor catVisitor;
@@ -89,9 +89,9 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Sets the variable values based on the parameters given in the command,
-     * and builds the SortByClauses to be used by the dpf_02 BatchCollect,
-     * as the actual sorting happens in BatchCollect
+     * Sets the variable values based on the parameters given in the command, and builds the SortByClauses to be used by
+     * the dpf_02 BatchCollect, as the actual sorting happens in BatchCollect
+     * 
      * @param ctx SortTransformationContext
      * @return CatalystNode containing result set (same as input)
      */
@@ -150,14 +150,23 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
         // at least one sortByClause needs to be present
         // otherwise throw exception with details
         if (this.listOfSortByClauses.size() < 1) {
-            throw new IllegalArgumentException("Sort command should contain at least one sortByInstruction. Example: 'sort -_time'");
+            throw new IllegalArgumentException(
+                    "Sort command should contain at least one sortByInstruction. Example: 'sort -_time'"
+            );
         }
 
         this.sortStep = new SortStep(catCtx, listOfSortByClauses, limit, desc);
 
-        LOGGER.info(String.format("Set sortStep params to: sbc=%s, desc=%s, bc=%s, limit=%s",
-                Arrays.toString(this.sortStep.getListOfSortByClauses().toArray()), this.sortStep.isDesc(), this.sortStep.getSortingBatchCollect(),
-                this.sortStep.getLimit()));
+        LOGGER
+                .info(
+                        String
+                                .format(
+                                        "Set sortStep params to: sbc=%s, desc=%s, bc=%s, limit=%s", Arrays
+                                                .toString(this.sortStep.getListOfSortByClauses().toArray()),
+                                        this.sortStep.isDesc(), this.sortStep.getSortingBatchCollect(),
+                                        this.sortStep.getLimit()
+                                )
+                );
 
         return sortTransformationEmitCatalyst(ctx);
     }
@@ -190,7 +199,6 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
             return visitChildren(ctx);
         }
     }
-
 
     // PLUS (+) is descending=false
     // MINUS (-) is descending=true
@@ -291,8 +299,8 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Pushes the list of sortBy clauses to ProcessingStack,
-     * and pushes the dataset to the stack.
+     * Pushes the list of sortBy clauses to ProcessingStack, and pushes the dataset to the stack.
+     * 
      * @param ctx
      * @return
      */

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -59,8 +59,10 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 
 public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RangemapTransformation.class);
     private final RangemapStep rangemapStep;
+
     public RangemapTransformation() {
         this.rangemapStep = new RangemapStep();
         this.rangemapStep.attributeRangeMap = new HashMap<>();
@@ -85,14 +87,20 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_rangemap_attrnParameter(DPLParser.T_rangemap_attrnParameterContext ctx) {
         final String key = ctx.stringType().getText();
         String valueLeft = ctx.t_rangemap_rangeParameter().GET_RANGE_NUMBER_LEFT().getText();
-        final String valueRight = ctx.t_rangemap_rangeParameter().t_rangemap_rangeRightParameter().GET_RANGE_NUMBER_RIGHT().getText();
+        final String valueRight = ctx
+                .t_rangemap_rangeParameter()
+                .t_rangemap_rangeRightParameter()
+                .GET_RANGE_NUMBER_RIGHT()
+                .getText();
 
         // left side of range contains a trailing '-' character which needs to be removed
         if (valueLeft.endsWith("-")) {
             valueLeft = valueLeft.substring(0, valueLeft.length() - 1);
         }
 
-        this.rangemapStep.attributeRangeMap.put(key, new String[]{valueLeft, valueRight});
+        this.rangemapStep.attributeRangeMap.put(key, new String[] {
+                valueLeft, valueRight
+        });
         return new NullNode();
     }
 

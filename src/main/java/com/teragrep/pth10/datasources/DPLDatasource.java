@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.datasources;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -63,6 +62,7 @@ import java.time.Instant;
  * DPL Datasource, used for archive and kafka queries
  */
 public class DPLDatasource {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLDatasource.class);
 
     private final Config config;
@@ -81,7 +81,6 @@ public class DPLDatasource {
         this.catCtx = catCtx;
     }
 
-
     public Dataset<Row> constructStreams(ArchiveQuery archiveQuery, boolean isMetadataQuery) {
         // resolve archive Query which is then used with archiveDatasource
         LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]>", archiveQuery);
@@ -97,9 +96,9 @@ public class DPLDatasource {
         return archiveDS;
     }
 
-
     /**
      * Setup source stream for query
+     * 
      * @param query
      * @return streaming dataset
      */
@@ -123,48 +122,49 @@ public class DPLDatasource {
 
         LOGGER.debug("Creating ArchiveSourceProvider");
         reader = sparkSession
-                    .readStream()
-                    .format(com.teragrep.pth_06.TeragrepDatasource.class.getName())
-                    .option("num_partitions", config.getString("dpl.pth_06.partitions"))
-                    .option("S3endPoint", config.getString("fs.s3a.endpoint"))
-                    .option("S3identity", s3identity)
-                    .option("S3credential", s3credential)
-                    .option("DBusername", config.getString("dpl.pth_06.archive.db.username"))
-                    .option("DBpassword", config.getString("dpl.pth_06.archive.db.password"))
-                    .option("DBurl", config.getString("dpl.pth_06.archive.db.url"))
-                    .option("DBstreamdbname", config.getString("dpl.pth_06.archive.db.streamdb.name"))
-                    .option("DBjournaldbname", config.getString("dpl.pth_06.archive.db.journaldb.name"))
-                    .option("hideDatabaseExceptions", config.getString("dpl.pth_06.archive.db.hideDatabaseExceptions"))
-                    .option("skipNonRFC5424Files", config.getString("dpl.pth_06.archive.s3.skipNonRFC5424Files"))
-                    .option("queryXML", query.queryString);
+                .readStream()
+                .format(com.teragrep.pth_06.TeragrepDatasource.class.getName())
+                .option("num_partitions", config.getString("dpl.pth_06.partitions"))
+                .option("S3endPoint", config.getString("fs.s3a.endpoint"))
+                .option("S3identity", s3identity)
+                .option("S3credential", s3credential)
+                .option("DBusername", config.getString("dpl.pth_06.archive.db.username"))
+                .option("DBpassword", config.getString("dpl.pth_06.archive.db.password"))
+                .option("DBurl", config.getString("dpl.pth_06.archive.db.url"))
+                .option("DBstreamdbname", config.getString("dpl.pth_06.archive.db.streamdb.name"))
+                .option("DBjournaldbname", config.getString("dpl.pth_06.archive.db.journaldb.name"))
+                .option("hideDatabaseExceptions", config.getString("dpl.pth_06.archive.db.hideDatabaseExceptions"))
+                .option("skipNonRFC5424Files", config.getString("dpl.pth_06.archive.s3.skipNonRFC5424Files"))
+                .option("queryXML", query.queryString);
         // Add auditInformation options if exists
-        if( catCtx != null && catCtx.getAuditInformation() != null) {
+        if (catCtx != null && catCtx.getAuditInformation() != null) {
             LOGGER.debug("Adding auditInformation");
             reader = reader
                     .option("TeragrepAuditQuery", catCtx.getAuditInformation().getQuery())
                     .option("TeragrepAuditReason", catCtx.getAuditInformation().getReason())
                     .option("TeragrepAuditUser", catCtx.getAuditInformation().getUser())
-                    .option("TeragrepAuditPluginClassName", catCtx.getAuditInformation().getTeragrepAuditPluginClassName());
+                    .option(
+                            "TeragrepAuditPluginClassName",
+                            catCtx.getAuditInformation().getTeragrepAuditPluginClassName()
+                    );
         }
 
         if (config.getBoolean("dpl.pth_06.archive.enabled")) {
             LOGGER.debug("Archive is enabled");
-            reader = reader
-                    .option("archive.enabled", "true");
+            reader = reader.option("archive.enabled", "true");
         }
         else {
             LOGGER.debug("Archive is disabled");
-            reader = reader
-                    .option("archive.enabled", "false");
+            reader = reader.option("archive.enabled", "false");
         }
 
         if (config.hasPath("dpl.pth_06.archive.scheduler")) {
             String schedulerType = config.getString("dpl.pth_06.archive.scheduler");
             LOGGER.debug("Setting scheduler to <[{}]>", schedulerType);
             if (schedulerType != null && !schedulerType.isEmpty()) {
-                reader = reader
-                .option("scheduler", schedulerType);
-            } else {
+                reader = reader.option("scheduler", schedulerType);
+            }
+            else {
                 LOGGER.warn("DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty");
             }
         }
@@ -197,7 +197,8 @@ public class DPLDatasource {
                 LOGGER.debug("Found domainIndex, removing domain");
                 s3identityWithoutDomain = s3identityWithoutDomain.substring(0, domainIndex);
             }
-            String jaasconfig = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\""+s3identityWithoutDomain+"\" password=\""+s3credential+"\";";
+            String jaasconfig = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\""
+                    + s3identityWithoutDomain + "\" password=\"" + s3credential + "\";";
 
             LOGGER.debug("Adding kafka configuration to reader");
             reader = reader
@@ -209,7 +210,10 @@ public class DPLDatasource {
                     .option("kafka.max.poll.records", config.getString("dpl.pth_06.kafka.max.poll.records"))
                     .option("kafka.fetch.max.bytes", config.getString("dpl.pth_06.kafka.fetch.max.bytes"))
                     .option("kafka.fetch.max.wait.ms", config.getString("dpl.pth_06.kafka.fetch.max.wait.ms"))
-                    .option("kafka.max.partition.fetch.bytes", config.getString("dpl.pth_06.kafka.max.partition.fetch.bytes"))
+                    .option(
+                            "kafka.max.partition.fetch.bytes",
+                            config.getString("dpl.pth_06.kafka.max.partition.fetch.bytes")
+                    )
                     .option("kafka.continuousProcessing", config.getString("dpl.pth_06.kafka.continuousProcessing"));
         }
 

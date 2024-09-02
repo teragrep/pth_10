@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -68,6 +68,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class StepList implements VoidFunction2<Dataset<Row>, Long> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StepList.class);
     private final List<AbstractStep> list;
     private int breakpoint = -1;
@@ -76,7 +77,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     private boolean ignoreDefaultSorting = false;
 
     private OutputMode outputMode = OutputMode.Append();
-    private Consumer<Dataset<Row>> batchHandler = null;    // for UI
+    private Consumer<Dataset<Row>> batchHandler = null; // for UI
     private BatchCollect batchCollect; // standard batchCollect, used before sending batch event
     private BatchCollect sequentialModeBatchCollect; // used if in append mode and in sequential, to allow aggregates in sequential mode
     private DPLParserCatalystVisitor catVisitor;
@@ -107,6 +108,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
     /**
      * Add the specified step to the StepList
+     * 
      * @param step step to add
      * @return if adding was a success
      */
@@ -115,9 +117,10 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     }
 
     /**
-     * Returns a map containing the field names and their values as toString() for those values provides.
-     * If the given index is invalid, returns null. If the value of a field cannot be accessed,
-     * returns a ??? value in the map instead.
+     * Returns a map containing the field names and their values as toString() for those values provides. If the given
+     * index is invalid, returns null. If the value of a field cannot be accessed, returns a ??? value in the map
+     * instead.
+     * 
      * @param i index between 0 and size-1 of the internal list
      * @return mapping of field-value
      */
@@ -129,18 +132,21 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
                 f.setAccessible(true);
                 try {
                     rv.put(f.getName(), f.get(this.list.get(i)).toString());
-                } catch (IllegalAccessException e) {
+                }
+                catch (IllegalAccessException e) {
                     rv.put(f.getName(), "???");
                 }
             }
             return rv;
-        } else {
+        }
+        else {
             return null;
         }
     }
 
     /**
      * returns the count of aggregates currently processed
+     * 
      * @return the count
      */
     public int getAggregateCount() {
@@ -149,6 +155,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
     /**
      * Execute the steps included in the list
+     * 
      * @return DataStreamWriter which can be used to start the query
      */
     public DataStreamWriter<Row> execute() throws StreamingQueryException {
@@ -177,16 +184,12 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
                 // Switch to sequential; aka run the step inside forEachBatch
                 LOGGER.debug("breakpoint encountered at index <{}>", i);
 
-                return ds
-                        .writeStream()
-                        .outputMode(this.outputMode)
-                        .foreachBatch(this);
+                return ds.writeStream().outputMode(this.outputMode).foreachBatch(this);
             }
             ds = step.get(ds);
         }
 
-        return ds.writeStream().outputMode(this.outputMode)
-                .foreachBatch(this);
+        return ds.writeStream().outputMode(this.outputMode).foreachBatch(this);
     }
 
     private Dataset<Row> executeInBatch(Dataset<Row> ds) throws StreamingQueryException {
@@ -216,17 +219,16 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
             step.setAggregatesUsedBefore(aggregateCount > 0);
 
-            if (step.hasProperty(AbstractStep.CommandProperty.USES_INTERNAL_BATCHCOLLECT)){
+            if (step.hasProperty(AbstractStep.CommandProperty.USES_INTERNAL_BATCHCOLLECT)) {
                 LOGGER.info("[Analyze] Step uses internal batch collect: <{}>", step);
                 this.useInternalBatchCollect = true;
                 this.batchCollect = null;
             }
 
             if (step.hasProperty(AbstractStep.CommandProperty.IGNORE_DEFAULT_SORTING)) {
-                LOGGER.info("[Analyze] Ignore default sorting: <{}>",step);
+                LOGGER.info("[Analyze] Ignore default sorting: <{}>", step);
                 this.ignoreDefaultSorting = true;
-                this.batchCollect = new BatchCollect(null,
-                        catVisitor.getDPLRecallSize());
+                this.batchCollect = new BatchCollect(null, catVisitor.getDPLRecallSize());
             }
 
             if (step.hasProperty(AbstractStep.CommandProperty.REQUIRE_PRECEDING_AGGREGATE)) {
@@ -241,7 +243,8 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
                 if (breakpoint == -1) {
                     breakpoint = i;
                 }
-            } else if (step.hasProperty(AbstractStep.CommandProperty.AGGREGATE)) {
+            }
+            else if (step.hasProperty(AbstractStep.CommandProperty.AGGREGATE)) {
                 LOGGER.info("[Analyze] Aggregate command: <{}>", step);
                 aggregateCount++;
 
@@ -257,6 +260,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     /**
      * Sends the processed batch to the {@link #batchHandler}<br>
      * This is where any possible sorting happens through dpf_02
+     * 
      * @param ds Processed batch dataset
      * @param id ID of the processed batch dataset
      */
@@ -288,20 +292,17 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             final long max = catVisitor.getCatalystContext().getDplMaximumLatest();
             final long step = catVisitor.getCatalystContext().getTimeChartSpanSeconds();
 
-            final Dataset<Row> rangeDs =
-                    catVisitor.getCatalystContext()
-                            .getSparkSession()
-                            .range((min/step)*step,
-                                    ((max/step)+1) * step, step)
-                            .select(functions.col("id").cast("timestamp").alias("_range"));
+            final Dataset<Row> rangeDs = catVisitor
+                    .getCatalystContext()
+                    .getSparkSession()
+                    .range((min / step) * step, ((max / step) + 1) * step, step)
+                    .select(functions.col("id").cast("timestamp").alias("_range"));
             // left join span to data & continue
-            batchDF = rangeDs.join(
-                            batchDF,
-                            rangeDs.col("_range").equalTo(batchDF.col("_time")), "left")
+            batchDF = rangeDs
+                    .join(batchDF, rangeDs.col("_range").equalTo(batchDF.col("_time")), "left")
                     .drop("_time")
                     .withColumnRenamed("_range", "_time")
                     .orderBy("_time");
-
 
             // fill null data with "0" for all types, except for the "_time" column
             for (final StructField field : batchDF.schema().fields()) {
@@ -309,19 +310,29 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
                 final DataType dataType = field.dataType();
 
                 if (dataType == DataTypes.StringType) {
-                    batchDF = batchDF.na().fill("0", new String[]{name});
+                    batchDF = batchDF.na().fill("0", new String[] {
+                            name
+                    });
                 }
                 else if (dataType == DataTypes.IntegerType) {
-                    batchDF = batchDF.na().fill(0, new String[]{name});
+                    batchDF = batchDF.na().fill(0, new String[] {
+                            name
+                    });
                 }
                 else if (dataType == DataTypes.LongType) {
-                    batchDF = batchDF.na().fill(0L, new String[]{name});
+                    batchDF = batchDF.na().fill(0L, new String[] {
+                            name
+                    });
                 }
                 else if (dataType == DataTypes.DoubleType) {
-                    batchDF = batchDF.na().fill(0d, new String[]{name});
+                    batchDF = batchDF.na().fill(0d, new String[] {
+                            name
+                    });
                 }
                 else if (dataType == DataTypes.FloatType) {
-                    batchDF = batchDF.na().fill(0f, new String[]{name});
+                    batchDF = batchDF.na().fill(0f, new String[] {
+                            name
+                    });
                 }
                 // skip TimestampType
             }
@@ -329,7 +340,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
         // Continue sub list of steps execution, if necessary
         if (!this.list.isEmpty()) {
-            LOGGER.info("StepList batch processing - Continuing execution to next ops after breakpoint index: <{}>", breakpoint);
+            LOGGER
+                    .info(
+                            "StepList batch processing - Continuing execution to next ops after breakpoint index: <{}>",
+                            breakpoint
+                    );
 
             Dataset<Row> ret = this.executeInBatch(batchDF);
 

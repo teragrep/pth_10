@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -59,29 +59,27 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Tests for RegexTransformation
- * Uses streaming datasets
+ * Tests for RegexTransformation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RegexTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RegexTransformationTest.class);
 
     private final String testFile = "src/test/resources/regexTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -101,71 +99,65 @@ public class RegexTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void regexTest1() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | regex _raw != \"data data\"",
-            testFile,
-            ds -> {
-                assertEquals(0, ds.collectAsList().size());
-            }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | regex _raw != \"data data\"", testFile, ds -> {
+            assertEquals(0, ds.collectAsList().size());
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void regexTest2() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | regex _raw = \"data data\"",
-            testFile,
-            ds -> {
-                int size = ds.collectAsList().size();
-                assertTrue(size > 1);
-            }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | regex _raw = \"data data\"", testFile, ds -> {
+            int size = ds.collectAsList().size();
+            assertTrue(size > 1);
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void regexTest3() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | regex \"data data\"",
-            testFile,
-            ds -> {
-                int size = ds.collectAsList().size();
-                assertTrue(size > 1);
-            }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | regex \"data data\"", testFile, ds -> {
+            int size = ds.collectAsList().size();
+            assertTrue(size > 1);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void regexTest4() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | regex \"^[d|D][a|z][t|T][a|B]\\s.{4}$\"",
-            testFile,
-            ds -> {
-                int size = ds.collectAsList().size();
-                assertTrue(size > 1);
-            }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][a|B]\\s.{4}$\"", testFile, ds -> {
+            int size = ds.collectAsList().size();
+            assertTrue(size > 1);
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void regexTest5() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | regex \"^[d|D][a|z][t|T][c|B]\\s.{4}$\"",
-            testFile,
-            ds -> {
-                assertEquals(0, ds.collectAsList().size());
-            }
-        );
+        streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][c|B]\\s.{4}$\"", testFile, ds -> {
+            assertEquals(0, ds.collectAsList().size());
+        });
     }
 }

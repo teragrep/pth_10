@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -52,6 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RexSedModeUDF implements UDF2<String, String, String> {
+
     @Override
     public String call(String inputStr, String sedStr) throws Exception {
         JavaPcre pcre = new JavaPcre();
@@ -67,11 +68,12 @@ public class RexSedModeUDF implements UDF2<String, String, String> {
         if (checkedSedString.globalMode()) {
             // global mode
             offsets = getAllOccurrences(pcre, inputStr, checkedSedString.replaceOccurrencesAmount());
-        } else {
+        }
+        else {
             // replace nth occurrence mode
             offsets = getUpToNthOccurrence(pcre, inputStr, checkedSedString.replaceOccurrencesAmount());
             // only need the last nth occurrence
-            offsets = offsets.subList(offsets.size()-1, offsets.size());
+            offsets = offsets.subList(offsets.size() - 1, offsets.size());
         }
 
         StringBuilder resultStrBuilder = new StringBuilder();
@@ -91,7 +93,7 @@ public class RexSedModeUDF implements UDF2<String, String, String> {
                     // part-to-be-replaced, skip chars
                     continue;
                 }
-                else if (j == endInd && i == offsets.size()-1) {
+                else if (j == endInd && i == offsets.size() - 1) {
                     // final set of offsets, add the remaining bits of the input
                     resultStrBuilder.append(inputStr.charAt(j));
                 }
@@ -123,7 +125,9 @@ public class RexSedModeUDF implements UDF2<String, String, String> {
             offset = jPcre.get_ovector1();
 
             //System.out.printf("Match found (%s, %s): '%s'\n", start, offset, input.substring(start, offset));
-            offsets.add(new int[]{ start, offset });
+            offsets.add(new int[] {
+                    start, offset
+            });
         }
 
         return offsets;
@@ -141,7 +145,9 @@ public class RexSedModeUDF implements UDF2<String, String, String> {
             offset = jPcre.get_ovector1();
 
             if (count >= from) {
-                offsets.add(new int[]{ start, offset });
+                offsets.add(new int[] {
+                        start, offset
+                });
             }
             //System.out.printf("Match found (%s, %s): '%s'\n", start, offset, input.substring(start, offset));
             jPcre.singlematch_java(input, offset);

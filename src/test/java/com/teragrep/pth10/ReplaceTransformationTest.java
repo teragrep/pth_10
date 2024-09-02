@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -61,29 +61,27 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for the ReplaceTransformation implementation
- * Uses streaming datasets
+ * Tests for the ReplaceTransformation implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ReplaceTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReplaceTransformationTest.class);
 
     private final String testFile = "src/test/resources/replaceTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -103,84 +101,123 @@ public class ReplaceTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // Standard replace, without wildcards in WITH-clause
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // Standard replace, without wildcards in WITH-clause
     public void replace_test_1() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | replace \"?$.data*\" WITH \"SomethingNew\" IN _raw",
-            testFile,
-            ds -> {
-                List<String> listOfRawCol = ds.select("_raw").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                assertEquals(1, listOfRawCol.size());
-                assertEquals("SomethingNew", listOfRawCol.get(0));
-            }
-        );
+        streamingTestUtil
+                .performDPLTest("index=index_A | replace \"?$.data*\" WITH \"SomethingNew\" IN _raw", testFile, ds -> {
+                    List<String> listOfRawCol = ds
+                            .select("_raw")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(1, listOfRawCol.size());
+                    assertEquals("SomethingNew", listOfRawCol.get(0));
+                });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // One trailing wildcard in WITH-clause
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // One trailing wildcard in WITH-clause
     public void replace_test_2() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | replace \"?$.data*\" WITH \"SomethingNew*\" IN _raw",
-            testFile,
-            ds -> {
-                List<String> listOfRawCol = ds.select("_raw").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                assertEquals(1, listOfRawCol.size());
-                assertEquals("SomethingNew^){", listOfRawCol.get(0));
-            }
-        );
+        streamingTestUtil
+                .performDPLTest("index=index_A | replace \"?$.data*\" WITH \"SomethingNew*\" IN _raw", testFile, ds -> {
+                    List<String> listOfRawCol = ds
+                            .select("_raw")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(1, listOfRawCol.size());
+                    assertEquals("SomethingNew^){", listOfRawCol.get(0));
+                });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // One wildcard in WITH-clause as a prefix
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // One wildcard in WITH-clause as a prefix
     public void replace_test_3() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | replace \"*data^){\" WITH \"SomethingNew*\" IN _raw",
-            testFile,
-            ds -> {
-                List<String> listOfRawCol = ds.select("_raw").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                assertEquals(1, listOfRawCol.size());
-                assertEquals("SomethingNew?$.", listOfRawCol.get(0));
-            }
-        );
+        streamingTestUtil
+                .performDPLTest("index=index_A | replace \"*data^){\" WITH \"SomethingNew*\" IN _raw", testFile, ds -> {
+                    List<String> listOfRawCol = ds
+                            .select("_raw")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(1, listOfRawCol.size());
+                    assertEquals("SomethingNew?$.", listOfRawCol.get(0));
+                });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // Two wildcards, both as a prefix and trailing in WITH-clause
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // Two wildcards, both as a prefix and trailing in WITH-clause
     public void replace_test_4() {
-        streamingTestUtil.performDPLTest(
-            "index=index_A | replace \"*data*\" WITH \"*SomethingNew*\" IN _raw",
-            testFile,
-            ds -> {
-                List<String> listOfRawCol = ds.select("_raw").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                assertEquals(1, listOfRawCol.size());
-                assertEquals("?$.SomethingNew^){", listOfRawCol.get(0));
-            }
-        );
+        streamingTestUtil
+                .performDPLTest("index=index_A | replace \"*data*\" WITH \"*SomethingNew*\" IN _raw", testFile, ds -> {
+                    List<String> listOfRawCol = ds
+                            .select("_raw")
+                            .dropDuplicates()
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    assertEquals(1, listOfRawCol.size());
+                    assertEquals("?$.SomethingNew^){", listOfRawCol.get(0));
+                });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // Two x WITH y constructs
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // Two x WITH y constructs
     public void replaceTwoValuesTest() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | replace host WITH lost, index_A WITH index_B IN host, index",
-                testFile,
-                ds -> {
-                    assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                            Arrays.toString(ds.columns()));
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | replace host WITH lost, index_A WITH index_B IN host, index", testFile, ds -> {
+                            assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
+                                    Arrays.toString(ds.columns())
+                            );
 
-                    List<String> listOfHost = ds.select("host").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(1, listOfHost.size());
-                    assertEquals("lost", listOfHost.get(0));
+                            List<String> listOfHost = ds
+                                    .select("host")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(1, listOfHost.size());
+                            assertEquals("lost", listOfHost.get(0));
 
-                    List<String> listOfIndex = ds.select("index").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(1, listOfIndex.size());
-                    assertEquals("index_B", listOfIndex.get(0));
-                }
-        );
+                            List<String> listOfIndex = ds
+                                    .select("index")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(1, listOfIndex.size());
+                            assertEquals("index_B", listOfIndex.get(0));
+                        }
+                );
     }
 }

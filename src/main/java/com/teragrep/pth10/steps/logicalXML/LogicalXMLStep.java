@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.logicalXML;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -90,7 +89,11 @@ public final class LogicalXMLStep extends AbstractStep {
         if (this.catCtx != null && this.catCtx.getConfig() != null && !this.catCtx.getTestingMode()) {
             // Perform archive query
             if (!this.archiveQuery.isStub) {
-                LOGGER.info("Constructing data stream with query=<{}> metadata=<{}>", this.archiveQuery, isMetadataQuery);
+                LOGGER
+                        .info(
+                                "Constructing data stream with query=<{}> metadata=<{}>", this.archiveQuery,
+                                isMetadataQuery
+                        );
                 DPLDatasource datasource = new DPLDatasource(catCtx);
                 ds = datasource.constructStreams(this.archiveQuery, isMetadataQuery);
                 LOGGER.info("Received dataset with columns: <{}>", Arrays.toString(ds.columns()));
@@ -104,10 +107,12 @@ public final class LogicalXMLStep extends AbstractStep {
             // Testing mode?
             if (catCtx != null && catCtx.getDs() != null && !archiveQuery.isStub) {
                 ds = catCtx.getDs();
-            } else if (catCtx != null && archiveQuery.isStub) {
+            }
+            else if (catCtx != null && archiveQuery.isStub) {
                 // generate empty dataset even in testing mode if no archive query was generated
                 ds = new GeneratedDatasource(catCtx).constructEmptyStream();
-            } else {
+            }
+            else {
                 throw new RuntimeException("CatCtx didn't have a config and it's dataset is null as well!");
             }
         }

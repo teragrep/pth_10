@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.predict;
 
 import org.apache.spark.sql.*;
@@ -58,7 +57,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class PredictStep extends AbstractPredictStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PredictStep.class);
+
     public PredictStep() {
         super();
         this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
@@ -78,7 +79,10 @@ public final class PredictStep extends AbstractPredictStep {
             case LLT:
                 return llt(dataset);
             default:
-                throw new IllegalArgumentException("Algorithm '" + this.algorithm + "' is not yet supported by the predict command. Use 'LL' (default) or 'LLT' instead.");
+                throw new IllegalArgumentException(
+                        "Algorithm '" + this.algorithm
+                                + "' is not yet supported by the predict command. Use 'LL' (default) or 'LLT' instead."
+                );
         }
     }
 
@@ -97,7 +101,7 @@ public final class PredictStep extends AbstractPredictStep {
             sum += val;
         }
 
-        return sum/count;
+        return sum / count;
     }
 
     private Dataset<Row> llt(Dataset<Row> dataset) {
@@ -108,16 +112,16 @@ public final class PredictStep extends AbstractPredictStep {
         int indexOfAliasBeginningQuote = predictCol.toString().indexOf(" AS ");
         String predictFieldName = "prediction(" + predictCol + ")";
         if (indexOfAliasBeginningQuote != -1) {
-            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote+4);
+            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote + 4);
         }
 
         // upper/lower confidence interval column naming
         // default: upperXX(predictField)
         // customized: abc(predictField)
-        String upperFieldName = this.upperField == null ? ("upper" + this.upper + "(" + predictFieldName + ")")
-                : (this.upperField + "(" + predictFieldName + ")");
-        String lowerFieldName = this.lowerField == null ? ("lower" + this.lower + "(" + predictFieldName + ")")
-                : (this.lowerField + "(" + predictFieldName + ")");
+        String upperFieldName = this.upperField == null ? ("upper" + this.upper + "(" + predictFieldName
+                + ")") : (this.upperField + "(" + predictFieldName + ")");
+        String lowerFieldName = this.lowerField == null ? ("lower" + this.lower + "(" + predictFieldName
+                + ")") : (this.lowerField + "(" + predictFieldName + ")");
 
         //label = to predict; "count"
         //feature = _time
@@ -147,8 +151,8 @@ public final class PredictStep extends AbstractPredictStep {
         double W2 = 1.271; // slope eq. error guess
 
         // confidence intervals
-        double upperMultiplier = (this.upper/100d) + 1d;
-        double lowerMultiplier = (this.lower/100d) + 1d;
+        double upperMultiplier = (this.upper / 100d) + 1d;
+        double lowerMultiplier = (this.lower / 100d) + 1d;
 
         // list of rows of predictions
         List<Row> listOfPredRows = new ArrayList<>();
@@ -156,42 +160,42 @@ public final class PredictStep extends AbstractPredictStep {
         // initial values
         Q[0] = 2.0;
         v[0] = 0.02; //initial slope
-        K[0] = Q[0]/(Q[0]+e);
+        K[0] = Q[0] / (Q[0] + e);
 
         double mu_0 = avg(y);
-        mu[0] = mu_0+ v[0] + K[0]*(toDbl(y.get(0).get(0))-mu_0);
+        mu[0] = mu_0 + v[0] + K[0] * (toDbl(y.get(0).get(0)) - mu_0);
 
-        CI_upper[0] = mu[0]+upperMultiplier*Math.sqrt(Q[0]);
-        CI_lower[0] = mu[0]-lowerMultiplier*Math.sqrt(Q[0]);
+        CI_upper[0] = mu[0] + upperMultiplier * Math.sqrt(Q[0]);
+        CI_lower[0] = mu[0] - lowerMultiplier * Math.sqrt(Q[0]);
 
         // add first predicted row
-        listOfPredRows.add(RowFactory.create(y.get(0).getTimestamp(1),toDbl(y.get(0).get(0)), mu[0], CI_upper[0], CI_lower[0]));
+        listOfPredRows
+                .add(RowFactory.create(y.get(0).getTimestamp(1), toDbl(y.get(0).get(0)), mu[0], CI_upper[0], CI_lower[0]));
         for (int t = 1; t < n; t++) {
             // update measurement
-            mu[t] = mu[t-1]+v[t-1]+K[t-1]*(toDbl(y.get(t-1).get(0))-mu[t-1]);
-            v[t] = v[t-1] + W2;
-            Q[t] = (1-K[t-1])*Q[t-1]+W1;
-            K[t] = Q[t]/(Q[t]+e);
+            mu[t] = mu[t - 1] + v[t - 1] + K[t - 1] * (toDbl(y.get(t - 1).get(0)) - mu[t - 1]);
+            v[t] = v[t - 1] + W2;
+            Q[t] = (1 - K[t - 1]) * Q[t - 1] + W1;
+            K[t] = Q[t] / (Q[t] + e);
 
-            CI_upper[t] = mu[t]+upperMultiplier*Math.sqrt(Q[t]);
-            CI_lower[t] = mu[t]-lowerMultiplier*Math.sqrt(Q[t]);
+            CI_upper[t] = mu[t] + upperMultiplier * Math.sqrt(Q[t]);
+            CI_lower[t] = mu[t] - lowerMultiplier * Math.sqrt(Q[t]);
 
             //System.out.printf("mu: %s, Q: %s, K: %s, CI-U: %s, CI-L: %s%n",
             //        mu[t], Q[t], K[t], CI_upper[t], CI_lower[t]);
 
-            listOfPredRows.add(RowFactory.create(y.get(t).getTimestamp(1), toDbl(y.get(t).get(0)), mu[t], CI_upper[t], CI_lower[t]));
+            listOfPredRows
+                    .add(RowFactory.create(y.get(t).getTimestamp(1), toDbl(y.get(t).get(0)), mu[t], CI_upper[t], CI_lower[t]));
         }
 
         // generate dataframe from predictions
-        final StructType sch = new StructType(
-                new StructField[]{
-                        StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                        StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply(predictFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply(upperFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply(lowerFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build())
-                }
-        );
+        final StructType sch = new StructType(new StructField[] {
+                StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply(predictFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply(upperFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply(lowerFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build())
+        });
 
         Dataset<Row> rv;
         if (SparkSession.getActiveSession().nonEmpty()) {
@@ -203,8 +207,7 @@ public final class PredictStep extends AbstractPredictStep {
 
         // join predictions with original dataset
         rv = ds.join(rv, "_time");
-        rv = rv.orderBy(functions.col("_time").asc()).drop( "y");
-
+        rv = rv.orderBy(functions.col("_time").asc()).drop("y");
 
         // future forecasting: list of forecasts
         List<Row> listOfForecasts = new ArrayList<>();
@@ -229,39 +232,40 @@ public final class PredictStep extends AbstractPredictStep {
         double[] CI_l = initArrayWithValue(0, f);
 
         // add initial forecast
-        mu_f[0] = mu[mu.length-1]+v[v.length-1]+K[K.length-1]*(toDbl(y.get(y.size()-1).get(0))-mu[mu.length-1]);
-        v_f[0] = v[v.length-1]+W2;
+        mu_f[0] = mu[mu.length - 1] + v[v.length - 1]
+                + K[K.length - 1] * (toDbl(y.get(y.size() - 1).get(0)) - mu[mu.length - 1]);
+        v_f[0] = v[v.length - 1] + W2;
 
-        Q_f[0] = (1-K[K.length-1])*Q[Q.length-1]+W1;
-        K_f[0] = Q_f[0]/((Q_f[0])+e);
-        CI_u[0] = mu_f[0]+upperMultiplier*Math.sqrt(Q_f[0]);
-        CI_l[0] = mu_f[0]-lowerMultiplier*Math.sqrt(Q_f[0]);
+        Q_f[0] = (1 - K[K.length - 1]) * Q[Q.length - 1] + W1;
+        K_f[0] = Q_f[0] / ((Q_f[0]) + e);
+        CI_u[0] = mu_f[0] + upperMultiplier * Math.sqrt(Q_f[0]);
+        CI_l[0] = mu_f[0] - lowerMultiplier * Math.sqrt(Q_f[0]);
 
-        listOfForecasts.add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)),null, mu_f[0], CI_u[0], CI_l[0]));
+        listOfForecasts
+                .add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)), null, mu_f[0], CI_u[0], CI_l[0]));
         for (int t = 1; t < f; t++) {
             //System.out.println("t(2)= " + t);
             // measurement update
-            mu_f[t] = mu_f[t-1]+v_f[t-1]+K_f[t-1]*(toDbl(y.get(y.size()-1).get(0))-mu_f[t-1]);
-            v_f[t] = v_f[t-1] + W2;
-            Q_f[t] = (1-K_f[t-1])*Q_f[t-1]+W1;
-            K_f[t] = Q_f[t]/(Q_f[t]+0);
-            CI_u[t] = mu_f[t]+upperMultiplier*Math.sqrt(Q_f[t]);
-            CI_l[t] = mu_f[t]-lowerMultiplier*Math.sqrt(Q_f[t]);
+            mu_f[t] = mu_f[t - 1] + v_f[t - 1] + K_f[t - 1] * (toDbl(y.get(y.size() - 1).get(0)) - mu_f[t - 1]);
+            v_f[t] = v_f[t - 1] + W2;
+            Q_f[t] = (1 - K_f[t - 1]) * Q_f[t - 1] + W1;
+            K_f[t] = Q_f[t] / (Q_f[t] + 0);
+            CI_u[t] = mu_f[t] + upperMultiplier * Math.sqrt(Q_f[t]);
+            CI_l[t] = mu_f[t] - lowerMultiplier * Math.sqrt(Q_f[t]);
 
             last += diff;
-            listOfForecasts.add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)), null, mu_f[t], CI_u[t], CI_l[t]));
+            listOfForecasts
+                    .add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)), null, mu_f[t], CI_u[t], CI_l[t]));
         }
 
         // new df from forecast
-        final StructType sch2 = new StructType(
-                new StructField[]{
-                        StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                        StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply("CI_upper", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply("CI_lower", DataTypes.DoubleType, true, new MetadataBuilder().build())
-                }
-        );
+        final StructType sch2 = new StructType(new StructField[] {
+                StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply("CI_upper", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply("CI_lower", DataTypes.DoubleType, true, new MetadataBuilder().build())
+        });
 
         Dataset<Row> rv2;
         if (SparkSession.getActiveSession().nonEmpty()) {
@@ -289,16 +293,16 @@ public final class PredictStep extends AbstractPredictStep {
         int indexOfAliasBeginningQuote = predictCol.toString().indexOf(" AS ");
         String predictFieldName = "prediction(" + predictCol + ")";
         if (indexOfAliasBeginningQuote != -1) {
-            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote+4);
+            predictFieldName = predictCol.toString().substring(indexOfAliasBeginningQuote + 4);
         }
 
         // upper/lower confidence interval column naming
         // default: upperXX(predictField)
         // customized: abc(predictField)
-        String upperFieldName = this.upperField == null ? ("upper" + this.upper + "(" + predictFieldName + ")")
-                : (this.upperField + "(" + predictFieldName + ")");
-        String lowerFieldName = this.lowerField == null ? ("lower" + this.lower + "(" + predictFieldName + ")")
-                : (this.lowerField + "(" + predictFieldName + ")");
+        String upperFieldName = this.upperField == null ? ("upper" + this.upper + "(" + predictFieldName
+                + ")") : (this.upperField + "(" + predictFieldName + ")");
+        String lowerFieldName = this.lowerField == null ? ("lower" + this.lower + "(" + predictFieldName
+                + ")") : (this.lowerField + "(" + predictFieldName + ")");
 
         //label = to predict; "count"
         //feature = _time
@@ -325,47 +329,46 @@ public final class PredictStep extends AbstractPredictStep {
         double W = 1.271; // State equation variance guess
 
         // confidence intervals
-        double upperMultiplier = (this.upper/100d) + 1d;
-        double lowerMultiplier = (this.lower/100d) + 1d;
+        double upperMultiplier = (this.upper / 100d) + 1d;
+        double lowerMultiplier = (this.lower / 100d) + 1d;
 
         // list of rows of predictions
         List<Row> listOfPredRows = new ArrayList<>();
 
         // initial values
         Q[0] = 2.0;
-        K[0] = Q[0]/(Q[0]+e);
+        K[0] = Q[0] / (Q[0] + e);
         double mu_0 = avg(y);
-        mu[0] = mu_0+K[0]*(toDbl(y.get(0).get(0))-mu_0);
-        CI_upper[0] = mu[0]+upperMultiplier*Math.sqrt(Q[0]);
-        CI_lower[0] = mu[0]-lowerMultiplier*Math.sqrt(Q[0]);
+        mu[0] = mu_0 + K[0] * (toDbl(y.get(0).get(0)) - mu_0);
+        CI_upper[0] = mu[0] + upperMultiplier * Math.sqrt(Q[0]);
+        CI_lower[0] = mu[0] - lowerMultiplier * Math.sqrt(Q[0]);
 
         // add first predicted row
         listOfPredRows.add(RowFactory.create(y.get(0), y.get(0).getTimestamp(1), mu[0], CI_upper[0], CI_lower[0]));
         for (int t = 1; t < n; t++) {
             // update measurement
-            mu[t] = mu[t-1]+K[t-1]*(toDbl(y.get(t-1).get(0))-mu[t-1]);
-            Q[t] = (1-K[t-1])*Q[t-1]+W;
-            K[t] = Q[t]/(Q[t]+e);
+            mu[t] = mu[t - 1] + K[t - 1] * (toDbl(y.get(t - 1).get(0)) - mu[t - 1]);
+            Q[t] = (1 - K[t - 1]) * Q[t - 1] + W;
+            K[t] = Q[t] / (Q[t] + e);
 
-            CI_upper[t] = mu[t]+upperMultiplier*Math.sqrt(Q[t]);
-            CI_lower[t] = mu[t]-lowerMultiplier*Math.sqrt(Q[t]);
+            CI_upper[t] = mu[t] + upperMultiplier * Math.sqrt(Q[t]);
+            CI_lower[t] = mu[t] - lowerMultiplier * Math.sqrt(Q[t]);
 
             //System.out.printf("mu: %s, Q: %s, K: %s, CI-U: %s, CI-L: %s%n",
             //        mu[t], Q[t], K[t], CI_upper[t], CI_lower[t]);
 
-            listOfPredRows.add(RowFactory.create(y.get(t).get(0), y.get(t).getTimestamp(1), mu[t], CI_upper[t], CI_lower[t]));
+            listOfPredRows
+                    .add(RowFactory.create(y.get(t).get(0), y.get(t).getTimestamp(1), mu[t], CI_upper[t], CI_lower[t]));
         }
 
         // generate dataframe from predictions
-        final StructType sch = new StructType(
-                new StructField[]{
-                        StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                        StructField.apply(predictFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply(upperFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply(lowerFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build())
-                }
-        );
+        final StructType sch = new StructType(new StructField[] {
+                StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                StructField.apply(predictFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply(upperFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply(lowerFieldName, DataTypes.DoubleType, true, new MetadataBuilder().build())
+        });
 
         Dataset<Row> rv;
         if (SparkSession.getActiveSession().nonEmpty()) {
@@ -378,7 +381,6 @@ public final class PredictStep extends AbstractPredictStep {
         // join predictions with original dataset
         rv = ds.join(rv, "_time");
         rv = rv.orderBy(functions.col("_time").asc()).drop("y");
-
 
         // future forecasting: list of forecasts
         List<Row> listOfForecasts = new ArrayList<>();
@@ -402,35 +404,35 @@ public final class PredictStep extends AbstractPredictStep {
         double[] CI_l = initArrayWithValue(0, f);
 
         // add initial forecast
-        mu_f[0] = mu[mu.length-1]+K[K.length-1]*(toDbl(y.get(y.size()-1).get(0))-mu[mu.length-1]);
-        Q_f[0] = (1-K[K.length-1])*Q[Q.length-1]+W;
-        K_f[0] = Q_f[0]/((Q_f[0])+e);
-        CI_u[0] = mu_f[0]+upperMultiplier*Math.sqrt(Q_f[0]);
-        CI_l[0] = mu_f[0]-lowerMultiplier*Math.sqrt(Q_f[0]);
+        mu_f[0] = mu[mu.length - 1] + K[K.length - 1] * (toDbl(y.get(y.size() - 1).get(0)) - mu[mu.length - 1]);
+        Q_f[0] = (1 - K[K.length - 1]) * Q[Q.length - 1] + W;
+        K_f[0] = Q_f[0] / ((Q_f[0]) + e);
+        CI_u[0] = mu_f[0] + upperMultiplier * Math.sqrt(Q_f[0]);
+        CI_l[0] = mu_f[0] - lowerMultiplier * Math.sqrt(Q_f[0]);
 
-        listOfForecasts.add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)),null, mu_f[0], CI_u[0], CI_l[0]));
+        listOfForecasts
+                .add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)), null, mu_f[0], CI_u[0], CI_l[0]));
         for (int t = 1; t < f; t++) {
             // measurement update
-            mu_f[t] = mu_f[t-1]+K_f[t-1]*(toDbl(y.get(y.size()-1).get(0))-mu_f[t-1]);
-            Q_f[t] = (1-K_f[t-1])*Q_f[t-1]+W;
-            K_f[t] = Q_f[t]/(Q_f[t]+0);
-            CI_u[t] = mu_f[t]+upperMultiplier*Math.sqrt(Q_f[t]);
-            CI_l[t] = mu_f[t]-lowerMultiplier*Math.sqrt(Q_f[t]);
+            mu_f[t] = mu_f[t - 1] + K_f[t - 1] * (toDbl(y.get(y.size() - 1).get(0)) - mu_f[t - 1]);
+            Q_f[t] = (1 - K_f[t - 1]) * Q_f[t - 1] + W;
+            K_f[t] = Q_f[t] / (Q_f[t] + 0);
+            CI_u[t] = mu_f[t] + upperMultiplier * Math.sqrt(Q_f[t]);
+            CI_l[t] = mu_f[t] - lowerMultiplier * Math.sqrt(Q_f[t]);
 
             last += diff;
-            listOfForecasts.add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)), null, mu_f[t], CI_u[t], CI_l[t]));
+            listOfForecasts
+                    .add(RowFactory.create(Timestamp.from(Instant.ofEpochMilli(last)), null, mu_f[t], CI_u[t], CI_l[t]));
         }
 
         // new df from forecast
-        final StructType sch2 = new StructType(
-                new StructField[]{
-                        StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                        StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply("CI_upper", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                        StructField.apply("CI_lower", DataTypes.DoubleType, true, new MetadataBuilder().build())
-                }
-        );
+        final StructType sch2 = new StructType(new StructField[] {
+                StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                StructField.apply("y", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply("CI_upper", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                StructField.apply("CI_lower", DataTypes.DoubleType, true, new MetadataBuilder().build())
+        });
 
         Dataset<Row> rv2;
         if (SparkSession.getActiveSession().nonEmpty()) {

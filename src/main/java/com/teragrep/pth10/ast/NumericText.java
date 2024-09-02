@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -48,24 +48,28 @@ package com.teragrep.pth10.ast;
 import java.util.regex.Pattern;
 
 public class NumericText implements Text {
+
     private final Pattern numericPattern = Pattern.compile("-?\\d+(\\.\\d+)?");
     private final Text origin;
 
     public NumericText(Text text) {
         this.origin = text;
     }
+
     @Override
     public String read() {
         final String s = origin.read();
         if (isNumeric(s)) {
             return s;
-        } else {
+        }
+        else {
             throw new RuntimeException("Non-numeric text was provided!");
         }
     }
 
     /**
      * Checks if given string is numeric
+     * 
      * @param s any string
      * @return was the string numeric?
      */

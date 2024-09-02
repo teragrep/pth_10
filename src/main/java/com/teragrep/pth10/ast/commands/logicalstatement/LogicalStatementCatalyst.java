@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.logicalstatement;
 
 import com.teragrep.jue_01.GlobToRegEx;
@@ -75,19 +74,22 @@ import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-
 /**
- * <p>Contains the visitor functions for logicalStatement, which is used
- * for the main search function of the language. </p>
- * <p>These functions help to build the necessary archive query and Spark actions.</p>
- * Example:
- * <pre>index=cinnamon earliest=-1y latest=-1d</pre>
- * <p>After the main logicalStatement, multiple
- * {@link com.teragrep.pth10.ast.commands.transformstatement.TransformStatement transformStatements}
- * that contain aggregations and other functions can be chained, or left unused if the user wants
- * to perform a basic search.</p>
+ * <p>
+ * Contains the visitor functions for logicalStatement, which is used for the main search function of the language.
+ * </p>
+ * <p>
+ * These functions help to build the necessary archive query and Spark actions.
+ * </p>
+ * Example: <pre>index=cinnamon earliest=-1y latest=-1d</pre>
+ * <p>
+ * After the main logicalStatement, multiple
+ * {@link com.teragrep.pth10.ast.commands.transformstatement.TransformStatement transformStatements} that contain
+ * aggregations and other functions can be chained, or left unused if the user wants to perform a basic search.
+ * </p>
  */
 public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(LogicalStatementCatalyst.class);
 
     private final DPLParserCatalystContext catCtx;
@@ -114,6 +116,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     /**
      * Visits the parse tree for SearchTransformationRoot and returns a LogicalCatalystStep that can be added to
      * Steptree in DPLParserCatalystVisitor.
+     * 
      * @param ctx SearchTransformationRootContext
      * @return LogicalCatalystStep
      */
@@ -129,19 +132,22 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * The main visitor function for searchTransformation, used for the main search function.
-     * <pre>
+     * The main visitor function for searchTransformation, used for the main search function. <pre>
      *     root : searchTransformationRoot transformStatement?
      *     searchTransformationRoot : logicalStatement
      * </pre>
+     * 
      * @param ctx SearchTransformationRoot context
      * @return logicalStatement columnNode
      */
     @Override
     public Node visitSearchTransformationRoot(DPLParser.SearchTransformationRootContext ctx) {
         ColumnNode rv;
-        LOGGER.info("[SearchTransformationRoot CAT] Visiting: <{}> with <{}> children", ctx.getText(), ctx.getChildCount());
-
+        LOGGER
+                .info(
+                        "[SearchTransformationRoot CAT] Visiting: <{}> with <{}> children", ctx.getText(),
+                        ctx.getChildCount()
+                );
 
         if (ctx.getChildCount() == 1) {
             // just a single directoryStatement -or- logicalStatement
@@ -150,8 +156,9 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         else {
             ParseTree secondChild = ctx.getChild(1);
 
-            if (secondChild instanceof TerminalNode &&
-                    ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR) {
+            if (
+                secondChild instanceof TerminalNode && ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR
+            ) {
                 // case: directoryStmt OR logicalStmt
                 ColumnNode dirStatColumnNode = (ColumnNode) visit(ctx.directoryStatement());
                 ColumnNode logiStatColumnNode = (ColumnNode) visit(ctx.logicalStatement(0));
@@ -162,23 +169,24 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 Column finalColumn = ((ColumnNode) visit(ctx.directoryStatement())).getColumn();
 
                 for (DPLParser.LogicalStatementContext logiStatCtx : ctx.logicalStatement()) {
-                    finalColumn = finalColumn.and(((ColumnNode)visit(logiStatCtx)).getColumn());
+                    finalColumn = finalColumn.and(((ColumnNode) visit(logiStatCtx)).getColumn());
                 }
 
                 rv = new ColumnNode(finalColumn);
             }
         }
 
-       if (rv != null && rv.getColumn() != null) {
-           LOGGER.info("Spark column: <{}>", rv.getColumn().toString());
-           this.catCtx.setSparkQuery(rv.getColumn().toString());
-       }
+        if (rv != null && rv.getColumn() != null) {
+            LOGGER.info("Spark column: <{}>", rv.getColumn().toString());
+            this.catCtx.setSparkQuery(rv.getColumn().toString());
+        }
 
         return rv;
     }
 
     /**
      * Prints parse tree string, IF catCtx has been setRuleNames(parser.getRuleNames())
+     * 
      * @param ctx current context
      * @return parse tree as string
      */
@@ -217,8 +225,9 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             ParseTree secondChild = ctx.getChild(1);
 
             // check if directoryStmt OR directoryStmt
-            if (secondChild instanceof TerminalNode &&
-                    ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR)  {
+            if (
+                secondChild instanceof TerminalNode && ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR
+            ) {
                 LOGGER.debug("[DirStmt] OR detected");
                 orMode = true;
             }
@@ -242,14 +251,14 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 Column c = null;
 
                 if (n instanceof SubSearchNode) {
-                    c = ((SubSearchNode)n).getColumn();
+                    c = ((SubSearchNode) n).getColumn();
                 }
                 else if (n instanceof ColumnNode) {
-                    c = ((ColumnNode)n).getColumn();
+                    c = ((ColumnNode) n).getColumn();
                 }
                 else if (n instanceof CatalystNode) {
                     LOGGER.debug("Got dataset from sub search");
-                    subSearchDs = ((CatalystNode)n).getDataset();
+                    subSearchDs = ((CatalystNode) n).getDataset();
                     continue;
                 }
                 else {
@@ -301,7 +310,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
         if (!(ctx.getChild(0) instanceof TerminalNode)) {
             left = visit(ctx.getChild(0));
-        } else {
+        }
+        else {
             leftIsTerminal = (TerminalNode) ctx.getChild(0);
             if (leftIsTerminal.getSymbol().getType() != DPLLexer.NOT) {
                 throw new RuntimeException("Unsupported unary logical operation: " + ctx.getText());
@@ -311,13 +321,15 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (ctx.getChildCount() == 1) {
             // leaf
             rv = left;
-        } else if (ctx.getChildCount() == 2) {
+        }
+        else if (ctx.getChildCount() == 2) {
             Node right = visit(ctx.getChild(1));
             if (leftIsTerminal != null) {
                 Column r = ((ColumnNode) right).getColumn();
                 // Use unary operation, currently only NOT is supported
                 rv = new ColumnNode(functions.not(r));
-            } else {
+            }
+            else {
                 if (left instanceof ColumnNode && right instanceof ColumnNode) {
                     Column l = ((ColumnNode) left).getColumn();
                     Column r = ((ColumnNode) right).getColumn();
@@ -326,7 +338,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 }
             }
 
-        } else if (ctx.getChildCount() == 3) {
+        }
+        else if (ctx.getChildCount() == 3) {
             TerminalNode operation = (TerminalNode) ctx.getChild(1);
             Node right = visit(ctx.getChild(2));
             if (left instanceof ColumnNode && right instanceof ColumnNode) {
@@ -335,7 +348,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 // resolve operation
                 if (DPLLexer.AND == operation.getSymbol().getType()) {
                     rv = new ColumnNode(l.and(r));
-                } else if (DPLLexer.OR == operation.getSymbol().getType())
+                }
+                else if (DPLLexer.OR == operation.getSymbol().getType())
                     rv = new ColumnNode(l.or(r));
                 else {
                     throw new RuntimeException("Unsupported logical operation:" + operation);
@@ -345,7 +359,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
         if (rv instanceof SubSearchNode) {
             LOGGER.info("[CAT] [LogiStat] Return value was SubsearchNode. Converting to ColumnNode!");
-            rv = new ColumnNode(((SubSearchNode)rv).getColumn());
+            rv = new ColumnNode(((SubSearchNode) rv).getColumn());
         }
 
         LOGGER.debug("visitLogicalStatement outgoing: <{}>", rv);
@@ -403,11 +417,10 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * searchQualifier : INDEX (EQ|NEQ) stringType WILDCARD? | SOURCETYPE (EQ|NEQ)
-     * stringType WILDCARD? | HOST (EQ|NEQ) stringType WILDCARD? | SOURCE (EQ|NEQ)
-     * stringType WILDCARD? | SAVEDSEARCH (EQ|NEQ) stringType WILDCARD? | EVENTTYPE
-     * (EQ|NEQ) stringType WILDCARD? | EVENTTYPETAG (EQ|NEQ) stringType WILDCARD? |
-     * HOSTTAG (EQ|NEQ) stringType WILDCARD? | TAG (EQ|NEQ) stringType WILDCARD? ;
+     * searchQualifier : INDEX (EQ|NEQ) stringType WILDCARD? | SOURCETYPE (EQ|NEQ) stringType WILDCARD? | HOST (EQ|NEQ)
+     * stringType WILDCARD? | SOURCE (EQ|NEQ) stringType WILDCARD? | SAVEDSEARCH (EQ|NEQ) stringType WILDCARD? |
+     * EVENTTYPE (EQ|NEQ) stringType WILDCARD? | EVENTTYPETAG (EQ|NEQ) stringType WILDCARD? | HOSTTAG (EQ|NEQ)
+     * stringType WILDCARD? | TAG (EQ|NEQ) stringType WILDCARD? ;
      */
     @Override
     public Node visitSearchQualifier(DPLParser.SearchQualifierContext ctx) {
@@ -452,7 +465,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             String rlikeStatement = glob2rlike(value);
             sQualifier = col.rlike(rlikeStatement);
 
-        } else if (left.getSymbol().getType() == DPLLexer.INDEX_IN) {
+        }
+        else if (left.getSymbol().getType() == DPLLexer.INDEX_IN) {
             for (String index : listOfIndices) {
                 String rlikeStatement = glob2rlike(index);
                 if (sQualifier == null) {
@@ -463,7 +477,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 }
 
             }
-        } else {
+        }
+        else {
             String rlikeStatement = glob2rlike(value);
             sQualifier = functions.not(col.rlike(rlikeStatement));
         }
@@ -515,9 +530,9 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
     /**
      * {@inheritDoc}
-     *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public Node visitComparisonStatement(DPLParser.ComparisonStatementContext ctx) {
@@ -548,22 +563,22 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             }
         }
 
-
         if (!specialCase) {
             col = new Column(field);
-            rv = this.addOperation(col, (TerminalNode) ctx.getChild(1), new UnquotedText(new TextString(ctx.getChild(2).getText())).read());
+            rv = this
+                    .addOperation(col, (TerminalNode) ctx.getChild(1), new UnquotedText(new TextString(ctx.getChild(2).getText())).read());
         }
 
         return new ColumnNode(rv);
     }
-
 
     private Column addOperation(Column source, TerminalNode operation, String value) {
         Column rv = null;
 
         SparkSession ss = catCtx.getSparkSession();
         ss.udf().register("Comparison", new SearchComparison(), DataTypes.BooleanType);
-        rv = functions.callUDF("Comparison", source, functions.lit(operation.getSymbol().getType()), functions.lit(value));
+        rv = functions
+                .callUDF("Comparison", source, functions.lit(operation.getSymbol().getType()), functions.lit(value));
 
         return rv;
     }
@@ -595,7 +610,6 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         //Node rv = new CatalystNode(subVisitor.getStack().pop());
         return null;
     }
-
 
     /*@Override
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
@@ -638,8 +652,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * subEvalLogicalStatement : PARENTHESIS_L subEvalLogicalStatement PARENTHESIS_R
-     * ;
+     * subEvalLogicalStatement : PARENTHESIS_L subEvalLogicalStatement PARENTHESIS_R ;
      */
     @Override
     public Node visitL_evalStatement_subEvalStatement(DPLParser.L_evalStatement_subEvalStatementContext ctx) {
@@ -655,7 +668,6 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     public Node visitT_chart_by_column_rowOptions(DPLParser.T_chart_by_column_rowOptionsContext ctx) {
         return chartTransformation.visitT_chart_by_column_rowOptions(ctx);
     }
-
 
     @Override
     public Node visitT_chart_fieldRenameInstruction(DPLParser.T_chart_fieldRenameInstructionContext ctx) {
@@ -720,15 +732,21 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         return evalStatement.visitEvalStringType(ctx);
     }
 
-    public Node visitL_evalStatement_evalCalculateStatement_multipliers(DPLParser.L_evalStatement_evalCalculateStatement_multipliersContext ctx) {
+    public Node visitL_evalStatement_evalCalculateStatement_multipliers(
+            DPLParser.L_evalStatement_evalCalculateStatement_multipliersContext ctx
+    ) {
         return evalStatement.visitL_evalStatement_evalCalculateStatement_multipliers(ctx);
     }
 
-    public Node visitL_evalStatement_evalCalculateStatement_minus_plus(DPLParser.L_evalStatement_evalCalculateStatement_minus_plusContext ctx) {
+    public Node visitL_evalStatement_evalCalculateStatement_minus_plus(
+            DPLParser.L_evalStatement_evalCalculateStatement_minus_plusContext ctx
+    ) {
         return evalStatement.visitL_evalStatement_evalCalculateStatement_minus_plus(ctx);
     }
 
-    public Node visitL_evalStatement_evalConcatenateStatement(DPLParser.L_evalStatement_evalConcatenateStatementContext ctx) {
+    public Node visitL_evalStatement_evalConcatenateStatement(
+            DPLParser.L_evalStatement_evalConcatenateStatementContext ctx
+    ) {
         return evalStatement.visitL_evalStatement_evalConcatenateStatement(ctx);
     }
 

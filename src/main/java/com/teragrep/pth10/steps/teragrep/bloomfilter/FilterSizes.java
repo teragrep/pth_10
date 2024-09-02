@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.google.gson.Gson;
@@ -60,11 +59,12 @@ import java.util.*;
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM;
 
 public class FilterSizes implements Serializable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterSizes.class);
 
     private final Config config;
-    private final ArrayList<SortedMap<Long,Double>> mapCache = new ArrayList<>(1);
-    private final ArrayList<Map<Long,Long>> bitSizeMapCache = new ArrayList<>(1);
+    private final ArrayList<SortedMap<Long, Double>> mapCache = new ArrayList<>(1);
+    private final ArrayList<Map<Long, Long>> bitSizeMapCache = new ArrayList<>(1);
 
     public FilterSizes(Config config) {
         this.config = config;
@@ -73,8 +73,8 @@ public class FilterSizes implements Serializable {
     /**
      * Filter sizes as sorted map
      * <p>
-     * Keys = filter expected num of items,
-     * values = filter FPP
+     * Keys = filter expected num of items, values = filter FPP
+     * 
      * @return SortedMap of filter configuration
      */
     public SortedMap<Long, Double> asSortedMap() {
@@ -104,10 +104,8 @@ public class FilterSizes implements Serializable {
         SortedMap<Long, Double> sizesMapFromJson = new TreeMap<>();
         Gson gson = new Gson();
 
-        List<JsonObject> jsonArray = gson.fromJson(
-                sizesJsonString(),
-                new TypeToken<List<JsonObject>>(){}.getType()
-        );
+        List<JsonObject> jsonArray = gson.fromJson(sizesJsonString(), new TypeToken<List<JsonObject>>() {
+        }.getType());
 
         for (JsonObject object : jsonArray) {
             if (object.has("expected") && object.has("fpp")) {
@@ -118,7 +116,8 @@ public class FilterSizes implements Serializable {
                     throw new RuntimeException("Duplicate entry expected num of items");
                 }
                 sizesMapFromJson.put(expectedNumOfItems, fpp);
-            } else {
+            }
+            else {
                 throw new RuntimeException("JSON did not have expected values of 'expected' or 'fpp'");
             }
         }
@@ -132,7 +131,8 @@ public class FilterSizes implements Serializable {
             if (jsonString == null || jsonString.isEmpty()) {
                 throw new RuntimeException("Bloom filter fields not configured.");
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("Missing configuration item: '" + BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM + "'.");
         }
         return jsonString;

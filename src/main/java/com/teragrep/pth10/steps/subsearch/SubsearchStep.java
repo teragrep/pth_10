@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.subsearch;
 
 import com.teragrep.pth10.ast.StepList;
@@ -62,11 +61,12 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Step for filtering the dataset generated in LogicalXMLStep.
- * This Step needs its own StepList. It has to filter the same dataset twice: first with the stepList given to it, and
- * then it reads the results from that dataset and filters the dataset with the results.
+ * Step for filtering the dataset generated in LogicalXMLStep. This Step needs its own StepList. It has to filter the
+ * same dataset twice: first with the stepList given to it, and then it reads the results from that dataset and filters
+ * the dataset with the results.
  */
 public final class SubsearchStep extends AbstractSubsearchStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SubsearchStep.class);
 
     public SubsearchStep(StepList stepList) {
@@ -91,7 +91,8 @@ public final class SubsearchStep extends AbstractSubsearchStep {
             final Map<String, String> mapOfColumnNames = new HashMap<>();
             final StructField[] subsearchFields = subSearchDs.schema().fields();
             for (final StructField field : subsearchFields) {
-                final String encodedName = "HEX".concat(Hex.encodeHexString(field.name().getBytes(StandardCharsets.UTF_8)));
+                final String encodedName = "HEX"
+                        .concat(Hex.encodeHexString(field.name().getBytes(StandardCharsets.UTF_8)));
                 subSearchDs = subSearchDs.withColumnRenamed(field.name(), encodedName);
                 mapOfColumnNames.put(encodedName, field.name());
             }
@@ -101,16 +102,15 @@ public final class SubsearchStep extends AbstractSubsearchStep {
             final String hdfsPath = this.hdfsPath;
             final String cpPath = hdfsPath + "checkpoint/sub/" + randomID;
             final String path = hdfsPath + "data/sub/" + randomID;
-            DataStreamWriter<Row> subToDiskWriter =
-                    subSearchDs
-                            .repartition(1)
-                            .writeStream()
-                            .format("avro")
-                            .trigger(Trigger.ProcessingTime(0))
-                          //  .option("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
-                            .option("checkpointLocation", cpPath)
-                            .option("path", path)
-                            .outputMode(OutputMode.Append());
+            DataStreamWriter<Row> subToDiskWriter = subSearchDs
+                    .repartition(1)
+                    .writeStream()
+                    .format("avro")
+                    .trigger(Trigger.ProcessingTime(0))
+                    //  .option("spark.cleaner.referenceTracking.cleanCheckpoints", "true")
+                    .option("checkpointLocation", cpPath)
+                    .option("path", path)
+                    .outputMode(OutputMode.Append());
 
             SparkSession ss = SparkSession.builder().getOrCreate();
 
@@ -118,7 +118,6 @@ public final class SubsearchStep extends AbstractSubsearchStep {
 
             // await for listener to stop the subToDiskQuery
             subToDiskQuery.awaitTermination();
-
 
             // read subsearch data from disk and collect
             Dataset<Row> readFromDisk = ss.read().schema(subSearchDs.schema()).format("avro").load(path);
@@ -137,14 +136,14 @@ public final class SubsearchStep extends AbstractSubsearchStep {
                 for (int i = 0; i < collectedRow.length(); i++) {
                     String rowContent = collectedRow.get(i).toString();
                     if (filterColumn != null) {
-                        filterColumn = filterColumn.or(functions.col("_raw").rlike("(?i)^.*" + Pattern.quote(rowContent) + ".*$"));
+                        filterColumn = filterColumn
+                                .or(functions.col("_raw").rlike("(?i)^.*" + Pattern.quote(rowContent) + ".*$"));
                     }
                     else {
                         filterColumn = functions.col("_raw").rlike("(?i)^.*" + Pattern.quote(rowContent) + ".*$");
                     }
                 }
             }
-
 
             if (filterColumn == null) {
                 throw new IllegalStateException("Generated filter column via subsearch was null!");

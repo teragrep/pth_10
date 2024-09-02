@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -59,20 +58,20 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
- * Base statement for all transformation commands, for example
- * statistics (stats) command, evaluation (eval) command and Teragrep system commands.
+ * Base statement for all transformation commands, for example statistics (stats) command, evaluation (eval) command and
+ * Teragrep system commands.
  */
 public class TransformStatement extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TransformStatement.class);
     private final DPLParserCatalystContext catCtx;
     private final DPLParserCatalystVisitor catVisitor;
 
     /**
-     * Constructor for the TransformStatement.
-     * Initializes various classes for different transform commands.
-     * @param catCtx Catalyst context object containing objects like the Zeppelin config.
+     * Constructor for the TransformStatement. Initializes various classes for different transform commands.
+     * 
+     * @param catCtx     Catalyst context object containing objects like the Zeppelin config.
      * @param catVisitor Catalyst visitor object used for walking the parse tree.
      */
     public TransformStatement(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
@@ -89,6 +88,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
 
     /**
      * Goes through the transform statement, visiting the given transform commands in the statement.
+     * 
      * @param ctx TransformStatement context
      * @return node generated during the walk
      */
@@ -106,13 +106,15 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         // Logging
         if (leftTree != null) {
             LOGGER.info("-> Left tree: text=<{}>", leftTree.getText());
-        } else {
+        }
+        else {
             LOGGER.info("-> Left tree NULL");
         }
 
         if (rightTree != null) {
             LOGGER.info("-> Right tree: text=<{}>", rightTree.getText());
-        } else {
+        }
+        else {
             LOGGER.info("-> Right tree NULL");
         }
 
@@ -122,14 +124,18 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         if (left != null) {
             if (left instanceof StepNode) {
                 LOGGER.debug("Add step to list");
-                this.catVisitor.getStepList().add(((StepNode)left).get());
+                this.catVisitor.getStepList().add(((StepNode) left).get());
             }
             else if (left instanceof StepListNode) {
                 LOGGER.debug("Add multiple steps to list");
-                ((StepListNode)left).asList().forEach(step -> this.catVisitor.getStepList().add(step));
+                ((StepListNode) left).asList().forEach(step -> this.catVisitor.getStepList().add(step));
             }
             else {
-                LOGGER.error("visit of leftTree did not return Step(List)Node, instead got: class=<{}>", left.getClass().getName());
+                LOGGER
+                        .error(
+                                "visit of leftTree did not return Step(List)Node, instead got: class=<{}>",
+                                left.getClass().getName()
+                        );
             }
             // Add right branch
             if (rightTree != null) {
@@ -137,15 +143,18 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
                 if (right != null) {
                     LOGGER.debug("Right side was not null: <{}>", right);
                     left = right;
-                } else {
+                }
+                else {
                     LOGGER.debug("transformStatement <EOF>");
                 }
-            } else { // EOF, return only left
+            }
+            else { // EOF, return only left
                 LOGGER.debug("transformStatement <EOF> return only left transformation");
             }
 
             return left;
-        } else {
+        }
+        else {
             // If null is returned, the command is not implemented.
             // All implemented commands return a StepNode or a StepListNode.
             throw new IllegalArgumentException("The provided command '" + ctx.getText() + "' is not yet implemented.");
@@ -206,6 +215,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         // strcat command
         return new StrcatTransformation(catCtx.nullValue).visitStrcatTransformation(ctx);
     }
+
     @Override
     public Node visitStatsTransformation(DPLParser.StatsTransformationContext ctx) {
         // stats command

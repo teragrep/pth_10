@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.table;
 
 import org.apache.spark.sql.Column;
@@ -62,6 +61,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public final class TableStep extends AbstractTableStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TableStep.class);
 
     public TableStep() {
@@ -91,9 +91,8 @@ public final class TableStep extends AbstractTableStep {
         }
 
         // reorder them to be in the same order as in the table command
-        Seq<Column> seqOfCols = JavaConversions.asScalaBuffer(
-                wildcardedFields.stream().map(functions::col).collect(Collectors.toList())
-        );
+        Seq<Column> seqOfCols = JavaConversions
+                .asScalaBuffer(wildcardedFields.stream().map(functions::col).collect(Collectors.toList()));
 
         assert dsWithDroppedCols != null : "Dropped columns dataset was null";
 
@@ -108,7 +107,8 @@ public final class TableStep extends AbstractTableStep {
 
     /**
      * Gets wildcarded fields from given array of column names
-     * @param wc wildcard statement
+     * 
+     * @param wc   wildcard statement
      * @param cols array of column names
      * @return list of column names which match the wildcard statement
      */
@@ -126,16 +126,18 @@ public final class TableStep extends AbstractTableStep {
                     quotablePartBuilder.setLength(0);
                 }
                 regexBuilder.append(".*");
-            } else {
+            }
+            else {
                 // On normal characters, add to quotablePartBuilder
-               quotablePartBuilder.append(c);
+                quotablePartBuilder.append(c);
             }
         }
 
         if (quotablePartBuilder.length() > 0) {
             // if quotablePartBuilder is not empty, quote and add it
             regex = Pattern.quote(quotablePartBuilder.toString());
-        } else {
+        }
+        else {
             // if it is empty, the regexBuilder contains the final regex
             regex = regexBuilder.toString();
         }

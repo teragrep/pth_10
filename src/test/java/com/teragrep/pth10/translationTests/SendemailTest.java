@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -83,7 +83,8 @@ public class SendemailTest {
         assertNotNull(cs.getSendemailResultsProcessor());
 
         Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
-        Map<String,String> expected = buildParamMap(new Object() {}.getClass().getEnclosingMethod().getName());
+        Map<String, String> expected = buildParamMap(new Object() {
+        }.getClass().getEnclosingMethod().getName());
         assertEquals(expected.size(), params.size());
 
         for (Map.Entry<String, String> ent : params.entrySet()) {
@@ -113,7 +114,8 @@ public class SendemailTest {
         assertNotNull(cs.getSendemailResultsProcessor());
 
         Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
-        Map<String,String> expected = buildParamMap(new Object() {}.getClass().getEnclosingMethod().getName());
+        Map<String, String> expected = buildParamMap(new Object() {
+        }.getClass().getEnclosingMethod().getName());
         assertEquals(expected.size(), params.size());
 
         for (Map.Entry<String, String> ent : params.entrySet()) {
@@ -126,8 +128,9 @@ public class SendemailTest {
     }
 
     /**
-     * Build a map of all the parameters in the SendemailProcessor for testing
-     * based on the given test method name - these are the expected values.
+     * Build a map of all the parameters in the SendemailProcessor for testing based on the given test method name -
+     * these are the expected values.
+     * 
      * @param testName name of test method
      * @return map of expected parameter values
      */
@@ -193,4 +196,3 @@ public class SendemailTest {
         return params;
     }
 }
-

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.replace;
 
 import org.apache.spark.sql.api.java.UDF3;
@@ -56,10 +55,9 @@ import java.util.regex.Pattern;
 
 /**
  * UDF used for the command <code>replace</code>.<br>
- * Spark's built-in regex_replace can be used, but the wildcard replacement
- * does not work using that function. Instead it must be done using this UDF.
- * More information can be found from the 'struck' documentation.
- * <br><hr>
+ * Spark's built-in regex_replace can be used, but the wildcard replacement does not work using that function. Instead
+ * it must be done using this UDF. More information can be found from the 'struck' documentation. <br>
+ * <hr>
  * Command examples:<br>
  * Original data: "data"
  * <hr>
@@ -67,11 +65,12 @@ import java.util.regex.Pattern;
  * <hr>
  * <code>(2) REPLACE "dat*" WITH "y" -&gt; result: "y"</code>
  * <hr>
- *  <code>(3) REPLACE "dat*" WITH "y*" -&gt; result: "ya"</code>
+ * <code>(3) REPLACE "dat*" WITH "y*" -&gt; result: "ya"</code>
  * <hr>
- *  <code>(4) REPLACE "*at*" WITH "*y*" -&gt; result: "dya"</code>
+ * <code>(4) REPLACE "*at*" WITH "*y*" -&gt; result: "dya"</code>
  */
 public class ReplaceCmd implements UDF3<String, String, String, String> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReplaceCmd.class);
 
     @Override
@@ -82,8 +81,14 @@ public class ReplaceCmd implements UDF3<String, String, String, String> {
         // Match converted regex with current content of the row
         Matcher matcher = Pattern.compile(regex).matcher(currentContent);
 
-        LOGGER.debug(String.format("[ReplaceCmd.call] Wildcard: %s | Regex: %s | CurrentContent: %s | WithClause: %s",
-                wildcard, regex, currentContent, replaceWith));
+        LOGGER
+                .debug(
+                        String
+                                .format(
+                                        "[ReplaceCmd.call] Wildcard: %s | Regex: %s | CurrentContent: %s | WithClause: %s",
+                                        wildcard, regex, currentContent, replaceWith
+                                )
+                );
 
         // Is there a match for replacing?
         boolean isMatch = matcher.matches();
@@ -101,41 +106,43 @@ public class ReplaceCmd implements UDF3<String, String, String, String> {
             }
 
             for (int i = 0; i < partsOfWildcard.length; i++) {
-                    String contentWithinWildcard;
-                    if (isFirst && partsOfWildcard.length > 1) {
-                        if (partsOfWildcard[i].length() < 1) {
-                            // Leading wildcard, without trailing present
-                            contentWithinWildcard = currentContent.substring(0, currentContent.indexOf(partsOfWildcard[i+1]));
-                        }
-                        else {
-                            // Leading wildcard, with trailing present
-                            contentWithinWildcard = currentContent.substring(0, currentContent.indexOf(partsOfWildcard[i]));
-                        }
-                        isFirst = false;
+                String contentWithinWildcard;
+                if (isFirst && partsOfWildcard.length > 1) {
+                    if (partsOfWildcard[i].length() < 1) {
+                        // Leading wildcard, without trailing present
+                        contentWithinWildcard = currentContent
+                                .substring(0, currentContent.indexOf(partsOfWildcard[i + 1]));
                     }
                     else {
-                        if (subSeq != null) {
-                            // Trailing wildcard, with leading wildcard
-                            contentWithinWildcard = currentContent.substring(currentContent.indexOf(partsOfWildcard[i]) + partsOfWildcard[i].length());
-                        }
-                        else {
-                            // Trailing wildcard, no leading wildcard
-                            contentWithinWildcard = currentContent.substring(partsOfWildcard[i].length());
-                        }
-
+                        // Leading wildcard, with trailing present
+                        contentWithinWildcard = currentContent.substring(0, currentContent.indexOf(partsOfWildcard[i]));
                     }
-
-                    LOGGER.debug("The content within wildcard: <{}> ", contentWithinWildcard);
-
-                    if (subSeq == null) {
-                        // First wildcard to be processed -> subsequence does not yet exist
-                        subSeq = wildcardMatcher.replaceFirst(Matcher.quoteReplacement(contentWithinWildcard));
+                    isFirst = false;
+                }
+                else {
+                    if (subSeq != null) {
+                        // Trailing wildcard, with leading wildcard
+                        contentWithinWildcard = currentContent
+                                .substring(currentContent.indexOf(partsOfWildcard[i]) + partsOfWildcard[i].length());
                     }
                     else {
-                        // Subsequence exists, generate a new matcher for the subsequence and continue building it
-                        wildcardMatcher = Pattern.compile("\\*").matcher(subSeq);
-                        subSeq = wildcardMatcher.replaceFirst(Matcher.quoteReplacement(contentWithinWildcard));
+                        // Trailing wildcard, no leading wildcard
+                        contentWithinWildcard = currentContent.substring(partsOfWildcard[i].length());
                     }
+
+                }
+
+                LOGGER.debug("The content within wildcard: <{}> ", contentWithinWildcard);
+
+                if (subSeq == null) {
+                    // First wildcard to be processed -> subsequence does not yet exist
+                    subSeq = wildcardMatcher.replaceFirst(Matcher.quoteReplacement(contentWithinWildcard));
+                }
+                else {
+                    // Subsequence exists, generate a new matcher for the subsequence and continue building it
+                    wildcardMatcher = Pattern.compile("\\*").matcher(subSeq);
+                    subSeq = wildcardMatcher.replaceFirst(Matcher.quoteReplacement(contentWithinWildcard));
+                }
                 LOGGER.debug("Subsequent wildcard: <{}>", subSeq);
             }
         }
@@ -158,14 +165,15 @@ public class ReplaceCmd implements UDF3<String, String, String, String> {
     }
 
     /**
-     * Converts a wildcard statement into a regex statement:
-     * all regex-sensitive characters are escaped, and the wildcard (*) gets
-     * converted into a regex any character wildcard (.*)
+     * Converts a wildcard statement into a regex statement: all regex-sensitive characters are escaped, and the
+     * wildcard (*) gets converted into a regex any character wildcard (.*)
+     * 
      * @param wc wildcard statement string
      * @return regex statement string
      */
     private String wcfieldToRegex(String wc) {
-        return wc.replaceAll("\\\\", "\\\\")
+        return wc
+                .replaceAll("\\\\", "\\\\")
                 .replaceAll("\\^", "\\\\^")
                 .replaceAll("\\.", "\\\\.")
                 .replaceAll("\\|", "\\\\|")

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
 import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.TimestampMapBuffer;
@@ -56,43 +55,46 @@ import java.io.Serializable;
  * Used for rate() function
  */
 public class EarliestLatestAggregator_Double extends EarliestLatestAggregator<Double> implements Serializable {
-	
-	private AggregatorMode.EarliestLatestAggregatorMode mode = AggregatorMode.EarliestLatestAggregatorMode.RATE; // 0=earliest, 1=latest, 2=earliest_time, 3=latest_time, 4=rate
 
-	/**
-	 * Initialize with column and mode
-	 * @param colName column name
-	 * @param mode aggregator mode
-	 */
-	public EarliestLatestAggregator_Double(java.lang.String colName, AggregatorMode.EarliestLatestAggregatorMode mode) {
-		super(colName);
-		this.mode = mode;
-	}
+    private AggregatorMode.EarliestLatestAggregatorMode mode = AggregatorMode.EarliestLatestAggregatorMode.RATE; // 0=earliest, 1=latest, 2=earliest_time, 3=latest_time, 4=rate
 
-	private static final long serialVersionUID = 1L;
+    /**
+     * Initialize with column and mode
+     * 
+     * @param colName column name
+     * @param mode    aggregator mode
+     */
+    public EarliestLatestAggregator_Double(java.lang.String colName, AggregatorMode.EarliestLatestAggregatorMode mode) {
+        super(colName);
+        this.mode = mode;
+    }
 
-	/**
-	 * Output encoder
-	 * @return double encoder
-	 */
-	@Override
-	public Encoder<Double> outputEncoder() {
-		return Encoders.DOUBLE();
-	}
+    private static final long serialVersionUID = 1L;
 
-	/**
-	 * Return the rate
-	 * @param buffer buffer
-	 * @return rate as double
-	 */
-	@Override
-	public Double finish(TimestampMapBuffer buffer) {
-		switch (this.mode) {
-			case RATE: // rate
-				return buffer.rate();
-			default: // shouldn't happen, throw Exception
-				throw new UnsupportedOperationException("EarliestLatestAggregator was called with unsupported mode");
-		}
-	}	
-	
+    /**
+     * Output encoder
+     * 
+     * @return double encoder
+     */
+    @Override
+    public Encoder<Double> outputEncoder() {
+        return Encoders.DOUBLE();
+    }
+
+    /**
+     * Return the rate
+     * 
+     * @param buffer buffer
+     * @return rate as double
+     */
+    @Override
+    public Double finish(TimestampMapBuffer buffer) {
+        switch (this.mode) {
+            case RATE: // rate
+                return buffer.rate();
+            default: // shouldn't happen, throw Exception
+                throw new UnsupportedOperationException("EarliestLatestAggregator was called with unsupported mode");
+        }
+    }
+
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.TextString;
@@ -62,22 +61,23 @@ import java.util.List;
 /**
  * The 'convert' command is used to convert field values in search results into numerical values.<br>
  * Original values are replaced by the new values, unless the 'AS' clause is used.<br>
- *
  * The command has various functions, that work in different ways: <br>
  * auto(x) - convert x automatically using the best conversion<br>
  * ctime(x) - convert x (epoch time) to a human readable time, timeformat option can be used to change the format<br>
  * dur2sec(x) - convert x (HH:MM:SS) to epoch seconds<br>
  * memk(x) - convert x (positive number with g/m/k) to kilobytes<br>
- * mktime(x) - convert x (human readable time) to epoch. Use timeformat to specify exact format from which to convert<br>
+ * mktime(x) - convert x (human readable time) to epoch. Use timeformat to specify exact format from which to
+ * convert<br>
  * mstime(x) - convert x (MM:SS.SSS) to seconds<br>
  * none(x) - ignore x fields in conversion functions<br>
  * num(x) - works like auto(x), but values that cannot be converted are ignored/removed<br>
  * rmcomma(x) - remove commas from x<br>
  * rmunit(x) - removes trailing text from x<br>
+ * 
  * @author eemhu
- *
  */
 public class ConvertTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertTransformation.class);
     public ConvertStep convertStep = null;
 
@@ -94,6 +94,7 @@ public class ConvertTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Main visiting function for convert command
+     * 
      * @param ctx convert command main context
      * @return step node
      */
@@ -195,13 +196,11 @@ public class ConvertTransformation extends DPLParserBaseVisitor<Node> {
         return null;
     }
 
-
-
-   /* @Override
+    /* @Override
     public Node visitStringType(DPLParser.StringTypeContext ctx) {
         return new StringNode(new Token(Token.Type.STRING, new UnquotedText(new TextString(ctx.getText())).read()));
     }
-*/
+    */
     private void buildStep(ConvertCommand.ConvertCommandType type, String wcfield) {
         this.cmd = new ConvertCommand();
         this.cmd.setCommandType(type);

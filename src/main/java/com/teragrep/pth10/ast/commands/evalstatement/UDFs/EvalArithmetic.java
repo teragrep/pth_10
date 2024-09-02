@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth10.steps.ParsedResult;
@@ -54,10 +53,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 /**
- * Checks if left and right side are longs/doubles, and performs basic arithmetic on them if they are,
- * otherwise concatenate them as strings
+ * Checks if left and right side are longs/doubles, and performs basic arithmetic on them if they are, otherwise
+ * concatenate them as strings
  */
 public class EvalArithmetic implements UDF3<Object, String, Object, String> {
+
     @Override
     public String call(Object l, String op, Object r) throws Exception {
         // try long
@@ -69,14 +69,17 @@ public class EvalArithmetic implements UDF3<Object, String, Object, String> {
         if (left.getType() == ParsedResult.Type.STRING || right.getType() == ParsedResult.Type.STRING) {
             if (op.equals("+")) {
                 return l.toString().concat(r.toString());
-            } else {
+            }
+            else {
                 throw new IllegalArgumentException("Eval arithmetics only allow Strings for the + operator.");
             }
         }
 
         // change left and right numbers into BigDecimal
-        BigDecimal leftNumber = left.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(left.getDouble()) : BigDecimal.valueOf(left.getLong());
-        BigDecimal rightNumber = right.getType() == ParsedResult.Type.DOUBLE ? BigDecimal.valueOf(right.getDouble()) : BigDecimal.valueOf(right.getLong());
+        BigDecimal leftNumber = left.getType() == ParsedResult.Type.DOUBLE ? BigDecimal
+                .valueOf(left.getDouble()) : BigDecimal.valueOf(left.getLong());
+        BigDecimal rightNumber = right.getType() == ParsedResult.Type.DOUBLE ? BigDecimal
+                .valueOf(right.getDouble()) : BigDecimal.valueOf(right.getLong());
 
         switch (op) {
             case "+":
@@ -88,7 +91,8 @@ public class EvalArithmetic implements UDF3<Object, String, Object, String> {
             case "/":
                 try {
                     return leftNumber.divide(rightNumber).stripTrailingZeros().toPlainString();
-                } catch (ArithmeticException e) {
+                }
+                catch (ArithmeticException e) {
                     // show 7 first decimals if the result of the division is a repeating number
                     return leftNumber.divide(rightNumber, 7, RoundingMode.HALF_UP).toPlainString();
                 }

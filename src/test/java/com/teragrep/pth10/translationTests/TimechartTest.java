@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -64,7 +64,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TimechartTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTest.class);
+
     @Test
     void testTimeChartTranslation() {
         String query = "| timechart span=5min sum(sales) as sales by product";
@@ -86,7 +88,10 @@ public class TimechartTest {
         TimechartStep tcs = tct.timechartStep;
 
         assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
-        assertEquals("sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales", tcs.getAggCols().get(0).toString());
+        assertEquals(
+                "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
+                tcs.getAggCols().get(0).toString()
+        );
         assertEquals("product", tcs.getDivByInsts().get(0));
     }
 
@@ -108,7 +113,10 @@ public class TimechartTest {
         TimechartStep tcs = tct.timechartStep;
 
         assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
-        assertEquals("sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales", tcs.getAggCols().get(0).toString());
+        assertEquals(
+                "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
+                tcs.getAggCols().get(0).toString()
+        );
         assertEquals(0, tcs.getDivByInsts().size());
     }
 
@@ -130,8 +138,10 @@ public class TimechartTest {
         TimechartStep tcs = tct.timechartStep;
 
         assertEquals("window(_time, 86400000000, 86400000000, 0) AS window", tcs.getSpan().toString());
-        assertEquals("countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS count", tcs.getAggCols().get(0).toString());
+        assertEquals(
+                "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS count",
+                tcs.getAggCols().get(0).toString()
+        );
         assertEquals(0, tcs.getDivByInsts().size());
     }
 }
-

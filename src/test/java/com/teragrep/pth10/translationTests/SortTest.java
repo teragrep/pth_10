@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -68,7 +68,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SortTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SortTest.class);
+
     @Test
     void testSortTranslation() {
         String query = "| sort +num(offset)";
@@ -150,7 +152,10 @@ public class SortTest {
 
         // build list from expected
         List<SortByClause> expected = new ArrayList<>();
-        expected.add(sbc); expected.add(sbc2); expected.add(sbc3); expected.add(sbc4);
+        expected.add(sbc);
+        expected.add(sbc2);
+        expected.add(sbc3);
+        expected.add(sbc4);
 
         for (int i = 0; i < cs.getListOfSortByClauses().size(); i++) {
             SortByClause fromRun = cs.getListOfSortByClauses().get(i);
@@ -165,4 +170,3 @@ public class SortTest {
         assertEquals(1234, cs.getLimit());
     }
 }
-

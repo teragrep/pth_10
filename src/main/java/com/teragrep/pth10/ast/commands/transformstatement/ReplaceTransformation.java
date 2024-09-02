@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.TextString;
@@ -67,6 +66,7 @@ import java.util.Map;
  * The base transformation class used for the command <code>replace</code>
  */
 public class ReplaceTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(ReplaceTransformation.class);
     private final Map<String, String> replacements;
     private final List<String> listOfFields;
@@ -79,6 +79,7 @@ public class ReplaceTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Gets all the parameters from given command and applies the {@link ReplaceCmd}
+     * 
      * @param ctx ReplaceTransformationContext
      * @return StepNode with Step for replace command
      */
@@ -103,6 +104,7 @@ public class ReplaceTransformation extends DPLParserBaseVisitor<Node> {
 
     /**
      * Gets the list of field names from the parse tree / command
+     * 
      * @param ctx fieldList context
      * @return NullNode
      */

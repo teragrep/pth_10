@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -59,6 +59,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class AddtotalsStep extends AbstractStep implements Serializable {
+
     public final boolean row;
     public final boolean col;
     public final String fieldName;
@@ -69,8 +70,15 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
     private final BatchCollect bc;
     private final NumericColumnSum numericColumnSum;
 
-    public AddtotalsStep(DPLParserCatalystContext catCtx,
-                         boolean row, boolean col, String fieldName, String labelField, String label, List<String> fieldList) {
+    public AddtotalsStep(
+            DPLParserCatalystContext catCtx,
+            boolean row,
+            boolean col,
+            String fieldName,
+            String labelField,
+            String label,
+            List<String> fieldList
+    ) {
         super();
         this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
         this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
@@ -96,7 +104,7 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
         /*
             UDF per column -> sum result to target column -> repeat until all cols iterated
             through
-
+        
             col=bool: show extra event at end for each column total
             row=bool: show extra column at end for each row total
             fieldList: for which fields, defaults to all
@@ -110,7 +118,8 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
             dataset = dataset.withColumn(fieldName, functions.lit(0));
             for (String field : dataset.schema().fieldNames()) {
                 if ((fieldList.isEmpty() || fieldList.contains(field)) && !field.equals(fieldName)) {
-                    dataset = dataset.withColumn(fieldName, functions.col(fieldName).plus(addtotalsUDF.apply(functions.col(field))));
+                    dataset = dataset
+                            .withColumn(fieldName, functions.col(fieldName).plus(addtotalsUDF.apply(functions.col(field))));
                 }
             }
         }
@@ -129,14 +138,17 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
 
             // Perform the accumulation
             final Iterator<Row> collected = dataset.collectAsList().iterator();
-            lastRow = SparkSession.builder().getOrCreate().createDataFrame(numericColumnSum.process(collected), dataset.schema());
+            lastRow = SparkSession
+                    .builder()
+                    .getOrCreate()
+                    .createDataFrame(numericColumnSum.process(collected), dataset.schema());
 
             // fieldName takes priority over labelField if the same name
             if (!fieldName.equals(labelField)) {
                 for (String field : dataset.schema().fieldNames()) {
                     if (field.equals(labelField)) {
-                        dataset = dataset.withColumn(field, functions.when(
-                                        functions.col(field).isNull(), functions.lit("")));
+                        dataset = dataset
+                                .withColumn(field, functions.when(functions.col(field).isNull(), functions.lit("")));
                         lastRow = lastRow.withColumn(field, functions.lit(label));
                         break;
                     }

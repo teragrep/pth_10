@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.google.gson.*;
@@ -71,202 +70,227 @@ import java.util.Map;
 
 /**
  * UDF for command spath(json/xml, spath)<br>
- * <p>First, the given (assumed to be) JSON/XML string is tried to be parsed as JSON, and if that fails,
- * XML parsing is attempted. Otherwise the function will return an empty result,
- * or the original input if the input and output column are set to the same column.</p>
- *
+ * <p>
+ * First, the given (assumed to be) JSON/XML string is tried to be parsed as JSON, and if that fails, XML parsing is
+ * attempted. Otherwise the function will return an empty result, or the original input if the input and output column
+ * are set to the same column.
+ * </p>
  * A separate 'xpath' command can be used for xpath expressions.
  *
  * @author eemhu
  */
 public class Spath implements UDF4<String, String, String, String, Map<String, String>>, Serializable {
-	private static final Logger LOGGER = LoggerFactory.getLogger(Spath.class);
-	private static final long serialVersionUID = 1L;
 
-	private final NullValue nullValue;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Spath.class);
+    private static final long serialVersionUID = 1L;
+
+    private final NullValue nullValue;
 
     public Spath(NullValue nullValue) {
-		super();
-		this.nullValue = nullValue;
-	}
+        super();
+        this.nullValue = nullValue;
+    }
 
-	@Override
-	public Map<String, String> call(String input, String spathExpr, String nameOfInputCol, String nameOfOutputCol) throws Exception {
-		// Map to return at the end of this function
-		final Map<String, String> result = new HashMap<>();
-		try {
-			// try json
-			final Gson gson = new Gson();
-			final JsonElement jsonElem = gson.fromJson(input, JsonElement.class);
+    @Override
+    public Map<String, String> call(String input, String spathExpr, String nameOfInputCol, String nameOfOutputCol)
+            throws Exception {
+        // Map to return at the end of this function
+        final Map<String, String> result = new HashMap<>();
+        try {
+            // try json
+            final Gson gson = new Gson();
+            final JsonElement jsonElem = gson.fromJson(input, JsonElement.class);
 
-			// Auto-extraction (JSON)
-			if (spathExpr == null) {
-				// expect topmost element to be an object
-				for (Map.Entry<String, JsonElement> sub : jsonElem.getAsJsonObject().entrySet()) {
-					// put key:value to map - unescaping result in case was a nested json string
-					result.put(sub.getKey(), new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))).read());
-				}
-			}
-			// Manual extraction via spath expression (JSON)
-			else {
-				final JsonElement jsonSubElem = getJsonElement(jsonElem, new UnquotedText(new TextString(spathExpr)).read());
-				// put key:value to map - unescaping result in case was a nested json string
-				result.put(spathExpr, jsonSubElem != null ?
-						new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))).read() :
-						nullValue.value());
-			}
-			return result;
-		} catch (JsonSyntaxException | ClassCastException json_fail) {
-			LOGGER.warn("Processing failed as JSON, trying XML parsing. Error: <{}>", json_fail.getMessage());
-			// try xml
-			try {
-				Document doc = getXmlDocFromString(input);
+            // Auto-extraction (JSON)
+            if (spathExpr == null) {
+                // expect topmost element to be an object
+                for (Map.Entry<String, JsonElement> sub : jsonElem.getAsJsonObject().entrySet()) {
+                    // put key:value to map - unescaping result in case was a nested json string
+                    result
+                            .put(
+                                    sub.getKey(),
+                                    new UnquotedText(
+                                            new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))
+                                    ).read()
+                            );
+                }
+            }
+            // Manual extraction via spath expression (JSON)
+            else {
+                final JsonElement jsonSubElem = getJsonElement(
+                        jsonElem, new UnquotedText(new TextString(spathExpr)).read()
+                );
+                // put key:value to map - unescaping result in case was a nested json string
+                result
+                        .put(
+                                spathExpr,
+                                jsonSubElem != null ? new UnquotedText(
+                                        new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))
+                                ).read() : nullValue.value()
+                        );
+            }
+            return result;
+        }
+        catch (JsonSyntaxException | ClassCastException json_fail) {
+            LOGGER.warn("Processing failed as JSON, trying XML parsing. Error: <{}>", json_fail.getMessage());
+            // try xml
+            try {
+                Document doc = getXmlDocFromString(input);
 
-				if (doc == null) {
-					// failed to make document from string
-					return result;
-				}
-				
-				// Auto-extraction (XML)
-				if (spathExpr == null) {
-					// Each tag-pair containing text inside will be given a new column
-					// main-sub-item would contain all for that type of nested tags, etc.
-					final Node rootNode = doc.getDocumentElement();
-					buildMapFromXmlNodes(rootNode, ".", result);
-				}
-				// Manual extraction via spath expression (XML)
-				else {
-					// spath expects spath at all times, even when input is XML
-					// spath needs to be converted to xpath for xml
-					final XPath xPath = XPathFactory.newInstance().newXPath();
+                if (doc == null) {
+                    // failed to make document from string
+                    return result;
+                }
 
-					// spath is of type main.sub.item, convert to /main/sub/item
-					String spathAsXpath = "/".concat(new UnquotedText(new TextString(spathExpr)).read()).replaceAll("\\.","/");
-					LOGGER.debug("spath->xpath conversion: <[{}]>", spathAsXpath);
+                // Auto-extraction (XML)
+                if (spathExpr == null) {
+                    // Each tag-pair containing text inside will be given a new column
+                    // main-sub-item would contain all for that type of nested tags, etc.
+                    final Node rootNode = doc.getDocumentElement();
+                    buildMapFromXmlNodes(rootNode, ".", result);
+                }
+                // Manual extraction via spath expression (XML)
+                else {
+                    // spath expects spath at all times, even when input is XML
+                    // spath needs to be converted to xpath for xml
+                    final XPath xPath = XPathFactory.newInstance().newXPath();
 
-					String rv = (String) xPath.compile(spathAsXpath).evaluate(doc, XPathConstants.STRING);
-					result.put(spathExpr, rv.trim());
-				}
-				return result;
-			} catch (Exception e) {
-				LOGGER.warn("spath: The content couldn't be parsed as JSON or XML. Details: <{}>", e.getMessage());
-				// return pre-existing content if output is the same as input
-				if (nameOfInputCol.equals(nameOfOutputCol)) {
-					result.put(spathExpr, input);
-				}
-				// otherwise output will be empty on error
-				else {
-					result.put(spathExpr, nullValue.value());
-				}
-				return result;
-			}
+                    // spath is of type main.sub.item, convert to /main/sub/item
+                    String spathAsXpath = "/"
+                            .concat(new UnquotedText(new TextString(spathExpr)).read())
+                            .replaceAll("\\.", "/");
+                    LOGGER.debug("spath->xpath conversion: <[{}]>", spathAsXpath);
 
-		}
-	}
+                    String rv = (String) xPath.compile(spathAsXpath).evaluate(doc, XPathConstants.STRING);
+                    result.put(spathExpr, rv.trim());
+                }
+                return result;
+            }
+            catch (Exception e) {
+                LOGGER.warn("spath: The content couldn't be parsed as JSON or XML. Details: <{}>", e.getMessage());
+                // return pre-existing content if output is the same as input
+                if (nameOfInputCol.equals(nameOfOutputCol)) {
+                    result.put(spathExpr, input);
+                }
+                // otherwise output will be empty on error
+                else {
+                    result.put(spathExpr, nullValue.value());
+                }
+                return result;
+            }
 
-	/**
-	 * Gets JSON element from JSON based on the given SPath expression
-	 * @param json JSONElement to get the (sub)element from
-	 * @param spath SPath expression which expresses the element to get
-	 */
-	private JsonElement getJsonElement(final JsonElement json, final String spath) {
-		final String[] parts = spath.split("[.\\[\\]]");
-		JsonElement rv = json;
+        }
+    }
 
-		for (String key : parts) {
-			key = key.trim();
+    /**
+     * Gets JSON element from JSON based on the given SPath expression
+     * 
+     * @param json  JSONElement to get the (sub)element from
+     * @param spath SPath expression which expresses the element to get
+     */
+    private JsonElement getJsonElement(final JsonElement json, final String spath) {
+        final String[] parts = spath.split("[.\\[\\]]");
+        JsonElement rv = json;
 
-			LOGGER.debug("Got key: <{}>", key);
+        for (String key : parts) {
+            key = key.trim();
 
-			if (key.isEmpty()) {
-				LOGGER.debug("Key was empty");
-				continue;
-			}
+            LOGGER.debug("Got key: <{}>", key);
 
-			if (rv == null || rv.isJsonNull()) {
-				LOGGER.debug("Given JsonElement was a NULL");
-				rv = JsonNull.INSTANCE;
-				break;
-			}
+            if (key.isEmpty()) {
+                LOGGER.debug("Key was empty");
+                continue;
+            }
 
-			if (rv.isJsonObject()) {
-				LOGGER.debug("Given JsonElement was an OBJECT");
-				rv = ((JsonObject)rv).get(key);
-			} else if (rv.isJsonArray()) {
-				LOGGER.debug("Given JsonElement was an ARRAY");
-				int i = Integer.parseInt(key) - 1;
-				rv = ((JsonArray)rv).get(i);
-			} else {
-				LOGGER.debug("Given JsonElement was something else");
-				break;
-			}
-		}
+            if (rv == null || rv.isJsonNull()) {
+                LOGGER.debug("Given JsonElement was a NULL");
+                rv = JsonNull.INSTANCE;
+                break;
+            }
 
-		return rv;
-	}
+            if (rv.isJsonObject()) {
+                LOGGER.debug("Given JsonElement was an OBJECT");
+                rv = ((JsonObject) rv).get(key);
+            }
+            else if (rv.isJsonArray()) {
+                LOGGER.debug("Given JsonElement was an ARRAY");
+                int i = Integer.parseInt(key) - 1;
+                rv = ((JsonArray) rv).get(i);
+            }
+            else {
+                LOGGER.debug("Given JsonElement was something else");
+                break;
+            }
+        }
 
-	/**
-	 * Convert an XML-formatted string to a Document object
-	 * @param xmlStr XML-formatted string
-	 * @return (XML) Document object
-	 */
-	private Document getXmlDocFromString(final String xmlStr) {
-		final DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
+        return rv;
+    }
 
-		DocumentBuilder docBuilder;
+    /**
+     * Convert an XML-formatted string to a Document object
+     * 
+     * @param xmlStr XML-formatted string
+     * @return (XML) Document object
+     */
+    private Document getXmlDocFromString(final String xmlStr) {
+        final DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
 
-		try {
-			docBuilder = docBuilderFactory.newDocumentBuilder();
-			return docBuilder.parse(new InputSource(new StringReader(xmlStr)));
-		} catch (Exception e) {
-			LOGGER.warn("Failed to parse XML: <{}>", e);
-			return null;
-		}
-	}
+        DocumentBuilder docBuilder;
 
-	/**
-	 * Adds all 'node tag - contents' Key-Value pairs to the map
-	 * <pre>tag.tag.tag => contents</pre>
-	 * @param rootNode root node (Main Document Element)
-	 * @param spacer Spacer string between each parent->child in key name
-	 * @param map Final map to be returned out of the UDF
-	 */
-	private void buildMapFromXmlNodes(final Node rootNode, final String spacer, final Map<String, String> map) {
-		// RootNode is text
-		if (rootNode.getNodeName().equals("#text")) {
-			String colName = "";
+        try {
+            docBuilder = docBuilderFactory.newDocumentBuilder();
+            return docBuilder.parse(new InputSource(new StringReader(xmlStr)));
+        }
+        catch (Exception e) {
+            LOGGER.warn("Failed to parse XML: <{}>", e);
+            return null;
+        }
+    }
 
-			Node parent = rootNode.getParentNode();
-			boolean isFirst = true;
+    /**
+     * Adds all 'node tag - contents' Key-Value pairs to the map <pre>tag.tag.tag => contents</pre>
+     * 
+     * @param rootNode root node (Main Document Element)
+     * @param spacer   Spacer string between each parent->child in key name
+     * @param map      Final map to be returned out of the UDF
+     */
+    private void buildMapFromXmlNodes(final Node rootNode, final String spacer, final Map<String, String> map) {
+        // RootNode is text
+        if (rootNode.getNodeName().equals("#text")) {
+            String colName = "";
 
-			// add each parent of parent as the top-most label
-			// grandparent.parent.child
-			// loop goes from child -> parent -> grandparent
-			while (parent != null) {
-				// top-most parent is #document, not needed
-				if (!parent.getNodeName().equals("#document")) {
-					colName = parent.getNodeName().concat(isFirst ? "" : spacer).concat(colName);
-				}
+            Node parent = rootNode.getParentNode();
+            boolean isFirst = true;
 
-				// get parent of parent
-				parent = parent.getParentNode();
-				isFirst = false;
-			}
+            // add each parent of parent as the top-most label
+            // grandparent.parent.child
+            // loop goes from child -> parent -> grandparent
+            while (parent != null) {
+                // top-most parent is #document, not needed
+                if (!parent.getNodeName().equals("#document")) {
+                    colName = parent.getNodeName().concat(isFirst ? "" : spacer).concat(colName);
+                }
 
-			// if there are multiple columns of the same name, add value to existing column
-			if (map.containsKey(colName)) {
-				String existingValue = map.get(colName);
-				map.put(colName, existingValue.concat("\n").concat(rootNode.getTextContent()));
-			} else {
-				map.put(colName, rootNode.getTextContent());
-			}
-		}
+                // get parent of parent
+                parent = parent.getParentNode();
+                isFirst = false;
+            }
 
-		final NodeList nl = rootNode.getChildNodes();
-		// Visit children of current node
-		for (int i = 0; i < nl.getLength(); i++) {
-			Node child = nl.item(i);
-			buildMapFromXmlNodes(child, spacer, map);
-		}
-	}
+            // if there are multiple columns of the same name, add value to existing column
+            if (map.containsKey(colName)) {
+                String existingValue = map.get(colName);
+                map.put(colName, existingValue.concat("\n").concat(rootNode.getTextContent()));
+            }
+            else {
+                map.put(colName, rootNode.getTextContent());
+            }
+        }
+
+        final NodeList nl = rootNode.getChildNodes();
+        // Visit children of current node
+        for (int i = 0; i < nl.getLength(); i++) {
+            Node child = nl.item(i);
+            buildMapFromXmlNodes(child, spacer, map);
+        }
+    }
 }

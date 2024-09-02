@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import org.apache.spark.sql.api.java.UDF2;
@@ -58,10 +57,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * UDF to used to calculate eval min/max functions.
- * The isMin boolean is used to choose the function.
+ * UDF to used to calculate eval min/max functions. The isMin boolean is used to choose the function.
  */
 public class MinMax implements UDF2<WrappedArray<Object>, Boolean, String> {
+
     @Override
     public String call(WrappedArray<Object> items, Boolean isMin) throws Exception {
         Iterator<Object> it = items.iterator();
@@ -74,17 +73,20 @@ public class MinMax implements UDF2<WrappedArray<Object>, Boolean, String> {
 
             if (current instanceof String) {
                 try {
-                    Long.valueOf((String)current);
-                } catch (NumberFormatException nfe) {
+                    Long.valueOf((String) current);
+                }
+                catch (NumberFormatException nfe) {
                     try {
-                        Double.valueOf((String)current);
+                        Double.valueOf((String) current);
                         outputType = DataTypes.DoubleType;
-                    } catch (NumberFormatException nfe2) {
+                    }
+                    catch (NumberFormatException nfe2) {
                         outputType = DataTypes.StringType;
                         break;
                     }
                 }
-            } else if (current instanceof Double || current instanceof Float) {
+            }
+            else if (current instanceof Double || current instanceof Float) {
                 outputType = DataTypes.DoubleType;
             }
         }
@@ -95,17 +97,22 @@ public class MinMax implements UDF2<WrappedArray<Object>, Boolean, String> {
         if (isMin) {
             if (outputType.equals(DataTypes.StringType)) {
                 result = javaList.stream().min(Comparator.comparing(Object::toString));
-            } else if (outputType.equals(DataTypes.DoubleType)) {
+            }
+            else if (outputType.equals(DataTypes.DoubleType)) {
                 result = javaList.stream().min(Comparator.comparing(a -> Double.valueOf(a.toString())));
-            } else {
+            }
+            else {
                 result = javaList.stream().min(Comparator.comparing(a -> Long.valueOf(a.toString())));
             }
-        } else {
+        }
+        else {
             if (outputType.equals(DataTypes.StringType)) {
                 result = javaList.stream().max(Comparator.comparing(Object::toString));
-            } else if (outputType.equals(DataTypes.DoubleType)) {
+            }
+            else if (outputType.equals(DataTypes.DoubleType)) {
                 result = javaList.stream().max(Comparator.comparing(a -> Double.valueOf(a.toString())));
-            } else {
+            }
+            else {
                 result = javaList.stream().max(Comparator.comparing(a -> Long.valueOf(a.toString())));
             }
         }

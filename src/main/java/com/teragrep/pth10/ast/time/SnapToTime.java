@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.time;
 
 import java.time.*;
@@ -51,8 +50,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 
 /**
- * Truncates time to the given unit. Can contain an offset.
- * Example: @d+3h snaps to 3AM of the same day.
+ * Truncates time to the given unit. Can contain an offset. Example: @d+3h snaps to 3AM of the same day.
  */
 public final class SnapToTime {
 
@@ -71,6 +69,7 @@ public final class SnapToTime {
 
     /**
      * Truncate the time to the start of the SnapUnit and add the offset.
+     * 
      * @param time original time
      * @return modified time
      */
@@ -163,7 +162,7 @@ public final class SnapToTime {
                     time = q3_ldt.atZone(ZoneId.systemDefault()).toInstant();
                 }
                 // After Q4
-                else if ((q4_ldt.isBefore(ldt) || q4_ldt.isEqual(ldt)) ) {
+                else if ((q4_ldt.isBefore(ldt) || q4_ldt.isEqual(ldt))) {
                     time = q4_ldt.atZone(ZoneId.systemDefault()).toInstant();
                 }
                 else {

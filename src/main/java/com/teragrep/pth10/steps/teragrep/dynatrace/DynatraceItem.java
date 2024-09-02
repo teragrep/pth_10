@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -52,6 +52,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 public class DynatraceItem implements Serializable {
+
     private String min;
     private String max;
     private String sum;
@@ -61,6 +62,7 @@ public class DynatraceItem implements Serializable {
     private String metricKey;
     private Timestamp timestamp;
     private String dplQuery;
+
     public DynatraceItem() {
         this.otherAggregates = new HashMap<>();
         this.dimensions = new HashMap<>();
@@ -160,8 +162,11 @@ public class DynatraceItem implements Serializable {
         final String format = "%s.%s%s gauge,min=%s,max=%s,sum=%s,count=%s %s\n%s";
         final String otherAggs = buildOtherAggregatesString();
         final String dims = buildDimensionString(!otherAggs.isEmpty());
-        final String output = String.format(format, metricKey, otherAggs, dims,
-                minString(), maxString(), sumString(), countString(), timestamp.toInstant().getEpochSecond() * 1000L, dtMeta);
+        final String output = String
+                .format(
+                        format, metricKey, otherAggs, dims, minString(), maxString(), sumString(), countString(),
+                        timestamp.toInstant().getEpochSecond() * 1000L, dtMeta
+                );
 
         return output;
     }
@@ -201,16 +206,17 @@ public class DynatraceItem implements Serializable {
         return builder.toString();
     }
 
-
     private String getAggString(String aggName) {
         if (aggName == null) {
             if (!otherAggregates.isEmpty()) {
                 Iterator<String> it = otherAggregates.values().iterator();
                 return it.next();
-            } else {
+            }
+            else {
                 return "1";
             }
-        } else {
+        }
+        else {
             return aggName;
         }
     }
@@ -228,9 +234,10 @@ public class DynatraceItem implements Serializable {
     }
 
     private String countString() {
-        if (count==null) {
+        if (count == null) {
             return "1";
-        } else {
+        }
+        else {
             return count;
         }
     }

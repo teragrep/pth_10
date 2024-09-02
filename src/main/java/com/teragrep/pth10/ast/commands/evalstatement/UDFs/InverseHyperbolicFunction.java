@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import org.apache.spark.sql.api.java.UDF1;
@@ -53,76 +52,75 @@ import java.io.Serializable;
 /**
  * UDF for acosh(x), asinh(x) and atanh(x)<br>
  * Spark built-in functions exist in version {@literal >=3.1.0}
+ * 
  * @author eemhu
- *
  */
 public class InverseHyperbolicFunction implements UDF1<Object, Double>, Serializable {
 
-	private static final long serialVersionUID = 1L;
-	private String function = "acosh";
-	
-	public InverseHyperbolicFunction(String function) {
-		super();
-		this.function = function;
-	}
+    private static final long serialVersionUID = 1L;
+    private String function = "acosh";
 
-	@Override
-	public Double call(Object x) throws Exception {
-		// Take x in as Object, so it can be multiple different types
-		// instead of making one UDF for each possible type
-		Double xAsDouble = convertObjectToDouble(x);
-		
-		switch (function) {
-			case "acosh": {
-				// Use Apache Commons function for acosh
-				org.apache.commons.math3.analysis.function.Acosh acoshFunction = 
-						new org.apache.commons.math3.analysis.function.Acosh();
+    public InverseHyperbolicFunction(String function) {
+        super();
+        this.function = function;
+    }
 
-				return acoshFunction.value(xAsDouble);
-			}
-			case "asinh": {
-				org.apache.commons.math3.analysis.function.Asinh asinhFunction =
-						new org.apache.commons.math3.analysis.function.Asinh();
-				
-				return asinhFunction.value(xAsDouble);
-			}
-			case "atanh": {
-				org.apache.commons.math3.analysis.function.Atanh atanhFunction =
-						new org.apache.commons.math3.analysis.function.Atanh();
-				
-				return atanhFunction.value(xAsDouble);
-			}
-			default: {
-				throw new RuntimeException("Invalid inverse hyperbolic function: " + function);
-			}
-		}
-		
-		
-	}
-	
-	private Double convertObjectToDouble(Object x) {
-		Double xAsDouble = null;
-		
-		if (x instanceof Long) {
-			xAsDouble = ((Long) x).doubleValue();
-		}
-		else if (x instanceof Integer) {
-			xAsDouble = ((Integer) x).doubleValue();
-		}
-		else if (x instanceof Double) {
-			xAsDouble = (Double) x;
-		}
-		else if (x instanceof Float) {
-			xAsDouble = ((Float) x).doubleValue();
-		}
-		else if (x instanceof String) {
-			xAsDouble = Double.valueOf((String) x);
-		}
-		else {
-			throw new RuntimeException(this.function + " input value couldn't be converted to Double. Expected Long, Integer, Double, Float or String.");
-		}
-		
-		return xAsDouble;
-	}
+    @Override
+    public Double call(Object x) throws Exception {
+        // Take x in as Object, so it can be multiple different types
+        // instead of making one UDF for each possible type
+        Double xAsDouble = convertObjectToDouble(x);
+
+        switch (function) {
+            case "acosh": {
+                // Use Apache Commons function for acosh
+                org.apache.commons.math3.analysis.function.Acosh acoshFunction = new org.apache.commons.math3.analysis.function.Acosh();
+
+                return acoshFunction.value(xAsDouble);
+            }
+            case "asinh": {
+                org.apache.commons.math3.analysis.function.Asinh asinhFunction = new org.apache.commons.math3.analysis.function.Asinh();
+
+                return asinhFunction.value(xAsDouble);
+            }
+            case "atanh": {
+                org.apache.commons.math3.analysis.function.Atanh atanhFunction = new org.apache.commons.math3.analysis.function.Atanh();
+
+                return atanhFunction.value(xAsDouble);
+            }
+            default: {
+                throw new RuntimeException("Invalid inverse hyperbolic function: " + function);
+            }
+        }
+
+    }
+
+    private Double convertObjectToDouble(Object x) {
+        Double xAsDouble = null;
+
+        if (x instanceof Long) {
+            xAsDouble = ((Long) x).doubleValue();
+        }
+        else if (x instanceof Integer) {
+            xAsDouble = ((Integer) x).doubleValue();
+        }
+        else if (x instanceof Double) {
+            xAsDouble = (Double) x;
+        }
+        else if (x instanceof Float) {
+            xAsDouble = ((Float) x).doubleValue();
+        }
+        else if (x instanceof String) {
+            xAsDouble = Double.valueOf((String) x);
+        }
+        else {
+            throw new RuntimeException(
+                    this.function
+                            + " input value couldn't be converted to Double. Expected Long, Integer, Double, Float or String."
+            );
+        }
+
+        return xAsDouble;
+    }
 
 }

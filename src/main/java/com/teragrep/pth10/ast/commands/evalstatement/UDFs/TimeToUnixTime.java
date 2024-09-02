@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import org.apache.spark.sql.api.java.UDF1;
@@ -58,12 +57,12 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Converts Timestamp/String object to a unix epoch,
- * otherwise Long/Integer will be returned as-is
+ * Converts Timestamp/String object to a unix epoch, otherwise Long/Integer will be returned as-is
  */
 public class TimeToUnixTime implements UDF1<Object, Long> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimeToUnixTime.class);
+
     /**
      * @param time Object of type timestamp or unix time
      * @return as unix time
@@ -74,27 +73,27 @@ public class TimeToUnixTime implements UDF1<Object, Long> {
         long unixtime = 0L;
 
         if (time instanceof Timestamp) {
-            Timestamp ts = (Timestamp)time;
-            LOGGER.debug("Time was detected as TIMESTAMP, epoch: <{}>", ts.getTime()/1000L);
+            Timestamp ts = (Timestamp) time;
+            LOGGER.debug("Time was detected as TIMESTAMP, epoch: <{}>", ts.getTime() / 1000L);
             unixtime = ts.getTime() / 1000L;
         }
         else if (time instanceof Long) {
             LOGGER.debug("Time was directly a LONG/EPOCH: <{}>", time);
-            unixtime = (Long)time;
+            unixtime = (Long) time;
         }
         else if (time instanceof Integer) {
             LOGGER.debug("Time was an INTEGER: <{}>", time);
-            unixtime = ((Integer)time).longValue();
+            unixtime = ((Integer) time).longValue();
         }
         else if (time instanceof String) {
             LOGGER.debug("Time was a STRING: <{}>", time);
             try {
                 LOGGER.debug("Attempting to use as-is (epoch)");
-                unixtime = Long.parseLong(((String)time));
+                unixtime = Long.parseLong(((String) time));
             }
             catch (NumberFormatException nfe) {
                 LOGGER.debug("Failed, attempting to parse as a ISO_ZONED_DATE_TIME");
-                String timeStr = (String)time;
+                String timeStr = (String) time;
                 LocalDateTime ldt = LocalDateTime.parse(timeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
                 ZonedDateTime zdt = ZonedDateTime.of(ldt, ZoneId.systemDefault());
                 ZonedDateTime asUtc = zdt.withZoneSameInstant(ZoneOffset.UTC);

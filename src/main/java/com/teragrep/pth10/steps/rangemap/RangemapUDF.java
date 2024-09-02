@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -54,10 +54,15 @@ import scala.collection.mutable.WrappedArray;
 
 import java.util.*;
 
-public class RangemapUDF implements UDF3<Object, String, scala.collection.immutable.Map<String,WrappedArray<String>>, List<String>> {
+public class RangemapUDF
+        implements UDF3<Object, String, scala.collection.immutable.Map<String, WrappedArray<String>>, List<String>> {
+
     @Override
-    public List<String> call(Object inputNumber, String defaultValue, scala.collection.immutable.Map<String, WrappedArray<String>> attributeRangeMap)
-            throws Exception {
+    public List<String> call(
+            Object inputNumber,
+            String defaultValue,
+            scala.collection.immutable.Map<String, WrappedArray<String>> attributeRangeMap
+    ) throws Exception {
         // parse numbers
         List<Double> inputs = getAllNumbersFromInput(new ArrayList<>(), inputNumber);
         // when all strings, then use defaultValue. Otherwise, skip strings.
@@ -100,10 +105,12 @@ public class RangemapUDF implements UDF3<Object, String, scala.collection.immuta
             if (parsedInputNumber.getType() == ParsedResult.Type.LONG) {
                 parsedNumber = parsedInputNumber.getLong();
                 targetList.add(parsedNumber);
-            } else if (parsedInputNumber.getType() == ParsedResult.Type.DOUBLE){
+            }
+            else if (parsedInputNumber.getType() == ParsedResult.Type.DOUBLE) {
                 parsedNumber = parsedInputNumber.getDouble();
                 targetList.add(parsedNumber);
-            } else if (parsedInputNumber.getType() == ParsedResult.Type.LIST) {
+            }
+            else if (parsedInputNumber.getType() == ParsedResult.Type.LIST) {
                 for (Object item : parsedInputNumber.getList()) {
                     targetList.addAll(getAllNumbersFromInput(targetList, item));
                 }

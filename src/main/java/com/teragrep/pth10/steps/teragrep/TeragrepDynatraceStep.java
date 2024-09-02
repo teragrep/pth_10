@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -75,11 +75,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepDynatraceStep.class);
     private final String metricKey;
     private final String metricsApiUrl;
     private final DPLParserCatalystContext catCtx;
     private List<DynatraceItem> dynatraceItems;
+
     public TeragrepDynatraceStep(DPLParserCatalystContext catCtx, String metricKey, String metricsApiUrl) {
         super();
         this.catCtx = catCtx;
@@ -88,6 +90,7 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
         this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
         this.properties.add(CommandProperty.REQUIRE_PRECEDING_AGGREGATE);
     }
+
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) {
         dynatraceItems = new ArrayList<>();
@@ -108,27 +111,32 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
                     // min(column)
                     final String col = new NumericText(new TextString(row.get(j))).read();
                     dti.setMin(col);
-                } else if (name.startsWith("max(") && name.endsWith(")")) {
+                }
+                else if (name.startsWith("max(") && name.endsWith(")")) {
                     // max(column)
                     final String col = new NumericText(new TextString(row.get(j))).read();
                     dti.setMax(col);
-                } else if (name.startsWith("sum(") && name.endsWith(")")) {
+                }
+                else if (name.startsWith("sum(") && name.endsWith(")")) {
                     // sum(column)
                     final String col = new NumericText(new TextString(row.get(j))).read();
                     dti.setSum(col);
 
-                } else if (name.startsWith("count(") && name.endsWith(")")) {
+                }
+                else if (name.startsWith("count(") && name.endsWith(")")) {
                     // count(column)
                     final String col = new NumericText(new TextString(row.get(j))).read();
                     dti.setCount(col);
 
-                } else if (name.indexOf('(') > 0 && name.endsWith(")")) {
+                }
+                else if (name.indexOf('(') > 0 && name.endsWith(")")) {
                     // <agg>(column)
                     final String col = new NumericText(new TextString(row.get(j))).read();
                     final String underscorified = name.replaceAll("[(|)]", "_");
                     dti.addAggregate(underscorified, col);
 
-                } else {
+                }
+                else {
                     // anything else should be a dimension
                     final String col = row.get(j).toString();
                     dti.addDimension(name, col);
@@ -150,13 +158,15 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
         httpPost.setHeader("Content-Type", "text/plain; charset=utf-8");
         httpPost.setEntity(new StringEntity(dti.toString(), "utf-8"));
 
-        try (CloseableHttpClient client = HttpClients.createDefault();
-             CloseableHttpResponse response = client.execute(httpPost)) {
+        try (
+                CloseableHttpClient client = HttpClients.createDefault();
+                CloseableHttpResponse response = client.execute(httpPost)
+        ) {
             final int statusCode = response.getStatusLine().getStatusCode();
 
             try (InputStream respStream = response.getEntity().getContent()) {
-                JsonObject jsonResp = new Gson().fromJson(
-                        new InputStreamReader(respStream, StandardCharsets.UTF_8), JsonObject.class);
+                JsonObject jsonResp = new Gson()
+                        .fromJson(new InputStreamReader(respStream, StandardCharsets.UTF_8), JsonObject.class);
                 JsonElement errorElem = jsonResp.get("error");
                 if (!(errorElem instanceof JsonNull)) {
                     throw new RuntimeException("Error from server response: " + errorElem.toString());
@@ -173,7 +183,6 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
                 LOGGER.warn("Invalid lines: <[{}]>", invalidElem);
             }
 
-
             if (statusCode != 202 && statusCode != 400) {
                 throw new RuntimeException("Error! Response code: <[" + statusCode + "]>. Expected 202 or 400.");
             }
@@ -188,7 +197,8 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
         dynatraceItems.forEach(dti -> {
             try {
                 sendPostReq(metricsApiUrl, dti);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 throw new RuntimeException("Error sending post request: " + e);
             }
         });

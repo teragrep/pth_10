@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -54,7 +54,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 
 public class FillnullStep extends AbstractFillnullStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FillnullStep.class);
+
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) {
         if (listOfFields.isEmpty()) {
@@ -67,15 +69,17 @@ public class FillnullStep extends AbstractFillnullStep {
             if (checkForFieldsExistence(field, dataset.columns())) {
                 // field exists
                 // replace all "" (empty string) fields with fillerString
-                dataset = dataset.withColumn(field,
-                        functions.when( // if field="" return fillerString
-                                        functions.col(field).equalTo(functions.lit(nullValue.value())),
-                                        functions.lit(fillerString))
-                                .otherwise( // else if field=null return fillerString
-                                        functions.when(
-                                                        functions.col(field).isNull(),functions.lit(fillerString))
-                                                .otherwise(functions.col(field)))); // else return field
-            } else {
+                dataset = dataset
+                        .withColumn(field, functions.when( // if field="" return fillerString
+                                functions.col(field).equalTo(functions.lit(nullValue.value())), functions.lit(fillerString)
+                        )
+                                .otherwise(
+                                        // else if field=null return fillerString
+                                        functions.when(functions.col(field).isNull(), functions.lit(fillerString)).otherwise(functions.col(field))
+                                )
+                        ); // else return field
+            }
+            else {
                 // field does not exist, create it and fill with fillerString
                 dataset = dataset.withColumn(field, functions.lit(fillerString));
             }

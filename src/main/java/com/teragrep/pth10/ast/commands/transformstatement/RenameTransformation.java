@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.TextString;
@@ -66,9 +65,11 @@ import java.util.Map;
  * <pre>{@literal ... | rename <original-field> AS <new-field-name>}</pre>
  */
 public class RenameTransformation extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RenameTransformation.class);
 
     public RenameStep renameStep = null;
+
     public RenameTransformation() {
 
     }
@@ -107,7 +108,8 @@ public class RenameTransformation extends DPLParserBaseVisitor<Node> {
 
             if (originalName != null && newName != null) {
                 // rename the column based on original and new name
-                mapOfRenamedFields.put(new UnquotedText(new TextString(originalName)).read(), new UnquotedText(new TextString(newName)).read());
+                mapOfRenamedFields
+                        .put(new UnquotedText(new TextString(originalName)).read(), new UnquotedText(new TextString(newName)).read());
                 originalName = null;
                 newName = null;
             }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast;
 
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.misc.Utils;
@@ -71,8 +70,9 @@ public class PrettyTree {
     }
 
     /**
-     * Pretty print out a whole tree. getNodeText is used on the node payloads to get the text
-     * for the nodes. (Derived from Trees.toStringTree(....))
+     * Pretty print out a whole tree. getNodeText is used on the node payloads to get the text for the nodes. (Derived
+     * from Trees.toStringTree(....))
+     * 
      * @return pretty tree as string
      */
     public String getTree() {
@@ -81,7 +81,8 @@ public class PrettyTree {
     }
 
     private String process(final Tree t, final List<String> ruleNames) {
-        if (t.getChildCount() == 0) return Utils.escapeWhitespace(Trees.getNodeText(t, ruleNames), false);
+        if (t.getChildCount() == 0)
+            return Utils.escapeWhitespace(Trees.getNodeText(t, ruleNames), false);
         StringBuilder sb = new StringBuilder();
         sb.append(lead(level));
         level++;

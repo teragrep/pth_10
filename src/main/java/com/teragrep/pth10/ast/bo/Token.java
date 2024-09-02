@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,61 +43,61 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.bo;
 
 /**
  * Token class to declare Token with certain types and values
  */
 public class Token {
-	public enum Type {
-		AND,
-		OR,
-		INVALID,
-		EQUALS,
-		NOT_EQUALS,
-		LIKE,
-		NOT_LIKE,
-		GT,
-		GE,
-		LT,
-		LE,
-		DIRECTORY,
-		MATCH,
-		LOGICAL_STATEMENT,
-		INDEX_STATEMENT,
-		SEARCH_QUALIFIER,
-		SUB_LOGICAL_STATEMENT,
-		TIMEFORMAT_STATEMENT,
-		TRANSFORM_STATEMENT,
-		STRING,
-		STRINGLIST,
-		STEP,
-		IF_STATEMENT
-	}
 
-	Type type;
-	String value;
+    public enum Type {
+        AND,
+        OR,
+        INVALID,
+        EQUALS,
+        NOT_EQUALS,
+        LIKE,
+        NOT_LIKE,
+        GT,
+        GE,
+        LT,
+        LE,
+        DIRECTORY,
+        MATCH,
+        LOGICAL_STATEMENT,
+        INDEX_STATEMENT,
+        SEARCH_QUALIFIER,
+        SUB_LOGICAL_STATEMENT,
+        TIMEFORMAT_STATEMENT,
+        TRANSFORM_STATEMENT,
+        STRING,
+        STRINGLIST,
+        STEP,
+        IF_STATEMENT
+    }
 
-	public Token(Type type, String value) {
-		this.type = type;
-		this.value = value;
-	}
+    Type type;
+    String value;
 
-	public Token(Type type) {
-		this.type = type;
-	}
+    public Token(Type type, String value) {
+        this.type = type;
+        this.value = value;
+    }
 
-	public Type getType() {
-		return this.type;
-	}
+    public Token(Type type) {
+        this.type = type;
+    }
 
-	public String toString() { 
-		if (this.value != null) {
-			return this.value; 
-		}
-		else {
-			return this.type.toString();
-		}
-	}
+    public Type getType() {
+        return this.type;
+    }
+
+    public String toString() {
+        if (this.value != null) {
+            return this.value;
+        }
+        else {
+            return this.type.toString();
+        }
+    }
 }

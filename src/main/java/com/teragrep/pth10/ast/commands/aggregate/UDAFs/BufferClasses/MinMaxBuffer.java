@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
 import org.apache.spark.sql.types.DataTypes;
@@ -51,10 +50,10 @@ import org.apache.spark.sql.types.DataTypes;
 import java.io.Serializable;
 
 /**
- * The buffer class that is used for the MinMaxAggregator.
- * Must be Java Bean compliant and serializable.
+ * The buffer class that is used for the MinMaxAggregator. Must be Java Bean compliant and serializable.
  */
 public class MinMaxBuffer implements Serializable {
+
     private static final long serialVersionUID = 1L;
 
     protected Double minNumber = null;
@@ -104,9 +103,9 @@ public class MinMaxBuffer implements Serializable {
     }
 
     /**
-     * Gets the outputFormatType of the buffer.
-     * Can be either <code>DataTypes.DoubleType.typeName()</code> or
+     * Gets the outputFormatType of the buffer. Can be either <code>DataTypes.DoubleType.typeName()</code> or
      * <code>DataTypes.IntegerType.typeName()</code>
+     * 
      * @return output format as a string
      */
     public String getOutputFormatType() {
@@ -114,9 +113,9 @@ public class MinMaxBuffer implements Serializable {
     }
 
     /**
-     * Sets the outputFormatType of the buffer.
-     * Can be set to <code>DataTypes.DoubleType.typeName()</code> only,
-     * the default is <code>DataTypes.IntegerType.typeName()</code>
+     * Sets the outputFormatType of the buffer. Can be set to <code>DataTypes.DoubleType.typeName()</code> only, the
+     * default is <code>DataTypes.IntegerType.typeName()</code>
+     * 
      * @param outputFormatType type to set to
      */
     public void setOutputFormatType(String outputFormatType) {
@@ -126,8 +125,9 @@ public class MinMaxBuffer implements Serializable {
     }
 
     /**
-     * Checks given number against current max and min values, and sets it as them if it is
-     * the new minimum and/or maximum
+     * Checks given number against current max and min values, and sets it as them if it is the new minimum and/or
+     * maximum
+     * 
      * @param value to add
      */
     public void addNumber(double value) {
@@ -142,8 +142,9 @@ public class MinMaxBuffer implements Serializable {
     }
 
     /**
-     * Checks given string against current max and min values, and sets it as them if it is
-     * the new minimum and/or maximum
+     * Checks given string against current max and min values, and sets it as them if it is the new minimum and/or
+     * maximum
+     * 
      * @param value to add
      */
     public void addString(String value) {

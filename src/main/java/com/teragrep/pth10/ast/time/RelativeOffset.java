@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,10 +43,8 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.steps.teragrep.TeragrepSyslogStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,6 +58,7 @@ import java.time.temporal.ChronoUnit;
  * Relative offset of time. Used to add or subtract time.
  */
 public final class RelativeOffset {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(RelativeOffset.class);
 
     private final long amount;
@@ -107,11 +106,13 @@ public final class RelativeOffset {
                 default:
                     throw new RuntimeException("Relative timestamp contained an invalid time unit");
             }
-        } catch (ArithmeticException ae) {
+        }
+        catch (ArithmeticException ae) {
             // on overflow, check positivity/negativity and pin to max/min
             if (amount < 0) {
                 time = Instant.ofEpochMilli(0);
-            } else {
+            }
+            else {
                 time = Instant.ofEpochMilli(Long.MAX_VALUE);
             }
             ldt = time.atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -121,12 +122,13 @@ public final class RelativeOffset {
             LOGGER.info("Epoch resulted in year over 9999, setting it to year 9999.");
             ldt = ldt.withYear(9999);
             time = ldt.atZone(ZoneId.systemDefault()).toInstant();
-        } else if (ldt.getYear() < 1000) {
+        }
+        else if (ldt.getYear() < 1000) {
             LOGGER.info("Epoch resulted in year less than 1000, setting it to year 1000.");
             ldt = ldt.withYear(1000);
             time = ldt.atZone(ZoneId.systemDefault()).toInstant();
         }
-        
+
         return time;
     }
 }

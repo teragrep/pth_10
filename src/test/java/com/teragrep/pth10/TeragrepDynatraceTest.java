@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -66,26 +66,24 @@ import static org.mockserver.model.HttpRequest.request;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeragrepDynatraceTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepDynatraceTest.class);
     private final String testFile = "src/test/resources/IplocationTransformationTest_data*.json"; // * to make the path into a directory path
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
     private ClientAndServer mockServer;
     private final int port = 9001;
-
 
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
@@ -111,55 +109,49 @@ public class TeragrepDynatraceTest {
         mockServer.stop();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgDynatraceTest() {
         // respond to metrics ingest
-        mockServer.when(
-                request()
-                        .withPath("/metrics/ingest")
-                        .withMethod("POST")
-                        .withHeader("Content-Type", "text/plain; charset=utf-8")
-                )
-                .respond(HttpClassCallback.callback(DynatraceTestAPICallback.class));
+        mockServer
+                .when(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8")).respond(HttpClassCallback.callback(DynatraceTestAPICallback.class));
 
         // send post
-        this.streamingTestUtil.performDPLTest(
-                "index=* " +
-                "| stats count(_raw) avg(_raw) by sourcetype " +
-                "| teragrep exec dynatrace metric write",
-                testFile, ds -> {
-                });
+        this.streamingTestUtil
+                .performDPLTest(
+                        "index=* " + "| stats count(_raw) avg(_raw) by sourcetype "
+                                + "| teragrep exec dynatrace metric write",
+                        testFile, ds -> {
+                        }
+                );
 
         // two lines received
         mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.exactly(2));
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgDynatraceNoAggregateTest() {
         // respond to metrics ingest
-        mockServer.when(
-                        request()
-                                .withPath("/metrics/ingest")
-                                .withMethod("POST")
-                                .withHeader("Content-Type", "text/plain; charset=utf-8")
-                )
-                .respond(HttpClassCallback.callback(DynatraceTestAPICallback.class));
+        mockServer
+                .when(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8")).respond(HttpClassCallback.callback(DynatraceTestAPICallback.class));
 
         // send post
-        Throwable th =
-            this.streamingTestUtil.performThrowingDPLTest(
-                    RuntimeException.class,
-                    "index=* " +
-                            "| teragrep exec dynatrace metric write",
-                    testFile, ds -> {
-                    });
+        Throwable th = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        RuntimeException.class, "index=* " + "| teragrep exec dynatrace metric write", testFile, ds -> {
+                        }
+                );
 
         // should not work without aggregate
         assertTrue(th.getMessage().endsWith("requires a preceding aggregate!"));
@@ -169,27 +161,23 @@ public class TeragrepDynatraceTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgDynatraceNonNumericDataTest() {
         // respond to metrics ingest
-        mockServer.when(
-                        request()
-                                .withPath("/metrics/ingest")
-                                .withMethod("POST")
-                                .withHeader("Content-Type", "text/plain; charset=utf-8")
-                )
-                .respond(HttpClassCallback.callback(DynatraceTestAPICallback.class));
+        mockServer
+                .when(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8")).respond(HttpClassCallback.callback(DynatraceTestAPICallback.class));
 
         // send post
-        Throwable th =
-            this.streamingTestUtil.performThrowingDPLTest(
-                    StreamingQueryException.class,
-                    "| makeresults count=10 " +
-                            "| eval _raw = \"string\"" +
-                            "| stats sum(_raw)" +
-                            "| teragrep exec dynatrace metric write",
-                    testFile, ds -> {
-                    });
+        Throwable th = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        StreamingQueryException.class, "| makeresults count=10 " + "| eval _raw = \"string\""
+                                + "| stats sum(_raw)" + "| teragrep exec dynatrace metric write",
+                        testFile, ds -> {
+                        }
+                );
 
         // should not work with non-numeric data
         assertEquals("Non-numeric text was provided!", th.getCause().getMessage());
@@ -198,4 +186,3 @@ public class TeragrepDynatraceTest {
         mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.never());
     }
 }
-

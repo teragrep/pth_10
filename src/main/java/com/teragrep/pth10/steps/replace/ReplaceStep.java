@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.replace;
 
 import com.teragrep.pth10.ast.commands.transformstatement.replace.ReplaceCmd;
@@ -54,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class ReplaceStep extends AbstractReplaceStep {
+
     public ReplaceStep(List<String> listOfFields, Map<String, String> replacements) {
         super(listOfFields, replacements);
     }
@@ -82,8 +82,8 @@ public final class ReplaceStep extends AbstractReplaceStep {
         // Apply the replace function to all given fields
         for (String field : this.listOfFields) {
             for (String contentToReplace : this.replacements.keySet()) {
-                Column res = functions.callUDF("UDF_Replace",
-                        functions.col(field), functions.lit(contentToReplace), functions.lit(this.replacements.get(contentToReplace)));
+                Column res = functions
+                        .callUDF("UDF_Replace", functions.col(field), functions.lit(contentToReplace), functions.lit(this.replacements.get(contentToReplace)));
 
                 dataset = dataset.withColumn(field, res);
             }

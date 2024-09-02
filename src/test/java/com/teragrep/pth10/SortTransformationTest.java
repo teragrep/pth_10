@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -61,30 +61,28 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for the new ProcessingStack implementation
- * Uses streaming datasets
+ * Tests for the new ProcessingStack implementation Uses streaming datasets
+ * 
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SortTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(SortTransformationTest.class);
 
     private final String testFile = "src/test/resources/sortTransformationTest_data*.json"; // * to make the path into a directory path
 
-    private final StructType testSchema = new StructType(
-            new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-            }
-    );
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -104,7 +102,6 @@ public class SortTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
@@ -112,183 +109,206 @@ public class SortTransformationTest {
     // FIXME fix these when sort command is fixed on parser side
     // (spaces before fields or auto(), num(), etc.)
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // ascending auto sortByType with desc override
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // ascending auto sortByType with desc override
     public void sort_test_1() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | sort + auto(offset) desc",
-                testFile,
-                ds -> {
-                    List<Row> listOfOffset = ds.select("offset").collectAsList();
-                    long firstOffset = listOfOffset.get(0).getLong(0);
-                    long lastOffset = listOfOffset.get(listOfOffset.size()-1).getLong(0);
+        streamingTestUtil.performDPLTest("index=index_A | sort + auto(offset) desc", testFile, ds -> {
+            List<Row> listOfOffset = ds.select("offset").collectAsList();
+            long firstOffset = listOfOffset.get(0).getLong(0);
+            long lastOffset = listOfOffset.get(listOfOffset.size() - 1).getLong(0);
 
-                    assertEquals(10, firstOffset);
-                    assertEquals(1, lastOffset);
-                }
-        );
+            assertEquals(10, firstOffset);
+            assertEquals(1, lastOffset);
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // override default/auto sorting
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // override default/auto sorting
     public void sort_test_1b() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | sort 10 + str(offset)",
-                testFile,
-                ds -> {
-                    List<Row> listOfOffset = ds.select("offset").collectAsList();
+        streamingTestUtil.performDPLTest("index=index_A | sort 10 + str(offset)", testFile, ds -> {
+            List<Row> listOfOffset = ds.select("offset").collectAsList();
 
-                    assertEquals("[1, 10, 2, 3, 4, 5, 6, 7, 8, 9]",
-                            Arrays.toString(listOfOffset.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+            assertEquals(
+                    "[1, 10, 2, 3, 4, 5, 6, 7, 8, 9]", Arrays.toString(listOfOffset.stream().map(r -> r.getAs(0).toString()).toArray())
+            );
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // descending sourcetype (pth03 parsing issue?, seems to be ascending)
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // descending sourcetype (pth03 parsing issue?, seems to be ascending)
     public void sort_test_2() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | sort limit=0 + sourcetype",
-                testFile,
-                ds -> {
-                    List<Row> listOfSourcetype = ds.select("sourcetype").collectAsList();
+        streamingTestUtil.performDPLTest("index=index_A | sort limit=0 + sourcetype", testFile, ds -> {
+            List<Row> listOfSourcetype = ds.select("sourcetype").collectAsList();
 
-                    assertEquals("[stream1, stream1, stream1, stream1, stream1, stream2, stream2, stream2, stream2, stream2]",
-                            Arrays.toString(listOfSourcetype.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+            assertEquals(
+                    "[stream1, stream1, stream1, stream1, stream1, stream2, stream2, stream2, stream2, stream2]",
+                    Arrays.toString(listOfSourcetype.stream().map(r -> r.getAs(0).toString()).toArray())
+            );
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // descending sort by ip address type
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // descending sort by ip address type
     public void sort_test_3() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | sort - ip(source)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource = ds.select("source").collectAsList();
+        streamingTestUtil.performDPLTest("index=index_A | sort - ip(source)", testFile, ds -> {
+            List<Row> listOfSource = ds.select("source").collectAsList();
 
-                    assertEquals("[127.9.9.9, 127.8.8.8, 127.7.7.7, 127.6.6.6, 127.5.5.5, 127.4.4.4, 127.3.3.3, 127.2.2.2, 127.1.1.1, 127.0.0.0]",
-                            Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+            assertEquals(
+                    "[127.9.9.9, 127.8.8.8, 127.7.7.7, 127.6.6.6, 127.5.5.5, 127.4.4.4, 127.3.3.3, 127.2.2.2, 127.1.1.1, 127.0.0.0]",
+                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+            );
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with aggregate
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // sort with aggregate
     public void sort_test_4() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | stats count(offset) as count_offset avg(offset) as avg_offset by sourcetype | sort +num(avg_offset)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource = ds.select("avg_offset").collectAsList();
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats count(offset) as count_offset avg(offset) as avg_offset by sourcetype | sort +num(avg_offset)",
+                        testFile, ds -> {
+                            List<Row> listOfSource = ds.select("avg_offset").collectAsList();
 
-                    assertEquals("[5.0, 6.0]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+                            assertEquals(
+                                    "[5.0, 6.0]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                            );
+                        }
+                );
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true") // chained sort
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // chained sort
     public void sort_test_5() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | sort - num(offset)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource =
-                            ds.select("offset").collectAsList();
+        streamingTestUtil.performDPLTest("index=index_A | sort - num(offset)", testFile, ds -> {
+            List<Row> listOfSource = ds.select("offset").collectAsList();
 
-                    assertEquals("[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+            assertEquals(
+                    "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+            );
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with a group by aggregate, descending sort
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // sort with a group by aggregate, descending sort
     public void sort_test_6() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | stats max(offset) AS max_off by id | sort -num(max_off)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource =
-                            ds.select("max_off").collectAsList();
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats max(offset) AS max_off by id | sort -num(max_off)", testFile, ds -> {
+                            List<Row> listOfSource = ds.select("max_off").collectAsList();
 
-                    assertEquals("[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+                            assertEquals(
+                                    "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]",
+                                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                            );
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with a group by aggregate, ascending sort
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // sort with a group by aggregate, ascending sort
     public void sort_test_7() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | stats max(offset) AS max_off by id | sort +num(max_off)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource =
-                            ds.select("max_off").collectAsList();
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats max(offset) AS max_off by id | sort +num(max_off)", testFile, ds -> {
+                            List<Row> listOfSource = ds.select("max_off").collectAsList();
 
-                    assertEquals("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+                            assertEquals(
+                                    "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
+                                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                            );
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // sort with a group by aggregate with auto sort
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // sort with a group by aggregate with auto sort
     public void sort_test_8() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | stats max(offset) AS max_off by id | sort -auto(max_off)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource =
-                            ds.select("max_off").collectAsList();
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats max(offset) AS max_off by id | sort -auto(max_off)", testFile, ds -> {
+                            List<Row> listOfSource = ds.select("max_off").collectAsList();
 
-                    assertEquals("[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+                            assertEquals(
+                                    "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]",
+                                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                            );
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // auto sort after eval
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // auto sort after eval
     public void sort_test_9() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | eval a = offset + 4 | sort -auto(a)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource =
-                            ds.select("a").collectAsList();
+        streamingTestUtil.performDPLTest("index=index_A | eval a = offset + 4 | sort -auto(a)", testFile, ds -> {
+            List<Row> listOfSource = ds.select("a").collectAsList();
 
-                    assertEquals("[14, 13, 12, 11, 10, 9, 8, 7, 6, 5]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+            assertEquals(
+                    "[14, 13, 12, 11, 10, 9, 8, 7, 6, 5]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+            );
+        });
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // auto sort strings
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // auto sort strings
     public void sort_test_10() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | eval a = if ( offset < 6, \"abc\", \"bcd\") | sort +auto(a)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource =
-                            ds.select("a").collectAsList();
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | eval a = if ( offset < 6, \"abc\", \"bcd\") | sort +auto(a)", testFile, ds -> {
+                            List<Row> listOfSource = ds.select("a").collectAsList();
 
-                    assertEquals("[[abc], [abc], [abc], [abc], [abc], [bcd], [bcd], [bcd], [bcd], [bcd]]", Arrays.toString(listOfSource.stream().map(r -> r.getList(0).toString()).toArray()));
-                }
-        );
+                            assertEquals(
+                                    "[[abc], [abc], [abc], [abc], [abc], [bcd], [bcd], [bcd], [bcd], [bcd]]",
+                                    Arrays.toString(listOfSource.stream().map(r -> r.getList(0).toString()).toArray())
+                            );
+                        }
+                );
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true") // auto sort ip addresses
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // auto sort ip addresses
     public void sort_test_11() {
-        streamingTestUtil.performDPLTest(
-                "index=index_A | sort +auto(source)",
-                testFile,
-                ds -> {
-                    List<Row> listOfSource =
-                            ds.select("source").collectAsList();
+        streamingTestUtil.performDPLTest("index=index_A | sort +auto(source)", testFile, ds -> {
+            List<Row> listOfSource = ds.select("source").collectAsList();
 
-                    assertEquals("[127.0.0.0, 127.1.1.1, 127.2.2.2, 127.3.3.3, 127.4.4.4, 127.5.5.5, 127.6.6.6, 127.7.7.7, 127.8.8.8, 127.9.9.9]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
-                }
-        );
+            assertEquals(
+                    "[127.0.0.0, 127.1.1.1, 127.2.2.2, 127.3.3.3, 127.4.4.4, 127.5.5.5, 127.6.6.6, 127.7.7.7, 127.8.8.8, 127.9.9.9]",
+                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+            );
+        });
     }
 }

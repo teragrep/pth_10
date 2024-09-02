@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import org.apache.spark.sql.api.java.UDF2;
@@ -55,30 +54,31 @@ import java.io.Serializable;
 /**
  * UDF for command mvjoin(mvfield, str)<br>
  * Joins the mvfield's values with str delimiter into a new mv field<br>
+ * 
  * @author eemhu
- *
  */
 public class Mvjoin implements UDF2<WrappedArray<String>, String, String>, Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public String call(WrappedArray<String> mvfield, String str) throws Exception {
-		String rv = "";
-		
-		Iterator<String> it = mvfield.iterator();
-		
-		while (it.hasNext()) {
-			String nextItem = it.next();
-			
-			// Concatenate item + given delimiter
-			// hasNext() check is used to see if the current one is the final value,
-			// and delimiter won't be added if that is the case
-			rv = rv.concat(nextItem);
-			if (it.hasNext()) rv = rv.concat(str);
-		}
-		
-		return rv;
-	}
+    @Override
+    public String call(WrappedArray<String> mvfield, String str) throws Exception {
+        String rv = "";
+
+        Iterator<String> it = mvfield.iterator();
+
+        while (it.hasNext()) {
+            String nextItem = it.next();
+
+            // Concatenate item + given delimiter
+            // hasNext() check is used to see if the current one is the final value,
+            // and delimiter won't be added if that is the case
+            rv = rv.concat(nextItem);
+            if (it.hasNext())
+                rv = rv.concat(str);
+        }
+
+        return rv;
+    }
 
 }

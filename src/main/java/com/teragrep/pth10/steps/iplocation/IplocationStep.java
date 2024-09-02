@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.iplocation;
 
 import com.teragrep.pth10.ast.commands.transformstatement.iplocation.IplocationGeoIPDataMapper;
@@ -60,11 +59,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Uses a GeoIP2 or rir-data MaxMind database to map IP addresses to location information,
- * such as latitude, longitude, city, region, country, metro code and et cetera.
+ * Uses a GeoIP2 or rir-data MaxMind database to map IP addresses to location information, such as latitude, longitude,
+ * city, region, country, metro code and et cetera.
  */
-public final class IplocationStep extends AbstractIplocationStep{
+public final class IplocationStep extends AbstractIplocationStep {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(IplocationStep.class);
+
     public IplocationStep() {
         super();
     }
@@ -94,24 +95,37 @@ public final class IplocationStep extends AbstractIplocationStep{
         if (isGeoIPDatabase) {
             LOGGER.info("Detected GeoIP database");
 
-            udf = functions.udf(
-                    new IplocationGeoIPDataMapper(this.pathToDb, this.catCtx.nullValue,
-                            extractMapFromHadoopCfg(this.catCtx.getSparkSession().sparkContext().hadoopConfiguration())),
-                    DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType, true));
+            udf = functions
+                    .udf(
+                            new IplocationGeoIPDataMapper(
+                                    this.pathToDb,
+                                    this.catCtx.nullValue,
+                                    extractMapFromHadoopCfg(
+                                            this.catCtx.getSparkSession().sparkContext().hadoopConfiguration()
+                                    )
+                            ), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType, true)
+                    );
         }
         else {
             LOGGER.info("Detected rir database");
 
-            udf = functions.udf(new IplocationRirDataMapper(this.pathToDb, this.catCtx.nullValue,
-                            extractMapFromHadoopCfg(this.catCtx.getSparkSession().sparkContext().hadoopConfiguration())),
-                    DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType, true));
+            udf = functions
+                    .udf(
+                            new IplocationRirDataMapper(
+                                    this.pathToDb,
+                                    this.catCtx.nullValue,
+                                    extractMapFromHadoopCfg(
+                                            this.catCtx.getSparkSession().sparkContext().hadoopConfiguration()
+                                    )
+                            ), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType, true)
+                    );
         }
 
         this.catCtx.getSparkSession().udf().register("UDF_IPLocation", udf);
 
         // Run udf
-        Column udfResult = functions.callUDF("UDF_IPLocation",
-                functions.col(field), functions.lit(lang), functions.lit(true));
+        Column udfResult = functions
+                .callUDF("UDF_IPLocation", functions.col(field), functions.lit(lang), functions.lit(true));
 
         // Different columns based on allfields parameter and database type
         List<String> mapKeys;
@@ -149,8 +163,9 @@ public final class IplocationStep extends AbstractIplocationStep{
     }
 
     /**
-     * Extracts the inner key-value map of a Hadoop configuration, allowing it to be used
-     * in a user-defined function, as the Configuration item itself is not Serializable.
+     * Extracts the inner key-value map of a Hadoop configuration, allowing it to be used in a user-defined function, as
+     * the Configuration item itself is not Serializable.
+     * 
      * @param hadoopCfg Hadoop configuration object
      * @return String, String mapping of the inner config
      */

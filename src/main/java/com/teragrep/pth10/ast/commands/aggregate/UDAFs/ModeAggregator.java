@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
 import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.ModeBuffer;
@@ -57,80 +56,88 @@ import java.io.Serializable;
 /**
  * Aggregator used for the command mode()
  */
-public class ModeAggregator extends Aggregator<Row, ModeBuffer, String> implements Serializable{
-	private static final long serialVersionUID = 1L;
-	private String colName = null;
+public class ModeAggregator extends Aggregator<Row, ModeBuffer, String> implements Serializable {
 
-	/**
-	 * Initialize with the column name
-	 * @param colName name of the target column
-	 */
-	public ModeAggregator(String colName) {
-		this.colName = colName;
-	}
+    private static final long serialVersionUID = 1L;
+    private String colName = null;
 
-	/**
-	 * Buffer encoder
-	 * @return ModeBuffer encoder
-	 */
-	@Override
-	public Encoder<ModeBuffer> bufferEncoder() {
-		// TODO kryo should speed this up
-		return Encoders.javaSerialization(ModeBuffer.class);
-	}
+    /**
+     * Initialize with the column name
+     * 
+     * @param colName name of the target column
+     */
+    public ModeAggregator(String colName) {
+        this.colName = colName;
+    }
 
-	/**
-	 * Return the result as string
-	 * @param buffer ModeBuffer
-	 * @return result as string
-	 */
-	@Override
-	public String finish(ModeBuffer buffer) {
-		return buffer.mode();
-	}
+    /**
+     * Buffer encoder
+     * 
+     * @return ModeBuffer encoder
+     */
+    @Override
+    public Encoder<ModeBuffer> bufferEncoder() {
+        // TODO kryo should speed this up
+        return Encoders.javaSerialization(ModeBuffer.class);
+    }
 
-	/**
-	 * Merge two buffers into one
-	 * @param buffer original
-	 * @param buffer2 another
-	 * @return merged buffer
-	 */
-	@Override
-	public ModeBuffer merge(ModeBuffer buffer, ModeBuffer buffer2) {
-		buffer.mergeMap(buffer2.getMap());
-		return buffer;
-	}
+    /**
+     * Return the result as string
+     * 
+     * @param buffer ModeBuffer
+     * @return result as string
+     */
+    @Override
+    public String finish(ModeBuffer buffer) {
+        return buffer.mode();
+    }
 
-	/**
-	 * Output encoder
-	 * @return String encoder
-	 */
-	@Override
-	public Encoder<String> outputEncoder() {
-		return Encoders.STRING();
-	}
+    /**
+     * Merge two buffers into one
+     * 
+     * @param buffer  original
+     * @param buffer2 another
+     * @return merged buffer
+     */
+    @Override
+    public ModeBuffer merge(ModeBuffer buffer, ModeBuffer buffer2) {
+        buffer.mergeMap(buffer2.getMap());
+        return buffer;
+    }
 
-	/**
-	 * Add new data to the buffer
-	 * @param buffer target buffer
-	 * @param input input row
-	 * @return resulting buffer
-	 */
-	@Override
-	public ModeBuffer reduce(ModeBuffer buffer, Row input) {
-		String inputValue = input.getAs(colName).toString();
-		buffer.add(inputValue);
-		
-		return buffer;
-	}
+    /**
+     * Output encoder
+     * 
+     * @return String encoder
+     */
+    @Override
+    public Encoder<String> outputEncoder() {
+        return Encoders.STRING();
+    }
 
-	/**
-	 * Initialize the ModeBuffer
-	 * @return initialized buffer
-	 */
-	@Override
-	public ModeBuffer zero() {
-		return new ModeBuffer();
-	}
+    /**
+     * Add new data to the buffer
+     * 
+     * @param buffer target buffer
+     * @param input  input row
+     * @return resulting buffer
+     */
+    @Override
+    public ModeBuffer reduce(ModeBuffer buffer, Row input) {
+        String inputValue = input.getAs(colName).toString();
+        buffer.add(inputValue);
+
+        return buffer;
+    }
+
+    /**
+     * Initialize the ModeBuffer
+     * 
+     * @return initialized buffer
+     */
+    @Override
+    public ModeBuffer zero() {
+        return new ModeBuffer();
+    }
 
 }

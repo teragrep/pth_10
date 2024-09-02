@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast;
 
 import com.teragrep.pth10.steps.AbstractStep;
@@ -60,9 +59,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.function.Consumer;
 
 /**
- * Encapsulates parameters for Catalyst code generator. In addition to that offers access to sparkcontext and incoming datasource
+ * Encapsulates parameters for Catalyst code generator. In addition to that offers access to sparkcontext and incoming
+ * datasource
  */
 public class DPLParserCatalystContext {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLParserCatalystContext.class);
 
     SparkSession sparkSession;
@@ -109,7 +110,8 @@ public class DPLParserCatalystContext {
     public void logMessageToUI(String msg) {
         if (this.messageLogger != null) {
             this.messageLogger.accept(msg);
-        } else {
+        }
+        else {
             LOGGER.warn("Tried to log message <{}> to UI, but messageLogger was not set!", msg);
         }
     }
@@ -121,7 +123,8 @@ public class DPLParserCatalystContext {
     public void sendMetrics(Dataset<Row> metricsDs) {
         if (this.metricsLogger != null) {
             this.metricsLogger.accept(metricsDs);
-        } else {
+        }
+        else {
             LOGGER.warn("Tried to send metrics via MetricsLogger, but it was not set.");
         }
     }
@@ -168,6 +171,7 @@ public class DPLParserCatalystContext {
 
     // timechart span
     private Long timeChartSpanSeconds = null;
+
     public void setTimeChartSpanSeconds(Long timeChartSpanSeconds) {
         this.timeChartSpanSeconds = timeChartSpanSeconds;
     }
@@ -178,10 +182,10 @@ public class DPLParserCatalystContext {
 
     // DPLInternalStreamingQueryListener
     private final DPLInternalStreamingQueryListener internalStreamingQueryListener;
+
     public DPLInternalStreamingQueryListener getInternalStreamingQueryListener() {
         return internalStreamingQueryListener;
     }
-
 
     /**
      * Used to flush the remaining rows to from commands (e.g. sendemail and kafka save)
@@ -211,6 +215,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Sets the base url to be used for linking to the search results in sent emails
+     * 
      * @param newValue like <code>https://teragrep.com</code>
      */
     public void setBaseUrl(String newValue) {
@@ -219,6 +224,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Sets the paragraph id for the search results link
+     * 
      * @param newValue like <code>paragraph_1658138772905_773043366</code>
      */
     public void setParagraphUrl(String newValue) {
@@ -227,6 +233,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Sets the notebook id for the search results link
+     * 
      * @param newValue like <code>2H7AVWKCQ</code>
      */
     public void setNotebookUrl(String newValue) {
@@ -235,6 +242,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Get the notebook id
+     * 
      * @return notebook id
      */
     public String getNotebookUrl() {
@@ -244,6 +252,7 @@ public class DPLParserCatalystContext {
     /**
      * Builds the full link to the search results to be inserted to the sent emails.<br>
      * Based on data from {@link #baseUrl}, {@link #notebookUrl} and {@link #paragraphUrl}
+     * 
      * @return full URL
      */
     public String getUrl() {
@@ -260,6 +269,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Get paragraph id
+     * 
      * @return paragraph id
      */
     public String getParagraphUrl() {
@@ -333,6 +343,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Initialize context with spark session
+     * 
      * @param sparkSession active session
      */
     public DPLParserCatalystContext(SparkSession sparkSession) {
@@ -344,8 +355,9 @@ public class DPLParserCatalystContext {
 
     /**
      * Initialize context with spark session and incoming dataset
+     * 
      * @param sparkSession active session
-     * @param ds {@literal DataSet<Row>}
+     * @param ds           {@literal DataSet<Row>}
      */
     public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds) {
         this.sparkSession = sparkSession;
@@ -359,8 +371,9 @@ public class DPLParserCatalystContext {
 
     /**
      * Initialize context with spark session and config which is created in zeppelin
+     * 
      * @param sparkSession active session
-     * @param config Zeppelin configuration object
+     * @param config       Zeppelin configuration object
      */
     public DPLParserCatalystContext(SparkSession sparkSession, Config config) {
         this.sparkSession = sparkSession;
@@ -370,13 +383,14 @@ public class DPLParserCatalystContext {
         this.internalStreamingQueryListener.init(this.sparkSession);
         if (config != null) {
             // set earliest to now-24h if in zeppelin env, otherwise it will be 1970-01-01
-            this.dplDefaultEarliest = Instant.now().truncatedTo(ChronoUnit.DAYS).getEpochSecond() - 24*60*60L;
+            this.dplDefaultEarliest = Instant.now().truncatedTo(ChronoUnit.DAYS).getEpochSecond() - 24 * 60 * 60L;
             this.dplMinimumEarliest = this.dplDefaultEarliest;
         }
     }
 
     /**
      * Get session
+     * 
      * @return active spark session
      */
     public SparkSession getSparkSession() {
@@ -385,6 +399,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Get current dataset
+     * 
      * @return {@literal Dataset<Row>}
      */
     public Dataset<Row> getDs() {
@@ -393,6 +408,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Set active or initial dataset. Used with tests
+     * 
      * @param inDs {@literal Dataset<Row>} incoming dataset
      */
     public void setDs(Dataset<Row> inDs) {
@@ -401,6 +417,7 @@ public class DPLParserCatalystContext {
 
     /**
      * Get current zeppelin config object
+     * 
      * @return Zepplein config
      */
     public Config getConfig() {
@@ -444,11 +461,12 @@ public class DPLParserCatalystContext {
     }
 
     @Override
-    public  DPLParserCatalystContext clone() {
+    public DPLParserCatalystContext clone() {
         DPLParserCatalystContext ctx;
         try {
-            ctx = (DPLParserCatalystContext)super.clone();
-        } catch (CloneNotSupportedException e) {
+            ctx = (DPLParserCatalystContext) super.clone();
+        }
+        catch (CloneNotSupportedException e) {
             LOGGER.debug("Clone not supported, create object copy");
             ctx = new DPLParserCatalystContext(this.sparkSession);
             ctx.setParserConfig(parserConfig);

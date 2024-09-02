@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
@@ -75,10 +74,11 @@ import java.util.regex.Pattern;
 import static com.teragrep.jue_01.GlobToRegEx.regexify;
 
 /**
- * Base statement for evaluation functions.
- * Called from {@link com.teragrep.pth10.ast.commands.transformstatement.EvalTransformation}
+ * Base statement for evaluation functions. Called from
+ * {@link com.teragrep.pth10.ast.commands.transformstatement.EvalTransformation}
  */
 public class EvalStatement extends DPLParserBaseVisitor<Node> {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(EvalStatement.class);
     private final DPLParserCatalystContext catCtx;
 
@@ -88,6 +88,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     /**
      * Initialize evalStatement
+     * 
      * @param catCtx Catalyst context object
      */
     public EvalStatement(DPLParserCatalystContext catCtx) {
@@ -96,6 +97,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     /**
      * Main visitor function for evalStatement
+     * 
      * @param ctx main parse tree
      * @return node
      */
@@ -114,10 +116,11 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         if (ctx.getChildCount() == 1) {
             // leaf
             rv = left;
-        } else if (ctx.getChildCount() == 2) {
-            throw new RuntimeException(
-                    "Unbalanced evalStatement operation:" + ctx.getText());
-        } else if (ctx.getChildCount() == 3) {
+        }
+        else if (ctx.getChildCount() == 2) {
+            throw new RuntimeException("Unbalanced evalStatement operation:" + ctx.getText());
+        }
+        else if (ctx.getChildCount() == 3) {
             // logical operation xxx AND/OR/XOR xxx
             TerminalNode operation = (TerminalNode) ctx.getChild(1);
             Token op = getOperation((TerminalNode) ctx.getChild(1));
@@ -158,21 +161,26 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitL_evalStatement_subEvalStatement(DPLParser.L_evalStatement_subEvalStatementContext ctx) {
-        LOGGER.info("VisitSubEvalStatements: children=<{}> text=<{}>",ctx.getChildCount(), ctx.getChild(0).getText());
+        LOGGER.info("VisitSubEvalStatements: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getChild(0).getText());
         // Consume parenthesis and return actual evalStatement
-        Node rv =visit(ctx.getChild(0));
-        LOGGER.debug("VisitSubEvalStatements children=<{}> rv=<{}> class=<{}>", ctx.getChildCount(), rv, rv.getClass().getName());
+        Node rv = visit(ctx.getChild(0));
+        LOGGER
+                .debug(
+                        "VisitSubEvalStatements children=<{}> rv=<{}> class=<{}>", ctx.getChildCount(), rv,
+                        rv.getClass().getName()
+                );
         //return new ColumnNode(functions.expr("true"));
         return rv;
     }
-    @Override public Node visitEvalFunctionStatement(DPLParser.EvalFunctionStatementContext ctx) {
-        Node rv =visit(ctx.getChild(0));
+
+    @Override
+    public Node visitEvalFunctionStatement(DPLParser.EvalFunctionStatementContext ctx) {
+        Node rv = visit(ctx.getChild(0));
         return rv;
     }
 
     /**
-     * evalCompareStatement : (decimalType|fieldType|stringType)
-     * (DEQ|EQ|LTE|GTE|LT|GT|NEQ|LIKE|Like) evalStatement ;
+     * evalCompareStatement : (decimalType|fieldType|stringType) (DEQ|EQ|LTE|GTE|LT|GT|NEQ|LIKE|Like) evalStatement ;
      **/
     public Node visitL_evalStatement_evalCompareStatement(DPLParser.L_evalStatement_evalCompareStatementContext ctx) {
         Node rv = evalCompareStatementEmitCatalyst(ctx);
@@ -181,29 +189,29 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * evalCompareStatement : (decimalType|fieldType|stringType)
-     * (DEQ|EQ|LTE|GTE|LT|GT|NEQ|LIKE|Like) evalStatement ;
+     * evalCompareStatement : (decimalType|fieldType|stringType) (DEQ|EQ|LTE|GTE|LT|GT|NEQ|LIKE|Like) evalStatement ;
      **/
     private Node evalCompareStatementEmitCatalyst(DPLParser.L_evalStatement_evalCompareStatementContext ctx) {
         Node rv = null;
         Column lCol = null;
         Column rCol = null;
         Node left = visit(ctx.getChild(0));
-        if(left != null){
-            lCol=((ColumnNode)left).getColumn();
+        if (left != null) {
+            lCol = ((ColumnNode) left).getColumn();
         }
-        Node right =  visit(ctx.getChild(2));
-        if(right != null){
-            rCol=((ColumnNode)right).getColumn();
+        Node right = visit(ctx.getChild(2));
+        if (right != null) {
+            rCol = ((ColumnNode) right).getColumn();
         }
         // Add operation between columns operation =,<,>,......
-        Column col  = addOperation(lCol, (TerminalNode)ctx.getChild(1), rCol);
+        Column col = addOperation(lCol, (TerminalNode) ctx.getChild(1), rCol);
         rv = new ColumnNode(col);
         return rv;
     }
 
     /**
      * Converts a {@link TerminalNode} containing an operation into a {@link Token}
+     * 
      * @param operation TerminalNode of an operation
      * @return Token
      */
@@ -243,23 +251,25 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     /**
      * Generates a column based on a source, value and operation
-     * @param source Left hand side
+     * 
+     * @param source    Left hand side
      * @param operation Operation
-     * @param value Right hand side
+     * @param value     Right hand side
      * @return Final resulting column
      */
     private Column addOperation(Column source, TerminalNode operation, Column value) {
         Column rv = null;
 
-            if (operation.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_LIKE) {
-                SparkSession ss = catCtx.getSparkSession();
-                ss.udf().register("LikeComparison", new LikeComparison(), DataTypes.BooleanType);
-                rv = functions.callUDF("LikeComparison", source, value);
-            } else {
-                SparkSession ss = catCtx.getSparkSession();
-                ss.udf().register("EvalOperation", new EvalOperation(), DataTypes.BooleanType);
-                rv = functions.callUDF("EvalOperation", source, functions.lit(operation.getSymbol().getType()), value);
-            }
+        if (operation.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_LIKE) {
+            SparkSession ss = catCtx.getSparkSession();
+            ss.udf().register("LikeComparison", new LikeComparison(), DataTypes.BooleanType);
+            rv = functions.callUDF("LikeComparison", source, value);
+        }
+        else {
+            SparkSession ss = catCtx.getSparkSession();
+            ss.udf().register("EvalOperation", new EvalOperation(), DataTypes.BooleanType);
+            rv = functions.callUDF("EvalOperation", source, functions.lit(operation.getSymbol().getType()), value);
+        }
         return rv;
     }
 
@@ -272,17 +282,23 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Node rv = null;
         Column lCol = null;
         Column rCol = null;
-        LOGGER.debug("VisitEvalLogicStatement(Catalyst) incoming: children=<{}> text=<{}>",ctx.getChildCount(), ctx.getText());
-        Node l =  visit(ctx.getChild(0));
+        LOGGER
+                .debug(
+                        "VisitEvalLogicStatement(Catalyst) incoming: children=<{}> text=<{}>", ctx.getChildCount(),
+                        ctx.getText()
+                );
+        Node l = visit(ctx.getChild(0));
         LOGGER.debug("VisitEvalLogicStatement(Catalyst) left: class=<{}>", l.getClass().getName());
         if (ctx.getChildCount() == 1) {
             // leaf
             rv = l;
-        } else if (ctx.getChildCount() == 2) {
+        }
+        else if (ctx.getChildCount() == 2) {
             // Should not come here at all
             Node r = visit(ctx.getChild(1));
             rv = r;
-        } else if (ctx.getChildCount() == 3) {
+        }
+        else if (ctx.getChildCount() == 3) {
             // logical operation xxx AND/OR/XOR xxx
             TerminalNode op = (TerminalNode) ctx.getChild(1);
             Token oper = null;
@@ -297,18 +313,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
             Node r = visit(ctx.getChild(2));
             LOGGER.debug("visitEvalLogicStatement(Catalyst) right=<{}>", r.getClass().getName());
 
-            if(l instanceof ColumnNode && r instanceof ColumnNode){
-                Column col=null;
+            if (l instanceof ColumnNode && r instanceof ColumnNode) {
+                Column col = null;
                 Column lcol = ((ColumnNode) l).getColumn();
                 Column rcol = ((ColumnNode) r).getColumn();
                 if (op.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_AND) {
-                    col=rcol.and(rcol);
+                    col = rcol.and(rcol);
                 }
                 if (op.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_OR) {
-                    col=lcol.or(rcol);
+                    col = lcol.or(rcol);
                 }
                 LOGGER.debug("visitEvalLogicStatement(Catalyst) with oper=<{}>", col.expr().sql());
-                rv=new ColumnNode(col);
+                rv = new ColumnNode(col);
             }
         }
         LOGGER.debug(" EvalLogicStatement(Catalyst) generated=<{}> class=<{}>", rv.toString(), rv.getClass().getName());
@@ -326,8 +342,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * subEvalStatement : PARENTHESIS_L EvalStatement PARENTHESIS_R
-     * ;
+     * subEvalStatement : PARENTHESIS_L EvalStatement PARENTHESIS_R ;
      */
     @Override
     public Node visitSubEvalStatement(DPLParser.SubEvalStatementContext ctx) {
@@ -348,7 +363,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         // Step initialization
         this.evalStep = new EvalStep();
         this.evalStep.setLeftSide(field.toString()); // eval a = ...
-        this.evalStep.setRightSide(((ColumnNode)n).getColumn()); // ... = right side
+        this.evalStep.setRightSide(((ColumnNode) n).getColumn()); // ... = right side
 
         return new StepNode(this.evalStep);
     }
@@ -376,18 +391,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         ColumnNode ifFalse = (ColumnNode) visit(ctx.evalStatement(2));
 
         // Register and call ifClause UDF
-        UserDefinedFunction ifClauseUdf = functions.udf(new IfClause(), DataTypes.createArrayType(DataTypes.StringType, true));
+        UserDefinedFunction ifClauseUdf = functions
+                .udf(new IfClause(), DataTypes.createArrayType(DataTypes.StringType, true));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("ifClause", ifClauseUdf);
-        Column res = functions.callUDF("ifClause",
-                logical.getColumn(), ifTrue.getColumn(), ifFalse.getColumn());
+        Column res = functions.callUDF("ifClause", logical.getColumn(), ifTrue.getColumn(), ifFalse.getColumn());
 
         return new ColumnNode(res);
     }
 
     /**
-     * substring() eval method
-     * Takes a substring out of the given string based on given indices
+     * substring() eval method Takes a substring out of the given string based on given indices
+     * 
      * @param ctx EvalMethodSubstrContext
      * @return column node containing substr column
      */
@@ -400,14 +415,15 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     private Node evalMethodSubstrEmitCatalyst(DPLParser.EvalMethodSubstrContext ctx) {
         ColumnNode rv;
         Column exp;
-        String par1=visit(ctx.getChild(2)).toString();
-        String par2=visit(ctx.getChild(4)).toString();
+        String par1 = visit(ctx.getChild(2)).toString();
+        String par2 = visit(ctx.getChild(4)).toString();
         // TODO: In spark >=3.5.0 change to use functions.substring() as it supports not
         //  providing the length argument.
         if (ctx.evalStatement().size() > 2) {
-            String par3=visit(ctx.getChild(6)).toString();
+            String par3 = visit(ctx.getChild(6)).toString();
             exp = functions.expr(String.format("substring(%s, %s, %s)", par1, par2, par3));
-        } else {
+        }
+        else {
             exp = functions.expr(String.format("substring(%s, %s)", par1, par2));
         }
 
@@ -416,8 +432,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * true() eval method
-     * returns TRUE
+     * true() eval method returns TRUE
+     * 
      * @param ctx EvalMethodTrueContext
      * @return column node
      */
@@ -427,15 +443,15 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         return rv;
     }
-    
+
     private Node evalMethodTrueEmitCatalyst(DPLParser.EvalMethodTrueContext ctx) {
         Column col = functions.lit(true);
         return new ColumnNode(col);
     }
 
     /**
-     * false() eval method
-     * returns FALSE
+     * false() eval method returns FALSE
+     * 
      * @param ctx EvalMethodFalseContext
      * @return column node
      */
@@ -451,30 +467,32 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * null() eval method
-     * Returns NULL
+     * null() eval method Returns NULL
+     * 
      * @param ctx EvalMethodNullContext
      * @return column node
      */
-    @Override public Node visitEvalMethodNull(DPLParser.EvalMethodNullContext ctx) {
+    @Override
+    public Node visitEvalMethodNull(DPLParser.EvalMethodNullContext ctx) {
         LOGGER.debug("Visit eval method null");
         Node rv = evalMethodNullEmitCatalyst(ctx);
 
         return rv;
     }
-    
+
     private Node evalMethodNullEmitCatalyst(DPLParser.EvalMethodNullContext ctx) {
         Column col = functions.lit(catCtx.nullValue.value()).cast(DataTypes.StringType);
         return new ColumnNode(col);
     }
 
     /**
-     * nullif() eval method
-     * Returns NULL if x==y, otherwise x
+     * nullif() eval method Returns NULL if x==y, otherwise x
+     * 
      * @param ctx EvalMethodNullifContext
      * @return column node
      */
-    @Override public Node visitEvalMethodNullif(DPLParser.EvalMethodNullifContext ctx) {
+    @Override
+    public Node visitEvalMethodNullif(DPLParser.EvalMethodNullifContext ctx) {
         Node rv = evalMethodNullifEmitCatalyst(ctx);
 
         return rv;
@@ -488,7 +506,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column yCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
         // If x == y, return null
-        Column col = functions.when(xCol.equalTo(yCol), functions.lit(catCtx.nullValue.value()).cast(DataTypes.StringType));
+        Column col = functions
+                .when(xCol.equalTo(yCol), functions.lit(catCtx.nullValue.value()).cast(DataTypes.StringType));
         // otherwise, return x
         col = col.otherwise(xCol);
 
@@ -497,8 +516,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * searchmatch(x) eval method
-     * Returns TRUE if the search string matches the event
+     * searchmatch(x) eval method Returns TRUE if the search string matches the event
+     * 
      * @param ctx EvalMethodSearchmatchContext
      * @return column node
      */
@@ -516,7 +535,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         // fields array should contain x=... , y=..., etc.
         String[] fields = searchStr.split(" ");
 
-        List<Column> columns = new ArrayList<>();     // list of all the Columns used in searchmatch
+        List<Column> columns = new ArrayList<>(); // list of all the Columns used in searchmatch
 
         for (String f : fields) {
             // Split to field and literal based on operator
@@ -527,7 +546,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                 String regexifiedString = "(?i)" + regexify(operands[0]); // (?i) to make it case-insensitive
                 columns.add(functions.col("_raw").rlike(regexifiedString));
                 // field=rlike
-            } else {
+            }
+            else {
                 Column field = functions.col(operands[0].trim());
                 Column literal = functions.lit(operands[1].trim());
                 String literalString = operands[1].trim();
@@ -536,13 +556,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                 // Test if field equals/leq/geq/lt/gt to literal
                 if (f.contains("<=")) {
                     columns.add(field.leq(literal));
-                } else if (f.contains(">=")) {
+                }
+                else if (f.contains(">=")) {
                     columns.add(field.geq(literal));
-                } else if (f.contains("<")) {
+                }
+                else if (f.contains("<")) {
                     columns.add(field.lt(literal));
-                } else if (f.contains("=")) {
+                }
+                else if (f.contains("=")) {
                     columns.add(field.rlike(regexifiedString));
-                } else if (f.contains(">")) {
+                }
+                else if (f.contains(">")) {
                     columns.add(field.gt(literal));
                 }
             }
@@ -564,10 +588,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return new ColumnNode(res);
     }
 
-
     /**
-     * now() eval method
-     * Returns the current system time
+     * now() eval method Returns the current system time
+     * 
      * @param ctx EvalMethodNowContext
      * @return column node
      */
@@ -586,8 +609,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * len() eval method
-     * Returns the length of the field contents
+     * len() eval method Returns the length of the field contents
+     * 
      * @param ctx EvalMethodLenContext
      * @return column node
      */
@@ -598,22 +621,23 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     public Node evalMethodLenEmitCatalyst(DPLParser.EvalMethodLenContext ctx) {
         ColumnNode rv;
-        String inField=visit(ctx.getChild(2)).toString();
+        String inField = visit(ctx.getChild(2)).toString();
         rv = new ColumnNode(functions.length(new Column(inField)));
         return rv;
     }
 
     /**
-     * lower() eval method
-     * Returns the field contents in all lowercase characters
+     * lower() eval method Returns the field contents in all lowercase characters
+     * 
      * @param ctx EvalMethodLowerContext
      * @return column node
      */
-    @Override public Node visitEvalMethodLower(DPLParser.EvalMethodLowerContext ctx) {
+    @Override
+    public Node visitEvalMethodLower(DPLParser.EvalMethodLowerContext ctx) {
         Node rv = evalMethodLowerEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodLowerEmitCatalyst(DPLParser.EvalMethodLowerContext ctx) {
         Node rv = null;
 
@@ -625,16 +649,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * upper() eval method
-     * Returns the field contents in all uppercase characters
+     * upper() eval method Returns the field contents in all uppercase characters
+     * 
      * @param ctx EvalMethodUpperContext
      * @return ColumnNode containing column for upper() eval method
      */
-    @Override public Node visitEvalMethodUpper(DPLParser.EvalMethodUpperContext ctx) {
+    @Override
+    public Node visitEvalMethodUpper(DPLParser.EvalMethodUpperContext ctx) {
         Node rv = evalMethodUpperEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodUpperEmitCatalyst(DPLParser.EvalMethodUpperContext ctx) {
         Node rv = null;
 
@@ -646,16 +671,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * urldecode() eval method
-     * Returns the given URL decoded, e.g. replaces %20 etc. with appropriate human readable characters
+     * urldecode() eval method Returns the given URL decoded, e.g. replaces %20 etc. with appropriate human readable
+     * characters
+     * 
      * @param ctx EvalMethodUrldecodeContext
      * @return column node
      */
-    @Override public Node visitEvalMethodUrldecode(DPLParser.EvalMethodUrldecodeContext ctx) {
+    @Override
+    public Node visitEvalMethodUrldecode(DPLParser.EvalMethodUrldecodeContext ctx) {
         Node rv = evalMethodUrldecodeEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodUrldecodeEmitCatalyst(DPLParser.EvalMethodUrldecodeContext ctx) {
         Node rv = null;
 
@@ -673,16 +700,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * ltrim() eval method
-     * Returns the field contents with trimString trimmed from left side if given, otherwise spaces and tabs
+     * ltrim() eval method Returns the field contents with trimString trimmed from left side if given, otherwise spaces
+     * and tabs
+     * 
      * @param ctx EvalMethodLtrimContext
      * @return ColumnNode containing column for trim() eval method
      */
-    @Override public Node visitEvalMethodLtrim(DPLParser.EvalMethodLtrimContext ctx) {
+    @Override
+    public Node visitEvalMethodLtrim(DPLParser.EvalMethodLtrimContext ctx) {
         Node rv = evalMethodLtrimEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodLtrimEmitCatalyst(DPLParser.EvalMethodLtrimContext ctx) {
         Node rv = null;
 
@@ -703,16 +732,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * replace() eval method
-     * Returns a string with replaced parts as defined by the regex string
+     * replace() eval method Returns a string with replaced parts as defined by the regex string
+     * 
      * @param ctx EvalMethodReplaceContext
      * @return column node
      */
-    @Override public Node visitEvalMethodReplace(DPLParser.EvalMethodReplaceContext ctx) {
+    @Override
+    public Node visitEvalMethodReplace(DPLParser.EvalMethodReplaceContext ctx) {
         Node rv = evalMethodReplaceEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodReplaceEmitCatalyst(DPLParser.EvalMethodReplaceContext ctx) {
         Node rv = null;
 
@@ -720,7 +750,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         // replace ( x , y , z )
 
         if (ctx.getChildCount() != 8) {
-            throw new UnsupportedOperationException("Eval method 'replace' requires three arguments: source string, regex string and substitute string.");
+            throw new UnsupportedOperationException(
+                    "Eval method 'replace' requires three arguments: source string, regex string and substitute string."
+            );
         }
 
         Column srcString = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
@@ -733,18 +765,19 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * rtrim() eval method
-     * Returns the field contents with trimString trimmed from right side if given, otherwise spaces and tabs
+     * rtrim() eval method Returns the field contents with trimString trimmed from right side if given, otherwise spaces
+     * and tabs
+     * 
      * @param ctx EvalMethodRtrimContext
      * @return ColumnNode containing column for rtrim() eval method
      */
-    @Override public Node visitEvalMethodRtrim(DPLParser.EvalMethodRtrimContext ctx) {
+    @Override
+    public Node visitEvalMethodRtrim(DPLParser.EvalMethodRtrimContext ctx) {
         Node rv = evalMethodRtrimEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodRtrimEmitCatalyst(DPLParser.EvalMethodRtrimContext ctx) {
         Node rv = null;
 
@@ -765,16 +798,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * trim() eval method
-     * Returns the field contents with trimString trimmed from both sides if given, otherwise spaces and tabs
+     * trim() eval method Returns the field contents with trimString trimmed from both sides if given, otherwise spaces
+     * and tabs
+     * 
      * @param ctx EvalMethodTrimContext
      * @return ColumnNode containing Column for trim() eval method
      */
-    @Override public Node visitEvalMethodTrim(DPLParser.EvalMethodTrimContext ctx) {
+    @Override
+    public Node visitEvalMethodTrim(DPLParser.EvalMethodTrimContext ctx) {
         Node rv = evalMethodTrimEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodTrimEmitCatalyst(DPLParser.EvalMethodTrimContext ctx) {
         Node rv = null;
 
@@ -795,8 +830,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * split() eval method
-     * Returns field split with delimiter
+     * split() eval method Returns field split with delimiter
+     * 
      * @param ctx EvalMethodSplitContext
      * @return ColumnNode containing the Column for split() eval method
      */
@@ -820,8 +855,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * relative_time() eval method
-     * Returns timestamp based on given unix epoch and relative time modifier
+     * relative_time() eval method Returns timestamp based on given unix epoch and relative time modifier
+     * 
      * @param ctx EvalMethodRelative_timeContext
      * @return ColumnNode containing Column for relative_time() eval method
      */
@@ -849,8 +884,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * strftime() eval method
-     * Returns a timestamp based on given unix epoch and format string
+     * strftime() eval method Returns a timestamp based on given unix epoch and format string
+     * 
      * @param ctx EvalMethodStrftimeContext
      * @return ColumnNode containing column for strftime() eval method
      */
@@ -907,8 +942,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * strptime() eval method
-     * Returns an unix epoch based on given timestamp and format string
+     * strptime() eval method Returns an unix epoch based on given timestamp and format string
+     * 
      * @param ctx EvalMethodStrptimeContext
      * @return ColumnNode containing the column for strptime() eval method
      */
@@ -959,8 +994,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * pow() eval method
-     * Returns the field to the power of n
+     * pow() eval method Returns the field to the power of n
+     * 
      * @param ctx EvalMethodPowContext
      * @return ColumnNode for pow() eval method
      */
@@ -968,7 +1003,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Node rv = evalMethodPowEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodPowEmitCatalyst(DPLParser.EvalMethodPowContext ctx) {
         Node rv = null;
         // child 2 and 4 are x and y
@@ -982,16 +1017,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * abs() eval method
-     * Returns absolute value
+     * abs() eval method Returns absolute value
+     * 
      * @param ctx EvalMethodAbs
      * @return ColumnNode for abs() eval method
      */
-    @Override public Node visitEvalMethodAbs(DPLParser.EvalMethodAbsContext ctx) {
+    @Override
+    public Node visitEvalMethodAbs(DPLParser.EvalMethodAbsContext ctx) {
         Node rv = evalMethodAbsEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodAbsEmitCatalyst(DPLParser.EvalMethodAbsContext ctx) {
         Node rv = null;
 
@@ -1004,16 +1040,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * ceiling() / ceil() eval method
-     * Returns the value rounded up
+     * ceiling() / ceil() eval method Returns the value rounded up
+     * 
      * @param ctx EvalMethodCeiling
      * @return ColumnNode for ceiling() / ceil() eval method
      */
-    @Override public Node visitEvalMethodCeiling(DPLParser.EvalMethodCeilingContext ctx) {
+    @Override
+    public Node visitEvalMethodCeiling(DPLParser.EvalMethodCeilingContext ctx) {
         Node rv = evalMethodCeilingEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodCeilingEmitCatalyst(DPLParser.EvalMethodCeilingContext ctx) {
         Node rv = null;
 
@@ -1026,9 +1063,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * exact() eval method
-     * Acts as a passthrough
-     * More details: {@link #evalMethodExactEmitCatalyst(DPLParser.EvalMethodExactContext)}
+     * exact() eval method Acts as a passthrough More details:
+     * {@link #evalMethodExactEmitCatalyst(DPLParser.EvalMethodExactContext)}
+     * 
      * @param ctx EvalMethodExactContext
      * @return ColumnNode containg Column for exact() eval method
      */
@@ -1056,16 +1093,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * exp() eval method
-     * Returns e^n
+     * exp() eval method Returns e^n
+     * 
      * @param ctx EvalMethodExpContext
      * @return ColumnNode containing column for exp() eval method
      */
-    @Override public Node visitEvalMethodExp(DPLParser.EvalMethodExpContext ctx) {
+    @Override
+    public Node visitEvalMethodExp(DPLParser.EvalMethodExpContext ctx) {
         Node rv = evalMethodExpEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodExpEmitCatalyst(DPLParser.EvalMethodExpContext ctx) {
         Node rv = null;
 
@@ -1078,16 +1116,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * floor() eval method
-     * Rounds down to nearest integer
+     * floor() eval method Rounds down to nearest integer
+     * 
      * @param ctx EvalMethodFloor
      * @return ColumnNode containing column for floor() eval method
      */
-    @Override public Node visitEvalMethodFloor(DPLParser.EvalMethodFloorContext ctx) {
+    @Override
+    public Node visitEvalMethodFloor(DPLParser.EvalMethodFloorContext ctx) {
         Node rv = evalMethodFloorEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodFloorEmitCatalyst(DPLParser.EvalMethodFloorContext ctx) {
         Node rv = null;
 
@@ -1100,16 +1139,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * ln() eval method
-     * Returns the natural logarithmic of n
+     * ln() eval method Returns the natural logarithmic of n
+     * 
      * @param ctx EvalMethodLnContext
      * @return ColumnNode containing column for ln() eval method
      */
-    @Override public Node visitEvalMethodLn(DPLParser.EvalMethodLnContext ctx) {
+    @Override
+    public Node visitEvalMethodLn(DPLParser.EvalMethodLnContext ctx) {
         Node rv = evalMethodLnEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodLnEmitCatalyst(DPLParser.EvalMethodLnContext ctx) {
         Node rv = null;
 
@@ -1122,16 +1162,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * log() eval method
-     * Returns the nth logarithmic of given number
+     * log() eval method Returns the nth logarithmic of given number
+     * 
      * @param ctx EvalMethodLogContext
      * @return ColumnNode containing the column for log() eval method
      */
-    @Override public Node visitEvalMethodLog(DPLParser.EvalMethodLogContext ctx) {
+    @Override
+    public Node visitEvalMethodLog(DPLParser.EvalMethodLogContext ctx) {
         Node rv = evalMethodLogEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodLogEmitCatalyst(DPLParser.EvalMethodLogContext ctx) {
         Node rv;
 
@@ -1146,10 +1187,12 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
             // num, base params
             numberCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
             base = Double.parseDouble(ctx.getChild(4).getText());
-        } else {
-            throw new UnsupportedOperationException("Eval method 'log' supports two parameters: Number (required) and base (optional).");
         }
-
+        else {
+            throw new UnsupportedOperationException(
+                    "Eval method 'log' supports two parameters: Number (required) and base (optional)."
+            );
+        }
 
         Column res = functions.log(base, numberCol);
         rv = new ColumnNode(res);
@@ -1157,8 +1200,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * cos() eval method
-     * Returns the cosine of the field value
+     * cos() eval method Returns the cosine of the field value
+     * 
      * @param ctx EvalMethodCosContext
      * @return ColumnNode containing the column for cos() eval method
      */
@@ -1180,8 +1223,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * cosh() eval method
-     * Returns the hyperbolic cosine of the field value
+     * cosh() eval method Returns the hyperbolic cosine of the field value
+     * 
      * @param ctx EvalMethodCoshContext
      * @return ColumnNode containing the column for the cosh() eval method
      */
@@ -1203,16 +1246,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * acos() eval method
-     * Returns arc cosine of the field value
+     * acos() eval method Returns arc cosine of the field value
+     * 
      * @param ctx EvalMethodAcosContext
      * @return ColumnNode containing the column for acos() eval method
      */
-    @Override public Node visitEvalMethodAcos(DPLParser.EvalMethodAcosContext ctx) {
+    @Override
+    public Node visitEvalMethodAcos(DPLParser.EvalMethodAcosContext ctx) {
         Node rv = evalMethodAcosEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodAcosEmitCatalyst(DPLParser.EvalMethodAcosContext ctx) {
         Node rv = null;
 
@@ -1225,8 +1269,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * acosh() eval method
-     * Returns the inverse hyperbolic cosine of the field value
+     * acosh() eval method Returns the inverse hyperbolic cosine of the field value
+     * 
      * @param ctx EvalMethodAcoshContext
      * @return ColumnNode containing the column for acosh() eval method
      */
@@ -1253,8 +1297,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sin() eval method
-     * Returns the sine of the field value
+     * sin() eval method Returns the sine of the field value
+     * 
      * @param ctx EvalMethodSinContext
      * @return ColumnNode containing the Column for sin() eval method
      */
@@ -1276,8 +1320,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sinh() eval method
-     * Returns hyperbolic sine of the field value
+     * sinh() eval method Returns hyperbolic sine of the field value
+     * 
      * @param ctx EvalMethodSinhContext
      * @return ColumnNode containing the Column for the sinh() eval method
      */
@@ -1299,16 +1343,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * asin() eval method
-     * Returns arc sine of the field value
+     * asin() eval method Returns arc sine of the field value
+     * 
      * @param ctx EvalMethodAsinContext
      * @return ColumnNode containing the Column for the asin() eval method
      */
-    @Override public Node visitEvalMethodAsin(DPLParser.EvalMethodAsinContext ctx) {
+    @Override
+    public Node visitEvalMethodAsin(DPLParser.EvalMethodAsinContext ctx) {
         Node rv = evalMethodAsinEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodAsinEmitCatalyst(DPLParser.EvalMethodAsinContext ctx) {
         Node rv = null;
 
@@ -1321,8 +1366,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * asinh() eval method
-     * Returns inverse hyperbolic sine of the field value
+     * asinh() eval method Returns inverse hyperbolic sine of the field value
+     * 
      * @param ctx EvalMethodAsinhContext
      * @return ColumnNode containing the Column for the asinh() eval method
      */
@@ -1348,8 +1393,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * tan() eval method
-     * Returns the tangent of the field value
+     * tan() eval method Returns the tangent of the field value
+     * 
      * @param ctx EvalMethodTanContext
      * @return ColumnNode containing the Column for the tan() eval method
      */
@@ -1370,10 +1415,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * tanh() eval method
-     * Returns the hyperbolic tangent of the field value
+     * tanh() eval method Returns the hyperbolic tangent of the field value
+     * 
      * @param ctx EvalMethodTanhContext
      * @return ColumnNode containing the Column for the tanh() eval method
      */
@@ -1395,16 +1439,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * atan() eval method
-     * Returns the arc tangent of the field value
+     * atan() eval method Returns the arc tangent of the field value
+     * 
      * @param ctx EvalMethodAtanContext
      * @return ColumnNode containing the Column for the atan() eval method
      */
-    @Override public Node visitEvalMethodAtan(DPLParser.EvalMethodAtanContext ctx) {
+    @Override
+    public Node visitEvalMethodAtan(DPLParser.EvalMethodAtanContext ctx) {
         Node rv = evalMethodAtanEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodAtanEmitCatalyst(DPLParser.EvalMethodAtanContext ctx) {
         Node rv = null;
 
@@ -1417,8 +1462,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * atan2() eval method
-     * Returns the arc tangent of Y,X
+     * atan2() eval method Returns the arc tangent of Y,X
+     * 
      * @param ctx EvalMethodAtan2Context
      * @return ColumnNode containg the Column for the atan2() eval method
      */
@@ -1441,8 +1486,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * atanh() eval method
-     * Returns the inverse hyperbolic tangent of the field value
+     * atanh() eval method Returns the inverse hyperbolic tangent of the field value
+     * 
      * @param ctx EvalMethodAtanhContext
      * @return ColumnNode containing the Column for the atanh() eval method
      */
@@ -1469,8 +1514,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * avg() eval method
-     * Returns the average of all numerical parameters given as an integer. Ignores parameters that can't be converted to a number.
+     * avg() eval method Returns the average of all numerical parameters given as an integer. Ignores parameters that
+     * can't be converted to a number.
+     * 
      * @param ctx EvalMethodAvgContext
      * @return ColumnNode containing the Column for the avg() eval method
      */
@@ -1484,11 +1530,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
             Column isNumber = number.cast(DataTypes.DoubleType).isNotNull();
 
             // only sum numerical values, because the value would result to a null otherwise
-            sum = functions.when(isNumber, sum.plus(number.cast(DataTypes.DoubleType)))
-                    .otherwise(sum);
+            sum = functions.when(isNumber, sum.plus(number.cast(DataTypes.DoubleType))).otherwise(sum);
 
-            amountSummed = functions.when(isNumber, amountSummed.plus(1))
-                    .otherwise(amountSummed);
+            amountSummed = functions.when(isNumber, amountSummed.plus(1)).otherwise(amountSummed);
         }
 
         Column average = functions.round(sum.divide(amountSummed)).cast(DataTypes.IntegerType);
@@ -1497,8 +1541,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * hypot() eval method
-     * Returns the hypotenuse, when X and Y are the edges forming the 90 degree angle of a triangle
+     * hypot() eval method Returns the hypotenuse, when X and Y are the edges forming the 90 degree angle of a triangle
+     * 
      * @param ctx EvalMethodHypotContext
      * @return ColumnNode containing the Column for the hypot() eval method
      */
@@ -1521,16 +1565,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * pi() eval method
-     * Returns constant pi to 11 digits of precision
+     * pi() eval method Returns constant pi to 11 digits of precision
+     * 
      * @param ctx EvalMethodPiContext
      * @return ColumnNode containing the Column for the pi() eval method
      */
-    @Override public Node visitEvalMethodPi(DPLParser.EvalMethodPiContext ctx) {
+    @Override
+    public Node visitEvalMethodPi(DPLParser.EvalMethodPiContext ctx) {
         Node rv = evalMethodPiEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodPiEmitCatalyst(DPLParser.EvalMethodPiContext ctx) {
         Node rv = null;
 
@@ -1543,8 +1588,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * min() eval method
-     * Returns the minimum of the given arguments
+     * min() eval method Returns the minimum of the given arguments
+     * 
      * @param ctx EvalMethodMinContext
      * @return ColumnNode containing the Column for the min() eval method
      */
@@ -1559,7 +1604,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // min ( x0 , x1 , x2 , ... , xn )
         List<Column> listOfColumns = new ArrayList<>();
-        for (int i = 2; i <= ctx.getChildCount()-2; i = i + 2) {
+        for (int i = 2; i <= ctx.getChildCount() - 2; i = i + 2) {
             listOfColumns.add(((ColumnNode) visit(ctx.getChild(i))).getColumn());
         }
 
@@ -1578,8 +1623,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * max() eval method
-     * Returns the maximum of the given arguments
+     * max() eval method Returns the maximum of the given arguments
+     * 
      * @param ctx EvalMethodMaxContext
      * @return ColumnNode containing the Column for the max() eval method
      */
@@ -1594,7 +1639,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // max ( x0 , x1 , x2 , ... , xn )
         List<Column> listOfColumns = new ArrayList<>();
-        for (int i = 2; i <= ctx.getChildCount()-2; i = i + 2) {
+        for (int i = 2; i <= ctx.getChildCount() - 2; i = i + 2) {
             listOfColumns.add(((ColumnNode) visit(ctx.getChild(i))).getColumn());
         }
 
@@ -1613,16 +1658,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * random() eval method
-     * Returns a pseudo-random integer from range 0 to 2^31 - 1
+     * random() eval method Returns a pseudo-random integer from range 0 to 2^31 - 1
+     * 
      * @param ctx EvalMethodRandomContext
      * @return ColumnNode containing the Column for the random() eval method
      */
-    @Override public Node visitEvalMethodRandom(DPLParser.EvalMethodRandomContext ctx) {
+    @Override
+    public Node visitEvalMethodRandom(DPLParser.EvalMethodRandomContext ctx) {
         Node rv = evalMethodRandomEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodRandomEmitCatalyst(DPLParser.EvalMethodRandomContext ctx) {
         Node rv = null;
 
@@ -1638,16 +1684,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sqrt() eval method
-     * Returns the square root of the field value
+     * sqrt() eval method Returns the square root of the field value
+     * 
      * @param ctx EvalMethodSqrtContext
      * @return ColumnNode containing the Column for the sqrt() eval method
      */
-    @Override public Node visitEvalMethodSqrt(DPLParser.EvalMethodSqrtContext ctx) {
+    @Override
+    public Node visitEvalMethodSqrt(DPLParser.EvalMethodSqrtContext ctx) {
         Node rv = evalMethodSqrtEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodSqrtEmitCatalyst(DPLParser.EvalMethodSqrtContext ctx) {
         Node rv = null;
 
@@ -1660,8 +1707,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sum() eval method
-     * Returns the sum of the given numerical values/fields
+     * sum() eval method Returns the sum of the given numerical values/fields
+     * 
      * @param ctx EvalmethodSumContext
      * @return ColumnNode containing the Column for the sum() eval method
      */
@@ -1673,23 +1720,23 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
             Column isDouble = number.cast(DataTypes.DoubleType).isNotNull();
 
             // only sum numerical values, because the value would result to a null otherwise
-            sum = functions.when(isDouble, sum.plus(number))
-                    .otherwise(sum);
+            sum = functions.when(isDouble, sum.plus(number)).otherwise(sum);
         }
         return new ColumnNode(sum);
     }
 
     /**
-     * round() eval method
-     * Returns x rounded to y decimal places, or integer if y missing
+     * round() eval method Returns x rounded to y decimal places, or integer if y missing
+     * 
      * @param ctx EvalMethodRoundContext
      * @return ColumnNode containing the Column for the round() eval method
      */
-    @Override public Node visitEvalMethodRound(DPLParser.EvalMethodRoundContext ctx) {
+    @Override
+    public Node visitEvalMethodRound(DPLParser.EvalMethodRoundContext ctx) {
         Node rv = evalMethodRoundEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodRoundEmitCatalyst(DPLParser.EvalMethodRoundContext ctx) {
         Node rv = null;
 
@@ -1708,8 +1755,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sigfig() eval method
-     * Returns the field value reduced to the significant figures
+     * sigfig() eval method Returns the field value reduced to the significant figures
+     * 
      * @param ctx EvalMethodSigfigContext
      * @return ColumnNode containing the Column for the sigfig() eval method
      */
@@ -1725,7 +1772,6 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         // The computation for sigfig is based on the type of calculation that generates the number
         // * / result should have minimum number of significant figures of all of the operands
         // + - result should have the same amount of sigfigs as the least precise number of all of the operands
-
 
         // This column contains the result of the calculation
         Column calculation = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
@@ -1746,7 +1792,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
             if (!matcher.matches()) {
                 // Not numeric, add to listOfCols as col
                 listOfCols.add(functions.col(operands[i]));
-            } else {
+            }
+            else {
                 // Numeric, add as lit
                 listOfCols.add(functions.lit(operands[i]));
             }
@@ -1771,8 +1818,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * case() eval method
-     * Alternating conditions and values, returns the first value where condition is true
+     * case() eval method Alternating conditions and values, returns the first value where condition is true
+     * 
      * @param ctx EvalMethodCaseContext
      * @return ColumnNode containing the Column for the case() eval method
      */
@@ -1780,14 +1827,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Node rv = evalMethodCaseEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodCaseEmitCatalyst(DPLParser.EvalMethodCaseContext ctx) {
         Node rv = null;
 
         // case ( x , y , x2 , y2 , x3, y3 , ... )
 
         if (ctx.getChildCount() % 2 != 0) {
-            throw new UnsupportedOperationException("The amount of arguments given was invalid. Make sure each condition has a matching value given as an argument.");
+            throw new UnsupportedOperationException(
+                    "The amount of arguments given was invalid. Make sure each condition has a matching value given as an argument."
+            );
         }
 
         Column condition = null;
@@ -1800,7 +1849,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                 continue;
 
             condition = ((ColumnNode) visit(ctx.getChild(i))).getColumn();
-            value = ((ColumnNode) visit(ctx.getChild(i+2))).getColumn();
+            value = ((ColumnNode) visit(ctx.getChild(i + 2))).getColumn();
             // Skip to i=i+2, so the value doesn't get read as a condition
             i = i + 2;
 
@@ -1816,25 +1865,27 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * validate() eval method
-     * Opposite of 'case(x,y)', returns the first y where x=false
+     * validate() eval method Opposite of 'case(x,y)', returns the first y where x=false
+     * 
      * @param ctx EvalMethodValidateContext
      * @return ColumnNode containing the Column for the validate() eval method
      */
-    @Override public Node visitEvalMethodValidate(DPLParser.EvalMethodValidateContext ctx) {
+    @Override
+    public Node visitEvalMethodValidate(DPLParser.EvalMethodValidateContext ctx) {
         Node rv = evalMethodValidateEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodValidateEmitCatalyst(DPLParser.EvalMethodValidateContext ctx) {
         Node rv = null;
 
         // validate ( x , y , x2 , y2 , x3, y3 , ... )
 
         if (ctx.getChildCount() % 2 != 0) {
-            throw new UnsupportedOperationException("The amount of arguments given was invalid. Make sure each condition has a matching value given as an argument.");
+            throw new UnsupportedOperationException(
+                    "The amount of arguments given was invalid. Make sure each condition has a matching value given as an argument."
+            );
         }
 
         Column condition = null;
@@ -1847,7 +1898,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                 continue;
 
             condition = ((ColumnNode) visit(ctx.getChild(i))).getColumn();
-            value = ((ColumnNode) visit(ctx.getChild(i+2))).getColumn();
+            value = ((ColumnNode) visit(ctx.getChild(i + 2))).getColumn();
             // Skip to i=i+2, so the value doesn't get read as a condition
             i = i + 2;
 
@@ -1863,18 +1914,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * cidrmatch() eval method
-     * x= cidr subnet, y= ip address to match with the subnet x
+     * cidrmatch() eval method x= cidr subnet, y= ip address to match with the subnet x
+     * 
      * @param ctx EvalMethodCidrmatchContext
      * @return ColumnNode containing the Column for the cidrmatch() eval method
      */
-    @Override public Node visitEvalMethodCidrmatch(DPLParser.EvalMethodCidrmatchContext ctx) {
+    @Override
+    public Node visitEvalMethodCidrmatch(DPLParser.EvalMethodCidrmatchContext ctx) {
         Node rv = evalMethodCidrmatchEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodCidrmatchEmitCatalyst(DPLParser.EvalMethodCidrmatchContext ctx) {
         Node rv = null;
 
@@ -1894,8 +1945,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * coalesce() eval method
-     * Returns the first non-null argument
+     * coalesce() eval method Returns the first non-null argument
+     * 
      * @param ctx EvalMethodCoalesceContext
      * @return ColumnNode containing the Column for the coalesce() eval method
      */
@@ -1903,7 +1954,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Node rv = evalMethodCoalesceEmitCatalyst(ctx);
         return rv;
     }
-    
+
     // coalesce ( x , x2 , x3 , ... )
     private Node evalMethodCoalesceEmitCatalyst(DPLParser.EvalMethodCoalesceContext ctx) {
         Node rv = null;
@@ -1913,7 +1964,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column res = null;
 
         // Skip all the non-interesting bits (commas, parenthesis) with the for loop itself
-        for (int i = 2; i <= ctx.getChildCount()-2; i = i + 2) {
+        for (int i = 2; i <= ctx.getChildCount() - 2; i = i + 2) {
             ColumnNode currentItemNode = ((ColumnNode) visit(ctx.getChild(i)));
             Column currentItem = currentItemNode.getColumn();
 
@@ -1927,16 +1978,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * in() eval method
-     * Returns if the first column's value is any of the other arguments
+     * in() eval method Returns if the first column's value is any of the other arguments
+     * 
      * @param ctx EvalMethodInContext
      * @return ColumnNode containing the Column for the in() eval method
      */
-    @Override public Node visitEvalMethodIn(DPLParser.EvalMethodInContext ctx) {
+    @Override
+    public Node visitEvalMethodIn(DPLParser.EvalMethodInContext ctx) {
         Node rv = evalMethodInEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodInEmitCatalyst(DPLParser.EvalMethodInContext ctx) {
         Node rv = null;
 
@@ -1945,7 +1997,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // Rest of the arguments are values, and are processed as strings
         List<String> valueList = new ArrayList<>();
-        for (int i = 4; i < ctx.getChildCount() - 1; i=i+2) {
+        for (int i = 4; i < ctx.getChildCount() - 1; i = i + 2) {
             String value = ctx.getChild(i).getText();
             valueList.add(new UnquotedText(new TextString(value)).read());
         }
@@ -1958,17 +2010,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * like() eval method
-     * Returns TRUE if field is like pattern
-     * Pattern supports wildcards % (multi char) and _ (single char)
+     * like() eval method Returns TRUE if field is like pattern Pattern supports wildcards % (multi char) and _ (single
+     * char)
+     * 
      * @param ctx EvalMethodLikeContext
      * @return ColumnNode containing the Column for the like() eval method
      */
-    @Override public Node visitEvalMethodLike(DPLParser.EvalMethodLikeContext ctx) {
+    @Override
+    public Node visitEvalMethodLike(DPLParser.EvalMethodLikeContext ctx) {
         Node rv = evalMethodLikeEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodLikeEmitCatalyst(DPLParser.EvalMethodLikeContext ctx) {
         Node rv = null;
 
@@ -1981,18 +2034,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * match() eval method
-     * Returns true if regex matches the subject
+     * match() eval method Returns true if regex matches the subject
+     * 
      * @param ctx EvalMethodMatchContext
      * @return ColumnNode containing the Column for the match() eval method
      */
-    @Override public Node visitEvalMethodMatch(DPLParser.EvalMethodMatchContext ctx) {
+    @Override
+    public Node visitEvalMethodMatch(DPLParser.EvalMethodMatchContext ctx) {
         Node rv = evalMethodMatchEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodMatchEmitCatalyst(DPLParser.EvalMethodMatchContext ctx) {
         Node rv = null;
 
@@ -2013,18 +2066,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * tostring() eval method
-     * Returns different types of strings based on given second argument
+     * tostring() eval method Returns different types of strings based on given second argument
+     * 
      * @param ctx EvalMethodTostringContext
      * @return ColumnNode containing the Column for the tostring() eval method
      */
-    @Override public Node visitEvalMethodTostring(DPLParser.EvalMethodTostringContext ctx) {
+    @Override
+    public Node visitEvalMethodTostring(DPLParser.EvalMethodTostringContext ctx) {
         Node rv = evalMethodTostringEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodTostringEmitCatalyst(DPLParser.EvalMethodTostringContext ctx) {
         Node rv = null;
 
@@ -2038,7 +2091,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         Column inputCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
         String options = null;
-        if (ctx.getChildCount() > 4) options = new UnquotedText(new TextString(ctx.getChild(4).getText())).read();
+        if (ctx.getChildCount() > 4)
+            options = new UnquotedText(new TextString(ctx.getChild(4).getText())).read();
 
         Column col = null;
         // Base case without options (Y)
@@ -2060,7 +2114,10 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                     col = functions.from_unixtime(inputCol, "HH:mm:ss");
                     break;
                 default:
-                    throw new UnsupportedOperationException("Unsupported optional argument supplied: '" + options + "'.The argument must be 'hex', 'commas' or 'duration' instead.");
+                    throw new UnsupportedOperationException(
+                            "Unsupported optional argument supplied: '" + options
+                                    + "'.The argument must be 'hex', 'commas' or 'duration' instead."
+                    );
             }
         }
 
@@ -2068,18 +2125,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * tonumber() eval method
-     * Returns number string converted to given base, defaults to base-10
+     * tonumber() eval method Returns number string converted to given base, defaults to base-10
+     * 
      * @param ctx EvalMethodTonumberContext
      * @return ColumnNode containing the Column for the tonumber() eval method
      */
-    @Override public Node visitEvalMethodTonumber(DPLParser.EvalMethodTonumberContext ctx) {
+    @Override
+    public Node visitEvalMethodTonumber(DPLParser.EvalMethodTonumberContext ctx) {
         Node rv = evalMethodTonumberEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodTonumberEmitCatalyst(DPLParser.EvalMethodTonumberContext ctx) {
         Node rv = null;
 
@@ -2103,18 +2160,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-
     /**
-     * md5() eval method
-     * Returns the md5 checksum of given field
+     * md5() eval method Returns the md5 checksum of given field
+     * 
      * @param ctx EvalMethodMd5Context
      * @return ColumnNode containing the Column for the md5() eval method
      */
-    @Override public Node visitEvalMethodMd5(DPLParser.EvalMethodMd5Context ctx) {
+    @Override
+    public Node visitEvalMethodMd5(DPLParser.EvalMethodMd5Context ctx) {
         Node rv = evalMethodMd5EmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodMd5EmitCatalyst(DPLParser.EvalMethodMd5Context ctx) {
         Node rv = null;
 
@@ -2127,16 +2184,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sha1() eval method
-     * Returns the sha1 checksum of given field
+     * sha1() eval method Returns the sha1 checksum of given field
+     * 
      * @param ctx EvalMethodSha1Context
      * @return ColumnNode containing the Column for the sha1() eval method
      */
-    @Override public Node visitEvalMethodSha1(DPLParser.EvalMethodSha1Context ctx) {
+    @Override
+    public Node visitEvalMethodSha1(DPLParser.EvalMethodSha1Context ctx) {
         Node rv = evalMethodSha1EmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodSha1EmitCatalyst(DPLParser.EvalMethodSha1Context ctx) {
         Node rv = null;
 
@@ -2149,16 +2207,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sha256() eval method
-     * Returns the sha256 checksum of given field
+     * sha256() eval method Returns the sha256 checksum of given field
+     * 
      * @param ctx EvalMethodSha256Context
      * @return ColumnNode containing the Column for the sha256() eval method
      */
-    @Override public Node visitEvalMethodSha256(DPLParser.EvalMethodSha256Context ctx) {
+    @Override
+    public Node visitEvalMethodSha256(DPLParser.EvalMethodSha256Context ctx) {
         Node rv = evalMethodSha256EmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodSha256EmitCatalyst(DPLParser.EvalMethodSha256Context ctx) {
         Node rv = null;
 
@@ -2171,16 +2230,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * sha512() eval method
-     * Returns the sha512 checksum of given field
+     * sha512() eval method Returns the sha512 checksum of given field
+     * 
      * @param ctx EvalMethodSha512Context
      * @return ColumnNode containing the column for the sha512() eval method
      */
-    @Override public Node visitEvalMethodSha512(DPLParser.EvalMethodSha512Context ctx) {
+    @Override
+    public Node visitEvalMethodSha512(DPLParser.EvalMethodSha512Context ctx) {
         Node rv = evalMethodSha512EmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodSha512EmitCatalyst(DPLParser.EvalMethodSha512Context ctx) {
         Node rv = null;
 
@@ -2193,16 +2253,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * isbool() eval method
-     * Returns whether or not the field value is a boolean
+     * isbool() eval method Returns whether or not the field value is a boolean
+     * 
      * @param ctx EvalMethodIsboolContext
      * @return ColumnNode containing the Column for the isbool() eval method
      */
-    @Override public Node visitEvalMethodIsbool(DPLParser.EvalMethodIsboolContext ctx) {
+    @Override
+    public Node visitEvalMethodIsbool(DPLParser.EvalMethodIsboolContext ctx) {
         Node rv = evalMethodIsboolEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodIsboolEmitCatalyst(DPLParser.EvalMethodIsboolContext ctx) {
         Node rv = null;
 
@@ -2220,16 +2281,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * isint() eval method
-     * Returns whether or not the field value is an integer
+     * isint() eval method Returns whether or not the field value is an integer
+     * 
      * @param ctx EvalMethodIsintContext
      * @return ColumnNode containing the Column for the isint() eval method
      */
-    @Override public Node visitEvalMethodIsint(DPLParser.EvalMethodIsintContext ctx) {
+    @Override
+    public Node visitEvalMethodIsint(DPLParser.EvalMethodIsintContext ctx) {
         Node rv = evalMethodIsintEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodIsintEmitCatalyst(DPLParser.EvalMethodIsintContext ctx) {
         Node rv = null;
 
@@ -2247,16 +2309,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * isnum() eval method
-     * Returns whether or not the field value is a numeric
+     * isnum() eval method Returns whether or not the field value is a numeric
+     * 
      * @param ctx EvalMethodIsnumContext
      * @return ColumnNode containing the Column for the isnum() eval method
      */
-    @Override public Node visitEvalMethodIsnum(DPLParser.EvalMethodIsnumContext ctx) {
+    @Override
+    public Node visitEvalMethodIsnum(DPLParser.EvalMethodIsnumContext ctx) {
         Node rv = evalMethodIsnumEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodIsnumEmitCatalyst(DPLParser.EvalMethodIsnumContext ctx) {
         Node rv = null;
 
@@ -2274,16 +2337,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * isstr() eval method
-     * Returns whether or not the field value is a string
+     * isstr() eval method Returns whether or not the field value is a string
+     * 
      * @param ctx EvalMethodIsstrContext
      * @return ColumnNode containing the Column for the isstr() eval method
      */
-    @Override public Node visitEvalMethodIsstr(DPLParser.EvalMethodIsstrContext ctx) {
+    @Override
+    public Node visitEvalMethodIsstr(DPLParser.EvalMethodIsstrContext ctx) {
         Node rv = evalMethodIsstrEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodIsstrEmitCatalyst(DPLParser.EvalMethodIsstrContext ctx) {
         Node rv = null;
 
@@ -2301,16 +2365,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * typeof() eval method
-     * Returns the type of the field
+     * typeof() eval method Returns the type of the field
+     * 
      * @param ctx EvalMethodTypeofContext
      * @return ColumnNode containing the Column for the typeof() eval method
      */
-    @Override public Node visitEvalMethodTypeof(DPLParser.EvalMethodTypeofContext ctx) {
+    @Override
+    public Node visitEvalMethodTypeof(DPLParser.EvalMethodTypeofContext ctx) {
         Node rv = evalMethodTypeofEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodTypeofEmitCatalyst(DPLParser.EvalMethodTypeofContext ctx) {
         Node rv = null;
 
@@ -2328,16 +2393,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * isnull() eval method
-     * Returns whether or not the field value is a null
+     * isnull() eval method Returns whether or not the field value is a null
+     * 
      * @param ctx EvalMethodIsnullContext
      * @return ColumnNode containing the Column for the isnull() eval method
      */
-    @Override public Node visitEvalMethodIsnull(DPLParser.EvalMethodIsnullContext ctx) {
+    @Override
+    public Node visitEvalMethodIsnull(DPLParser.EvalMethodIsnullContext ctx) {
         Node rv = evalMethodIsnullEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodIsnullEmitCatalyst(DPLParser.EvalMethodIsnullContext ctx) {
         Node rv = null;
 
@@ -2349,16 +2415,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * isnotnull() eval method
-     * Returns whether or not the field value is a non-null
+     * isnotnull() eval method Returns whether or not the field value is a non-null
+     * 
      * @param ctx EvalMethodIsnotnullContext
      * @return ColumnNode containing the Column for the isnotnull() eval method
      */
-    @Override public Node visitEvalMethodIsnotnull(DPLParser.EvalMethodIsnotnullContext ctx) {
+    @Override
+    public Node visitEvalMethodIsnotnull(DPLParser.EvalMethodIsnotnullContext ctx) {
         Node rv = evalMethodIsnotnullEmitCatalyst(ctx);
         return rv;
     }
-    
+
     private Node evalMethodIsnotnullEmitCatalyst(DPLParser.EvalMethodIsnotnullContext ctx) {
         Node rv = null;
 
@@ -2370,8 +2437,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * commands() eval method
-     * Returns the commands used in given search string
+     * commands() eval method Returns the commands used in given search string
+     * 
      * @param ctx EvalMethodCommandsContext
      * @return ColumnNode containing the Column for the commands() eval method
      */
@@ -2387,7 +2454,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column searchString = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
         // Register and call UDF Commands
-        UserDefinedFunction CommandsUDF = functions.udf(new Commands(), DataTypes.createArrayType(DataTypes.StringType, false));
+        UserDefinedFunction CommandsUDF = functions
+                .udf(new Commands(), DataTypes.createArrayType(DataTypes.StringType, false));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("CommandsUDF", CommandsUDF);
 
@@ -2398,8 +2466,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvappend() eval method
-     * Returns a multivalue field with all arguments as values
+     * mvappend() eval method Returns a multivalue field with all arguments as values
+     * 
      * @param ctx EvalMethodMvappendContext
      * @return ColumnNode containing the Column for the mvappend() eval method
      */
@@ -2418,7 +2486,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         List<Column> listOfFields = new ArrayList<>();
         for (int i = 2; i <= ctx.getChildCount() - 2; i = i + 2) {
             Column field = ((ColumnNode) visit(ctx.getChild(i))).getColumn();
-            if (field != null) listOfFields.add(field);
+            if (field != null)
+                listOfFields.add(field);
         }
 
         Column res = functions.array(JavaConversions.asScalaBuffer(listOfFields));
@@ -2428,8 +2497,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvcount() eval method
-     * Returns the amount of items in the multivalue field
+     * mvcount() eval method Returns the amount of items in the multivalue field
+     * 
      * @param ctx EvalMethodMvcountContext
      * @return ColumnNode containing the Column for the mvcount() eval method
      */
@@ -2451,7 +2520,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column sizeCol = functions.size(mvfield);
 
         // Return null if empty, otherwise return what functions.size() returns
-        Column res = functions.when(sizeCol.notEqual(functions.lit(0)), sizeCol)
+        Column res = functions
+                .when(sizeCol.notEqual(functions.lit(0)), sizeCol)
                 .otherwise(functions.lit(catCtx.nullValue.value()).cast(DataTypes.StringType));
 
         rv = new ColumnNode(res);
@@ -2459,8 +2529,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvdedup() eval method
-     * Returns the given multivalue field with deduplicated values
+     * mvdedup() eval method Returns the given multivalue field with deduplicated values
+     * 
      * @param ctx EvalMethodMvdedupContext
      * @return ColumnNode containing the column for the mvdedup() eval method
      */
@@ -2477,7 +2547,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column mvfield = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
         // Call and register dedup udf
-        UserDefinedFunction mvDedupUDF = functions.udf(new Mvdedup(), DataTypes.createArrayType(DataTypes.StringType, false));
+        UserDefinedFunction mvDedupUDF = functions
+                .udf(new Mvdedup(), DataTypes.createArrayType(DataTypes.StringType, false));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("mvDedupUDF", mvDedupUDF);
 
@@ -2488,9 +2559,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvfilter() eval method
-     * Returns the values in a multivalue field that pass the given regex filter
-     * TODO Implement, requires? work on the parser side
+     * mvfilter() eval method Returns the values in a multivalue field that pass the given regex filter TODO Implement,
+     * requires? work on the parser side
+     * 
      * @param ctx EvalMethodMvfilterContext
      * @return ColumnNode containing Column for the mvfilter() eval method
      */
@@ -2523,14 +2594,13 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column res = functions.when(booleanExp.equalTo(functions.lit(true)), booleanExpField);
         res = functions.array(res);
 
-
         rv = new ColumnNode(res);
         return rv;
     }
 
     /**
-     * mvfind() eval method
-     * Returns the values that match the given regex in the multivalue field provided
+     * mvfind() eval method Returns the values that match the given regex in the multivalue field provided
+     * 
      * @param ctx EvalMethodMvfindContext
      * @return ColumnNode containing the Column for the mvfind() eval method
      */
@@ -2552,7 +2622,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // Register and use UDF regexMatch with multivalue flag set to true
         boolean isMultiValue = true;
-        UserDefinedFunction regexMatch = functions.udf(new RegexMatch(isMultiValue, catCtx.nullValue), DataTypes.IntegerType);
+        UserDefinedFunction regexMatch = functions
+                .udf(new RegexMatch(isMultiValue, catCtx.nullValue), DataTypes.IntegerType);
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("regexMatch", regexMatch);
 
@@ -2563,8 +2634,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvindex() eval method
-     * Returns the values of the multivalue field between the given indices
+     * mvindex() eval method Returns the values of the multivalue field between the given indices
+     * 
      * @param ctx EvalMethodMvindexContext
      * @return ColumnNode containing Column for the mvindex() eval method
      */
@@ -2596,20 +2667,21 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         }
 
         // Register and use UDF
-        UserDefinedFunction mvIndexUDF = functions.udf(new Mvindex(), DataTypes.createArrayType(DataTypes.StringType, false));
+        UserDefinedFunction mvIndexUDF = functions
+                .udf(new Mvindex(), DataTypes.createArrayType(DataTypes.StringType, false));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("mvIndexUDF", mvIndexUDF);
 
-        Column res = functions.callUDF("mvIndexUDF", mvField, startIndex,
-                endIndex == null ? functions.lit(-1) : endIndex, functions.lit(endIndex != null));
+        Column res = functions
+                .callUDF("mvIndexUDF", mvField, startIndex, endIndex == null ? functions.lit(-1) : endIndex, functions.lit(endIndex != null));
 
         rv = new ColumnNode(res);
         return rv;
     }
 
     /**
-     * mvjoin() eval method
-     * Returns the multivalue field's items concatenated with given delimiter in between each value
+     * mvjoin() eval method Returns the multivalue field's items concatenated with given delimiter in between each value
+     * 
      * @param ctx EvalMethodMvjoinContext
      * @return ColumnNode containing Column for the mvjoin() eval method
      */
@@ -2642,8 +2714,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvrange() eval method
-     * Returns a multivalue field with numbers from start to end with step.
+     * mvrange() eval method Returns a multivalue field with numbers from start to end with step.
+     * 
      * @param ctx EvalMethodMvrangeContext
      * @return ColumnNode containing Column for mvrange() eval method
      */
@@ -2662,7 +2734,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column step = ((ColumnNode) visit(ctx.getChild(6))).getColumn();
 
         // Register and call UDF Mvrange
-        UserDefinedFunction MvrangeUDF = functions.udf(new Mvrange(), DataTypes.createArrayType(DataTypes.StringType, false));
+        UserDefinedFunction MvrangeUDF = functions
+                .udf(new Mvrange(), DataTypes.createArrayType(DataTypes.StringType, false));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("MvrangeUDF", MvrangeUDF);
 
@@ -2673,8 +2746,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvsort() eval method
-     * Returns the given multivalue field sorted
+     * mvsort() eval method Returns the given multivalue field sorted
+     * 
      * @param ctx EvalMethodMvsortContext
      * @return ColumnNode containing Column for mvsort() eval method
      */
@@ -2695,8 +2768,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * mvzip() eval method
-     * Returns the two multivalue field's values "zipped" together, optionally with a delimiter
+     * mvzip() eval method Returns the two multivalue field's values "zipped" together, optionally with a delimiter
+     * 
      * @param ctx EvalMethodMvzipContext
      * @return ColumnNode containing Column for mvzip() eval method
      */
@@ -2721,19 +2794,21 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // Register and call UDF Mvzip
         // Spark built-in function arrays_zip() exists, but it does not support specifying the delimiter
-        UserDefinedFunction MvzipUDF = functions.udf(new Mvzip(), DataTypes.createArrayType(DataTypes.StringType, false));
+        UserDefinedFunction MvzipUDF = functions
+                .udf(new Mvzip(), DataTypes.createArrayType(DataTypes.StringType, false));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("MvzipUDF", MvzipUDF);
 
-        Column res = functions.callUDF("MvzipUDF", mvfield1, mvfield2, delimiter != null ? delimiter : functions.lit(","));
+        Column res = functions
+                .callUDF("MvzipUDF", mvfield1, mvfield2, delimiter != null ? delimiter : functions.lit(","));
         rv = new ColumnNode(res);
 
         return rv;
     }
 
     /**
-     * JSONValid() eval method
-     * Returns whether or not the given field contains valid json
+     * JSONValid() eval method Returns whether or not the given field contains valid json
+     * 
      * @param ctx EvalMethodJSONValidContext
      * @return ColumnNode containing Column for JSONValid() eval method
      */
@@ -2760,8 +2835,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * spath() eval method
-     * Processes the spath/xpath expression and returns the results
+     * spath() eval method Processes the spath/xpath expression and returns the results
+     * 
      * @param ctx EvalMethodSpathContext
      * @return ColumnNode containing Column for spath() eval method
      */
@@ -2779,7 +2854,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column spathExpr = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
         // Register and call UDF Spath
-        UserDefinedFunction SpathUDF = functions.udf(new Spath(catCtx.nullValue), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType));
+        UserDefinedFunction SpathUDF = functions
+                .udf(new Spath(catCtx.nullValue), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("SpathUDF", SpathUDF);
 
@@ -2790,8 +2866,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * time() eval method
-     * Returns the current time in seconds
+     * time() eval method Returns the current time in seconds
+     * 
      * @param ctx EvalMethodTimeContext
      * @return ColumnNode containing Column for time() eval method
      */
@@ -2806,7 +2882,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // Get current time in seconds, and add nanoseconds converted to seconds on top
         Instant now = Instant.now();
-        double currentTimeInSecs = ((double)now.getEpochSecond()) + ((((double)now.getNano() / 1000d) / 1000d) / 1000d);
+        double currentTimeInSecs = ((double) now.getEpochSecond())
+                + ((((double) now.getNano() / 1000d) / 1000d) / 1000d);
 
         // Known formatting type
         DecimalFormat df = new DecimalFormat("0.000000");
@@ -2815,7 +2892,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         rv = new ColumnNode(res);
         return rv;
     }
-    
+
     //
     // -- Eval types (field, integer, etc.) --
     //
@@ -2882,12 +2959,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitL_evalStatement_evalCalculateStatement_multipliers(DPLParser.L_evalStatement_evalCalculateStatement_multipliersContext ctx) {
+    public Node visitL_evalStatement_evalCalculateStatement_multipliers(
+            DPLParser.L_evalStatement_evalCalculateStatement_multipliersContext ctx
+    ) {
         return evalCalculateStatementEmitCatalyst(ctx);
     }
 
     @Override
-    public Node visitL_evalStatement_evalCalculateStatement_minus_plus(DPLParser.L_evalStatement_evalCalculateStatement_minus_plusContext ctx) {
+    public Node visitL_evalStatement_evalCalculateStatement_minus_plus(
+            DPLParser.L_evalStatement_evalCalculateStatement_minus_plusContext ctx
+    ) {
         return evalCalculateStatementEmitCatalyst(ctx);
     }
 
@@ -2902,63 +2983,65 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return new ColumnNode(res);
 
         /* Column res = null;
-    	switch (opNode.getSymbol().getType()) {
-	    	case DPLLexer.EVAL_LANGUAGE_MODE_PLUS: // '+'
-	    		Column plus = leftSide.plus(rightSide);
-	    		res = plus;
-	    		break;
-	    	case DPLLexer.EVAL_LANGUAGE_MODE_MINUS: // '-'
-	    		res = leftSide.minus(rightSide);
-	    		break;
-	    	case DPLLexer.EVAL_LANGUAGE_MODE_WILDCARD: // '*'
-	    		res = leftSide.multiply(rightSide);
-	    		break;
-	    	case DPLLexer.EVAL_LANGUAGE_MODE_SLASH: // '/'
-	    		res = leftSide.divide(rightSide);
-	    		break;
-	    	case DPLLexer.EVAL_LANGUAGE_MODE_PERCENT: // '%'
-	    		res = leftSide.mod(rightSide);
-	    		break;
-	    	default:
-	    		throw new UnsupportedOperationException("Unknown EvalCalculateStatement operation: " + opNode.getText());
-    	}
-    	
-    	return new ColumnNode(res);*/
+        switch (opNode.getSymbol().getType()) {
+        	case DPLLexer.EVAL_LANGUAGE_MODE_PLUS: // '+'
+        		Column plus = leftSide.plus(rightSide);
+        		res = plus;
+        		break;
+        	case DPLLexer.EVAL_LANGUAGE_MODE_MINUS: // '-'
+        		res = leftSide.minus(rightSide);
+        		break;
+        	case DPLLexer.EVAL_LANGUAGE_MODE_WILDCARD: // '*'
+        		res = leftSide.multiply(rightSide);
+        		break;
+        	case DPLLexer.EVAL_LANGUAGE_MODE_SLASH: // '/'
+        		res = leftSide.divide(rightSide);
+        		break;
+        	case DPLLexer.EVAL_LANGUAGE_MODE_PERCENT: // '%'
+        		res = leftSide.mod(rightSide);
+        		break;
+        	default:
+        		throw new UnsupportedOperationException("Unknown EvalCalculateStatement operation: " + opNode.getText());
+        }
+        
+        return new ColumnNode(res);*/
     }
 
     @Override
-    public Node visitL_evalStatement_evalConcatenateStatement(DPLParser.L_evalStatement_evalConcatenateStatementContext ctx) {
+    public Node visitL_evalStatement_evalConcatenateStatement(
+            DPLParser.L_evalStatement_evalConcatenateStatementContext ctx
+    ) {
         throw new UnsupportedOperationException("evalConcatenateStatement not supported yet");
-         /* was as bellow, in SQL mode
+        /* was as bellow, in SQL mode
         if (doc != null) {
-            throw new RuntimeException("evalConcatenateStatementEmitSql not implemented yet: " + ctx.getText());
-//            return null;
+           throw new RuntimeException("evalConcatenateStatementEmitSql not implemented yet: " + ctx.getText());
+        //            return null;
         }
         return evalConcatenateStatementEmitSql(ctx);
-
-
-    public StringNode evalConcatenateStatementEmitSql(DPLParser.L_evalStatement_evalConcatenateStatementContext ctx) {
+        
+        
+        public StringNode evalConcatenateStatementEmitSql(DPLParser.L_evalStatement_evalConcatenateStatementContext ctx) {
         String sql = null;
         boolean useConcat = false;
-
+        
         Node left = visit(ctx.getChild(0));
         TerminalNode operation = (TerminalNode) ctx.getChild(1);
         Node right = visit(ctx.getChild(2));
-
+        
         String leftOperand = left.toString();
         String rightOperand = right.toString();
         // check whether operand name exist in symbol-table and replace it
         if (symbolTable.get(leftOperand) != null) {
-            leftOperand = symbolTable.get(leftOperand);
+           leftOperand = symbolTable.get(leftOperand);
         }
         if (symbolTable.get(rightOperand) != null) {
-            rightOperand = symbolTable.get(rightOperand);
+           rightOperand = symbolTable.get(rightOperand);
         }
         sql = "CONCAT(" + leftOperand + ", " + rightOperand + ")";
         StringNode sNode = new StringNode(new Token(Type.STRING, sql));
         return sNode;
-    }
-         */
+        }
+        */
     }
 
 }

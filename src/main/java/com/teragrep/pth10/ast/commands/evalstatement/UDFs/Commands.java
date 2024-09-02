@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import org.apache.spark.sql.api.java.UDF1;
@@ -61,24 +60,24 @@ import java.util.List;
  */
 public class Commands implements UDF1<String, List<String>>, Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public List<String> call(String searchStr) throws Exception {
-		List<String> rv = new ArrayList<>();
-		
-		// Running this command should result in following input->output:
-		// example: "search foo | stats count | sort count" -> search, stats, sort
-		
-		// should result in "search foo", "stats count", "sort count"
-		String[] cmds = searchStr.split("\\|");
-			
-		// remove unnecessary whitespace and create mv field (Spark ArrayType)
-		for (int i = 0; i < cmds.length; i++) {
-			String currentCmd = cmds[i].trim();
-			rv.add(currentCmd.substring(0, currentCmd.indexOf(' ')));
-		}
-		
-		return rv;
-	}
+    @Override
+    public List<String> call(String searchStr) throws Exception {
+        List<String> rv = new ArrayList<>();
+
+        // Running this command should result in following input->output:
+        // example: "search foo | stats count | sort count" -> search, stats, sort
+
+        // should result in "search foo", "stats count", "sort count"
+        String[] cmds = searchStr.split("\\|");
+
+        // remove unnecessary whitespace and create mv field (Spark ArrayType)
+        for (int i = 0; i < cmds.length; i++) {
+            String currentCmd = cmds[i].trim();
+            rv.add(currentCmd.substring(0, currentCmd.indexOf(' ')));
+        }
+
+        return rv;
+    }
 }

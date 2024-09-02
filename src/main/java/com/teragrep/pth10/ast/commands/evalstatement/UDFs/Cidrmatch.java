@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth10.ast.TextString;
@@ -55,96 +54,100 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * User Defined Function for command cidrmatch(ip, subnet)<br><br>
+ * User Defined Function for command cidrmatch(ip, subnet)<br>
+ * <br>
  * Assumes that both ip and subnet are in String format, and returns a boolean.<br>
  * Returns TRUE, if the ip belongs to the subnet given. Otherwise returns FALSE.<br>
- * Expects subnet to be in CIDR form. Like 192.168.1.1/24. Where the number after / is the netmask length in bits.<br><br>
- * 
+ * Expects subnet to be in CIDR form. Like 192.168.1.1/24. Where the number after / is the netmask length in bits.<br>
+ * <br>
  * Netmask length explanation:<br>
  * Until 255.x.x.x netmask=8<br>
  * Until 255.255.x.x netmask=16<br>
  * Until 255.255.255.x netmask=24<br>
  * Until 255.255.255.255 netmask=32<br>
+ * 
  * @author eemhu
- *
  */
 public class Cidrmatch implements UDF2<String, String, Boolean>, Serializable {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public Boolean call(String ip, String subnet) throws Exception {
-		
-		// Strip quotes, if any
-		subnet = new UnquotedText(new TextString(subnet)).read();
-    	ip = new UnquotedText(new TextString(ip)).read();
-    	
-    	int nMaskBits;
-    	InetAddress requiredAdd = null;
-    	
-    	// Check for subnet mask length in bits (given after '/' character)
-    	if (subnet.indexOf('/') > 0) {
-    		String[] addWithMask = subnet.split("/");
-    		
-    		subnet = addWithMask[0];
-    		nMaskBits = Integer.parseInt(addWithMask[1]);
-    	}
-    	else {
-    		// Set to -1 if subnet mask length was not given
-    		nMaskBits = -1;
-    	}
-    	
-    	// Convert subnet string to InetAddress object
-    	try {
-    		requiredAdd = InetAddress.getByName(subnet);
-    	}
-    	catch (UnknownHostException e) {
-    		throw new RuntimeException("Cidrmatch could not convert subnet string to InetAddress object. Check that the string is a valid IP address, like 192.168.1.1.");
-    	}
-    	
-    	// Convert ip string to InetAddress object
-    	InetAddress remoteAdd = null;
-    	try {
-    		remoteAdd = InetAddress.getByName(ip);
-    	}
-    	catch (UnknownHostException e) {
-    		throw new RuntimeException("Cidrmatch could not convert IP string to InetAddress object. Check that the string is a valid IP address, like 192.168.1.1.");
-    	}
-    	
-    	// Check that both are valid InetAddress objects
-    	if (!requiredAdd.getClass().equals(remoteAdd.getClass())) {
-    		return false;
-    	}
-    	
-    	// If no subnet mask was found, do a direct comparison.
-    	if (nMaskBits < 0) {
-    		boolean isSame = remoteAdd == requiredAdd;
-    		
-    		return isSame;
-    	}
-    	
-    	// Subnet mask was given, check against given mask
-    	byte[] remAddr = remoteAdd.getAddress();
-    	byte[] reqAddr = requiredAdd.getAddress();
-    	
-    	int nMaskFullBytes = nMaskBits / 8;
-    	
-    	byte finalByte = (byte) (0xFF00 >> (nMaskBits & 0x07));
-    	
-    	for (int i = 0; i < nMaskFullBytes; i++) {
-    		if (remAddr[i] != reqAddr[i]) {
-    			return false;
-    		}
-    	}
-    	
-    	if (finalByte != 0) {
-    		boolean isSame = (remAddr[nMaskFullBytes] & finalByte) == (reqAddr[nMaskFullBytes] & finalByte);
-    		
-    		return isSame;
-    	}
-    	
-    	return true;
-	}
+    @Override
+    public Boolean call(String ip, String subnet) throws Exception {
 
-	
+        // Strip quotes, if any
+        subnet = new UnquotedText(new TextString(subnet)).read();
+        ip = new UnquotedText(new TextString(ip)).read();
+
+        int nMaskBits;
+        InetAddress requiredAdd = null;
+
+        // Check for subnet mask length in bits (given after '/' character)
+        if (subnet.indexOf('/') > 0) {
+            String[] addWithMask = subnet.split("/");
+
+            subnet = addWithMask[0];
+            nMaskBits = Integer.parseInt(addWithMask[1]);
+        }
+        else {
+            // Set to -1 if subnet mask length was not given
+            nMaskBits = -1;
+        }
+
+        // Convert subnet string to InetAddress object
+        try {
+            requiredAdd = InetAddress.getByName(subnet);
+        }
+        catch (UnknownHostException e) {
+            throw new RuntimeException(
+                    "Cidrmatch could not convert subnet string to InetAddress object. Check that the string is a valid IP address, like 192.168.1.1."
+            );
+        }
+
+        // Convert ip string to InetAddress object
+        InetAddress remoteAdd = null;
+        try {
+            remoteAdd = InetAddress.getByName(ip);
+        }
+        catch (UnknownHostException e) {
+            throw new RuntimeException(
+                    "Cidrmatch could not convert IP string to InetAddress object. Check that the string is a valid IP address, like 192.168.1.1."
+            );
+        }
+
+        // Check that both are valid InetAddress objects
+        if (!requiredAdd.getClass().equals(remoteAdd.getClass())) {
+            return false;
+        }
+
+        // If no subnet mask was found, do a direct comparison.
+        if (nMaskBits < 0) {
+            boolean isSame = remoteAdd == requiredAdd;
+
+            return isSame;
+        }
+
+        // Subnet mask was given, check against given mask
+        byte[] remAddr = remoteAdd.getAddress();
+        byte[] reqAddr = requiredAdd.getAddress();
+
+        int nMaskFullBytes = nMaskBits / 8;
+
+        byte finalByte = (byte) (0xFF00 >> (nMaskBits & 0x07));
+
+        for (int i = 0; i < nMaskFullBytes; i++) {
+            if (remAddr[i] != reqAddr[i]) {
+                return false;
+            }
+        }
+
+        if (finalByte != 0) {
+            boolean isSame = (remAddr[nMaskFullBytes] & finalByte) == (reqAddr[nMaskFullBytes] & finalByte);
+
+            return isSame;
+        }
+
+        return true;
+    }
+
 }

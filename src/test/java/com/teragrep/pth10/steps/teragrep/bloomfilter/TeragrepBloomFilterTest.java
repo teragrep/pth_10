@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
@@ -72,7 +71,7 @@ class TeragrepBloomFilterTest {
     private FilterSizes filterSizes;
     private final BloomFilter emptyFilter = BloomFilter.create(100, 0.01);
 
-    private SortedMap<Long,Double> sizeMap;
+    private SortedMap<Long, Double> sizeMap;
 
     @BeforeAll
     void setEnv() throws ClassNotFoundException, SQLException {
@@ -81,11 +80,12 @@ class TeragrepBloomFilterTest {
         properties.put("dpl.pth_10.bloom.db.username", username);
         properties.put("dpl.pth_10.bloom.db.password", password);
         properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
-        properties.put("dpl.pth_06.bloom.db.fields", "[" +
-                "{expected: 10000, fpp: 0.01}," +
-                "{expected: 20000, fpp: 0.03}," +
-                "{expected: 30000, fpp: 0.05}" +
-                "]");
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[" + "{expected: 10000, fpp: 0.01}," + "{expected: 20000, fpp: 0.03},"
+                                + "{expected: 30000, fpp: 0.05}" + "]"
+                );
 
         Config config = ConfigFactory.parseProperties(properties);
         lazyConnection = new LazyConnection(config);
@@ -96,32 +96,26 @@ class TeragrepBloomFilterTest {
         filterSizes = new FilterSizes(config);
         sizeMap = filterSizes.asSortedMap();
 
-        Class.forName ("org.h2.Driver");
+        Class.forName("org.h2.Driver");
         sizeMap.put(10000L, 0.01);
         sizeMap.put(20000L, 0.03);
         sizeMap.put(30000L, 0.05);
 
-        String createFilterType =
-                "CREATE TABLE `filtertype` (" +
-                        "`id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                        "`expectedElements` bigint(20) NOT NULL," +
-                        "`targetFpp`        DOUBLE UNSIGNED NOT NULL" +
-                        ");";
+        String createFilterType = "CREATE TABLE `filtertype` ("
+                + "`id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+                + "`expectedElements` bigint(20) NOT NULL," + "`targetFpp`        DOUBLE UNSIGNED NOT NULL" + ");";
 
-        String createBloomFilter =
-                "CREATE TABLE `bloomfilter` (" +
-                        "    `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY," +
-                        "    `partition_id` BIGINT(20) UNSIGNED NOT NULL," +
-                        "    `filter_type_id` BIGINT(20) UNSIGNED NOT NULL," +
-                        "    `filter` LONGBLOB NOT NULL" +
-                        ");";
+        String createBloomFilter = "CREATE TABLE `bloomfilter` ("
+                + "    `id` BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+                + "    `partition_id` BIGINT(20) UNSIGNED NOT NULL,"
+                + "    `filter_type_id` BIGINT(20) UNSIGNED NOT NULL," + "    `filter` LONGBLOB NOT NULL" + ");";
 
         String insertSql = "INSERT INTO `filtertype` (`expectedElements`, `targetFpp`) VALUES (?, ?)";
 
         conn.prepareStatement(createFilterType).execute();
         conn.prepareStatement(createBloomFilter).execute();
 
-        for(Map.Entry<Long,Double> entry : sizeMap.entrySet()) {
+        for (Map.Entry<Long, Double> entry : sizeMap.entrySet()) {
             try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
 
                 stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
@@ -149,23 +143,21 @@ class TeragrepBloomFilterTest {
         Row row = Assertions.assertDoesNotThrow(() -> generatedRow(sizeMap, tokens));
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
-        TeragrepBloomFilter filter =
-                new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterSizes);
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterSizes);
         filter.saveFilter(false);
 
-        Map.Entry<Long,Double> entry = sizeMap.entrySet().iterator().next();
+        Map.Entry<Long, Double> entry = sizeMap.entrySet().iterator().next();
         String sql = "SELECT `filter` FROM `bloomfilter`;";
 
-        ResultSet rs = Assertions.assertDoesNotThrow(() -> lazyConnection.get().prepareStatement(sql)
-                .executeQuery());
+        ResultSet rs = Assertions.assertDoesNotThrow(() -> lazyConnection.get().prepareStatement(sql).executeQuery());
 
         int cols = Assertions.assertDoesNotThrow(() -> rs.getMetaData().getColumnCount());
         BloomFilter resultFilter = emptyFilter;
 
-        while(Assertions.assertDoesNotThrow(() -> rs.next())) {
+        while (Assertions.assertDoesNotThrow(() -> rs.next())) {
             byte[] bytes = Assertions.assertDoesNotThrow(() -> rs.getBytes(1));
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            resultFilter =  Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
+            resultFilter = Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
         }
 
         Assertions.assertNotNull(resultFilter);
@@ -184,24 +176,20 @@ class TeragrepBloomFilterTest {
         Row row = Assertions.assertDoesNotThrow(() -> generatedRow(sizeMap, tokens));
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
-        TeragrepBloomFilter filter =
-                new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterSizes);
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterSizes);
         filter.saveFilter(true);
 
         String sql = "SELECT `filter` FROM `bloomfilter`;";
 
-        ResultSet rs = Assertions.assertDoesNotThrow(() -> lazyConnection
-                        .get()
-                        .prepareStatement(sql)
-                        .executeQuery());
+        ResultSet rs = Assertions.assertDoesNotThrow(() -> lazyConnection.get().prepareStatement(sql).executeQuery());
 
         int cols = Assertions.assertDoesNotThrow(() -> rs.getMetaData().getColumnCount());
         BloomFilter resultFilter = emptyFilter;
 
-        while(Assertions.assertDoesNotThrow(() -> rs.next())) {
+        while (Assertions.assertDoesNotThrow(() -> rs.next())) {
             byte[] bytes = Assertions.assertDoesNotThrow(() -> rs.getBytes(1));
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            resultFilter =  Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
+            resultFilter = Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
         }
 
         Assertions.assertNotNull(resultFilter);
@@ -217,24 +205,26 @@ class TeragrepBloomFilterTest {
         Row secondRow = Assertions.assertDoesNotThrow(() -> generatedRow(sizeMap, secondTokens));
         String secondPartition = secondRow.getString(0);
         byte[] secondFilterBytes = (byte[]) secondRow.get(1);
-        TeragrepBloomFilter secondFilter =
-                new TeragrepBloomFilter(secondPartition, secondFilterBytes, lazyConnection.get(), filterSizes);
+        TeragrepBloomFilter secondFilter = new TeragrepBloomFilter(
+                secondPartition,
+                secondFilterBytes,
+                lazyConnection.get(),
+                filterSizes
+        );
         secondFilter.saveFilter(true);
 
         String secondSql = "SELECT `filter` FROM `bloomfilter`;";
 
-        ResultSet secondRs = Assertions.assertDoesNotThrow(() -> lazyConnection
-                .get()
-                .prepareStatement(secondSql)
-                .executeQuery());
+        ResultSet secondRs = Assertions
+                .assertDoesNotThrow(() -> lazyConnection.get().prepareStatement(secondSql).executeQuery());
 
         int secondCols = Assertions.assertDoesNotThrow(() -> secondRs.getMetaData().getColumnCount());
         BloomFilter secondResultFilter = emptyFilter;
 
-        while(Assertions.assertDoesNotThrow(() -> secondRs.next())) {
+        while (Assertions.assertDoesNotThrow(() -> secondRs.next())) {
             byte[] bytes = Assertions.assertDoesNotThrow(() -> secondRs.getBytes(1));
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            secondResultFilter =  Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
+            secondResultFilter = Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
         }
 
         Assertions.assertNotNull(secondResultFilter);
@@ -256,8 +246,7 @@ class TeragrepBloomFilterTest {
         Row row = Assertions.assertDoesNotThrow(() -> generatedRow(sizeMap, tokens));
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
-        TeragrepBloomFilter filter =
-                new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterSizes);
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterSizes);
         filter.saveFilter(false);
 
         long size = Long.MAX_VALUE;
@@ -271,18 +260,15 @@ class TeragrepBloomFilterTest {
         Double fpp = sizeMap.get(size);
         String sql = "SELECT `filter` FROM `bloomfilter`;";
 
-        ResultSet rs = Assertions.assertDoesNotThrow(() -> lazyConnection
-                .get()
-                .prepareStatement(sql)
-                .executeQuery());
+        ResultSet rs = Assertions.assertDoesNotThrow(() -> lazyConnection.get().prepareStatement(sql).executeQuery());
 
         int cols = Assertions.assertDoesNotThrow(() -> rs.getMetaData().getColumnCount());
         BloomFilter resultFilter = emptyFilter;
 
-        while(Assertions.assertDoesNotThrow(() -> rs.next())) {
+        while (Assertions.assertDoesNotThrow(() -> rs.next())) {
             byte[] bytes = Assertions.assertDoesNotThrow(() -> rs.getBytes(1));
             ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-            resultFilter =  Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
+            resultFilter = Assertions.assertDoesNotThrow(() -> BloomFilter.readFrom(bais));
         }
 
         Assertions.assertNotNull(resultFilter);
@@ -300,14 +286,14 @@ class TeragrepBloomFilterTest {
         long size = filterMap.lastKey();
 
         for (long key : filterMap.keySet()) {
-            if (key < size  && key >= tokens.size()) {
+            if (key < size && key >= tokens.size()) {
                 size = key;
             }
         }
 
         BloomFilter bf = BloomFilter.create(size, filterMap.get(size));
 
-        for(String token: tokens){
+        for (String token : tokens) {
             bf.put(token);
         }
 

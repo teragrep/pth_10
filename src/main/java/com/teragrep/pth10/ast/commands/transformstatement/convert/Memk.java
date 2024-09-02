@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.transformstatement.convert;
 
 import org.apache.spark.sql.api.java.UDF1;
@@ -54,39 +53,42 @@ import java.util.regex.Pattern;
 /**
  * Positive int or float to kilobytes.<br>
  * Default is kb to kb, can be k, m or g
+ * 
  * @author eemhu
- *
  */
 public class Memk implements UDF1<String, String> {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	@Override
-	public String call(String input) throws Exception {
-		// (\d+(.\d+)?(k|m|g)?)
-		Matcher m = Pattern.compile("\\d+(.\\d+)?").matcher(input); 
-		
-		if (!m.find()) {
-			throw new RuntimeException("Invalid value given for function memk(). Expected: Positive integer or float, with an optional unit k, m or g. Instead got: " + input);
-		}
-		
-		String numberPart = m.group();
-		float number = Float.parseFloat(numberPart);
-		String unit = input.substring(numberPart.length());
-				
-		if (unit.equalsIgnoreCase("k")) {
-			return String.valueOf(number);
-		}
-		else if (unit.equalsIgnoreCase("m")) {
-			return String.valueOf(number * 1024f);
-		}
-		else if (unit.equalsIgnoreCase("g")) {
-			return String.valueOf(number * 1024f * 1024f);
-		}
-		else {
-			// invalid unit, default to "k"
-			return String.valueOf(number);
-		}
-	}
+    @Override
+    public String call(String input) throws Exception {
+        // (\d+(.\d+)?(k|m|g)?)
+        Matcher m = Pattern.compile("\\d+(.\\d+)?").matcher(input);
+
+        if (!m.find()) {
+            throw new RuntimeException(
+                    "Invalid value given for function memk(). Expected: Positive integer or float, with an optional unit k, m or g. Instead got: "
+                            + input
+            );
+        }
+
+        String numberPart = m.group();
+        float number = Float.parseFloat(numberPart);
+        String unit = input.substring(numberPart.length());
+
+        if (unit.equalsIgnoreCase("k")) {
+            return String.valueOf(number);
+        }
+        else if (unit.equalsIgnoreCase("m")) {
+            return String.valueOf(number * 1024f);
+        }
+        else if (unit.equalsIgnoreCase("g")) {
+            return String.valueOf(number * 1024f * 1024f);
+        }
+        else {
+            // invalid unit, default to "k"
+            return String.valueOf(number);
+        }
+    }
 
 }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -46,7 +46,6 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
 import com.teragrep.pth10.ast.commands.transformstatement.DedupTransformation;
 import com.teragrep.pth10.steps.dedup.DedupStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
@@ -66,7 +65,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DedupTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupTest.class);
+
     @Test
     void testDedupTranslation() {
         String query = "| dedup fieldOne, fieldTwo";
@@ -112,7 +113,7 @@ public class DedupTest {
 
     }
 
-	@Test
+    @Test
     void testDedupTranslationWithConsecutiveParam() {
         String query = "| dedup fieldOne, fieldTwo consecutive=true";
         CharStream inputStream = CharStreams.fromString(query);
@@ -135,7 +136,7 @@ public class DedupTest {
         assertTrue(ds.getConsecutive());
     }
 
-	@Test
+    @Test
     void testDedupTranslationWithKeepEmptyParam() {
         String query = "| dedup fieldOne, fieldTwo keepempty=true";
         CharStream inputStream = CharStreams.fromString(query);
@@ -159,7 +160,7 @@ public class DedupTest {
 
     }
 
-	@Test
+    @Test
     void testDedupTranslationWithKeepEventsParam() {
         String query = "| dedup fieldOne, fieldTwo keepevents=true";
         CharStream inputStream = CharStreams.fromString(query);
@@ -205,4 +206,3 @@ public class DedupTest {
         // TODO add assertion for sort by clause
     }
 }
-

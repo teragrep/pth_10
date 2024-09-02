@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -62,139 +62,163 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class fieldTransformationTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(fieldTransformationTest.class);
 
-	// Use this file for  dataset initialization
-	String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
-	private StreamingTestUtil streamingTestUtil;
+    private static final Logger LOGGER = LoggerFactory.getLogger(fieldTransformationTest.class);
 
-	@org.junit.jupiter.api.BeforeAll
-	void setEnv() {
-		this.streamingTestUtil = new StreamingTestUtil();
-		this.streamingTestUtil.setEnv();
-	}
+    // Use this file for  dataset initialization
+    String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
+    private StreamingTestUtil streamingTestUtil;
 
-	@org.junit.jupiter.api.BeforeEach
-	void setUp() {
-		this.streamingTestUtil.setUp();
-	}
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        this.streamingTestUtil = new StreamingTestUtil();
+        this.streamingTestUtil.setEnv();
+    }
 
-	@org.junit.jupiter.api.AfterEach
-	void tearDown() {
-		this.streamingTestUtil.tearDown();
-	}
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        this.streamingTestUtil.setUp();
+    }
 
-	@Disabled(value="Should be converted to a dataframe test")
-	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransformTest() {
-		String q = "index=cinnamon | fields meta.*";
-		String e = "SELECT meta.* FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" )";
-		String result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-		utils.printDebug(e,result);
-		assertEquals(e,result);
-	}
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        this.streamingTestUtil.tearDown();
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	void parseFieldsTransformCatTest() {
-		String q = "index=index_B | fields _time";
-		this.streamingTestUtil.performDPLTest(q, this.testFile, ds -> {
-			List<String> expectedValues = new ArrayList<>();
-			expectedValues.add("2006-06-06T06:06:06.060+03:00");
-			expectedValues.add("2007-07-07T07:07:07.070+03:00");
-			expectedValues.add("2008-08-08T08:08:08.080+03:00");
-			expectedValues.add("2009-09-09T09:09:09.090+03:00");
-			expectedValues.add("2010-10-10T10:10:10.100+03:00");
+    @Disabled(value = "Should be converted to a dataframe test")
+    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    public void parseFieldsTransformTest() {
+        String q = "index=cinnamon | fields meta.*";
+        String e = "SELECT meta.* FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" )";
+        String result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        utils.printDebug(e, result);
+        assertEquals(e, result);
+    }
 
-			List<String> dsAsList = ds.collectAsList().stream().map(r -> r.getString(0)).sorted().collect(Collectors.toList());
-			Collections.sort(expectedValues);
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void parseFieldsTransformCatTest() {
+        String q = "index=index_B | fields _time";
+        this.streamingTestUtil.performDPLTest(q, this.testFile, ds -> {
+            List<String> expectedValues = new ArrayList<>();
+            expectedValues.add("2006-06-06T06:06:06.060+03:00");
+            expectedValues.add("2007-07-07T07:07:07.070+03:00");
+            expectedValues.add("2008-08-08T08:08:08.080+03:00");
+            expectedValues.add("2009-09-09T09:09:09.090+03:00");
+            expectedValues.add("2010-10-10T10:10:10.100+03:00");
 
-			assertEquals(5, dsAsList.size());
-			for (int i = 0; i < expectedValues.size(); i++) {
-				assertEquals(expectedValues.get(i), dsAsList.get(i));
-			}
+            List<String> dsAsList = ds
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .sorted()
+                    .collect(Collectors.toList());
+            Collections.sort(expectedValues);
 
-			assertEquals("[_time: string]", ds.toString());
-		});
-	}
+            assertEquals(5, dsAsList.size());
+            for (int i = 0; i < expectedValues.size(); i++) {
+                assertEquals(expectedValues.get(i), dsAsList.get(i));
+            }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	void parseFieldsTransformCat2Test() {
-		String q = "index=index_B | fields _time host";
-		this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-			assertEquals(5, res.count());
-			assertEquals("[_time: string, host: string]", res.toString());
-		});
-	}
+            assertEquals("[_time: string]", ds.toString());
+        });
+    }
 
-	/*
-	  _raw, _time, host, index, offset, partition, source, sourcetype
-	 */
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	void parseFieldsTransformCatDropTest() {
-		this.streamingTestUtil.performDPLTest("index=index_B | fields - host", this.testFile, res -> {
-			assertEquals(5, res.count());
-			// check that we drop only host-column
-			String schema = res.schema().toString();
-			assertEquals("StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))", schema);
-		});
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void parseFieldsTransformCat2Test() {
+        String q = "index=index_B | fields _time host";
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            assertEquals(5, res.count());
+            assertEquals("[_time: string, host: string]", res.toString());
+        });
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	void parseFieldsTransformCatDropSeveralTest() {
-		this.streamingTestUtil.performDPLTest("index=index_B | fields - host index partition", this.testFile, res -> {
-			assertEquals(5, res.count());
-			String schema = res.schema().toString();
-			assertEquals("StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))", schema);
-		});
-	}
+    /*
+      _raw, _time, host, index, offset, partition, source, sourcetype
+     */
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void parseFieldsTransformCatDropTest() {
+        this.streamingTestUtil.performDPLTest("index=index_B | fields - host", this.testFile, res -> {
+            assertEquals(5, res.count());
+            // check that we drop only host-column
+            String schema = res.schema().toString();
+            assertEquals(
+                    "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
+                    schema
+            );
+        });
+    }
 
-	@Disabled(value="Should be converteed to a dataframe test")
-	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransform1Test() {
-		String q,e,result;
-		q = "index=cinnamon Denied | fields meta.*,_raw";
-		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' )";
-		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-		utils.printDebug(e,result);
-		assertEquals(e,result);
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void parseFieldsTransformCatDropSeveralTest() {
+        this.streamingTestUtil.performDPLTest("index=index_B | fields - host index partition", this.testFile, res -> {
+            assertEquals(5, res.count());
+            String schema = res.schema().toString();
+            assertEquals(
+                    "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
+                    schema
+            );
+        });
+    }
 
-	@Disabled(value="Should be converteed to a dataframe test")
-	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransform2Test() {
-		String q,e,result;
+    @Disabled(value = "Should be converteed to a dataframe test")
+    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    public void parseFieldsTransform1Test() {
+        String q, e, result;
+        q = "index=cinnamon Denied | fields meta.*,_raw";
+        e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' )";
+        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        utils.printDebug(e, result);
+        assertEquals(e, result);
+    }
 
-		q = "index=cinnamon Denied Port | fields meta.*,_raw";
-		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-		utils.printDebug(e,result);
-		assertEquals(e,result);
-	}
+    @Disabled(value = "Should be converteed to a dataframe test")
+    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    public void parseFieldsTransform2Test() {
+        String q, e, result;
 
-	@Disabled(value="Should be converteed to a dataframe test")
-	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransformAddTest() {
-		String q,e,result;
+        q = "index=cinnamon Denied Port | fields meta.*,_raw";
+        e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
+        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        utils.printDebug(e, result);
+        assertEquals(e, result);
+    }
 
-		q = "index=cinnamon Denied Port | fields + meta.*,_raw";
-		e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-		utils.printDebug(e,result);
-		assertEquals(e,result);
-	}
+    @Disabled(value = "Should be converteed to a dataframe test")
+    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    public void parseFieldsTransformAddTest() {
+        String q, e, result;
 
-	@Disabled(value="Should be converteed to a dataframe test")
-	@Test // disabled on 2022-05-16 TODO convert to dataframe test
-	public void parseFieldsTransformDropTest() {
-		String q,e,result;
-		q = "index=cinnamon Denied Port | fields - meta.*, _raw";
-		e = "SELECT DROPFIELDS(meta.*,_raw) FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-		result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-		utils.printDebug(e,result);
-		assertEquals(e,result);
-	}
+        q = "index=cinnamon Denied Port | fields + meta.*,_raw";
+        e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
+        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        utils.printDebug(e, result);
+        assertEquals(e, result);
+    }
+
+    @Disabled(value = "Should be converteed to a dataframe test")
+    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    public void parseFieldsTransformDropTest() {
+        String q, e, result;
+        q = "index=cinnamon Denied Port | fields - meta.*, _raw";
+        e = "SELECT DROPFIELDS(meta.*,_raw) FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
+        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        utils.printDebug(e, result);
+        assertEquals(e, result);
+    }
 }

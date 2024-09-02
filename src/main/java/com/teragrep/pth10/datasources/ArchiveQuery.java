@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -45,19 +45,18 @@
  */
 package com.teragrep.pth10.datasources;
 
-
 /**
- * Class representing an archive query. The query is in XML format and is used
- * by the PTH-06 Datasource Component. If no query is provided, the constructor will
- * set the isStub property as true, which should be used instead of a null check.
+ * Class representing an archive query. The query is in XML format and is used by the PTH-06 Datasource Component. If no
+ * query is provided, the constructor will set the isStub property as true, which should be used instead of a null
+ * check.
  */
 public final class ArchiveQuery {
+
     public final String queryString;
     public final boolean isStub;
 
     /**
-     * Case: No query given. Traditionally this would be the null case.
-     * Check for a "null case" using the isStub field.
+     * Case: No query given. Traditionally this would be the null case. Check for a "null case" using the isStub field.
      */
     public ArchiveQuery() {
         this.queryString = "";
@@ -65,8 +64,9 @@ public final class ArchiveQuery {
     }
 
     /**
-     * Case: A non-empty query given. Traditionally this would be a non-null case.
-     * It does not guarantee that the query is 100% valid, only that it is of a non-null value.
+     * Case: A non-empty query given. Traditionally this would be a non-null case. It does not guarantee that the query
+     * is 100% valid, only that it is of a non-null value.
+     * 
      * @param queryString XML-formatted string for the Archive
      */
     public ArchiveQuery(final String queryString) {

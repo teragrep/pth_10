@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -63,98 +63,119 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class AccumTransformationStreamingTest {
-	private static final Logger LOGGER = LoggerFactory.getLogger(AccumTransformationStreamingTest.class);
 
-	private final String numberDataTestFile = "src/test/resources/numberData_0*.json"; // * to make the path into a directory path
-	private final String numberDataWithMixedStringsTestFile = "src/test/resources/numberData_withMixedStrings*.json";
-	private final StructType testSchema = new StructType(
-			new StructField[] {
-					new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-					new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-					new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-					new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
-			}
-	);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccumTransformationStreamingTest.class);
 
-	private StreamingTestUtil streamingTestUtil;
+    private final String numberDataTestFile = "src/test/resources/numberData_0*.json"; // * to make the path into a directory path
+    private final String numberDataWithMixedStringsTestFile = "src/test/resources/numberData_withMixedStrings*.json";
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
 
-	@org.junit.jupiter.api.BeforeAll
-	void setEnv() {
-		this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
-		this.streamingTestUtil.setEnv();
-	}
+    private StreamingTestUtil streamingTestUtil;
 
-	@org.junit.jupiter.api.BeforeEach
-	void setUp() {
-		this.streamingTestUtil.setUp();
-	}
+    @org.junit.jupiter.api.BeforeAll
+    void setEnv() {
+        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
+        this.streamingTestUtil.setEnv();
+    }
 
-	@org.junit.jupiter.api.AfterEach
-	void tearDown() {
-		this.streamingTestUtil.tearDown();
-	}
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        this.streamingTestUtil.setUp();
+    }
 
-	// ----------------------------------------
-	// Tests
-	// ----------------------------------------
+    @org.junit.jupiter.api.AfterEach
+    void tearDown() {
+        this.streamingTestUtil.tearDown();
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void accumBasicQueryTest() {
-		streamingTestUtil.performDPLTest(
-				"index=* | accum _raw",
-				numberDataTestFile,
-				ds -> {
-					List<Object> rawCol = ds.select("_raw").collectAsList().stream().map(r->r.getAs(0)).collect(Collectors.toList());
-					List<Object> expected = Arrays.asList("-10", "-10", "0", "35", "82.2");
-					assertTrue(rawCol.containsAll(expected));
-				});
-	}
+    // ----------------------------------------
+    // Tests
+    // ----------------------------------------
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void accumRenameFieldQueryTest() {
-		streamingTestUtil.performDPLTest(
-				"index=* | accum _raw as new",
-				numberDataTestFile,
-				ds -> {
-					List<Object> newCol = ds.select("new").collectAsList().stream().map(r->r.getAs(0)).collect(Collectors.toList());
-					List<Object> expected = Arrays.asList("-10", "-10", "0", "35", "82.2");
-					assertTrue(newCol.containsAll(expected));
-				});
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void accumBasicQueryTest() {
+        streamingTestUtil.performDPLTest("index=* | accum _raw", numberDataTestFile, ds -> {
+            List<Object> rawCol = ds
+                    .select("_raw")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0))
+                    .collect(Collectors.toList());
+            List<Object> expected = Arrays.asList("-10", "-10", "0", "35", "82.2");
+            assertTrue(rawCol.containsAll(expected));
+        });
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void accumMixedStringsQueryTest() {
-		streamingTestUtil.performDPLTest(
-				"index=* | accum _raw",
-				numberDataWithMixedStringsTestFile,
-				ds -> {
-					List<Object> rawCol = ds.select("_raw").collectAsList().stream().map(r->r.getAs(0)).collect(Collectors.toList());
-					// expect to skip strings in data and return original data as-is
-					List<Object> expected = Arrays.asList("10", "string", "110", "another_string", "165.0");
-					assertTrue(rawCol.containsAll(expected));
-				});
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void accumRenameFieldQueryTest() {
+        streamingTestUtil.performDPLTest("index=* | accum _raw as new", numberDataTestFile, ds -> {
+            List<Object> newCol = ds
+                    .select("new")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0))
+                    .collect(Collectors.toList());
+            List<Object> expected = Arrays.asList("-10", "-10", "0", "35", "82.2");
+            assertTrue(newCol.containsAll(expected));
+        });
+    }
 
-	@Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-	public void accumMixedStringsQueryWithRenameFieldTest() {
-		streamingTestUtil.performDPLTest(
-				"index=* | accum _raw as new",
-				numberDataWithMixedStringsTestFile,
-				ds -> {
-					List<Object> newCol = ds.select("new").collectAsList().stream().map(r->r.getAs(0)).collect(Collectors.toList());
-					// expect to skip strings in data and return empty
-					List<Object> expected = Arrays.asList("10", streamingTestUtil.getCtx().nullValue.value(), "110", streamingTestUtil.getCtx().nullValue.value(), "165.0");
-					assertTrue(newCol.containsAll(expected));
-				});
-	}
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void accumMixedStringsQueryTest() {
+        streamingTestUtil.performDPLTest("index=* | accum _raw", numberDataWithMixedStringsTestFile, ds -> {
+            List<Object> rawCol = ds
+                    .select("_raw")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0))
+                    .collect(Collectors.toList());
+            // expect to skip strings in data and return original data as-is
+            List<Object> expected = Arrays.asList("10", "string", "110", "another_string", "165.0");
+            assertTrue(rawCol.containsAll(expected));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void accumMixedStringsQueryWithRenameFieldTest() {
+        streamingTestUtil.performDPLTest("index=* | accum _raw as new", numberDataWithMixedStringsTestFile, ds -> {
+            List<Object> newCol = ds
+                    .select("new")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0))
+                    .collect(Collectors.toList());
+            // expect to skip strings in data and return empty
+            List<Object> expected = Arrays
+                    .asList(
+                            "10", streamingTestUtil.getCtx().nullValue.value(), "110",
+                            streamingTestUtil.getCtx().nullValue.value(), "165.0"
+                    );
+            assertTrue(newCol.containsAll(expected));
+        });
+    }
 }
-
-

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth10.ast.NullValue;
@@ -63,108 +62,111 @@ import java.util.regex.PatternSyntaxException;
  * Returns true if regex matches subject, otherwise false.<br>
  * "isMultivalue=false" Goes through a normal field, and returns whether or not there was a match<br>
  * "isMultivalue=true" Goes through a multi-value field, and returns index of first match<br>
+ * 
  * @author eemhu
- *
  */
 public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
 
-	private static final long serialVersionUID = 1L;
-	private final boolean isMultiValue;
-	private final NullValue nullValue;
-	
-	public RegexMatch(NullValue nullValue) {
-		super();
-		this.isMultiValue = false;
-		this.nullValue = nullValue;
-	}
-	
-	public RegexMatch(boolean isMultiValue, NullValue nullValue) {
-		super();
-		this.isMultiValue = isMultiValue;
-		this.nullValue = nullValue;
-	}
+    private static final long serialVersionUID = 1L;
+    private final boolean isMultiValue;
+    private final NullValue nullValue;
 
-	@Override
-	public Object call(Object subject, String regexString) throws Exception {
-		
-		String subjectStr = null;
-			
-		if (subject instanceof Long) {
-			subjectStr = ((Long)subject).toString();
-		}
-		else if (subject instanceof Integer) {
-			subjectStr = ((Integer)subject).toString();
-		}
-		else if (subject instanceof Double) {
-			subjectStr = ((Double)subject).toString();
-		}
-		else if (subject instanceof Float) {
-			subjectStr = ((Double)subject).toString();
-		}
-		else if (subject instanceof String) {
-			subjectStr = ((String)subject);
-		}
-		else if (subject instanceof java.sql.Timestamp) {
-			subjectStr = ((java.sql.Timestamp)subject).toString();
-		}
-		
-		
-		if (!this.isMultiValue) {
-			return performForNormalField(subjectStr, regexString);
-		}
-		else {
-			@SuppressWarnings("unchecked")
-			WrappedArray<String> subjectLst = (WrappedArray<String>) subject;
-			
-			return performForMultiValueField(subjectLst, regexString);
-		}
-		
-	}
-	
-	// This gets called if isMultiValue=false
-	// Goes through a normal field, and returns whether or not there was a match
-	private Boolean performForNormalField(String subjectStr, String regexString) {
-		regexString = new UnquotedText(new TextString(regexString)).read();
-		boolean isMatch = false;
-		
-		try {
-			Pattern p = Pattern.compile(regexString);
-			Matcher m = p.matcher(subjectStr);
-			isMatch = m.find();
-		}
-		catch (PatternSyntaxException pse) {
-			throw new RuntimeException("Match command encountered an error compiling the regex pattern: " + pse.getMessage());
-		}
-		
-		return isMatch;
-	}
-	
-	// This gets called if isMultiValue=true
-	// Goes through a multi-value field, and returns index of first match
-	private Object performForMultiValueField(WrappedArray<String> subjectLst, String regexString) {
-		Pattern p;
+    public RegexMatch(NullValue nullValue) {
+        super();
+        this.isMultiValue = false;
+        this.nullValue = nullValue;
+    }
 
-		try {
-			p = Pattern.compile(regexString);
-		}
-		catch (PatternSyntaxException pse) {
-			throw new RuntimeException("Match command encountered an error compiling the regex pattern: " + pse.getMessage());
-		}
-		
-		Iterator<String> it = subjectLst.iterator();
-		int i = 0;
-		while (it.hasNext()) {
-			Matcher m = p.matcher(it.next());
-			boolean isMatch = m.find();
-			
-			if (isMatch) {
-				return i;
-			}
-			
-			i++;
-		}
-		
-		return nullValue.value();
-	}
+    public RegexMatch(boolean isMultiValue, NullValue nullValue) {
+        super();
+        this.isMultiValue = isMultiValue;
+        this.nullValue = nullValue;
+    }
+
+    @Override
+    public Object call(Object subject, String regexString) throws Exception {
+
+        String subjectStr = null;
+
+        if (subject instanceof Long) {
+            subjectStr = ((Long) subject).toString();
+        }
+        else if (subject instanceof Integer) {
+            subjectStr = ((Integer) subject).toString();
+        }
+        else if (subject instanceof Double) {
+            subjectStr = ((Double) subject).toString();
+        }
+        else if (subject instanceof Float) {
+            subjectStr = ((Double) subject).toString();
+        }
+        else if (subject instanceof String) {
+            subjectStr = ((String) subject);
+        }
+        else if (subject instanceof java.sql.Timestamp) {
+            subjectStr = ((java.sql.Timestamp) subject).toString();
+        }
+
+        if (!this.isMultiValue) {
+            return performForNormalField(subjectStr, regexString);
+        }
+        else {
+            @SuppressWarnings("unchecked")
+            WrappedArray<String> subjectLst = (WrappedArray<String>) subject;
+
+            return performForMultiValueField(subjectLst, regexString);
+        }
+
+    }
+
+    // This gets called if isMultiValue=false
+    // Goes through a normal field, and returns whether or not there was a match
+    private Boolean performForNormalField(String subjectStr, String regexString) {
+        regexString = new UnquotedText(new TextString(regexString)).read();
+        boolean isMatch = false;
+
+        try {
+            Pattern p = Pattern.compile(regexString);
+            Matcher m = p.matcher(subjectStr);
+            isMatch = m.find();
+        }
+        catch (PatternSyntaxException pse) {
+            throw new RuntimeException(
+                    "Match command encountered an error compiling the regex pattern: " + pse.getMessage()
+            );
+        }
+
+        return isMatch;
+    }
+
+    // This gets called if isMultiValue=true
+    // Goes through a multi-value field, and returns index of first match
+    private Object performForMultiValueField(WrappedArray<String> subjectLst, String regexString) {
+        Pattern p;
+
+        try {
+            p = Pattern.compile(regexString);
+        }
+        catch (PatternSyntaxException pse) {
+            throw new RuntimeException(
+                    "Match command encountered an error compiling the regex pattern: " + pse.getMessage()
+            );
+        }
+
+        Iterator<String> it = subjectLst.iterator();
+        int i = 0;
+        while (it.hasNext()) {
+            Matcher m = p.matcher(it.next());
+            boolean isMatch = m.find();
+
+            if (isMatch) {
+                return i;
+            }
+
+            i++;
+        }
+
+        return nullValue.value();
+    }
 
 }

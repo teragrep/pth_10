@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.google.gson.Gson;
@@ -93,7 +92,12 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
     private final static String KAFKA_SECURITY_PROTOCOL_CONFIG_ITEM = "dpl.pth_10.transform.teragrep.kafka.save.security.protocol";
     private final static String DEFAULT_KAFKA_TOPIC_TEMPLATE = "teragrep.%s.%s";
 
-    public TeragrepKafkaStep(String hdfsPath, DPLParserCatalystContext catCtx, Config zeppelinConfig, String kafkaTopic) {
+    public TeragrepKafkaStep(
+            String hdfsPath,
+            DPLParserCatalystContext catCtx,
+            Config zeppelinConfig,
+            String kafkaTopic
+    ) {
         this.hdfsPath = hdfsPath;
         this.catCtx = catCtx;
         this.zeppelinConfig = zeppelinConfig;
@@ -107,7 +111,8 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
             // last version of the whole dataset has to be saved to kafka now.
             try {
                 this.dfKafkaWriter.save();
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 throw new RuntimeException("Error saving dataframe: " + e);
             }
         }
@@ -130,7 +135,8 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
                     // exists, but null or empty string
                     throw new RuntimeException("Identity was null");
                 }
-            } else {
+            }
+            else {
                 // no config item
                 throw new RuntimeException("Missing configuration item: '" + FALLBACK_S3_IDENTITY_CONFIG_ITEM + "'.");
             }
@@ -141,17 +147,20 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
                     // exists, but null or empty string
                     throw new RuntimeException("Credential was null");
                 }
-            } else {
+            }
+            else {
                 // no config item
                 throw new RuntimeException("Missing configuration item: '" + FALLBACK_S3_CREDENTIAL_CONFIG_ITEM + "'.");
             }
-        } else {
+        }
+        else {
             // ignore anything after '@' char in username
             identity = identity.split("@")[0];
         }
 
         // set jaas config string based on identity & credential
-        final String jaasConfig = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"" + identity + "\" password=\"" + credential + "\";";
+        final String jaasConfig = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\""
+                + identity + "\" password=\"" + credential + "\";";
 
         if (kafkaTopic == null || kafkaTopic.equals("")) {
             // default kafka topic if not one specified by user
@@ -171,17 +180,24 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
 
         if (toKafkaDs.isStreaming()) { // parallel mode
             // Convert each row to a single "value" column as JSON
-            toKafkaDs = toKafkaDs.map((MapFunction<Row, Row>) r -> {
-                // get column names as a scala sequence
-                Seq<String> seqOfColumnNames = JavaConversions.asScalaBuffer(Arrays.asList(r.schema().fieldNames()));
+            toKafkaDs = toKafkaDs
+                    .map(
+                            (MapFunction<Row, Row>) r -> {
+                                // get column names as a scala sequence
+                                Seq<String> seqOfColumnNames = JavaConversions
+                                        .asScalaBuffer(Arrays.asList(r.schema().fieldNames()));
 
-                // Get values for each of the columns as a map, and create json out of the map
-                // getValuesMap() returns a Scala map; mapAsJavaMap converts it to a java map which Gson processes correctly
-                String json = new Gson().toJson(JavaConversions.mapAsJavaMap(r.getValuesMap(seqOfColumnNames)));
+                                // Get values for each of the columns as a map, and create json out of the map
+                                // getValuesMap() returns a Scala map; mapAsJavaMap converts it to a java map which Gson processes correctly
+                                String json = new Gson()
+                                        .toJson(JavaConversions.mapAsJavaMap(r.getValuesMap(seqOfColumnNames)));
 
-                // Return final row
-                return RowFactory.create(json);
-            }, RowEncoder.apply(new StructType(new StructField[]{new StructField("value", DataTypes.StringType, true, new MetadataBuilder().build())})));
+                                // Return final row
+                                return RowFactory.create(json);
+                            }, RowEncoder.apply(new StructType(new StructField[] {
+                                    new StructField("value", DataTypes.StringType, true, new MetadataBuilder().build())
+                            }))
+                    );
         }
         else { // sequential mode, all as one event
             List<String> jsonList = toKafkaDs.toJSON().collectAsList();
@@ -194,8 +210,11 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
                 json = Arrays.toString(jsonList.toArray());
             }
 
-            toKafkaDs = catCtx.getSparkSession().createDataFrame(Collections.singletonList(RowFactory.create(json)),
-                    new StructType(new StructField[]{new StructField("value", DataTypes.StringType, true, new MetadataBuilder().build())}));
+            toKafkaDs = catCtx
+                    .getSparkSession()
+                    .createDataFrame(Collections.singletonList(RowFactory.create(json)), new StructType(new StructField[] {
+                            new StructField("value", DataTypes.StringType, true, new MetadataBuilder().build())
+                    }));
         }
 
         String kafkaBootstrapServers;
@@ -210,7 +229,8 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
                 // exists, but null or empty string
                 throw new RuntimeException("Kafka save bootstrap servers config not properly set.");
             }
-        } else {
+        }
+        else {
             // config item does not exist at all
             throw new RuntimeException("Missing configuration item: '" + KAFKA_BOOTSTRAP_SERVERS_CONFIG_ITEM + "'.");
         }
@@ -221,7 +241,8 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
                 // exists, but null or empty string
                 throw new RuntimeException("Kafka save sasl mechanism config not properly set.");
             }
-        } else {
+        }
+        else {
             // config item does not exist at all
             throw new RuntimeException("Missing configuration item: '" + KAFKA_SASL_MECHANISM_CONFIG_ITEM + "'.");
         }
@@ -232,7 +253,8 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
                 // exists, but null or empty string
                 throw new RuntimeException("Kafka save security protocol config not properly set.");
             }
-        } else {
+        }
+        else {
             // config item does not exist at all
             throw new RuntimeException("Missing configuration item: '" + KAFKA_SECURITY_PROTOCOL_CONFIG_ITEM + "'.");
         }
@@ -243,7 +265,8 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
                 // exists, but null or empty string
                 throw new RuntimeException("S3 endpoint config not properly set.");
             }
-        } else {
+        }
+        else {
             // config item does not exist at all
             throw new RuntimeException("Missing configuration item: '" + S3_CREDENTIAL_ENDPOINT_CONFIG_ITEM + "'.");
         }
@@ -290,12 +313,15 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
 
             if (catCtx.getStepList().getAggregateCount() > 0) {
                 kafkaWriter.outputMode(OutputMode.Complete());
-            } else {
+            }
+            else {
                 // should always be this, since aggregates should be in sequential
                 kafkaWriter.outputMode(OutputMode.Append());
             }
 
-            StreamingQuery kafkaQuery = catCtx.getInternalStreamingQueryListener().registerQuery(kafkaQueryName, kafkaWriter);
+            StreamingQuery kafkaQuery = catCtx
+                    .getInternalStreamingQueryListener()
+                    .registerQuery(kafkaQueryName, kafkaWriter);
 
             // Await for the listener to send the stop signal
             kafkaQuery.awaitTermination();

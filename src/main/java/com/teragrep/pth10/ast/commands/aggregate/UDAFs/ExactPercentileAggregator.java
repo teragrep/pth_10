@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
 import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.PercentileBuffer;
@@ -59,100 +58,107 @@ import java.io.Serializable;
  */
 public class ExactPercentileAggregator extends Aggregator<Row, PercentileBuffer, Double> implements Serializable {
 
-	private static final long serialVersionUID = 1L;
-	private String colName = null;
-	private double percentile = 0.5d;
-	
-	/**
-	 * Calculates the exact percentile using the Nearest Rank algorithm
-	 * @param colName Source column name on dataframe
-	 * @param percentile 0.0d-1.0d percentile to calculate
-	 */
-	public ExactPercentileAggregator(String colName, double percentile) {
-		this.colName = colName;
-		this.percentile = percentile;
-	}
+    private static final long serialVersionUID = 1L;
+    private String colName = null;
+    private double percentile = 0.5d;
 
-	/**
-	 * Buffer encoder
-	 * @return Encoder for PercentileBuffer
-	 */
-	@Override
-	public Encoder<PercentileBuffer> bufferEncoder() {
-		// TODO using kryo should speed this up
-		return Encoders.javaSerialization(PercentileBuffer.class);
-	}
+    /**
+     * Calculates the exact percentile using the Nearest Rank algorithm
+     * 
+     * @param colName    Source column name on dataframe
+     * @param percentile 0.0d-1.0d percentile to calculate
+     */
+    public ExactPercentileAggregator(String colName, double percentile) {
+        this.colName = colName;
+        this.percentile = percentile;
+    }
 
-	/**
-	 * sort and calculate percentile
-	 * @param buffer PercentileBuffer
-	 * @return percentile as double
-	 */
-	@Override
-	public Double finish(PercentileBuffer buffer) {
-		buffer.sortInternalList();
-		return buffer.calculatePercentile();
-	}
+    /**
+     * Buffer encoder
+     * 
+     * @return Encoder for PercentileBuffer
+     */
+    @Override
+    public Encoder<PercentileBuffer> bufferEncoder() {
+        // TODO using kryo should speed this up
+        return Encoders.javaSerialization(PercentileBuffer.class);
+    }
 
-	/**
-	 * Merge two PercentileBuffers
-	 * @param buffer Original buffer
-	 * @param buffer2 Buffer to merge to original
-	 * @return resulting buffer
-	 */
-	@Override
-	public PercentileBuffer merge(PercentileBuffer buffer, PercentileBuffer buffer2) {
-		buffer.mergeList(buffer2.getList());
-		return buffer;
-	}
+    /**
+     * sort and calculate percentile
+     * 
+     * @param buffer PercentileBuffer
+     * @return percentile as double
+     */
+    @Override
+    public Double finish(PercentileBuffer buffer) {
+        buffer.sortInternalList();
+        return buffer.calculatePercentile();
+    }
 
-	/**
-	 * Output encoder
-	 * @return double encoder
-	 */
-	@Override
-	public Encoder<Double> outputEncoder() {
-		return Encoders.DOUBLE();
-	}
+    /**
+     * Merge two PercentileBuffers
+     * 
+     * @param buffer  Original buffer
+     * @param buffer2 Buffer to merge to original
+     * @return resulting buffer
+     */
+    @Override
+    public PercentileBuffer merge(PercentileBuffer buffer, PercentileBuffer buffer2) {
+        buffer.mergeList(buffer2.getList());
+        return buffer;
+    }
 
-	/**
-	 * Add new data to buffer
-	 * @param buffer Buffer
-	 * @param input input row
-	 * @return Buffer with input row added
-	 */
-	@Override
-	public PercentileBuffer reduce(PercentileBuffer buffer, Row input) {
-		Object inputValue = input.getAs(colName);
-		Double value = null;
+    /**
+     * Output encoder
+     * 
+     * @return double encoder
+     */
+    @Override
+    public Encoder<Double> outputEncoder() {
+        return Encoders.DOUBLE();
+    }
 
-		if (inputValue instanceof Long) {
-			value = ((Long) inputValue).doubleValue();
-		}
-		else if (inputValue instanceof Integer) {
-			value = ((Integer) inputValue).doubleValue();
-		}
-		else if (inputValue instanceof Float) {
-			value = ((Float) inputValue).doubleValue();
-		}
-		else if (inputValue instanceof Double) {
-			value = ((Double) inputValue);
-		}
-		else if (inputValue instanceof String) {
-			value = Double.valueOf((String)inputValue);
-		}
-		
-		buffer.add(value);
-		return buffer;
-	}
+    /**
+     * Add new data to buffer
+     * 
+     * @param buffer Buffer
+     * @param input  input row
+     * @return Buffer with input row added
+     */
+    @Override
+    public PercentileBuffer reduce(PercentileBuffer buffer, Row input) {
+        Object inputValue = input.getAs(colName);
+        Double value = null;
 
-	/**
-	 * Initialize the buffer
-	 * @return initialized buffer
-	 */
-	@Override
-	public PercentileBuffer zero() {
-		return new PercentileBuffer(this.percentile);
-	}
+        if (inputValue instanceof Long) {
+            value = ((Long) inputValue).doubleValue();
+        }
+        else if (inputValue instanceof Integer) {
+            value = ((Integer) inputValue).doubleValue();
+        }
+        else if (inputValue instanceof Float) {
+            value = ((Float) inputValue).doubleValue();
+        }
+        else if (inputValue instanceof Double) {
+            value = ((Double) inputValue);
+        }
+        else if (inputValue instanceof String) {
+            value = Double.valueOf((String) inputValue);
+        }
+
+        buffer.add(value);
+        return buffer;
+    }
+
+    /**
+     * Initialize the buffer
+     * 
+     * @return initialized buffer
+     */
+    @Override
+    public PercentileBuffer zero() {
+        return new PercentileBuffer(this.percentile);
+    }
 
 }

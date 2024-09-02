@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -60,6 +60,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class statsTransformationTest {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(statsTransformationTest.class);
 
     // Use this file for dataset initialization
@@ -82,18 +83,17 @@ public class statsTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // --- SQL emit mode tests ---
-    
+
     // --- XML emit mode tests ---
-    
+
     // --- Catalyst emit mode tests ---
 
     // Explanation: 
     // UDAF = User Defined Aggregate Function, deprecated in spark 3.x, not performant enough in many cases
     // aggregator = custom aggregator, replaces UDAF in spark 3.x and above, performance vastly improved compared to UDAF
     // spark = uses built-in spark function
-    
+
     /*
      * -- Command --	-- Status --
      * exactperc() 		aggregator
@@ -123,499 +123,728 @@ public class statsTransformationTest {
      * latest() 		aggregator
      * latest_time() 	aggregator
      */
-    
+
     // Test exactpercX()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggExactPerc_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats exactperc50(offset) AS perc_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats exactperc50(offset) AS perc_offset", testFile, ds -> {
+            assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("perc_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("6.5"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("perc_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("6.5"), destAsList);
+        });
     }
-    
+
     // Test percX()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggPerc_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats perc50(offset) AS perc_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats perc50(offset) AS perc_offset", testFile, ds -> {
+            assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("perc_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("6"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("perc_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("6"), destAsList);
+        });
     }
-    
+
     // Test rate()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggRate_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats rate(offset) AS rate_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[rate_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats rate(offset) AS rate_offset", testFile, ds -> {
+            assertEquals("[rate_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("rate_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("3.2425553062149416E-8"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("rate_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("3.2425553062149416E-8"), destAsList);
+        });
     }
-    
+
     // Test earliest()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggEarliest_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats earliest(offset) AS earliest_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats earliest(offset) AS earliest_offset", testFile, ds -> {
+            assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("earliest_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("1"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("earliest_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("1"), destAsList);
+        });
     }
 
     // Test earliest() with no data
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggEarliestNoData_Test() {
-        streamingTestUtil.performDPLTest("index=index_XYZ | stats earliest(offset) AS earliest_offset",
-                testFile,
-                ds -> {
+        streamingTestUtil
+                .performDPLTest("index=index_XYZ | stats earliest(offset) AS earliest_offset", testFile, ds -> {
                     assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("earliest_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> destAsList = ds
+                            .select("earliest_offset")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(Collections.singletonList(""), destAsList);
                 });
     }
 
     // Test latest() with no data
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggLatestNoData_Test() {
-        streamingTestUtil.performDPLTest("index=index_XYZ | stats latest(offset) AS latest_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_XYZ | stats latest(offset) AS latest_offset", testFile, ds -> {
+            assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("latest_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList(""), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("latest_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList(""), destAsList);
+        });
     }
-    
+
     // Test earliest_time()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggEarliestTime_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats earliest_time(offset) AS earliest_time_offset",
-                testFile,
-                ds -> {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats earliest_time(offset) AS earliest_time_offset", testFile, ds -> {
                     assertEquals("[earliest_time_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("earliest_time_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> destAsList = ds
+                            .select("earliest_time_offset")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(Collections.singletonList("978310861"), destAsList);
                 });
     }
-    
+
     // Test values()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggValues_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats values(offset) AS values_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[values_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats values(offset) AS values_offset", testFile, ds -> {
+            assertEquals("[values_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("values_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("1\n10\n11\n2\n3\n4\n5\n6\n7\n8\n9"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("values_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("1\n10\n11\n2\n3\n4\n5\n6\n7\n8\n9"), destAsList);
+        });
     }
-    
+
     // Test list()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggList_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats list(offset) AS list_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[list_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats list(offset) AS list_offset", testFile, ds -> {
+            assertEquals("[list_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("list_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n11"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("list_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n11"), destAsList);
+        });
     }
-    
+
     // Test median()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggMedian_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats median(offset) AS median_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[median_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats median(offset) AS median_offset", testFile, ds -> {
+            assertEquals("[median_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("median_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("6.5"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("median_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("6.5"), destAsList);
+        });
     }
-    
-	// Test mode()
+
+    // Test mode()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggMode_Test() {
-        streamingTestUtil.performDPLTest("index=index_A | stats mode(offset) AS mode_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[mode_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats mode(offset) AS mode_offset", testFile, ds -> {
+            assertEquals("[mode_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("mode_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("11"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("mode_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("11"), destAsList);
+        });
     }
-    
+
     // Test min()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggMin_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats min(offset) AS min_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[min_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats min(offset) AS min_offset", testFile, ds -> {
+            assertEquals("[min_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("min_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("1"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("min_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("1"), destAsList);
+        });
     }
-    
+
     // Test max()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggMax_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats max(offset) AS max_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[max_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats max(offset) AS max_offset", testFile, ds -> {
+            assertEquals("[max_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("max_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("11"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("max_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("11"), destAsList);
+        });
     }
-    
+
     // Test stdev()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggStdev_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats stdev(offset) AS stdev_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[stdev_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats stdev(offset) AS stdev_offset", testFile, ds -> {
+            assertEquals("[stdev_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("stdev_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("3.4761089357690347"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("stdev_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("3.4761089357690347"), destAsList);
+        });
     }
-    
+
     // Test stdevp()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggStdevp_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats stdevp(offset) AS stdevp_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[stdevp_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats stdevp(offset) AS stdevp_offset", testFile, ds -> {
+            assertEquals("[stdevp_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("stdevp_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("3.3281209246193093"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("stdevp_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("3.3281209246193093"), destAsList);
+        });
     }
-    
+
     // Test sum()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggSum_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats sum(offset) AS sum_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[sum_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats sum(offset) AS sum_offset", testFile, ds -> {
+            assertEquals("[sum_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("sum_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("77"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("sum_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("77"), destAsList);
+        });
     }
 
     // Test sum() with MV field input
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggSum_mvField_Test() {
-        streamingTestUtil.performDPLTest("index=index_A | eval mv = mvappend(offset, offset+1) | stats sum(mv) AS sum_mv",
-                testFile,
-                ds -> {
-                    assertEquals("[sum_mv]", Arrays.toString(ds.columns()));
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | eval mv = mvappend(offset, offset+1) | stats sum(mv) AS sum_mv", testFile,
+                        ds -> {
+                            assertEquals("[sum_mv]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("sum_mv").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("166"), destAsList);
-                });
+                            List<String> destAsList = ds
+                                    .select("sum_mv")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Collections.singletonList("166"), destAsList);
+                        }
+                );
     }
 
     // Test sum() with MV field input
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggSum_mvField_GH261_Test() {
-        streamingTestUtil.performDPLTest("index=index_A offset < 3" +
-                        "| eval atk = if(offset=0, 1, 0) " +
-                        "| eval def = if(offset=1, 2, 1) " +
-                        "| eval spy = if(offset=2, 4, 6)" +
-                        "| stats sum(atk) AS attack, sum(def) AS defend, sum(spy) as spying", testFile,
-                ds -> {
-                    List<String> atk = ds.select("attack").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    List<String> def = ds.select("defend").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    List<String> spy = ds.select("spying").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A offset < 3" + "| eval atk = if(offset=0, 1, 0) "
+                                + "| eval def = if(offset=1, 2, 1) " + "| eval spy = if(offset=2, 4, 6)"
+                                + "| stats sum(atk) AS attack, sum(def) AS defend, sum(spy) as spying",
+                        testFile, ds -> {
+                            List<String> atk = ds
+                                    .select("attack")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            List<String> def = ds
+                                    .select("defend")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            List<String> spy = ds
+                                    .select("spying")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
 
-                    // should be one of each
-                    assertEquals(1, atk.size());
-                    assertEquals(1, def.size());
-                    assertEquals(1, spy.size());
-                    // aggregate results
-                    assertEquals("0", atk.get(0));
-                    assertEquals("3", def.get(0));
-                    assertEquals("10", spy.get(0));
-                });
+                            // should be one of each
+                            assertEquals(1, atk.size());
+                            assertEquals(1, def.size());
+                            assertEquals(1, spy.size());
+                            // aggregate results
+                            assertEquals("0", atk.get(0));
+                            assertEquals("3", def.get(0));
+                            assertEquals("10", spy.get(0));
+                        }
+                );
     }
-    
+
     // Test sumsq()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggSumsq_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats sumsq(offset) AS sumsq_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[sumsq_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats sumsq(offset) AS sumsq_offset", testFile, ds -> {
+            assertEquals("[sumsq_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("sumsq_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("627.0"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("sumsq_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("627.0"), destAsList);
+        });
     }
-    
+
     // Test dc()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggDc_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats dc(offset) AS dc_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[dc_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats dc(offset) AS dc_offset", testFile, ds -> {
+            assertEquals("[dc_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("dc_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("11"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("dc_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("11"), destAsList);
+        });
     }
 
     // Test dc() with NULL data
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggDc_NoData_Test() {
         // rex4j is used to produce nulls here
-        streamingTestUtil.performDPLTest("| makeresults | eval raw=\"kissa@1\"| rex4j field=raw \"koira@(?<koira>\\d)\" | stats dc(koira)",
-                testFile,
-                ds -> {
-                    assertEquals("[dc(koira)]", Arrays.toString(ds.columns()));
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults | eval raw=\"kissa@1\"| rex4j field=raw \"koira@(?<koira>\\d)\" | stats dc(koira)",
+                        testFile, ds -> {
+                            assertEquals("[dc(koira)]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("dc(koira)").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("0"), destAsList);
-                });
+                            List<String> destAsList = ds
+                                    .select("dc(koira)")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            assertEquals(Collections.singletonList("0"), destAsList);
+                        }
+                );
     }
-    
+
     // Test estdc()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggEstdc_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats estdc(offset) AS estdc_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[estdc_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats estdc(offset) AS estdc_offset", testFile, ds -> {
+            assertEquals("[estdc_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("estdc_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("11"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("estdc_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("11"), destAsList);
+        });
     }
-    
+
     // Test estdc_error()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggEstdc_error_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats estdc_error(offset) AS estdc_error_offset",
-                testFile,
-                ds -> {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats estdc_error(offset) AS estdc_error_offset", testFile, ds -> {
                     assertEquals("[estdc_error_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("estdc_error_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> destAsList = ds
+                            .select("estdc_error_offset")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(Collections.singletonList("0.0"), destAsList);
                 });
     }
-    
+
     // Test range()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggRange_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats range(offset) AS range_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[range_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats range(offset) AS range_offset", testFile, ds -> {
+            assertEquals("[range_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("range_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("10"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("range_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("10"), destAsList);
+        });
     }
-    
+
     // Test count()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggCount_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats count(offset) AS count_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[count_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats count(offset) AS count_offset", testFile, ds -> {
+            assertEquals("[count_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("count_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("12"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("count_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("12"), destAsList);
+        });
     }
-    
+
     // Test avg()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggAvg_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats avg(offset)",
-                testFile,
-                ds -> {
-                    assertEquals("[avg(offset)]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats avg(offset)", testFile, ds -> {
+            assertEquals("[avg(offset)]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("avg(offset)").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("avg(offset)")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
+        });
     }
-    
+
     // Test mean()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggMean_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats mean(offset)",
-                testFile,
-                ds -> {
-                    assertEquals("[mean(offset)]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats mean(offset)", testFile, ds -> {
+            assertEquals("[mean(offset)]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("mean(offset)").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("mean(offset)")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
+        });
     }
-    
+
     // Test var()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggVar_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats var(offset) AS var_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[var_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats var(offset) AS var_offset", testFile, ds -> {
+            assertEquals("[var_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("var_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("12.083333333333332"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("var_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("12.083333333333332"), destAsList);
+        });
     }
-    
+
     // Test varp()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggVarp_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats varp(offset) AS varp_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[varp_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats varp(offset) AS varp_offset", testFile, ds -> {
+            assertEquals("[varp_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("varp_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("11.076388888888888"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("varp_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("11.076388888888888"), destAsList);
+        });
     }
-    
+
     // Test multiple aggregations at once
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_Agg_MultipleTest() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats var(offset) AS var_offset avg(offset) AS avg_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[var_offset, avg_offset]", Arrays.toString(ds.columns()));
-                });
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | stats var(offset) AS var_offset avg(offset) AS avg_offset", testFile, ds -> {
+                            assertEquals("[var_offset, avg_offset]", Arrays.toString(ds.columns()));
+                        }
+                );
     }
-    
+
     // Test BY field,field
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_Agg_ByTest() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats avg(offset) AS avg_offset BY sourcetype,host",
-                testFile,
-                ds -> {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats avg(offset) AS avg_offset BY sourcetype,host", testFile, ds -> {
                     assertEquals("[sourcetype, host, avg_offset]", Arrays.toString(ds.columns()));
                 });
     }
-    
+
     // Test first()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggFirst_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats first(offset) AS first_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[first_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats first(offset) AS first_offset", testFile, ds -> {
+            assertEquals("[first_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("first_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("1"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("first_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("1"), destAsList);
+        });
     }
-    
+
     // Test last()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggLast_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats last(offset) AS last_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[last_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats last(offset) AS last_offset", testFile, ds -> {
+            assertEquals("[last_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("last_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("11"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("last_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("11"), destAsList);
+        });
     }
-    
+
     // Test latest()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggLatest_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats latest(offset) AS latest_offset",
-                testFile,
-                ds -> {
-                    assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
+        streamingTestUtil.performDPLTest("index=index_A | stats latest(offset) AS latest_offset", testFile, ds -> {
+            assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("latest_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("11"), destAsList);
-                });
+            List<String> destAsList = ds
+                    .select("latest_offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            assertEquals(Collections.singletonList("11"), destAsList);
+        });
     }
-    
+
     // Test latest_time()
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     void statsTransform_AggLatestTime_Test() {
-    	streamingTestUtil.performDPLTest("index=index_A | stats latest_time(offset) AS latest_time_offset",
-                testFile,
-                ds -> {
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats latest_time(offset) AS latest_time_offset", testFile, ds -> {
                     assertEquals("[latest_time_offset]", Arrays.toString(ds.columns()));
 
-                    List<String> destAsList = ds.select("latest_time_offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> destAsList = ds
+                            .select("latest_time_offset")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
                     assertEquals(Collections.singletonList("1286709610"), destAsList);
                 });
     }

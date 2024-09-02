@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.makeresults;
 
 import org.apache.spark.sql.*;
@@ -68,10 +67,12 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class MakeresultsStep extends AbstractMakeresultsStep{
+public final class MakeresultsStep extends AbstractMakeresultsStep {
+
     public MakeresultsStep() {
         super();
     }
+
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
         /*if (dataset == null) {
@@ -81,26 +82,20 @@ public final class MakeresultsStep extends AbstractMakeresultsStep{
         // change schema based on annotate parameter
         StructType schema;
         if (annotate) {
-            schema =
-                    new StructType(
-                            new StructField[] {
-                                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("struck_server", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("struck_server_group", DataTypes.StringType, true, new MetadataBuilder().build())
-                            }
-                    );
+            schema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("struck_server", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("struck_server_group", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
         }
         else {
-            schema =
-                    new StructType(
-                            new StructField[] {
-                                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build())
-                            }
-                    );
+            schema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build())
+            });
         }
 
         // make a streaming dataset
@@ -110,12 +105,13 @@ public final class MakeresultsStep extends AbstractMakeresultsStep{
         MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlCtx, Option.apply(1), encoder);
         Dataset<Row> generated = rowMemoryStream.toDS();
 
-        final String queryName = "makeresults_" + ((int)(Math.random() * 100000));
+        final String queryName = "makeresults_" + ((int) (Math.random() * 100000));
 
-        DataStreamWriter<Row> makeResultsWriter = generated.
-                writeStream().outputMode("append").format("memory");
+        DataStreamWriter<Row> makeResultsWriter = generated.writeStream().outputMode("append").format("memory");
 
-        StreamingQuery makeResultsQuery = this.catCtx.getInternalStreamingQueryListener().registerQuery(queryName, makeResultsWriter);
+        StreamingQuery makeResultsQuery = this.catCtx
+                .getInternalStreamingQueryListener()
+                .registerQuery(queryName, makeResultsWriter);
 
         // add row $count times
         rowMemoryStream.addData(makeRows(count, annotate));
@@ -128,7 +124,8 @@ public final class MakeresultsStep extends AbstractMakeresultsStep{
     /**
      * Make one row $amount times and return as {@literal Seq<Row>}<br>
      * Uses system default timezone
-     * @param amount How many times each row should be repeated?
+     * 
+     * @param amount   How many times each row should be repeated?
      * @param annotate Add more columns in addition to '_time'?
      * @return scala sequence of Rows
      */
@@ -137,20 +134,12 @@ public final class MakeresultsStep extends AbstractMakeresultsStep{
         Row row;
 
         if (annotate) {
-            row = RowFactory.create(
-                    Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault())),
-                    catCtx.nullValue.value(),
-                    catCtx.nullValue.value(),
-                    catCtx.nullValue.value(),
-                    catCtx.nullValue.value(),
-                    catCtx.nullValue.value(),
-                    catCtx.nullValue.value()
-            );
+            row = RowFactory
+                    .create(Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault())), catCtx.nullValue.value(), catCtx.nullValue.value(), catCtx.nullValue.value(), catCtx.nullValue.value(), catCtx.nullValue.value(), catCtx.nullValue.value());
         }
         else {
-            row = RowFactory.create(
-                    Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault()))
-            );
+            row = RowFactory
+                    .create(Timestamp.valueOf(LocalDateTime.ofInstant(Instant.now(), ZoneOffset.systemDefault())));
         }
 
         while (amount > 0) {

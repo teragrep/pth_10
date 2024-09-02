@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.TextString;
@@ -60,13 +59,7 @@ import java.util.regex.Pattern;
 public class RelativeTimeParser {
 
     enum OffsetUnit {
-        SECONDS,
-        MINUTES,
-        HOURS,
-        DAYS,
-        WEEKS,
-        MONTHS,
-        YEARS
+        SECONDS, MINUTES, HOURS, DAYS, WEEKS, MONTHS, YEARS
     }
 
     enum SnapUnit {
@@ -94,6 +87,7 @@ public class RelativeTimeParser {
 
     /**
      * Parses the given String into a RelativeTimestamp object.
+     * 
      * @param timestamp relative time as string, ex. -12h@day
      * @return relative time as object
      */
@@ -101,7 +95,9 @@ public class RelativeTimeParser {
         timestamp = new UnquotedText(new TextString(timestamp)).read(); // strip quotes
 
         // regex that should match all types of relative timestamps but not normal timestamps
-        Matcher relativeTimeMatcher = Pattern.compile("^((-|\\+)(\\d*[A-Za-z]+))?(@[A-Za-z]+(-|\\+)?[\\dA-Za-z]*)?").matcher(timestamp);
+        Matcher relativeTimeMatcher = Pattern
+                .compile("^((-|\\+)(\\d*[A-Za-z]+))?(@[A-Za-z]+(-|\\+)?[\\dA-Za-z]*)?")
+                .matcher(timestamp);
 
         // no match and isn't keyword "now" -> assume it is a normal timestamp and use unixEpochFromString()
         if (!relativeTimeMatcher.matches() && !timestamp.equalsIgnoreCase("now")) {
@@ -120,7 +116,8 @@ public class RelativeTimeParser {
 
             offset = parseRelativeOffset(offsetTimestamp);
             snap = parseSnapToTime(snapTimestamp);
-        } else {
+        }
+        else {
             // only offset present, or incorrect timestamp
             offset = parseRelativeOffset(timestamp);
         }
@@ -199,7 +196,8 @@ public class RelativeTimeParser {
         if (relativeOffset == null) {
             // snap without offset
             snapToTime = new SnapToTime(snapUnit);
-        } else {
+        }
+        else {
             // with offset
             snapToTime = new SnapToTime(snapUnit, relativeOffset);
         }

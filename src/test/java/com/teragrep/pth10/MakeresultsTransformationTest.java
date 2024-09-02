@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -60,11 +60,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author eemhu
- *
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MakeresultsTransformationTest {
+
     private StreamingTestUtil streamingTestUtil;
+
     @org.junit.jupiter.api.BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
@@ -81,87 +82,81 @@ public class MakeresultsTransformationTest {
         this.streamingTestUtil.tearDown();
     }
 
-
     // ----------------------------------------
     // Tests
     // ----------------------------------------
 
-
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void makeresults_BasicQuery_Test() {
-        this.streamingTestUtil.performDPLTest(
-            "| makeresults", "",
-            ds -> {
-                assertEquals(new StructType(new StructField[]{
+        this.streamingTestUtil.performDPLTest("| makeresults", "", ds -> {
+            assertEquals(new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build())
-                }), ds.schema());
-                assertEquals(1, ds.count());
-            }
-        );
+            }), ds.schema());
+            assertEquals(1, ds.count());
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void makeresults_Annotate_Test() {
-        this.streamingTestUtil.performDPLTest(
-            "| makeresults annotate=true", "",
-            ds -> {
-                assertEquals(new StructType(
-                    new StructField[] {
-                        new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                        new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                        new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                        new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
-                        new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-                        new StructField("struck_server", DataTypes.StringType, true, new MetadataBuilder().build()),
-                        new StructField("struck_server_group", DataTypes.StringType, true, new MetadataBuilder().build())
-                    }
-                ),ds.schema());
-                assertEquals(1, ds.count());
+        this.streamingTestUtil.performDPLTest("| makeresults annotate=true", "", ds -> {
+            assertEquals(new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("struck_server", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("struck_server_group", DataTypes.StringType, true, new MetadataBuilder().build())
+            }), ds.schema());
+            assertEquals(1, ds.count());
 
-                // get all rows except '_time'
-                List<Row> rows = ds.drop("_time").collectAsList();
-                assertEquals(1, rows.size());
-                // assert all of them to be null
-                rows.forEach(row -> {
-                    assertEquals(6, row.length());
-                    for (int i = 0; i < row.length(); i++) {
-                        assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
-                    }
-                });
-            }
-        );
+            // get all rows except '_time'
+            List<Row> rows = ds.drop("_time").collectAsList();
+            assertEquals(1, rows.size());
+            // assert all of them to be null
+            rows.forEach(row -> {
+                assertEquals(6, row.length());
+                for (int i = 0; i < row.length(); i++) {
+                    assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
+                }
+            });
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void makeresults_Count100_Test() {
-        this.streamingTestUtil.performDPLTest(
-            "| makeresults count=100","",
-            ds -> {
-                assertEquals(new StructType(
-                    new StructField[] {
-                        new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    }
-                ), ds.schema());
-                assertEquals(100, ds.count());
-            }
-        );
+        this.streamingTestUtil.performDPLTest("| makeresults count=100", "", ds -> {
+            assertEquals(new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            }), ds.schema());
+            assertEquals(100, ds.count());
+        });
     }
 
     @Test
-	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void makeresults_WithEval_Test()  {
-        this.streamingTestUtil.performDPLTest(
-            "| makeresults | eval a = 1", "",
-            ds -> {
-                assertEquals(new StructType(new StructField[]{
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void makeresults_WithEval_Test() {
+        this.streamingTestUtil.performDPLTest("| makeresults | eval a = 1", "", ds -> {
+            assertEquals(new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, false, new MetadataBuilder().build())
-                }), ds.schema());
-                assertEquals(1, ds.count());
-            }
-        );
+            }), ds.schema());
+            assertEquals(1, ds.count());
+        });
     }
 }

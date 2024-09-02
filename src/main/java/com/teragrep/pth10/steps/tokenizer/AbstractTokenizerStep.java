@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,12 +43,12 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.tokenizer;
 
 import com.teragrep.pth10.steps.AbstractStep;
 
 public abstract class AbstractTokenizerStep extends AbstractStep {
+
     public enum TokenizerFormat {
         STRING, BYTES
     }
@@ -57,12 +57,14 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
     protected String outputCol = "tokens";
 
     protected TokenizerFormat tokenizerFormat = TokenizerFormat.STRING;
+
     public AbstractTokenizerStep() {
         super();
     }
 
     /**
      * Sets the field for the tokenizer to run on
+     * 
      * @param inputCol field name, defaults to '_raw'
      */
     public void setInputCol(String inputCol) {
@@ -71,6 +73,7 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
 
     /**
      * Set Tokenizer output column
+     * 
      * @param outputCol output column
      */
     public void setOutputCol(String outputCol) {
@@ -79,6 +82,7 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
 
     /**
      * Set whether to return byte array or string
+     * 
      * @param tokenizerFormat format enum; string or bytes
      */
     public void setTokenizerFormat(TokenizerFormat tokenizerFormat) {
@@ -87,6 +91,7 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
 
     /**
      * Gets the field set for the tokenizer
+     * 
      * @return field name used in the tokenizer, default '_raw'
      */
     public String getInputCol() {
@@ -95,6 +100,7 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
 
     /**
      * Get tokenizer output column
+     * 
      * @return output column
      */
     public String getOutputCol() {
@@ -103,6 +109,7 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
 
     /**
      * Get Tokenizer return type; bytes or string
+     * 
      * @return bytes or string enum
      */
     public TokenizerFormat getTokenizerFormat() {
