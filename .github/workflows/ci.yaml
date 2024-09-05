@@ -25,6 +25,9 @@ jobs:
           path: ~/.m2/repository
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
 
+      - name: Install test dependencies
+        run: cd / && sudo apt-get update && sudo apt-get install wget rpm2cpio && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-city-20180605-1.el8.noarch.rpm && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-country-20180605-1.el8.noarch.rpm && rpm2cpio geolite2-city-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories && rpm2cpio geolite2-country-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories
+
       - name: Compile Test and Verify
         run: mvn --batch-mode clean verify
 
