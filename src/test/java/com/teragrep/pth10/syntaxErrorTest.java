@@ -51,8 +51,8 @@ import org.junit.jupiter.api.Test;
 
 public class syntaxErrorTest {
 
-    @Disabled(value = "Should be converted to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    @Disabled(value = "move to PTH-03 tests")
+    @Test // disabled on 2022-05-16
     public void syntaxTest() {
         String e;
         final String q;
@@ -63,8 +63,8 @@ public class syntaxErrorTest {
         throw new UnsupportedOperationException("Implement");
     }
 
-    @Disabled(value = "Should be converted to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    @Disabled(value = "move to PTH-03 tests")
+    @Test // disabled on 2022-05-16
     public void syntax1Test() {
         String e;
         final String q;
@@ -80,7 +80,7 @@ public class syntaxErrorTest {
     /**
      * Now input is valid and test\"localhost is just plain string
      */
-    @Disabled(value = "Should be converted to a dataframe test")
+    @Disabled(value = "move to PTH-03 tests")
     @Test
     public void syntax2Test() {
         String e;
@@ -93,8 +93,8 @@ public class syntaxErrorTest {
 
     }
 
-    @Disabled(value = "Should be converted to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    @Disabled(value = "move to PTH-03 tests")
+    @Test // disabled on 2022-05-16
     public void syntaxError3Test() {
         String e;
         final String q;
@@ -106,8 +106,8 @@ public class syntaxErrorTest {
 
     }
 
-    @Disabled(value = "Should be converted to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
+    @Disabled(value = "move to PTH-03 tests")
+    @Test // disabled on 2022-05-16
     public void syntax4Test() {
         String q, e;
         // missing parameter in IF-clause

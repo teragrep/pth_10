@@ -45,15 +45,20 @@
  */
 package com.teragrep.pth10;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class fieldTransformationTest {
@@ -64,31 +69,25 @@ public class fieldTransformationTest {
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
     private StreamingTestUtil streamingTestUtil;
 
-    @BeforeAll
+    @org.junit.jupiter.api.BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @BeforeEach
+    @org.junit.jupiter.api.BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @AfterEach
+    @org.junit.jupiter.api.AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
 
-    @Disabled(value = "Should be converted to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
-    public void parseFieldsTransformTest() {
-        String q = "index=cinnamon | fields meta.*";
-        String e = "SELECT meta.* FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" )";
-        String result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
-    }
+    // ----------------------------------------
+    // Tests
+    // ----------------------------------------
 
     @Test
     @DisabledIfSystemProperty(
@@ -113,12 +112,12 @@ public class fieldTransformationTest {
                     .collect(Collectors.toList());
             Collections.sort(expectedValues);
 
-            Assertions.assertEquals(5, dsAsList.size());
+            assertEquals(5, dsAsList.size());
             for (int i = 0; i < expectedValues.size(); i++) {
-                Assertions.assertEquals(expectedValues.get(i), dsAsList.get(i));
+                assertEquals(expectedValues.get(i), dsAsList.get(i));
             }
 
-            Assertions.assertEquals("[_time: string]", ds.toString());
+            assertEquals("[_time: string]", ds.toString());
         });
     }
 
@@ -130,14 +129,11 @@ public class fieldTransformationTest {
     void parseFieldsTransformCat2Test() {
         String q = "index=index_B | fields _time host";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Assertions.assertEquals(5, res.count());
-            Assertions.assertEquals("[_time: string, host: string]", res.toString());
+            assertEquals(5, res.count());
+            assertEquals("[_time: string, host: string]", res.toString());
         });
     }
 
-    /*
-      _raw, _time, host, index, offset, partition, source, sourcetype
-     */
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
@@ -145,14 +141,13 @@ public class fieldTransformationTest {
     )
     void parseFieldsTransformCatDropTest() {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host", this.testFile, res -> {
-            Assertions.assertEquals(5, res.count());
             // check that we drop only host-column
             String schema = res.schema().toString();
-            Assertions
-                    .assertEquals(
-                            "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
-                            schema
-                    );
+            assertEquals(5, res.count());
+            assertEquals(
+                    "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
+                    schema
+            );
         });
     }
 
@@ -163,59 +158,55 @@ public class fieldTransformationTest {
     )
     void parseFieldsTransformCatDropSeveralTest() {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host index partition", this.testFile, res -> {
-            Assertions.assertEquals(5, res.count());
             String schema = res.schema().toString();
-            Assertions
-                    .assertEquals(
-                            "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
-                            schema
-                    );
+            assertEquals(5, res.count());
+            assertEquals(
+                    "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
+                    schema
+            );
         });
     }
 
-    @Disabled(value = "Should be converteed to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
-    public void parseFieldsTransform1Test() {
-        String q, e, result;
-        q = "index=cinnamon Denied | fields meta.*,_raw";
-        e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' )";
-        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void fieldsWithPlusTest() {
+        String query = "index = index_B | fields + offset";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            assertEquals(5, ds.count());
+            assertEquals("[offset: bigint]", ds.toString()); //check schema is correct
+        });
+
     }
 
-    @Disabled(value = "Should be converteed to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
-    public void parseFieldsTransform2Test() {
-        String q, e, result;
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void fieldsWithMultiplePlusTest() {
+        String query = "index = index_B | fields + offset, source, host";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            assertEquals(5, ds.count());
+            assertEquals("[offset, source, host]", Arrays.toString(ds.columns())); //check schema is correct
+        });
 
-        q = "index=cinnamon Denied Port | fields meta.*,_raw";
-        e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
     }
 
-    @Disabled(value = "Should be converteed to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
-    public void parseFieldsTransformAddTest() {
-        String q, e, result;
+    @Test
+    @Disabled(value = "wildcard functionality not implemented, pth-10 issue #275")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void fieldsWithWildcardTest() {
+        String query = "index = index_B | fields - _*"; // remove internal fields
+        this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            assertEquals(5, ds.count());
+            assertEquals("[index, sourcetype, source, host, partition, offset]", Arrays.toString(ds.columns())); //check schema is correct
+        });
 
-        q = "index=cinnamon Denied Port | fields + meta.*,_raw";
-        e = "SELECT meta.*,_raw FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled(value = "Should be converteed to a dataframe test")
-    @Test // disabled on 2022-05-16 TODO convert to dataframe test
-    public void parseFieldsTransformDropTest() {
-        String q, e, result;
-        q = "index=cinnamon Denied Port | fields - meta.*, _raw";
-        e = "SELECT DROPFIELDS(meta.*,_raw) FROM ( SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _raw LIKE '%Denied%' AND _raw LIKE '%Port%' )";
-        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
     }
 }
