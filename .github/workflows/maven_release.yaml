@@ -46,16 +46,3 @@ jobs:
           CENTRAL_SONATYPE_ORG_USERNAME: ${{ secrets.CENTRAL_SONATYPE_ORG_USERNAME }}
           CENTRAL_SONATYPE_ORG_PASSWORD: ${{ secrets.CENTRAL_SONATYPE_ORG_PASSWORD }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
-
-      - name: Setup GitHub Packages
-        uses: actions/setup-java@v2
-        with:
-          java-version: 8.0.292+10
-          distribution: 'adopt'
-          gpg-passphrase: MAVEN_GPG_PASSPHRASE
-
-      - name: Publish to GitHub Packages
-        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean deploy -Ppublish-github-packages
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
