@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
@@ -67,7 +66,11 @@ public class BloomFilterForeachPartitionFunction implements ForeachPartitionFunc
         this(new FilterTypes(config), new LazyConnection(config), overwrite);
     }
 
-    public BloomFilterForeachPartitionFunction(FilterTypes filterTypes, LazyConnection lazyConnection, boolean overwrite) {
+    public BloomFilterForeachPartitionFunction(
+            FilterTypes filterTypes,
+            LazyConnection lazyConnection,
+            boolean overwrite
+    ) {
         this.filterTypes = filterTypes;
         this.lazyConnection = lazyConnection;
         this.overwrite = overwrite;
@@ -80,8 +83,7 @@ public class BloomFilterForeachPartitionFunction implements ForeachPartitionFunc
             final Row row = iter.next(); // Row[partitionID, filterBytes]
             final String partition = row.getString(0);
             final byte[] filterBytes = (byte[]) row.get(1);
-            final TeragrepBloomFilter filter =
-                    new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
+            final TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
             filter.saveFilter(overwrite);
             conn.commit();
         }

@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
@@ -69,12 +68,9 @@ import java.util.SortedMap;
  * teragrep exec bloom
  */
 public class TeragrepBloomStep extends AbstractStep {
+
     public enum BloomMode {
-        UPDATE,
-        CREATE,
-        ESTIMATE,
-        AGGREGATE,
-        DEFAULT
+        UPDATE, CREATE, ESTIMATE, AGGREGATE, DEFAULT
     }
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepBloomStep.class);
@@ -93,8 +89,13 @@ public class TeragrepBloomStep extends AbstractStep {
     public final static String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
     public final static String BLOOM_TABLE_NAME_ITEM = "dpl.pth_06.bloom.table.name";
 
-    public TeragrepBloomStep(Config zeppelinConfig, BloomMode mode,
-                             String inputCol, String outputCol, String estimateCol) {
+    public TeragrepBloomStep(
+            Config zeppelinConfig,
+            BloomMode mode,
+            String inputCol,
+            String outputCol,
+            String estimateCol
+    ) {
         this.zeppelinConfig = zeppelinConfig;
         this.mode = mode;
         this.inputCol = inputCol;
@@ -124,9 +125,10 @@ public class TeragrepBloomStep extends AbstractStep {
                 rv = aggregate(dataset);
                 break;
             default:
-                throw new UnsupportedOperationException("Selected bloom command is not supported. " +
-                        "Supported commands: exec bloom create, exec bloom update, exec bloom estimate," +
-                        ".");
+                throw new UnsupportedOperationException(
+                        "Selected bloom command is not supported. "
+                                + "Supported commands: exec bloom create, exec bloom update, exec bloom estimate," + "."
+                );
         }
 
         return rv;
@@ -161,28 +163,19 @@ public class TeragrepBloomStep extends AbstractStep {
     }
 
     private Dataset<Row> estimateSize(Dataset<Row> dataset) {
-        return dataset.select(
-                        functions.col("partition"),
-                        functions.explode(
-                                functions.col(inputCol)
-                        ).as("token")
-                )
+        return dataset
+                .select(functions.col("partition"), functions.explode(functions.col(inputCol)).as("token"))
                 .groupBy("partition")
-                .agg(
-                        functions.approxCountDistinct("token")
-                                .as(outputCol)
-                );
+                .agg(functions.approxCountDistinct("token").as(outputCol));
     }
 
     public Dataset<Row> aggregate(Dataset<Row> dataset) {
 
         FilterTypes filterTypes = new FilterTypes(this.zeppelinConfig);
 
-        BloomFilterAggregator agg =
-                new BloomFilterAggregator(inputCol, estimateCol, filterTypes.sortedMap());
+        BloomFilterAggregator agg = new BloomFilterAggregator(inputCol, estimateCol, filterTypes.sortedMap());
 
-        return dataset.groupBy("partition")
-                .agg(agg.toColumn().as("bloomfilter"));
+        return dataset.groupBy("partition").agg(agg.toColumn().as("bloomfilter"));
 
     }
 
@@ -193,8 +186,11 @@ public class TeragrepBloomStep extends AbstractStep {
         final String pattern = filterTypes.pattern();
         for (final Map.Entry<Long, Double> entry : filterSizeMap.entrySet()) {
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Writing filtertype (expected <[{}]>, fpp: <[{}]>, pattern: <[{}]>)",
-                        entry.getKey(), entry.getValue(), pattern);
+                LOGGER
+                        .info(
+                                "Writing filtertype (expected <[{}]>, fpp: <[{}]>, pattern: <[{}]>)", entry.getKey(),
+                                entry.getValue(), pattern
+                        );
             }
             final String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`, `pattern`) VALUES (?, ?, ?)";
             try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
@@ -204,9 +200,14 @@ public class TeragrepBloomStep extends AbstractStep {
                 stmt.executeUpdate();
                 stmt.clearParameters();
                 connection.commit();
-            } catch (SQLException e) {
+            }
+            catch (SQLException e) {
                 if (LOGGER.isErrorEnabled()) {
-                    LOGGER.error("Error writing filter[expected: <{}>, fpp: <{}>, pattern: <{}>] into database", entry.getKey(), entry.getValue(), pattern);
+                    LOGGER
+                            .error(
+                                    "Error writing filter[expected: <{}>, fpp: <{}>, pattern: <{}>] into database",
+                                    entry.getKey(), entry.getValue(), pattern
+                            );
                 }
                 throw new RuntimeException(e);
             }

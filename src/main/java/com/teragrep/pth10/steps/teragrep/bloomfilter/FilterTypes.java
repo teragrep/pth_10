@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.google.gson.Gson;
@@ -60,6 +59,7 @@ import java.util.*;
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.*;
 
 public class FilterTypes implements Serializable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterTypes.class);
 
     private final Config config;
@@ -79,8 +79,7 @@ public class FilterTypes implements Serializable {
     /**
      * Filter sizes as sorted map
      * <p>
-     * Keys = filter expected num of items,
-     * values = filter FPP
+     * Keys = filter expected num of items, values = filter FPP
      *
      * @return SortedMap of filter configuration
      */
@@ -109,11 +108,8 @@ public class FilterTypes implements Serializable {
     private SortedMap<Long, Double> sizeMap() {
         final SortedMap<Long, Double> sizesMapFromJson = new TreeMap<>();
         final Gson gson = new Gson();
-        final List<JsonObject> jsonArray = gson.fromJson(
-                sizesJsonString(),
-                new TypeToken<List<JsonObject>>() {
-                }.getType()
-        );
+        final List<JsonObject> jsonArray = gson.fromJson(sizesJsonString(), new TypeToken<List<JsonObject>>() {
+        }.getType());
         for (final JsonObject object : jsonArray) {
             if (object.has("expected") && object.has("fpp")) {
                 final Long expectedNumOfItems = Long.parseLong(object.get("expected").toString());
@@ -123,7 +119,8 @@ public class FilterTypes implements Serializable {
                     throw new RuntimeException("Duplicate entry expected num of items");
                 }
                 sizesMapFromJson.put(expectedNumOfItems, fpp);
-            } else {
+            }
+            else {
                 throw new RuntimeException("JSON did not have expected values of 'expected' or 'fpp'");
             }
         }
@@ -138,7 +135,8 @@ public class FilterTypes implements Serializable {
                 throw new RuntimeException("Bloom filter pattern was not configured.");
             }
             pattern = patternFromConfig.trim();
-        } else {
+        }
+        else {
             throw new RuntimeException("Missing configuration item: '" + BLOOM_PATTERN_CONFIG_ITEM + "'.");
         }
         return pattern;
@@ -152,7 +150,8 @@ public class FilterTypes implements Serializable {
                 throw new RuntimeException("Bloom filter table name was not configured.");
             }
             tableName = tableNameFromConfig.replaceAll("\\s", "").trim();
-        } else {
+        }
+        else {
             throw new RuntimeException("Missing configuration item: '" + BLOOM_TABLE_NAME_ITEM + "'.");
         }
 
@@ -166,7 +165,8 @@ public class FilterTypes implements Serializable {
             if (jsonString == null || jsonString.isEmpty()) {
                 throw new RuntimeException("Bloom filter size fields was not configured.");
             }
-        } else {
+        }
+        else {
             throw new RuntimeException("Missing configuration item: '" + BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM + "'.");
         }
         return jsonString;

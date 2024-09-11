@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023, 2024  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
@@ -58,6 +57,7 @@ import java.util.Properties;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BloomFilterTableTest {
+
     Properties properties;
 
     @BeforeAll
@@ -95,7 +95,10 @@ class BloomFilterTableTest {
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable injectionTable = new BloomFilterTable(config, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, injectionTable::create);
-        Assertions.assertEquals(e.getMessage(), "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _");
+        Assertions
+                .assertEquals(
+                        e.getMessage(), "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _"
+                );
     }
 
     @Test
@@ -105,7 +108,11 @@ class BloomFilterTableTest {
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable table = new BloomFilterTable(config, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
-        Assertions.assertEquals(e.getMessage(), "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters");
+        Assertions
+                .assertEquals(
+                        e.getMessage(),
+                        "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters"
+                );
     }
 
     @Test
@@ -117,8 +124,7 @@ class BloomFilterTableTest {
         table.create();
         String sql = "SHOW COLUMNS FROM " + tableName + ";";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = new LazyConnection(config).get().prepareStatement(sql)
-                    .executeQuery();
+            ResultSet rs = new LazyConnection(config).get().prepareStatement(sql).executeQuery();
             int cols = 0;
             List<String> columnList = new ArrayList<>(4);
             while (rs.next()) {
