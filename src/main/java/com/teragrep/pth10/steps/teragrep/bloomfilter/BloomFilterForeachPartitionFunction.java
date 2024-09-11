@@ -48,7 +48,9 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 import com.typesafe.config.Config;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Row;
+import org.apache.spark.util.sketch.BloomFilter;
 
+import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.util.Iterator;
 
@@ -83,9 +85,11 @@ public class BloomFilterForeachPartitionFunction implements ForeachPartitionFunc
             final Row row = iter.next(); // Row[partitionID, filterBytes]
             final String partition = row.getString(0);
             final byte[] filterBytes = (byte[]) row.get(1);
-            final TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
-            filter.saveFilter(overwrite);
+            final BloomFilter filter = BloomFilter.readFrom(new ByteArrayInputStream(filterBytes));
+            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filter, conn, filterTypes);
+            tgFilter.saveFilter(overwrite);
             conn.commit();
+
         }
     }
 }

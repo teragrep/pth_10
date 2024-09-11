@@ -112,4 +112,40 @@ class FilterTypesTest {
         FilterTypes filterTypes = new FilterTypes(config);
         assertEquals("testTable", filterTypes.tableName());
     }
+
+    @Test
+    public void testEquals() {
+        Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.table.name", "test");
+        properties.put("dpl.pth_06.bloom.pattern", "pattern");
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.01},"
+                                + "{expected: 3000, fpp: 0.01}" + "]"
+                );
+        Config config = ConfigFactory.parseProperties(properties);
+        FilterTypes filterTypes1 = new FilterTypes(config);
+        FilterTypes filterTypes2 = new FilterTypes(config);
+        filterTypes1.sortedMap();
+        filterTypes1.pattern();
+        filterTypes1.tableName();
+        filterTypes1.bitSizeMap();
+        assertEquals(filterTypes1, filterTypes2);
+        assertEquals(filterTypes2, filterTypes1);
+    }
+
+    @Test
+    public void testNotEquals() {
+        Properties properties1 = new Properties();
+        properties1.put("dpl.pth_06.bloom.table.name", "test");
+        Properties properties2 = new Properties();
+        properties2.put("dpl.pth_06.bloom.table.name", "not_test");
+        Config config1 = ConfigFactory.parseProperties(properties1);
+        Config config2 = ConfigFactory.parseProperties(properties2);
+        FilterTypes filterTypes1 = new FilterTypes(config1);
+        FilterTypes filterTypes2 = new FilterTypes(config2);
+        assertNotEquals(filterTypes1, filterTypes2);
+        assertNotEquals(filterTypes2, filterTypes1);
+    }
 }
