@@ -63,17 +63,9 @@ public class FilterTypes implements Serializable {
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterTypes.class);
 
     private final Config config;
-    private final List<SortedMap<Long, Double>> mapCache;
-    private final List<Map<Long, Long>> bitSizeMapCache;
 
     public FilterTypes(Config config) {
-        this(config, new ArrayList<>(), new ArrayList<>());
-    }
-
-    public FilterTypes(Config config, List<SortedMap<Long, Double>> mapCahce, List<Map<Long, Long>> bitSizeMapCache) {
         this.config = config;
-        this.mapCache = mapCahce;
-        this.bitSizeMapCache = bitSizeMapCache;
     }
 
     /**
@@ -84,28 +76,6 @@ public class FilterTypes implements Serializable {
      * @return SortedMap of filter configuration
      */
     public SortedMap<Long, Double> sortedMap() {
-        if (mapCache.isEmpty()) {
-            final SortedMap<Long, Double> resultMap = sizeMap();
-            mapCache.add(resultMap);
-        }
-        return mapCache.get(0);
-    }
-
-    public Map<Long, Long> bitSizeMap() {
-        if (bitSizeMapCache.isEmpty()) {
-            final Map<Long, Double> filterSizes = sortedMap();
-            final Map<Long, Long> bitsizeToExpectedItemsMap = new HashMap<>();
-            // Calculate bitSizes
-            for (final Map.Entry<Long, Double> entry : filterSizes.entrySet()) {
-                final BloomFilter bf = BloomFilter.create(entry.getKey(), entry.getValue());
-                bitsizeToExpectedItemsMap.put(bf.bitSize(), entry.getKey());
-            }
-            bitSizeMapCache.add(bitsizeToExpectedItemsMap);
-        }
-        return bitSizeMapCache.get(0);
-    }
-
-    private SortedMap<Long, Double> sizeMap() {
         final SortedMap<Long, Double> sizesMapFromJson = new TreeMap<>();
         final Gson gson = new Gson();
         final List<JsonObject> jsonArray = gson.fromJson(sizesJsonString(), new TypeToken<List<JsonObject>>() {
@@ -125,6 +95,17 @@ public class FilterTypes implements Serializable {
             }
         }
         return sizesMapFromJson;
+    }
+
+    public Map<Long, Long> bitSizeMap() {
+        final Map<Long, Double> filterSizes = sortedMap();
+        final Map<Long, Long> bitsizeToExpectedItemsMap = new HashMap<>();
+        // Calculate bitSizes
+        for (final Map.Entry<Long, Double> entry : filterSizes.entrySet()) {
+            final BloomFilter bf = BloomFilter.create(entry.getKey(), entry.getValue());
+            bitsizeToExpectedItemsMap.put(bf.bitSize(), entry.getKey());
+        }
+        return bitsizeToExpectedItemsMap;
     }
 
     public String pattern() {
@@ -170,5 +151,17 @@ public class FilterTypes implements Serializable {
             throw new RuntimeException("Missing configuration item: '" + BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM + "'.");
         }
         return jsonString;
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object)
+            return true;
+        if (object == null)
+            return false;
+        if (object.getClass() != this.getClass())
+            return false;
+        final FilterTypes cast = (FilterTypes) object;
+        return config.equals(cast.config);
     }
 }

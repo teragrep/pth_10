@@ -58,18 +58,13 @@ import java.util.Properties;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class BloomFilterTableTest {
 
-    Properties properties;
+    final String username = "sa";
+    final String password = "";
+    final String connectionUrl = "jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
 
     @BeforeAll
     void setEnv() {
-        String username = "sa";
-        String password = "";
-        String connectionUrl = "jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
-        this.properties = new Properties();
-        properties.put("dpl.pth_10.bloom.db.username", username);
-        properties.put("dpl.pth_10.bloom.db.password", password);
-        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
-        Config config = ConfigFactory.parseProperties(properties);
+        Config config = ConfigFactory.parseProperties(getDefaultProperties());
         Connection connection = new LazyConnection(config).get();
         Assertions.assertDoesNotThrow(() -> {
             connection.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
@@ -82,7 +77,7 @@ class BloomFilterTableTest {
     @AfterAll
     void tearDown() {
         Assertions.assertDoesNotThrow(() -> {
-            Config config = ConfigFactory.parseProperties(properties);
+            Config config = ConfigFactory.parseProperties(getDefaultProperties());
             Connection connection = new LazyConnection(config).get();
             connection.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
         });
@@ -90,6 +85,7 @@ class BloomFilterTableTest {
 
     @Test
     void testInvalidInputCharacters() {
+        Properties properties = getDefaultProperties();
         String injection = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
         properties.put("dpl.pth_06.bloom.table.name", injection);
         Config config = ConfigFactory.parseProperties(properties);
@@ -103,6 +99,7 @@ class BloomFilterTableTest {
 
     @Test
     void testInputOverMaxLimit() {
+        Properties properties = getDefaultProperties();
         String tooLongName = "testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati";
         properties.put("dpl.pth_06.bloom.table.name", tooLongName);
         Config config = ConfigFactory.parseProperties(properties);
@@ -116,7 +113,8 @@ class BloomFilterTableTest {
     }
 
     @Test
-    void testCreate() {
+    void testCreateToDatabase() {
+        Properties properties = getDefaultProperties();
         String tableName = "test_table";
         properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
@@ -141,11 +139,61 @@ class BloomFilterTableTest {
     }
 
     @Test
-    void testCreateFailure() {
+    void testCreateToDatabaseFailure() {
+        Properties properties = getDefaultProperties();
         String tableName = "test_table";
         properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable table = new BloomFilterTable(config);
         Assertions.assertThrows(RuntimeException.class, table::create);
+    }
+
+    @Test
+    void testEquals() {
+        Properties properties = getDefaultProperties();
+        String tableName = "test_table";
+        properties.put("dpl.pth_06.bloom.table.name", tableName);
+        Config config = ConfigFactory.parseProperties(properties);
+        BloomFilterTable table1 = new BloomFilterTable(config, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, true);
+        table1.create();
+        Assertions.assertEquals(table1, table2);
+        Assertions.assertEquals(table2, table1);
+    }
+
+    @Test
+    void testNotEqualsName() {
+        Properties properties1 = getDefaultProperties();
+        Properties properties2 = getDefaultProperties();
+        properties1.put("dpl.pth_06.bloom.table.name", "test_table");
+        properties2.put("dpl.pth_06.bloom.table.name", "table_test");
+        Config config1 = ConfigFactory.parseProperties(properties1);
+        Config config2 = ConfigFactory.parseProperties(properties2);
+        BloomFilterTable table1 = new BloomFilterTable(config1, true);
+        BloomFilterTable table2 = new BloomFilterTable(config2, true);
+        table1.create();
+        Assertions.assertNotEquals(table1, table2);
+        Assertions.assertNotEquals(table2, table1);
+    }
+
+    @Test
+    void testNotEqualsIgnoreConstraints() {
+        Properties properties = getDefaultProperties();
+        String tableName = "test_table";
+        properties.put("dpl.pth_06.bloom.table.name", tableName);
+        Config config = ConfigFactory.parseProperties(properties);
+        BloomFilterTable table1 = new BloomFilterTable(config, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, false);
+        table1.create();
+        Assertions.assertNotEquals(table1, table2);
+        Assertions.assertNotEquals(table2, table1);
+    }
+
+    private Properties getDefaultProperties() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_10.bloom.db.username", username);
+        properties.put("dpl.pth_10.bloom.db.password", password);
+        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
+        return properties;
     }
 }

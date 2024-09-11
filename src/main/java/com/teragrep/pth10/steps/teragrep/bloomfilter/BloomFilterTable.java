@@ -77,7 +77,7 @@ public final class BloomFilterTable {
         final String name = new FilterTypes(config).tableName();
         final String sql = createTableSQL(name);
         final Connection connection = new LazyConnection(config).get();
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.execute();
             connection.commit();
             LOGGER.info("Created a bloom filter table name <[{}]>", name);
@@ -88,7 +88,7 @@ public final class BloomFilterTable {
         }
     }
 
-    private String createTableSQL(String name) {
+    private String createTableSQL(final String name) {
         final Pattern pattern = Pattern.compile("^[A-Za-z0-9_]+$");
         if (!pattern.matcher(name).find()) {
             throw new RuntimeException("dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _");
@@ -98,16 +98,32 @@ public final class BloomFilterTable {
                     "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters"
             );
         }
-        return ignoreConstraints ? "CREATE TABLE IF NOT EXISTS `" + name + "`("
+
+        if (ignoreConstraints) {
+            return "CREATE TABLE IF NOT EXISTS `" + name + "`("
+                    + "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
+                    + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
+                    + "`filter` LONGBLOB NOT NULL);";
+        }
+        return "CREATE TABLE IF NOT EXISTS `" + name + "`("
                 + "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
                 + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
-                + "`filter` LONGBLOB NOT NULL);" : "CREATE TABLE IF NOT EXISTS `" + name + "`("
-                        + "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
-                        + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,"
-                        + "`filter_type_id` BIGINT UNSIGNED NOT NULL," + "`filter` LONGBLOB NOT NULL," + "CONSTRAINT `"
-                        + name + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)"
-                        + "ON DELETE CASCADE," + "CONSTRAINT `" + name
-                        + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)" + "ON DELETE CASCADE"
-                        + ");";
+                + "`filter` LONGBLOB NOT NULL," + "CONSTRAINT `" + name
+                + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)" + "ON DELETE CASCADE,"
+                + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)"
+                + "ON DELETE CASCADE" + ");";
+
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object)
+            return true;
+        if (object == null)
+            return false;
+        if (object.getClass() != this.getClass())
+            return false;
+        final BloomFilterTable cast = (BloomFilterTable) object;
+        return config.equals(cast.config) && this.ignoreConstraints == cast.ignoreConstraints;
     }
 }

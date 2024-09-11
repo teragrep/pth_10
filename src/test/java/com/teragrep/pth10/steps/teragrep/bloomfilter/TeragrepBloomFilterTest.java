@@ -143,7 +143,9 @@ class TeragrepBloomFilterTest {
         Row row = generatedRow(sizeMap, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
-        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterTypes);
+        BloomFilter rawFilter = Assertions
+                .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
         filter.saveFilter(false);
         Map.Entry<Long, Double> entry = sizeMap.entrySet().iterator().next();
         String sql = "SELECT `filter` FROM `" + tableName + "`";
@@ -171,7 +173,9 @@ class TeragrepBloomFilterTest {
         Row row = generatedRow(sizeMap, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
-        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterTypes);
+        BloomFilter rawFilter = Assertions
+                .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
         filter.saveFilter(true);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
@@ -195,9 +199,11 @@ class TeragrepBloomFilterTest {
         Row secondRow = generatedRow(sizeMap, secondTokens);
         String secondPartition = secondRow.getString(0);
         byte[] secondFilterBytes = (byte[]) secondRow.get(1);
+        BloomFilter rawFilter2 = Assertions
+                .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(secondFilterBytes)));
         TeragrepBloomFilter secondFilter = new TeragrepBloomFilter(
                 secondPartition,
-                secondFilterBytes,
+                rawFilter2,
                 lazyConnection.get(),
                 filterTypes
         );
@@ -232,7 +238,9 @@ class TeragrepBloomFilterTest {
         Row row = generatedRow(sizeMap, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
-        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, lazyConnection.get(), filterTypes);
+        BloomFilter rawFilter = Assertions
+                .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
         filter.saveFilter(false);
         long size = Long.MAX_VALUE;
         for (long key : sizeMap.keySet()) {
@@ -274,6 +282,47 @@ class TeragrepBloomFilterTest {
             }
             Assertions.assertEquals(this.pattern, pattern);
         });
+    }
+
+    @Test
+    public void testEquals() {
+        List<String> tokens = new ArrayList<>(Collections.singletonList("one"));
+        Row row = generatedRow(sizeMap, tokens);
+        String partition = row.getString(0);
+        byte[] filterBytes = (byte[]) row.get(1);
+        BloomFilter rawFilter = Assertions
+                .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
+        TeragrepBloomFilter filter1 = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
+        TeragrepBloomFilter filter2 = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
+        filter1.saveFilter(false);
+        Assertions.assertEquals(filter1, filter2);
+        Assertions.assertEquals(filter2, filter1);
+    }
+
+    @Test
+    public void testNotEqualsTokens() {
+        List<String> tokens1 = new ArrayList<>(Collections.singletonList("one"));
+        List<String> tokens2 = new ArrayList<>(Collections.singletonList("two"));
+        Row row1 = generatedRow(sizeMap, tokens1);
+        Row row2 = generatedRow(sizeMap, tokens2);
+        BloomFilter rawFilter1 = Assertions
+                .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream((byte[]) row1.get(1))));
+        BloomFilter rawFilter2 = Assertions
+                .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream((byte[]) row2.get(1))));
+        TeragrepBloomFilter filter1 = new TeragrepBloomFilter(
+                row1.getString(0),
+                rawFilter1,
+                lazyConnection.get(),
+                filterTypes
+        );
+        TeragrepBloomFilter filter2 = new TeragrepBloomFilter(
+                row2.getString(0),
+                rawFilter2,
+                lazyConnection.get(),
+                filterTypes
+        );
+        Assertions.assertNotEquals(filter1, filter2);
+        Assertions.assertNotEquals(filter2, filter1);
     }
 
     // -- Helper methods --
