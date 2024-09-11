@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023, 2024  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
@@ -56,6 +55,7 @@ import java.sql.SQLException;
 import java.util.regex.Pattern;
 
 public final class BloomFilterTable {
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterTable.class);
     private final Config config;
     private final boolean ignoreConstraints;
@@ -82,7 +82,8 @@ public final class BloomFilterTable {
             connection.commit();
             LOGGER.info("Created a bloom filter table name <[{}]>", name);
             LOGGER.debug("Create table SQL <{}>", sql);
-        } catch (SQLException e) {
+        }
+        catch (SQLException e) {
             throw new RuntimeException("Error creating bloom filter table: " + e);
         }
     }
@@ -93,24 +94,20 @@ public final class BloomFilterTable {
             throw new RuntimeException("dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _");
         }
         if (name.length() > 100) {
-            throw new RuntimeException("dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters");
+            throw new RuntimeException(
+                    "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters"
+            );
         }
-        return ignoreConstraints ?
-                "CREATE TABLE IF NOT EXISTS `" + name + "`(" +
-                        "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY," +
-                        "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," +
-                        "`filter_type_id` BIGINT UNSIGNED NOT NULL," +
-                        "`filter` LONGBLOB NOT NULL);"
-                :
-                "CREATE TABLE IF NOT EXISTS `" + name + "`(" +
-                        "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY," +
-                        "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," +
-                        "`filter_type_id` BIGINT UNSIGNED NOT NULL," +
-                        "`filter` LONGBLOB NOT NULL," +
-                        "CONSTRAINT `" + name + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)" +
-                        "ON DELETE CASCADE," +
-                        "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)" +
-                        "ON DELETE CASCADE" +
-                        ");";
+        return ignoreConstraints ? "CREATE TABLE IF NOT EXISTS `" + name + "`("
+                + "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
+                + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
+                + "`filter` LONGBLOB NOT NULL);" : "CREATE TABLE IF NOT EXISTS `" + name + "`("
+                        + "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
+                        + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,"
+                        + "`filter_type_id` BIGINT UNSIGNED NOT NULL," + "`filter` LONGBLOB NOT NULL," + "CONSTRAINT `"
+                        + name + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)"
+                        + "ON DELETE CASCADE," + "CONSTRAINT `" + name
+                        + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)" + "ON DELETE CASCADE"
+                        + ");";
     }
 }

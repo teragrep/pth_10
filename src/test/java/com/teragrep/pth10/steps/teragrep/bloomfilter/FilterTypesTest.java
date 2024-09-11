@@ -1,6 +1,6 @@
 /*
- * Teragrep DPL to Catalyst Translator PTH-10
- * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
+ * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,7 +43,6 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
@@ -61,11 +60,12 @@ class FilterTypesTest {
     @Test
     public void testSortedMapMethod() {
         Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.db.fields", "[" +
-                "{expected: 1000, fpp: 0.01}," +
-                "{expected: 2000, fpp: 0.01}," +
-                "{expected: 3000, fpp: 0.01}" +
-                "]");
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.01},"
+                                + "{expected: 3000, fpp: 0.01}" + "]"
+                );
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         Map<Long, Double> resultMap = filterTypes.sortedMap();
@@ -78,23 +78,18 @@ class FilterTypesTest {
     @Test
     public void testBitSizeMapMethod() {
         Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.db.fields", "[" +
-                "{expected: 1000, fpp: 0.01}," +
-                "{expected: 2000, fpp: 0.01}," +
-                "{expected: 3000, fpp: 0.01}" +
-                "]");
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.01},"
+                                + "{expected: 3000, fpp: 0.01}" + "]"
+                );
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         Map<Long, Long> bitSizeMap = filterTypes.bitSizeMap();
-        assertEquals(1000L,
-                bitSizeMap.get(BloomFilter.create(1000,0.01).bitSize())
-        );
-        assertEquals(2000L,
-                bitSizeMap.get(BloomFilter.create(2000,0.01).bitSize())
-        );
-        assertEquals(3000L,
-                bitSizeMap.get(BloomFilter.create(3000,0.01).bitSize())
-        );
+        assertEquals(1000L, bitSizeMap.get(BloomFilter.create(1000, 0.01).bitSize()));
+        assertEquals(2000L, bitSizeMap.get(BloomFilter.create(2000, 0.01).bitSize()));
+        assertEquals(3000L, bitSizeMap.get(BloomFilter.create(3000, 0.01).bitSize()));
         assertEquals(3, bitSizeMap.size());
     }
 
