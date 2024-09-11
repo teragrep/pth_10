@@ -1,6 +1,6 @@
 /*
- * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
- * Copyright (C) 2019-2024 Suomen Kanuuna Oy
+ * Teragrep DPL to Catalyst Translator PTH-10
+ * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,6 +43,7 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
+
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
@@ -54,35 +55,33 @@ import java.util.Iterator;
 
 public class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
 
-    private final FilterSizes filterSizes;
+    private final FilterTypes filterTypes;
     private final LazyConnection lazyConnection;
     private final boolean overwrite;
 
+    public BloomFilterForeachPartitionFunction(Config config) {
+        this(new FilterTypes(config), new LazyConnection(config), false);
+    }
+
     public BloomFilterForeachPartitionFunction(Config config, boolean overwrite) {
-        this.filterSizes = new FilterSizes(config);
-        this.lazyConnection = new LazyConnection(config);
+        this(new FilterTypes(config), new LazyConnection(config), overwrite);
+    }
+
+    public BloomFilterForeachPartitionFunction(FilterTypes filterTypes, LazyConnection lazyConnection, boolean overwrite) {
+        this.filterTypes = filterTypes;
+        this.lazyConnection = lazyConnection;
         this.overwrite = overwrite;
     }
 
-    public BloomFilterForeachPartitionFunction(Config config) {
-        this.filterSizes = new FilterSizes(config);
-        this.lazyConnection = new LazyConnection(config);
-        this.overwrite = false;
-    }
-
     @Override
-    public void call(Iterator<Row> iter) throws Exception {
-
-        Connection conn = lazyConnection.get();
-
+    public void call(final Iterator<Row> iter) throws Exception {
+        final Connection conn = lazyConnection.get();
         while (iter.hasNext()) {
-            Row row = iter.next(); // Row[partitionID, filterBytes]
-
-            String partition = row.getString(0);
-            byte[] filterBytes = (byte[]) row.get(1);
-
-            TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, filterBytes, conn, filterSizes);
-
+            final Row row = iter.next(); // Row[partitionID, filterBytes]
+            final String partition = row.getString(0);
+            final byte[] filterBytes = (byte[]) row.get(1);
+            final TeragrepBloomFilter filter =
+                    new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
             filter.saveFilter(overwrite);
             conn.commit();
         }

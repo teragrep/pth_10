@@ -1,6 +1,6 @@
 /*
- * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
- * Copyright (C) 2019-2024 Suomen Kanuuna Oy
+ * Teragrep DPL to Catalyst Translator PTH-10
+ * Copyright (C) 2019, 2020, 2021, 2022, 2023  Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://github.com/teragrep/teragrep/blob/main/LICENSE>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -43,55 +43,62 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
+
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
 import org.apache.spark.util.sketch.BloomFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.sparkproject.guava.reflect.TypeToken;
 
 import java.io.Serializable;
 import java.util.*;
 
-import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM;
+import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.*;
 
-public class FilterSizes implements Serializable {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(FilterSizes.class);
+public class FilterTypes implements Serializable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilterTypes.class);
 
     private final Config config;
-    private final ArrayList<SortedMap<Long, Double>> mapCache = new ArrayList<>(1);
-    private final ArrayList<Map<Long, Long>> bitSizeMapCache = new ArrayList<>(1);
+    private final List<SortedMap<Long, Double>> mapCache;
+    private final List<Map<Long, Long>> bitSizeMapCache;
 
-    public FilterSizes(Config config) {
+    public FilterTypes(Config config) {
+        this(config, new ArrayList<>(), new ArrayList<>());
+    }
+
+    public FilterTypes(Config config, List<SortedMap<Long, Double>> mapCahce, List<Map<Long, Long>> bitSizeMapCache) {
         this.config = config;
+        this.mapCache = mapCahce;
+        this.bitSizeMapCache = bitSizeMapCache;
     }
 
     /**
      * Filter sizes as sorted map
      * <p>
-     * Keys = filter expected num of items, values = filter FPP
-     * 
+     * Keys = filter expected num of items,
+     * values = filter FPP
+     *
      * @return SortedMap of filter configuration
      */
-    public SortedMap<Long, Double> asSortedMap() {
+    public SortedMap<Long, Double> sortedMap() {
         if (mapCache.isEmpty()) {
-            SortedMap<Long, Double> resultMap = mapFromConfig();
+            final SortedMap<Long, Double> resultMap = sizeMap();
             mapCache.add(resultMap);
         }
         return mapCache.get(0);
     }
 
-    public Map<Long, Long> asBitsizeSortedMap() {
+    public Map<Long, Long> bitSizeMap() {
         if (bitSizeMapCache.isEmpty()) {
-            Map<Long, Double> filterSizes = asSortedMap();
-            Map<Long, Long> bitsizeToExpectedItemsMap = new HashMap<>();
+            final Map<Long, Double> filterSizes = sortedMap();
+            final Map<Long, Long> bitsizeToExpectedItemsMap = new HashMap<>();
             // Calculate bitSizes
-            for (Map.Entry<Long, Double> entry : filterSizes.entrySet()) {
-                BloomFilter bf = BloomFilter.create(entry.getKey(), entry.getValue());
+            for (final Map.Entry<Long, Double> entry : filterSizes.entrySet()) {
+                final BloomFilter bf = BloomFilter.create(entry.getKey(), entry.getValue());
                 bitsizeToExpectedItemsMap.put(bf.bitSize(), entry.getKey());
             }
             bitSizeMapCache.add(bitsizeToExpectedItemsMap);
@@ -99,40 +106,67 @@ public class FilterSizes implements Serializable {
         return bitSizeMapCache.get(0);
     }
 
-    private SortedMap<Long, Double> mapFromConfig() {
-
-        SortedMap<Long, Double> sizesMapFromJson = new TreeMap<>();
-        Gson gson = new Gson();
-
-        List<JsonObject> jsonArray = gson.fromJson(sizesJsonString(), new TypeToken<List<JsonObject>>() {
-        }.getType());
-
-        for (JsonObject object : jsonArray) {
+    private SortedMap<Long, Double> sizeMap() {
+        final SortedMap<Long, Double> sizesMapFromJson = new TreeMap<>();
+        final Gson gson = new Gson();
+        final List<JsonObject> jsonArray = gson.fromJson(
+                sizesJsonString(),
+                new TypeToken<List<JsonObject>>() {
+                }.getType()
+        );
+        for (final JsonObject object : jsonArray) {
             if (object.has("expected") && object.has("fpp")) {
-                Long expectedNumOfItems = Long.parseLong(object.get("expected").toString());
-                Double fpp = Double.parseDouble(object.get("fpp").toString());
+                final Long expectedNumOfItems = Long.parseLong(object.get("expected").toString());
+                final Double fpp = Double.parseDouble(object.get("fpp").toString());
                 if (sizesMapFromJson.containsKey(expectedNumOfItems)) {
-                    LOGGER.error("Duplicate value of expected number of items value: <{}>", expectedNumOfItems);
+                    LOGGER.error("Duplicate value of expected number of items value: <[{}]>", expectedNumOfItems);
                     throw new RuntimeException("Duplicate entry expected num of items");
                 }
                 sizesMapFromJson.put(expectedNumOfItems, fpp);
-            }
-            else {
+            } else {
                 throw new RuntimeException("JSON did not have expected values of 'expected' or 'fpp'");
             }
         }
         return sizesMapFromJson;
     }
 
+    public String pattern() {
+        final String pattern;
+        if (config.hasPath(BLOOM_PATTERN_CONFIG_ITEM)) {
+            final String patternFromConfig = config.getString(BLOOM_PATTERN_CONFIG_ITEM);
+            if (patternFromConfig == null || patternFromConfig.isEmpty()) {
+                throw new RuntimeException("Bloom filter pattern was not configured.");
+            }
+            pattern = patternFromConfig.trim();
+        } else {
+            throw new RuntimeException("Missing configuration item: '" + BLOOM_PATTERN_CONFIG_ITEM + "'.");
+        }
+        return pattern;
+    }
+
+    public String tableName() {
+        final String tableName;
+        if (config.hasPath(BLOOM_TABLE_NAME_ITEM)) {
+            final String tableNameFromConfig = config.getString(BLOOM_TABLE_NAME_ITEM);
+            if (tableNameFromConfig == null || tableNameFromConfig.isEmpty()) {
+                throw new RuntimeException("Bloom filter table name was not configured.");
+            }
+            tableName = tableNameFromConfig.replaceAll("\\s", "").trim();
+        } else {
+            throw new RuntimeException("Missing configuration item: '" + BLOOM_TABLE_NAME_ITEM + "'.");
+        }
+
+        return tableName;
+    }
+
     private String sizesJsonString() {
-        String jsonString;
+        final String jsonString;
         if (config.hasPath(BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM)) {
             jsonString = config.getString(BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM);
             if (jsonString == null || jsonString.isEmpty()) {
-                throw new RuntimeException("Bloom filter fields not configured.");
+                throw new RuntimeException("Bloom filter size fields was not configured.");
             }
-        }
-        else {
+        } else {
             throw new RuntimeException("Missing configuration item: '" + BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM + "'.");
         }
         return jsonString;
