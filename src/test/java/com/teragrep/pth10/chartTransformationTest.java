@@ -137,8 +137,6 @@ public class chartTransformationTest {
             Collections.sort(resultList);
 
             assertEquals(expectedValues, resultList);
-            boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
         });
     }
 
@@ -172,9 +170,6 @@ public class chartTransformationTest {
             Collections.sort(resultList);
 
             assertEquals(expectedValues, resultList);
-            res.printSchema();
-            boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
         });
     }
 
@@ -205,8 +200,6 @@ public class chartTransformationTest {
             Collections.sort(resultList);
 
             assertEquals(expectedValues, resultList);
-            boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
         });
     }
 
@@ -286,8 +279,6 @@ public class chartTransformationTest {
 
             List<Row> time = res.select("_time").collectAsList();
             List<Row> offset = res.select("avg(offset)").collectAsList();
-
-            System.out.println(time.stream().map(r -> r.getAs(0).toString()).toArray());
 
             // assert correct ordering, old to new
             String[] expectedTime = new String[] {

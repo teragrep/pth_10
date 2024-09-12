@@ -259,7 +259,7 @@ public class whereTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void whereWithLikeAndWilcardTest() {
+    void whereWithLikeAndWildcardTest() {
         String query = "index = index_A  | where like(source, \"127.7%\")";
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
             List<String> sourceList = ds

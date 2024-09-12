@@ -593,7 +593,7 @@ public class logicalOperationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testWithParenthesisAndWilcard() {
+    public void testWithParenthesisAndWildcard() {
         String q = "index=index_B source=\"\\(*:computer04.*(com)*\\)\" OR source=\"\\(*7.*(com)*\\)\"";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
