@@ -56,7 +56,7 @@ import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_URL_CO
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_USERNAME_CONFIG_ITEM;
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_PASSWORD_CONFIG_ITEM;
 
-public class LazyConnection implements Serializable {
+public final class LazyConnection implements Serializable {
 
     private static Connection connection = null;
     private final Config config;

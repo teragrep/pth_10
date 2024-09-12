@@ -67,7 +67,7 @@ import java.util.SortedMap;
 /**
  * teragrep exec bloom
  */
-public class TeragrepBloomStep extends AbstractStep {
+public final class TeragrepBloomStep extends AbstractStep {
 
     public enum BloomMode {
         UPDATE, CREATE, ESTIMATE, AGGREGATE, DEFAULT

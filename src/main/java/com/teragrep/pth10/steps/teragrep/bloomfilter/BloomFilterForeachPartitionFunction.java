@@ -54,7 +54,7 @@ import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.util.Iterator;
 
-public class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
+public final class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
 
     private final FilterTypes filterTypes;
     private final LazyConnection lazyConnection;
@@ -85,8 +85,7 @@ public class BloomFilterForeachPartitionFunction implements ForeachPartitionFunc
             final Row row = iter.next(); // Row[partitionID, filterBytes]
             final String partition = row.getString(0);
             final byte[] filterBytes = (byte[]) row.get(1);
-            final BloomFilter filter = BloomFilter.readFrom(new ByteArrayInputStream(filterBytes));
-            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filter, conn, filterTypes);
+            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
             tgFilter.saveFilter(overwrite);
             conn.commit();
 

@@ -59,7 +59,7 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TeragrepBloomFilter {
+public final class TeragrepBloomFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepBloomFilter.class);
 
@@ -67,6 +67,10 @@ public class TeragrepBloomFilter {
     private final BloomFilter filter;
     private final Connection connection;
     private final FilterTypes filterTypes;
+
+    public TeragrepBloomFilter(String partition, byte[] bytes, Connection connection, FilterTypes filterTypes) {
+        this(partition, new ToBloomFilter(bytes), connection, filterTypes);
+    }
 
     public TeragrepBloomFilter(String partition, BloomFilter filter, Connection connection, FilterTypes filterTypes) {
         this.partitionID = partition;

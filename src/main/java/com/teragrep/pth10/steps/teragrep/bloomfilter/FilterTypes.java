@@ -58,7 +58,7 @@ import java.util.*;
 
 import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.*;
 
-public class FilterTypes implements Serializable {
+public final class FilterTypes implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterTypes.class);
 
