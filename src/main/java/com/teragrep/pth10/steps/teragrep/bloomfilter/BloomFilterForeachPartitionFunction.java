@@ -48,9 +48,7 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 import com.typesafe.config.Config;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Row;
-import org.apache.spark.util.sketch.BloomFilter;
 
-import java.io.ByteArrayInputStream;
 import java.sql.Connection;
 import java.util.Iterator;
 
