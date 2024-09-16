@@ -245,8 +245,8 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                 host = portParamCtx.getText();
             }
 
-            if (hostParamCtx.COMMAND_TERAGREP_MODE_PORT_NUM() != null) {
-                port = Integer.parseInt(hostParamCtx.COMMAND_TERAGREP_MODE_PORT_NUM().getText());
+            if (hostParamCtx.COMMAND_TERAGREP_IP_MODE_PORT_NUM() != null) {
+                port = Integer.parseInt(hostParamCtx.COMMAND_TERAGREP_IP_MODE_PORT_NUM().getText());
             }
         }
 
