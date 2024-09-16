@@ -54,7 +54,6 @@
     <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
     <teragrep.pth_03.version>6.1.4</teragrep.pth_03.version>
     <teragrep.pth_06.version>3.1.2</teragrep.pth_06.version>
-    <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
     <teragrep.rlp_01.version>4.0.1</teragrep.rlp_01.version>
     <teragrep.rlp_03.version>1.7.6</teragrep.rlp_03.version>
   </properties>
@@ -89,12 +88,6 @@
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
       <version>1.4.0</version>
-    </dependency>
-    <!-- rfc5424-parser -->
-    <dependency>
-      <groupId>com.teragrep</groupId>
-      <artifactId>rlo_06</artifactId>
-      <version>${teragrep.rlo_06.version}</version>
     </dependency>
     <!-- unix-utils -->
     <dependency>
@@ -198,6 +191,7 @@
       <groupId>com.teragrep</groupId>
       <artifactId>rlp_03</artifactId>
       <version>${teragrep.rlp_03.version}</version>
+      <scope>test</scope>
     </dependency>
     <!-- iplocation command -->
     <!-- DO NOT UPDATE - 2.16.1 final Java8 compatible version -->
