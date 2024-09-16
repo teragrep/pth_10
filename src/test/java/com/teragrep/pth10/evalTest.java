@@ -66,7 +66,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class evalTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(evalTest.class);
 
     private StreamingTestUtil streamingTestUtil;
@@ -94,35 +93,21 @@ public class evalTest {
         this.streamingTestUtil.tearDown();
     }
 
+
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMultipleStatementsTest() {
         String q = "index=index_A | eval a = 1, b = 2";
         String testFile = "src/test/resources/eval_test_data1*.json";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),"
-                + "StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),"
-                + "StructField(a,IntegerType,false),StructField(b,IntegerType,false))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true)," +
+                "StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true)," +
+                "StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true)," +
+                "StructField(a,IntegerType,false),StructField(b,IntegerType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
-            List<String> listOfA = res
-                    .select("a")
-                    .distinct()
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> listOfB = res
-                    .select("b")
-                    .distinct()
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
+            List<String> listOfA = res.select("a").distinct().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> listOfB = res.select("b").distinct().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
             assertEquals(1, listOfA.size());
             assertEquals("1", listOfA.get(0));
@@ -131,11 +116,9 @@ public class evalTest {
         });
     }
 
+
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalLenCatalystTest() {
         String q = "index=index_A | eval lenField = len(_raw)";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the file into a directory path
@@ -145,33 +128,25 @@ public class evalTest {
             assertEquals(schema, res.schema().toString());
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("lenField").orderBy("lenField").distinct();
-            List<Integer> lst = orderedDs
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getInt(0))
-                    .sorted()
-                    .collect(Collectors.toList());
+            List<Integer> lst = orderedDs.collectAsList().stream().map(r->r.getInt(0)).sorted().collect(Collectors.toList());
             // we should get 3 distinct values
-            assertEquals(3, lst.size());
+            assertEquals(3,lst.size());
             // Compare values
-            assertEquals(158, lst.get(0));
-            assertEquals(187, lst.get(1));
-            assertEquals(210, lst.get(2));
+            assertEquals(158,lst.get(0));
+            assertEquals(187,lst.get(1));
+            assertEquals(210,lst.get(2));
         });
     }
 
     // Test upper(x) lower(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalUpperLowerCatalystTest() {
         String q = "index=index_A | eval a=upper(\"hello world\") | eval b=lower(\"HELLO WORLD\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -190,16 +165,13 @@ public class evalTest {
 
     // test eval method urldecode()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalUrldecodeCatalystTest() {
         String q = "index=index_A | eval a=urldecode(\"http%3A%2F%2Fwww.example.com%2Fdownload%3Fr%3Dlatest\") | eval b=urldecode(\"https%3A%2F%2Fwww.longer-domain-here.example.com%2Fapi%2Fv1%2FgetData%3Fmode%3Dall%26type%3Dupdate%26random%3Dtrue\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -212,27 +184,21 @@ public class evalTest {
             List<String> lstB = resB.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
             assertEquals("http://www.example.com/download?r=latest", lstA.get(0));
-            assertEquals(
-                    "https://www.longer-domain-here.example.com/api/v1/getData?mode=all&type=update&random=true",
-                    lstB.get(0)
-            );
+            assertEquals("https://www.longer-domain-here.example.com/api/v1/getData?mode=all&type=update&random=true", lstB.get(0));
         });
     }
 
     // test ltrim() rtrim() trim()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTrimCatalystTest() {
-        String q = "index=index_A | eval a=ltrim(\" \t aabbccdd \") | eval b=ltrim(\"  zZaabcdzz \",\" zZ\") "
-                + "| eval c=rtrim(\"\t abcd  \t\") | eval d=rtrim(\" AbcDeF g\",\"F g\") | eval e=trim(\"\tabcd\t\") | eval f=trim(\"\t zzabcdzz \t\",\"\t zz\")";
+        String q = "index=index_A | eval a=ltrim(\" \t aabbccdd \") | eval b=ltrim(\"  zZaabcdzz \",\" zZ\") " +
+        		 	"| eval c=rtrim(\"\t abcd  \t\") | eval d=rtrim(\" AbcDeF g\",\"F g\") | eval e=trim(\"\tabcd\t\") | eval f=trim(\"\t zzabcdzz \t\",\"\t zz\")";
         String testFile = "src/test/resources/eval_test_data1*.json";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false),"
-                + "StructField(c,StringType,false),StructField(d,StringType,false),StructField(e,StringType,false),StructField(f,StringType,false))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false)," +
+                "StructField(c,StringType,false),StructField(d,StringType,false),StructField(e,StringType,false),StructField(f,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -263,6 +229,7 @@ public class evalTest {
             Dataset<Row> resF = res.select("f").orderBy("f").distinct();
             List<String> lstF = resF.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
+
             // ltrim()
             assertEquals("aabbccdd ", lstA.get(0));
             assertEquals("aabcdzz ", lstB.get(0));
@@ -279,10 +246,7 @@ public class evalTest {
 
     // Test eval method replace(x,y,z)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalReplaceCatalystTest() {
         String q = "index=index_A | eval a=replace(\"Hello world\", \"He\", \"Ha\") | eval b=replace(a, \"world\", \"welt\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -304,10 +268,7 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSubstringCatalystTest() {
         String q = "index=index_A | eval str = substr(_raw,1,14)";
         String testFile = "src/test/resources/subsearchData*.json";
@@ -319,17 +280,14 @@ public class evalTest {
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1, lst.size());
+            assertEquals(1,lst.size());
             // Compare values
-            assertEquals("127.0.0.123:45", lst.get(0).getString(0));
+            assertEquals("127.0.0.123:45",lst.get(0).getString(0));
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSubstringNoLengthParamCatalystTest() {
         String q = "index=index_A | eval str = substr(_raw,185)";
         String testFile = "src/test/resources/subsearchData*.json";
@@ -339,28 +297,20 @@ public class evalTest {
             assertEquals(schema, res.schema().toString());
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
-            List<String> lst = orderedDs
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getString(0))
-                    .sorted()
-                    .collect(Collectors.toList());
+            List<String> lst = orderedDs.collectAsList().stream().map(r->r.getString(0)).sorted().collect(Collectors.toList());
             // we should get 3 distinct values
-            assertEquals(3, lst.size());
+            assertEquals(3,lst.size());
             // Compare values
-            assertEquals("", lst.get(0));
-            assertEquals("com", lst.get(1));
+            assertEquals("",lst.get(0));
+            assertEquals("com",lst.get(1));
             assertEquals("com cOmPuter02.example.com", lst.get(2));
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalIfCatalystTest() {
-        String q = "index=index_A | eval val2=if((false() OR true()),\"a\", \"b\")";
+		String q = "index=index_A | eval val2=if((false() OR true()),\"a\", \"b\")";
         String testFile = "src/test/resources/subsearchData*.json";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(val2,ArrayType(StringType,true),true))";
 
@@ -371,17 +321,14 @@ public class evalTest {
 
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1, lst.size());
+            assertEquals(1,lst.size());
             // Compare values
-            assertEquals(Collections.singletonList("a"), lst.get(0).getList(0));
+            assertEquals(Collections.singletonList("a"),lst.get(0).getList(0));
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalIfMultiValueCatalystTest() {
         String q = "index=index_A | eval mvf=mvappend(\"\") |eval val2=if(mvf==\"\",\"t\",\"f\"))";
         String testFile = "src/test/resources/subsearchData*.json";
@@ -394,17 +341,14 @@ public class evalTest {
 
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1, lst.size());
+            assertEquals(1,lst.size());
             // Compare values
-            assertEquals(Collections.singletonList("t"), lst.get(0).getList(0));
+            assertEquals(Collections.singletonList("t"),lst.get(0).getList(0));
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalIfMultiValueAsResultCatalystTest() {
         String q = "index=index_A | eval mvf=mvappend(\"\") |eval val2=if(mvf==\"\",mvappend(\"tr\",\"ue\"),\"f\"))";
         String testFile = "src/test/resources/subsearchData*.json";
@@ -417,51 +361,40 @@ public class evalTest {
 
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1, lst.size());
+            assertEquals(1,lst.size());
             // Compare values
-            assertEquals(Arrays.asList("tr", "ue"), lst.get(0).getList(0));
+            assertEquals(Arrays.asList("tr", "ue"),lst.get(0).getList(0));
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalIfCatalyst1Test() {
-        String q = "index=index_A | eval val2=if( 1 < 2  , substr(_raw,165,100) , \"b\")";
+		String q = "index=index_A | eval val2=if( 1 < 2  , substr(_raw,165,100) , \"b\")";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(val2,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
-            orderedDs.show(false);
 
-            List<String> lst = orderedDs
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .sorted()
-                    .collect(Collectors.toList());
+            List<String> lst = orderedDs.collectAsList().stream()
+                    .map(r->r.getList(0).get(0).toString()).sorted().collect(Collectors.toList());
             // we should get 5 distinct values
             assertEquals(5, lst.size());
 
             // Compare values
-            assertEquals("", lst.get(0));
-            assertEquals(" computer01.example.com", lst.get(1));
-            assertEquals(" computer01.example.com cOmPuter02.example.com", lst.get(2));
-            assertEquals(" computer02.example.com", lst.get(3));
-            assertEquals(" computer03.example.com", lst.get(4));
+            assertEquals("",lst.get(0));
+            assertEquals(" computer01.example.com",lst.get(1));
+            assertEquals(" computer01.example.com cOmPuter02.example.com",lst.get(2));
+            assertEquals(" computer02.example.com",lst.get(3));
+            assertEquals(" computer03.example.com",lst.get(4));
 
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalLen1Test() {
         String q = "index=index_A | eval a=if(substr(_raw,0,11)=\"127.0.0.123\",len( _raw),0)";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
@@ -471,28 +404,20 @@ public class evalTest {
             assertEquals(schema, res.schema().toString());
             //  Get only distinct field and sort it by value
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
-            List<String> lst = orderedDs
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .sorted()
-                    .collect(Collectors.toList());
+            List<String> lst = orderedDs.collectAsList().stream().map(r->r.getList(0).get(0).toString()).sorted().collect(Collectors.toList());
 
             // check result count
-            assertEquals(3, lst.size()); // column a has 3 different values, as the data has 3 different lengths of _raw values
+            assertEquals(3,lst.size()); // column a has 3 different values, as the data has 3 different lengths of _raw values
             // Compare values
-            assertEquals("158", lst.get(0));
-            assertEquals("187", lst.get(1));
-            assertEquals("210", lst.get(2));
+            assertEquals("158",lst.get(0));
+            assertEquals("187",lst.get(1));
+            assertEquals("210",lst.get(2));
         });
     }
 
     // Test eval function null()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalNullCatalystTest() {
         String q = "index=index_A | eval a=null()";
         String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
@@ -504,18 +429,15 @@ public class evalTest {
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values (all should be null)
-            assertEquals(1, lst.size());
+            assertEquals(1,lst.size());
             // Compare values (is it null?)
-            assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), lst.get(0).get(0));
+            assertEquals(this.streamingTestUtil.getCtx().nullValue.value(),lst.get(0).get(0));
         });
     }
 
     // Test eval function pow()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalPowCatalystTest() {
         String q = "index=index_A | eval a=pow(offset,2)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -530,11 +452,10 @@ public class evalTest {
             // we should get the same amount of values back as we put in
             assertEquals(19, lst.size());
             // Compare values to expected
-            List<Double> expectedLst = Arrays
-                    .asList(
-                            1.0, 1.0, 1.0, 1.0, 4.0, 9.0, 16.0, 25.0, 36.0, 49.0, 64.0, 81.0, 100.0, 121.0, 144.0,
-                            169.0, 196.0, 225.0, 256.0
-                    );
+            List<Double> expectedLst = Arrays.asList(
+                    1.0, 1.0, 1.0, 1.0, 4.0, 9.0, 16.0, 25.0, 36.0,
+                    49.0, 64.0, 81.0, 100.0, 121.0, 144.0,
+                    169.0, 196.0, 225.0, 256.0);
 
             assertEquals(expectedLst, lst);
         });
@@ -542,10 +463,7 @@ public class evalTest {
 
     // Test eval function nullif()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalNullifCatalystTest() {
         String q = "index=index_A | eval a=nullif(offset,_raw)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -555,20 +473,13 @@ public class evalTest {
             assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
-            List<String> lst = resA
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
+            List<String> lst = resA.collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
             assertEquals(19, lst.size());
             // Compare values to expected
-            List<String> expectedLst = Arrays
-                    .asList(
-                            "1", "1", "1", "1", "10", "11", "12", "13", "14", "15", "16", "2", "3", "4", "5", "6", "7",
-                            "8", "9"
-                    );
+            List<String> expectedLst = Arrays.asList(
+                    "1","1","1","1","10","11","12","13","14","15","16","2","3","4","5","6","7","8","9");
 
             assertEquals(expectedLst, lst);
         });
@@ -576,10 +487,7 @@ public class evalTest {
 
     // Test eval function abs()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalAbsCatalystTest() {
         String q = "index=index_A | eval a=abs(offset)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -594,8 +502,7 @@ public class evalTest {
             // we should get the same amount of values back as we put in
             assertEquals(19, lst.size());
             // Compare values to expected
-            List<Long> expectedLst = Arrays
-                    .asList(1L, 1L, 1L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L, 15L, 16L);
+            List<Long> expectedLst = Arrays.asList(1L,1L,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L,11L,12L,13L,14L,15L,16L);
 
             assertEquals(expectedLst, lst);
         });
@@ -603,10 +510,7 @@ public class evalTest {
 
     // Test eval method ceiling(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalCeilingCatalystTest() {
         String q = "index=index_A | eval a=ceiling(offset+0.5)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -637,10 +541,7 @@ public class evalTest {
 
     // Test eval method exp(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalExpCatalystTest() {
         String q = "index=index_A | eval a=exp(offset)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -664,7 +565,7 @@ public class evalTest {
             for (Long val : srcLst) {
                 Double vExp = Math.exp(val.doubleValue());
                 Double vGot = lst.get(i++);
-                if (!vExp.toString().substring(0, 10).equals(vGot.toString().substring(0, 10))) {
+                if (!vExp.toString().substring(0,10).equals(vGot.toString().substring(0,10))) {
                     fail(vExp + "!=" + vGot);
                 }
 
@@ -674,10 +575,7 @@ public class evalTest {
 
     // Test eval method floor(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalFloorCatalystTest() {
         String q = "index=index_A | eval a=floor(offset+0.5)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -708,10 +606,7 @@ public class evalTest {
 
     // Test eval method ln(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalLnCatalystTest() {
         String q = "index=index_A | eval a=ln(offset)";
         String testFile = "src/test/resources/eval_test_data1*.json";
@@ -734,12 +629,8 @@ public class evalTest {
             for (Long val : srcLst) {
                 Double vExp = Math.log(val.doubleValue());
                 Double vReal = lst.get(i++);
-                if (
-                    !vExp
-                            .toString()
-                            .substring(0, Math.min(vExp.toString().length(), 10))
-                            .equals(vReal.toString().substring(0, Math.min(vReal.toString().length(), 10)))
-                ) {
+                if (!vExp.toString().substring(0, Math.min(vExp.toString().length(),10))
+                        .equals(vReal.toString().substring(0,Math.min(vReal.toString().length(),10)))) {
                     fail(vExp + "!=" + vReal);
                 }
             }
@@ -748,10 +639,7 @@ public class evalTest {
 
     // Test eval method log(x,y)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalLogCatalystTest() {
         String q = "index=index_A | eval a=log(offset, 10)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to  make the path into a directory path
@@ -776,7 +664,7 @@ public class evalTest {
 
             // Round both column 'a' contents and the expected, as spark log10 and java log10
             // return slightly different values. Making sure it is within margin of error.
-            for (int i = 0; i < lst.size(); i++) {
+            for (int i = 0; i < lst.size(); i++){
                 Double v = lst.get(i);
                 v = Double.valueOf(df.format(v));
                 lst.set(i, v);
@@ -795,10 +683,7 @@ public class evalTest {
 
     // Test eval method log(x,y)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalLogWithoutBaseParamCatalystTest() {
         String q = "index=index_A | eval a=log(offset)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to  make the path into a directory path
@@ -824,7 +709,7 @@ public class evalTest {
             List<Double> expectedLst = new ArrayList<>();
             // Round both column 'a' contents and the expected, as spark log10 and java log10
             // return slightly different values. Making sure it is within margin of error.
-            for (int i = 0; i < lst.size(); i++) {
+            for (int i = 0; i < lst.size(); i++){
                 // Get double value from log() input number
                 Double v = lst.get(i);
                 // Round to 8 decimal precision
@@ -846,10 +731,7 @@ public class evalTest {
 
     // Test random()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalRandomCatalystTest() {
         String q = "index=index_A | eval a=random()";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -869,10 +751,7 @@ public class evalTest {
 
     // Test eval method pi()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalPiCatalystTest() {
         String q = "index=index_A | eval a=pi()";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -890,16 +769,13 @@ public class evalTest {
 
     // Test eval method round(x,y)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalRoundCatalystTest() {
         String q = "index=index_A | eval a=round(1.545) | eval b=round(5.7432, 3)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -918,17 +794,14 @@ public class evalTest {
 
     // Test eval method sigfig(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSigfigCatalystTest() {
         String q = "index=index_A | eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),"
-                + "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true)," +
+                "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -952,11 +825,10 @@ public class evalTest {
             Dataset<Row> resD = res.select("d");
             List<Double> lstD = resD.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
 
-            boolean isOfEqualSize = (lstA.size() == lstB.size()) && (lstB.size() == lstC.size())
-                    && (lstC.size() == lstD.size());
+            boolean isOfEqualSize = (lstA.size() == lstB.size()) && (lstB.size() == lstC.size()) && (lstC.size() == lstD.size());
             assertTrue(isOfEqualSize);
 
-            for (int i = 0; i < lstA.size(); i++) {
+            for (int i = 0 ; i < lstA.size() ; i++) {
                 assertFalse(Double.isNaN(lstA.get(i)));
                 assertFalse(Double.isNaN(lstB.get(i)));
                 assertFalse(Double.isNaN(lstC.get(i)));
@@ -970,10 +842,7 @@ public class evalTest {
 
     // Test eval method sqrt(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSqrtCatalystTest() {
         String q = "index=index_A | eval a=sqrt(offset)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -991,16 +860,13 @@ public class evalTest {
 
             // Assert
             for (int i = 0; i < srcLst.size(); i++) {
-                assertEquals(Math.sqrt(srcLst.get(i)), lst.get(i));
+                assertEquals(Math.sqrt(srcLst.get(i)),lst.get(i));
             }
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSumTest() {
         String q = "index=index_A | eval a=sum(offset, 1, 3)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1029,10 +895,7 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSumWithStringsTest() { // should use the string in the sum if it is numerical, ignore otherwise
         String q = "index=index_A | eval a=sum(\"foo\", offset, \"2\", index)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1061,10 +924,7 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSumWithDoubleTest() {
         String q = "index=index_A | eval a=sum(offset, 2.6, 3.5)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1093,10 +953,7 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSumWithArithmeticalOperation() {
         String q = "index=index_A | eval a=sum(offset, 2 + 5)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1125,11 +982,8 @@ public class evalTest {
     }
 
     // Test eval concat ab+cd
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalConcatCatalystTest() {
         String q = "index=index_A | eval a=\"ab\"+\"cd\"";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1150,10 +1004,7 @@ public class evalTest {
 
     // Test eval plus
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalPlusCatalystTest() {
         String q = "index=index_A | eval a=0.1+1.4";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1174,10 +1025,7 @@ public class evalTest {
 
     // Test eval minus
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMinusCatalystTest() {
         String q = "index=index_A | eval a = offset - 1";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1191,27 +1039,20 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getLong(0))
-                    .collect(Collectors.toList());
+            List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
             assertEquals(19, lst.size());
             // Compare values to expected
             for (int i = 0; i < lst.size(); i++) {
-                assertEquals(lstOffset.get(i) - 1, Double.parseDouble(lst.get(i)));
+                assertEquals(lstOffset.get(i)-1, Double.parseDouble(lst.get(i)));
             }
         });
     }
 
     // Test eval multiply
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMultiplyCatalystTest() {
         String q = "index=index_A | eval a = offset * offset";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1225,27 +1066,20 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getLong(0))
-                    .collect(Collectors.toList());
+            List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
             assertEquals(19, lst.size());
             // Compare values to expected
             for (int i = 0; i < lst.size(); i++) {
-                assertEquals(lstOffset.get(i) * lstOffset.get(i), Long.parseLong(lst.get(i)));
+                assertEquals(lstOffset.get(i) * lstOffset.get(i),Long.parseLong(lst.get(i)));
             }
         });
     }
 
     // Test eval divide
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalDivideCatalystTest() {
         String q = "index=index_A | eval a = offset / offset";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1259,27 +1093,20 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getLong(0))
-                    .collect(Collectors.toList());
+            List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
             assertEquals(19, lst.size());
             // Compare values to expected
             for (int i = 0; i < lst.size(); i++) {
-                assertEquals((double) lstOffset.get(i) / (double) lstOffset.get(i), Double.parseDouble(lst.get(i)));
+                assertEquals((double)lstOffset.get(i)/(double)lstOffset.get(i),Double.parseDouble(lst.get(i)));
             }
         });
     }
 
     // Test eval mod (%)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalModCatalystTest() {
         String q = "index=index_A | eval a = offset % 2";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1293,11 +1120,7 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getLong(0))
-                    .collect(Collectors.toList());
+            List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
             assertEquals(19, lst.size());
@@ -1310,10 +1133,7 @@ public class evalTest {
 
     // Test cryptographic functions: md5, sha1, sha256, sha512
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalCryptographicCatalystTest() {
         String q = "index=index_A | eval md5=md5(_raw) | eval sha1=sha1(_raw) | eval sha256=sha256(_raw) | eval sha512=sha512(_raw)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1335,44 +1155,33 @@ public class evalTest {
 
             // Get column 'sha256'
             Dataset<Row> ress256 = res.select("sha256").orderBy("offset");
-            List<String> lstS256 = ress256
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getString(0))
-                    .collect(Collectors.toList());
+            List<String> lstS256 = ress256.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
             // Get column 'sha512'
             Dataset<Row> ress512 = res.select("sha512").orderBy("offset");
-            List<String> lstS512 = ress512
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getString(0))
-                    .collect(Collectors.toList());
+            List<String> lstS512 = ress512.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
             // Assert expected to result
 
             // Amount of data
-            assertEquals(lstRaw.size(), lstMd5.size());
-            assertEquals(lstRaw.size(), lstS1.size());
-            assertEquals(lstRaw.size(), lstS256.size());
-            assertEquals(lstRaw.size(), lstS512.size());
+            assertEquals(lstRaw.size(),lstMd5.size());
+            assertEquals(lstRaw.size(),lstS1.size());
+            assertEquals(lstRaw.size(),lstS256.size());
+            assertEquals(lstRaw.size(),lstS512.size());
 
             // Contents
             for (int i = 0; i < lstRaw.size(); ++i) {
-                assertEquals(DigestUtils.md5Hex(lstRaw.get(i)), lstMd5.get(i));
-                assertEquals(DigestUtils.sha1Hex(lstRaw.get(i)), lstS1.get(i));
-                assertEquals(DigestUtils.sha256Hex(lstRaw.get(i)), lstS256.get(i));
-                assertEquals(DigestUtils.sha512Hex(lstRaw.get(i)), lstS512.get(i));
+                assertEquals(DigestUtils.md5Hex(lstRaw.get(i)),lstMd5.get(i));
+                assertEquals(DigestUtils.sha1Hex(lstRaw.get(i)),lstS1.get(i));
+                assertEquals(DigestUtils.sha256Hex(lstRaw.get(i)),lstS256.get(i));
+                assertEquals(DigestUtils.sha512Hex(lstRaw.get(i)),lstS512.get(i));
             }
         });
     }
 
     // Test eval function case(x1,y1,x2,y2, ..., xn, yn)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalCaseCatalystTest() {
         String q = "index=index_A | eval a=case(offset < 2, \"Less than two\", offset > 2, \"More than two\", offset == 2, \"Exactly two\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1382,32 +1191,23 @@ public class evalTest {
             assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<String> lst = resA
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
+            List<String> lst = resA.collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
             assertEquals(19, lst.size());
             // Compare values to expected
-            List<String> expectedLst = Arrays
-                    .asList(
-                            "Less than two", "Less than two", "Less than two", "Less than two", "Exactly two",
-                            "More than two", "More than two", "More than two", "More than two", "More than two",
-                            "More than two", "More than two", "More than two", "More than two", "More than two",
-                            "More than two", "More than two", "More than two", "More than two"
-                    );
+            List<String> expectedLst = Arrays.asList(
+                    "Less than two", "Less than two","Less than two","Less than two","Exactly two","More than two","More than two","More than two",
+                    "More than two","More than two","More than two","More than two","More than two",
+                    "More than two","More than two","More than two","More than two","More than two",
+                    "More than two");
             assertEquals(expectedLst, lst);
         });
     }
 
     // Test eval function validate(x1,y1,x2,y2, ..., xn, yn)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalValidateCatalystTest() {
         String q = "index=index_A | eval a=validate(offset < 10, \"Not less than 10\", offset < 9, \"Not less than 9\", offset < 6, \"Not less than 6\", offset > 0, \"Not more than 0\", offset == 0, \"Not 0\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory
@@ -1417,22 +1217,17 @@ public class evalTest {
             assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<String> lst = resA
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
+            List<String> lst = resA.collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
             assertEquals(19, lst.size());
             // Compare values to expected
-            List<String> expectedLst = Arrays
-                    .asList(
-                            "Not 0", "Not 0", "Not 0", "Not 0", "Not 0", "Not 0", "Not 0", "Not 0", "Not less than 6",
-                            "Not less than 6", "Not less than 6", "Not less than 9", "Not less than 10",
-                            "Not less than 10", "Not less than 10", "Not less than 10", "Not less than 10",
-                            "Not less than 10", "Not less than 10"
-                    );
+            List<String> expectedLst = Arrays.asList(
+                    "Not 0","Not 0","Not 0","Not 0","Not 0","Not 0","Not 0","Not 0",
+                    "Not less than 6","Not less than 6","Not less than 6","Not less than 9",
+                    "Not less than 10","Not less than 10","Not less than 10","Not less than 10",
+                    "Not less than 10","Not less than 10","Not less than 10"
+            );
 
             assertEquals(expectedLst, lst);
         });
@@ -1440,10 +1235,7 @@ public class evalTest {
 
     // Test eval method tostring(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTostring_NoOptionalArgument_CatalystTest() {
         String q = "index=index_A | eval a=tostring(true())";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1454,6 +1246,7 @@ public class evalTest {
             // Get column 'a'
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<String> lst = orderedDs.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+
 
             // we should get one result because all = "true"
             assertEquals(1, lst.size());
@@ -1466,10 +1259,7 @@ public class evalTest {
 
     // Test eval method tostring(x,y="hex")
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTostring_Hex_CatalystTest() {
         String q = "index=index_A | eval a=tostring(offset, \"hex\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1500,10 +1290,7 @@ public class evalTest {
     // Test eval method tostring(x,y="duration")
     // Has to have UTC as SparkSession's timezone
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTostring_Duration_CatalystTest() {
         String q = "index=index_A | eval a=tostring(offset, \"duration\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1533,10 +1320,7 @@ public class evalTest {
 
     // Test eval method tostring(x,y="commas")
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTostring_Commas_CatalystTest() {
         String q = "index=index_A | eval a=tostring(12345.6789, \"commas\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1557,10 +1341,7 @@ public class evalTest {
 
     // Test eval method tonumber(numstr, base)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTonumberCatalystTest() {
         String q = "index=index_A | eval a=tonumber(\"0A4\", 16)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1581,10 +1362,7 @@ public class evalTest {
 
     // Test eval method tonumber(numstr)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTonumberNoBaseArgumentCatalystTest() {
         String q = "index=index_A | eval a=tonumber(\"12345\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1605,10 +1383,7 @@ public class evalTest {
 
     // Test eval function acos, acosh, cos, cosh
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalCosCatalystTest() {
         String q = "index=index_A | eval a=acos(offset / 10) | eval b=acosh(offset) | eval c=cos(offset / 10) | eval d=cosh(offset / 10)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1648,13 +1423,14 @@ public class evalTest {
             List<Double> expectedLstC = new ArrayList<>();
             List<Double> expectedLstD = new ArrayList<>();
 
-            org.apache.commons.math3.analysis.function.Acosh acoshFunction = new org.apache.commons.math3.analysis.function.Acosh();
+            org.apache.commons.math3.analysis.function.Acosh acoshFunction =
+                    new org.apache.commons.math3.analysis.function.Acosh();
 
             for (Long val : srcLst) {
-                expectedLst.add(Math.acos(Double.valueOf((double) val / 10d)));
+                expectedLst.add(Math.acos(Double.valueOf((double)val/10d)));
                 expectedLstB.add(acoshFunction.value(Double.valueOf(val)));
-                expectedLstC.add(Math.cos(Double.valueOf((double) val / 10d)));
-                expectedLstD.add(Math.cosh(Double.valueOf((double) val / 10d)));
+                expectedLstC.add(Math.cos(Double.valueOf((double)val/10d)));
+                expectedLstD.add(Math.cosh(Double.valueOf((double)val/10d)));
             }
 
             assertEquals(expectedLst, lst);
@@ -1666,17 +1442,14 @@ public class evalTest {
 
     // Test eval function asin, asinh, sin, sinh
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSinCatalystTest() {
         String q = "index=index_A | eval a=asin(offset / 10) | eval b=asinh(offset) | eval c=sin(offset / 10) | eval d=sinh(offset / 10)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),"
-                + "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true)," +
+                "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -1712,13 +1485,14 @@ public class evalTest {
             List<Double> expectedLstC = new ArrayList<>();
             List<Double> expectedLstD = new ArrayList<>();
 
-            org.apache.commons.math3.analysis.function.Asinh asinhFunction = new org.apache.commons.math3.analysis.function.Asinh();
+            org.apache.commons.math3.analysis.function.Asinh asinhFunction =
+                    new org.apache.commons.math3.analysis.function.Asinh();
 
             for (Long val : srcLst) {
-                expectedLst.add(Math.asin(Double.valueOf((double) val / 10d)));
+                expectedLst.add(Math.asin(Double.valueOf((double)val/10d)));
                 expectedLstB.add(asinhFunction.value(Double.valueOf(val)));
-                expectedLstC.add(Math.sin(Double.valueOf((double) val / 10d)));
-                expectedLstD.add(Math.sinh(Double.valueOf((double) val / 10d)));
+                expectedLstC.add(Math.sin(Double.valueOf((double)val/10d)));
+                expectedLstD.add(Math.sinh(Double.valueOf((double)val/10d)));
             }
             assertEquals(expectedLst, lst);
             assertEquals(expectedLstB, lstB);
@@ -1729,10 +1503,7 @@ public class evalTest {
 
     // Test eval function tan, tanh, atan, atanh, atan2
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTanCatalystTest() {
         String q = "index=index_A | eval a=atan(offset) | eval b=atanh(offset / 10) | eval c=tan(offset / 10) | eval d=tanh(offset / 10) | eval e=atan2(offset / 10, offset / 20)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -1765,11 +1536,11 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(srcLst.size(), lst.size());
-            assertEquals(srcLst.size(), lstB.size());
-            assertEquals(srcLst.size(), lstC.size());
-            assertEquals(srcLst.size(), lstD.size());
-            assertEquals(srcLst.size(), lstE.size());
+            assertEquals(srcLst.size(),lst.size());
+            assertEquals(srcLst.size(),lstB.size());
+            assertEquals(srcLst.size(),lstC.size());
+            assertEquals(srcLst.size(),lstD.size());
+            assertEquals(srcLst.size(),lstE.size());
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
             List<Double> expectedLstB = new ArrayList<>();
@@ -1777,14 +1548,15 @@ public class evalTest {
             List<Double> expectedLstD = new ArrayList<>();
             List<Double> expectedLstE = new ArrayList<>();
 
-            org.apache.commons.math3.analysis.function.Atanh atanhFunction = new org.apache.commons.math3.analysis.function.Atanh();
+            org.apache.commons.math3.analysis.function.Atanh atanhFunction =
+                    new org.apache.commons.math3.analysis.function.Atanh();
 
             for (Long val : srcLst) {
                 expectedLst.add(Math.atan(Double.valueOf(val))); // atan
-                expectedLstB.add(atanhFunction.value(Double.valueOf((double) val / 10d))); // atanh
-                expectedLstC.add(Math.tan(Double.valueOf((double) val / 10d))); // tan
-                expectedLstD.add(Math.tanh(Double.valueOf((double) val / 10d))); // tanh
-                expectedLstE.add(Math.atan2(Double.valueOf((double) val / 10d), Double.valueOf((double) val / 20d))); // atan
+                expectedLstB.add(atanhFunction.value(Double.valueOf((double)val/10d))); // atanh
+                expectedLstC.add(Math.tan(Double.valueOf((double)val/10d))); // tan
+                expectedLstD.add(Math.tanh(Double.valueOf((double)val/10d))); // tanh
+                expectedLstE.add(Math.atan2(Double.valueOf((double)val/10d),Double.valueOf((double)val/20d))); // atan
             }
             assertEquals(expectedLst, lst);
             assertEquals(expectedLstB, lstB);
@@ -1795,18 +1567,15 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAvgTest() {
         String q = "index=index_A | eval a=avg(offset, 1, 2)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
-        streamingTestUtil.performDPLTest(q, testFile, res -> {
+        streamingTestUtil.performDPLTest(q,testFile, res -> {
             assertEquals(schema, res.schema().toString());
 
             // Get column 'a'
@@ -1828,16 +1597,13 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAvgWithStringsTest() { // Should ignore non-numerical Strings
         String q = "index=index_A | eval a=avg(\"foo\", offset, \"1\", \"bar\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -1861,16 +1627,13 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAvgWithDoublesTest() {
         String q = "index=index_A | eval a=avg(offset, 1.5, 3.5)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -1894,16 +1657,13 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAvgWithArithmeticsTest() {
         String q = "index=index_A | eval a=avg(offset, 1 + 4, 5 + 6)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -1928,16 +1688,13 @@ public class evalTest {
 
     // Test eval method hypot(x,y)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalHypotCatalystTest() {
-        String q = "index=index_A | eval a=hypot(offset, offset)";
+    	String q = "index=index_A | eval a=hypot(offset, offset)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -1950,13 +1707,13 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(srcLst.size(), lst.size());
+            assertEquals(srcLst.size(),lst.size());
 
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
 
             for (Long val : srcLst) {
-                expectedLst.add(Math.hypot(Double.valueOf(val), Double.valueOf(val)));
+                expectedLst.add(Math.hypot(Double.valueOf(val),Double.valueOf(val)));
             }
 
             assertEquals(expectedLst, lst);
@@ -1965,10 +1722,7 @@ public class evalTest {
 
     // Test eval function cidrmatch
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalCidrmatchCatalystTest() {
         String q = "index=index_A | eval a=cidrmatch(ip, \"192.168.2.0/24\")";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
@@ -1983,7 +1737,9 @@ public class evalTest {
             // we should get the same amount of values back as we put in
             assertEquals(3, lst.size());
             // Compare values to expected
-            List<Boolean> expectedLst = Arrays.asList(true, false, true);
+            List<Boolean> expectedLst = Arrays.asList(
+                    true, false, true
+            );
 
             assertEquals(expectedLst, lst);
         });
@@ -1991,17 +1747,14 @@ public class evalTest {
 
     // Test eval method coalesce(x, ...)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalCoalesceCatalystTest() {
         String q = "index=index_A | eval a=coalesce(null(),index) | eval b=coalesce(index, null()) | eval c=coalesce(null())";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),"
-                + "StructField(a,StringType,true),StructField(b,StringType,true),StructField(c,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true)," +
+                "StructField(a,StringType,true),StructField(b,StringType,true),StructField(c,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2029,10 +1782,7 @@ public class evalTest {
 
     // Test eval method in(field, value_list)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalInCatalystTest() {
         String q = "index=index_A | eval a=in(ip,\"192.168.2.1\",\"127.0.0.91\", \"127.0.0.1\")";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
@@ -2047,7 +1797,9 @@ public class evalTest {
             // we should get the same amount of values back as we put in
             assertEquals(3, lst.size());
             // Compare values to expected
-            List<Boolean> expectedLst = Arrays.asList(true, false, true);
+            List<Boolean> expectedLst = Arrays.asList(
+                    true, false, true
+            );
 
             assertEquals(expectedLst, lst);
         });
@@ -2055,10 +1807,7 @@ public class evalTest {
 
     // Test eval method like(text, pattern)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalLikeCatalystTest() {
         String q = "index=index_A | eval a=like(ip,\"192.168.3%\")";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
@@ -2073,7 +1822,9 @@ public class evalTest {
             // we should get the same amount of values back as we put in
             assertEquals(3, lst.size());
             // Compare values to expected
-            List<Boolean> expectedLst = Arrays.asList(false, true, false);
+            List<Boolean> expectedLst = Arrays.asList(
+                    false, true, false
+            );
 
             assertEquals(expectedLst, lst);
         });
@@ -2081,10 +1832,7 @@ public class evalTest {
 
     // Test eval method match(subject, regex)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMatchCatalystTest() {
         String q = "index=index_A | eval a=match(ip,\"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\")";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
@@ -2099,39 +1847,36 @@ public class evalTest {
             // we should get the same amount of values back as we put in
             assertEquals(3, lst.size());
             // Compare values to expected
-            List<Boolean> expectedLst = Arrays.asList(true, true, true);
+            List<Boolean> expectedLst = Arrays.asList(
+                    true, true, true
+            );
 
             assertEquals(expectedLst, lst);
         });
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMatch2CatalystTest() {
         String q = "index=index_A | eval a=if(match(ip,\"3\"),1,0)";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true)," +
+                "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true)," +
+                "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<String> lst = resA
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
+            List<String> lst = resA.collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
             assertEquals(3, lst.size());
             // Compare values to expected
-            List<String> expectedLst = Arrays.asList("0", "1", "0");
+            List<String> expectedLst = Arrays.asList(
+                    "0", "1", "0"
+            );
 
             assertEquals(expectedLst, lst);
         });
@@ -2139,10 +1884,7 @@ public class evalTest {
 
     // Test eval method mvfind(mvfield, "regex")
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMvfindCatalystTest() {
         String q = "index=index_A | eval a=mvfind(mvappend(\"random\",\"192.168.1.1\",\"192.168.10.1\"),\"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$\")";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
@@ -2161,14 +1903,11 @@ public class evalTest {
 
     // Test eval method mvindex(mvfield, startindex [,endindex])
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMvindexCatalystTest() {
-        String q = "index=index_A | eval a=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2) "
-                + "| eval b=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2, 3)"
-                + "| eval c=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),-1)";
+        String q = "index=index_A | eval a=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2) " +
+        		   				 "| eval b=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2, 3)" +
+                                 "| eval c=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),-1)";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true),StructField(c,ArrayType(StringType,false),true))";
 
@@ -2195,13 +1934,10 @@ public class evalTest {
 
     // Test eval method mvjoin(mvfield, str)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMvjoinCatalystTest() {
-        String q = "index=index_A | eval a=mvjoin(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),\";;\") "
-                + "<!--| eval b=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2, 3)--> ";
+        String q = "index=index_A | eval a=mvjoin(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),\";;\") " +
+        		   				 "<!--| eval b=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2, 3)--> ";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
@@ -2218,12 +1954,10 @@ public class evalTest {
 
     // Test eval method mvrange(start, end, step)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMvrangeCatalystTest() {
-        String q = "index=index_A | eval a=mvrange(1514834731,1524134919,\"7d\")" + "| eval b=mvrange(1, 10, 2)";
+        String q = "index=index_A | eval a=mvrange(1514834731,1524134919,\"7d\")" +
+        		   				 "| eval b=mvrange(1, 10, 2)";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
@@ -2238,29 +1972,40 @@ public class evalTest {
             List<List<Object>> lstB = resB.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals(
-                    "[1514834731, " + "1515439531, " + "1516044331, " + "1516649131, " + "1517253931, " + "1517858731, "
-                            + "1518463531, " + "1519068331, " + "1519673131, " + "1520277931, " + "1520882731, "
-                            + "1521487531, " + "1522092331, " + "1522697131, " + "1523301931, " + "1523906731]",
-                    lst.get(0).toString()
-            );
-            assertEquals("[1, " + "3, " + "5, " + "7, " + "9]", lstB.get(0).toString());
+            assertEquals("[1514834731, "
+                    + "1515439531, "
+                    + "1516044331, "
+                    + "1516649131, "
+                    + "1517253931, "
+                    + "1517858731, "
+                    + "1518463531, "
+                    + "1519068331, "
+                    + "1519673131, "
+                    + "1520277931, "
+                    + "1520882731, "
+                    + "1521487531, "
+                    + "1522092331, "
+                    + "1522697131, "
+                    + "1523301931, "
+                    + "1523906731]", lst.get(0).toString());
+            assertEquals("[1, "
+                    + "3, "
+                    + "5, "
+                    + "7, "
+                    + "9]", lstB.get(0).toString());
         });
     }
 
     // Test eval method mvsort(mvfield)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMvsortCatalystTest() {
         String q = "index=index_A | eval a=mvsort(mvappend(\"6\", \"4\", \"Aa\", \"Bb\", \"aa\", \"cd\", \"g\", \"b\", \"10\", \"11\", \"100\"))";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true)," +
+                "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true)," +
+                "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2269,22 +2014,26 @@ public class evalTest {
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals(
-                    "[10, " + "100, " + "11, " + "4, " + "6, " + "Aa, " + "Bb, " + "aa, " + "b, " + "cd, " + "g]",
-                    lst.get(0).toString()
-            );
+            assertEquals("[10, "
+                    + "100, "
+                    + "11, "
+                    + "4, "
+                    + "6, "
+                    + "Aa, "
+                    + "Bb, "
+                    + "aa, "
+                    + "b, "
+                    + "cd, "
+                    + "g]",lst.get(0).toString());
         });
     }
 
     // Test eval method mvzip(x,y,"z")
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMvzipCatalystTest() {
         String q = "index=index_A | eval mv1=mvappend(\"mv1-1\",\"mv1-2\",\"mv1-3\") | eval mv2=mvappend(\"mv2-1\",\"mv2-2\",\"mv2-3\")"
-                + "| eval a=mvzip(mv1, mv2) | eval b=mvzip(mv1, mv2, \"=\")";
+        		+ "| eval a=mvzip(mv1, mv2) | eval b=mvzip(mv1, mv2, \"=\")";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(mv1,ArrayType(StringType,false),false),StructField(mv2,ArrayType(StringType,false),false),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
@@ -2299,25 +2048,26 @@ public class evalTest {
             List<List<Object>> lstB = resB.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals("[mv1-1,mv2-1, " + "mv1-2,mv2-2, " + "mv1-3,mv2-3]", lst.get(0).toString());
-            assertEquals("[mv1-1=mv2-1, " + "mv1-2=mv2-2, " + "mv1-3=mv2-3]", lstB.get(0).toString());
+            assertEquals("[mv1-1,mv2-1, "
+                    + "mv1-2,mv2-2, "
+                    + "mv1-3,mv2-3]", lst.get(0).toString());
+            assertEquals("[mv1-1=mv2-1, "
+                    + "mv1-2=mv2-2, "
+                    + "mv1-3=mv2-3]", lstB.get(0).toString());
         });
     }
 
     // Test eval method commands(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalCommandsCatalystTest() {
-        String q = "index=index_A | eval a=commands(\"search foo | stats count | sort count\") "
-                + "| eval b=commands(\"eval a=random() | eval b=a % 10 | stats avg(b) as avg min(b) as min max(b) as max var(b) as var | table avg min max var\")";
+        String q = "index=index_A | eval a=commands(\"search foo | stats count | sort count\") " +
+        		   "| eval b=commands(\"eval a=random() | eval b=a % 10 | stats avg(b) as avg min(b) as min max(b) as max var(b) as var | table avg min max var\")";
         String testFile = "src/test/resources/eval_test_ips*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true)," +
+                "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true)," +
+                "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2338,17 +2088,15 @@ public class evalTest {
 
     // Test eval isbool(x) / isint(x) / isnum(x) / isstr(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalIsTypeCatalystTest() {
         String q = "index=index_A | eval isBoolean = isbool(true()) | eval isNotBoolean = isbool(1) "
-                + "| eval isInt = isint(1) | eval isNotInt = isint(\"a\") "
-                + "| eval isNum = isnum(5.4) | eval isNotNum = isnum(false()) "
-                + "| eval isStr = isstr(\"a\") | eval isNotStr = isstr(3)";
+        			+ "| eval isInt = isint(1) | eval isNotInt = isint(\"a\") "
+        			+ "| eval isNum = isnum(5.4) | eval isNotNum = isnum(false()) "
+        			+ "| eval isStr = isstr(\"a\") | eval isNotStr = isstr(3)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(isBoolean,BooleanType,true),StructField(isNotBoolean,BooleanType,true),StructField(isInt,BooleanType,true),StructField(isNotInt,BooleanType,true),StructField(isNum,BooleanType,true),StructField(isNotNum,BooleanType,true),StructField(isStr,BooleanType,true),StructField(isNotStr,BooleanType,true))";
+
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2361,6 +2109,7 @@ public class evalTest {
             List<Row> lst_isNotBoolean = ds_isNotBoolean.collectAsList();
             assertFalse(lst_isNotBoolean.get(0).getBoolean(0));
 
+
             // Integer
             Dataset<Row> ds_isInt = res.select("isInt").orderBy("isInt").distinct();
             List<Row> lst_isInt = ds_isInt.collectAsList();
@@ -2370,6 +2119,7 @@ public class evalTest {
             List<Row> lst_isNotInt = ds_isNotInt.collectAsList();
             assertFalse(lst_isNotInt.get(0).getBoolean(0));
 
+
             // Numeric
             Dataset<Row> ds_isNum = res.select("isNum").orderBy("isNum").distinct();
             List<Row> lst_isNum = ds_isNum.collectAsList();
@@ -2378,6 +2128,7 @@ public class evalTest {
             Dataset<Row> ds_isNotNum = res.select("isNotNum").orderBy("isNotNum").distinct();
             List<Row> lst_isNotNum = ds_isNotNum.collectAsList();
             assertFalse(lst_isNotNum.get(0).getBoolean(0));
+
 
             // String
             Dataset<Row> ds_isStr = res.select("isStr").orderBy("isStr").distinct();
@@ -2392,10 +2143,7 @@ public class evalTest {
 
     // Test eval isnull(x) and isnotnull(x)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalIsNullCatalystTest() {
         String q = "index=index_A | eval a = isnull(null()) | eval b = isnull(true()) | eval c = isnotnull(null()) | eval d = isnotnull(true())";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -2425,10 +2173,7 @@ public class evalTest {
     // Test eval typeof(x)
     // TODO uncomment eval d= ... when eval supports non-existing fields
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTypeofCatalystTest() {
         String q = "index=index_A | eval a = typeof(12) | eval b = typeof(\"string\") | eval c = typeof(1==2) <!--| eval d = typeof(badfield)-->";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -2452,18 +2197,15 @@ public class evalTest {
             assertEquals("Boolean", dsBooleanLst.get(0).getString(0));
 
             // invalid
-            //            Dataset<Row> dsInvalid = res.select("d").orderBy("d").distinct();
-            //            List<Row> dsInvalidLst = dsInvalid.collectAsList();
-            //            assertEquals("Invalid", dsInvalidLst.get(0).getString(0));
+//            Dataset<Row> dsInvalid = res.select("d").orderBy("d").distinct();
+//            List<Row> dsInvalidLst = dsInvalid.collectAsList();
+//            assertEquals("Invalid", dsInvalidLst.get(0).getString(0));
         });
     }
 
     // Test eval method mvappend(x, ...)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseMvappendCatalystTest() {
         String q = "index=index_A | eval a = mvappend(\"Hello\",\"World\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -2482,17 +2224,14 @@ public class evalTest {
 
     // Test eval method mvcount(mvfield)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseMvcountCatalystTest() {
         String q = "index=index_A | eval one_value = mvcount(mvappend(offset)) | eval two_values = mvcount(mvappend(index, offset))";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(one_value,StringType,true),"
-                + "StructField(two_values,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(one_value,StringType,true)," +
+                "StructField(two_values,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2512,16 +2251,13 @@ public class evalTest {
 
     // Test eval method mvdedup(mvfield)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseMvdedupCatalystTest() {
         String q = "index=index_A | eval a = mvdedup(mvappend(\"1\",\"2\",\"3\",\"1\",\"2\",\"4\"))";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true)," +
+                "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true)," +
+                "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2532,35 +2268,31 @@ public class evalTest {
     }
 
     // Test eval method mvfilter(x)
-    // TODO
     @Disabled
-    @Test
+	@Test
     public void parseMvfilterCatalystTest() {
         String q = "index=index_A | eval email = mvappend(\"aa@bb.example.test\",\"aa@yy.example.test\",\"oo@ii.example.test\",\"zz@uu.example.test\",\"auau@uiui.example.test\") | eval a = mvfilter( email != \"aa@bb.example.test\" )";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
             Dataset<Row> resEmail = res.select("email");
 
             Dataset<Row> resA = res.select("a");
-            //            List<Row> lstA = resA.collectAsList();
-            //            assertEquals("1\n2\n3\n4", lstA.get(0).getString(0));
+//            List<Row> lstA = resA.collectAsList();
+//            assertEquals("1\n2\n3\n4", lstA.get(0).getString(0));
         });
     }
 
     // Test eval strptime()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalStrptimeCatalystTest() {
-        String q = "index=index_A | eval a=strptime(\"2018-08-13 11:22:33\",\"%Y-%m-%d %H:%M:%S\") "
-                + "| eval b=strptime(\"2018-08-13 11:22:33 11 AM PST\",\"%Y-%m-%d %T %I %p %Z\") ";
+    	String q = "index=index_A | eval a=strptime(\"2018-08-13 11:22:33\",\"%Y-%m-%d %H:%M:%S\") " +
+    			   "| eval b=strptime(\"2018-08-13 11:22:33 11 AM PST\",\"%Y-%m-%d %T %I %p %Z\") ";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true),StructField(b,LongType,true))";
 
@@ -2579,13 +2311,10 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalStrftimeCatalystTest() {
-        String q = "index=index_A | eval a=strftime(1534159353,\"%Y-%m-%d %H:%M:%S\") "
-                + "| eval b=strftime(1534188153,\"%Y-%m-%d %T %I %p %Z\")";
+        String q = "index=index_A | eval a=strftime(1534159353,\"%Y-%m-%d %H:%M:%S\") " +
+                "| eval b=strftime(1534188153,\"%Y-%m-%d %T %I %p %Z\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -2602,13 +2331,10 @@ public class evalTest {
 
     // Test eval method split(field,delimiter)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSplitCatalystTest() {
-        String q = "index=index_A | eval a=split(\"a;b;c;d;e;f;g;h\",\";\") "
-                + "| eval b=split(\"1,2,3,4,5,6,7,8,9,10\",\",\")";
+    	String q = "index=index_A | eval a=split(\"a;b;c;d;e;f;g;h\",\";\") " +
+    			   "| eval b=split(\"1,2,3,4,5,6,7,8,9,10\",\",\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false),StructField(b,ArrayType(StringType,false),false))";
 
@@ -2628,17 +2354,14 @@ public class evalTest {
 
     // Test eval method relative_time(unixtime, modifier)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalRelative_timeCatalystTest() {
-        String q = "index=index_A | eval a=relative_time(1645092037, \"-7d\") "
-                + "| eval b=relative_time(1645092037,\"@d\")";
+    	String q = "index=index_A | eval a=relative_time(1645092037, \"-7d\") " +
+    			   "| eval b=relative_time(1645092037,\"@d\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true),StructField(b,LongType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true),StructField(b,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2656,16 +2379,13 @@ public class evalTest {
 
     // Test eval method min(x, ...) and max(x, ...)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMinMaxCatalystTest() {
-        String q = "index=index_A | eval a=min(offset, offset - 2, offset - 3, offset - 4, offset - 5, offset) | eval b=max(offset, offset - 1, offset + 5) ";
+    	String q = "index=index_A | eval a=min(offset, offset - 2, offset - 3, offset - 4, offset - 5, offset) | eval b=max(offset, offset - 1, offset + 5) ";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2688,16 +2408,13 @@ public class evalTest {
 
     // Test eval method min(x, ...) and max(x, ...) with String
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMinMaxWithStringCatalystTest() {
         String q = "index=index_A | eval a=min(offset, \"foo\") | eval b=max(offset, \"foo\") ";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2712,7 +2429,7 @@ public class evalTest {
 
             // Assert equals with expected
             for (int i = 0; i < srcLst.size(); i++) {
-                assertEquals(srcLst.get(i).getLong(0), Long.parseLong(lstA.get(i).getString(0)));
+                assertEquals(srcLst.get(i).getLong(0),Long.parseLong(lstA.get(i).getString(0)));
                 assertEquals("foo", lstB.get(i).getString(0));
             }
         });
@@ -2720,16 +2437,13 @@ public class evalTest {
 
     // Test eval method min(x, ...) and max(x, ...) with String
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMinMaxWithStringNumbersCatalystTest() {
         String q = "index=index_A | eval a=min(\"9\", \"10\", \"foo\") | eval b=max(\"9\", \"10\", \"foo\") ";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2749,16 +2463,13 @@ public class evalTest {
 
     // Test eval method min(x, ...) and max(x, ...) with String
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalMinMaxWithStringDecimalsCatalystTest() {
         String q = "index=index_A | eval a=min(\"10.0\", \"4.7\") | eval b=max(\"10.0\", \"4.7\") ";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2778,17 +2489,14 @@ public class evalTest {
 
     // Test eval json_valid()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalJSONValidCatalystTest() {
         String q = " index=index_A | eval a=json_valid(_raw) | eval b=json_valid(json_field)";
         String testFile = "src/test/resources/eval_test_json*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,BooleanType,true),"
-                + "StructField(b,BooleanType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,BooleanType,true)," +
+                "StructField(b,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2807,15 +2515,15 @@ public class evalTest {
 
     // Test spath() with JSON
     @Disabled
-    @Test
+	@Test
     // FIXME broken due to spath udf changes
     public void parseEvalSpathJSONCatalystTest() {
-        String q = "index=index_A | eval a=spath(json_field, \"name\") | eval b=spath(json_field,\"invalid_spath\")";
+    	String q = "index=index_A | eval a=spath(json_field, \"name\") | eval b=spath(json_field,\"invalid_spath\")";
         String testFile = "src/test/resources/eval_test_json*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,StringType,true),"
-                + "StructField(b,StringType,true))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,StringType,true)," +
+                "StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2826,6 +2534,7 @@ public class evalTest {
             // Get column 'b'
             Dataset<Row> resB = res.select("b").orderBy("b").distinct();
             List<Row> lstB = resB.collectAsList();
+
 
             assertEquals("John A", lst.get(0).getString(0));
             assertEquals("John", lst.get(1).getString(0));
@@ -2845,13 +2554,13 @@ public class evalTest {
     // //person[age=30]/name/text()
     // FIXME broken due to spath udf changes
     @Disabled
-    @Test
+	@Test
     public void parseEvalSpathXMLCatalystTest() {
-        String q = "index=index_A | eval a=spath(xml_field, \"people.person.name\")";
+    	String q = "index=index_A | eval a=spath(xml_field, \"people.person.name\")";
         String testFile = "src/test/resources/eval_test_json*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,StringType,true))"; //, " +
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,StringType,true))"; //, " +
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2863,8 +2572,9 @@ public class evalTest {
             List<Row> lst = resA.collectAsList();
 
             // Get column 'b'
-            //            Dataset<Row> resB = res.select("b").orderBy("b").distinct();
-            //            List<Row> lstB = resB.collectAsList();
+//            Dataset<Row> resB = res.select("b").orderBy("b").distinct();
+//            List<Row> lstB = resB.collectAsList();
+
 
             assertEquals("John", lst.get(0).getString(0));
             assertEquals("John", lst.get(1).getString(0));
@@ -2882,12 +2592,9 @@ public class evalTest {
 
     // Test eval method exact()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalExactCatalystTest() {
-        String q = "index=index_A | eval a=8.250 * 0.2 | eval b=exact(8.250 * 0.2)";
+    	String q = "index=index_A | eval a=8.250 * 0.2 | eval b=exact(8.250 * 0.2)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
@@ -2908,17 +2615,14 @@ public class evalTest {
 
     // Test eval method searchmatch()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSearchmatchCatalystTest() {
-        String q = "index=index_A | eval test=searchmatch(\"index=index_A\") | eval test2=searchmatch(\"index=index_B\") | eval test3=searchmatch(\"offset<10 index=index_A sourcetype=a*\")";
+    	String q = "index=index_A | eval test=searchmatch(\"index=index_A\") | eval test2=searchmatch(\"index=index_B\") | eval test3=searchmatch(\"offset<10 index=index_A sourcetype=a*\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(test,BooleanType,false),"
-                + "StructField(test2,BooleanType,false),StructField(test3,BooleanType,false))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(test,BooleanType,false)," +
+                "StructField(test2,BooleanType,false),StructField(test3,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2951,6 +2655,7 @@ public class evalTest {
                 // eval test2 results in all FALSE
                 assertFalse(lstB.get(i).getBoolean(0));
 
+
                 // eval test3, values between i=0..6 are TRUE, otherwise FALSE
                 if (i < 6) {
                     assertTrue(lstC.get(i).getBoolean(0));
@@ -2965,16 +2670,13 @@ public class evalTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalSearchmatchImplicitRawCatalystTest() {
         String q = "index=index_A | eval test=searchmatch(\"*cOmPuter02.example.com*\")";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(test,BooleanType,false))";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true)," +
+                "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true)," +
+                "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(test,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             assertEquals(schema, res.schema().toString());
@@ -2997,10 +2699,7 @@ public class evalTest {
 
     // Test eval now() and time()
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEval_Now_Time_CatalystTest() {
         String q = " index=index_A | eval a=now() | eval b=time()";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -3031,10 +2730,7 @@ public class evalTest {
 
     // Test that eval arithmetics only works for Strings with the + operator
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalArithmeticsWithStringTest() {
         Exception exceptionMinus = assertThrows(IllegalArgumentException.class, () -> {
             new EvalArithmetic().call("string", "-", "string");
@@ -3062,10 +2758,7 @@ public class evalTest {
 
     // Test that eval arithmetic + operation concatenates Strings
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalArithmeticsWithString_2_Test() {
         String q = "index=index_A | eval a=offset+\"string\"";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
@@ -3079,17 +2772,14 @@ public class evalTest {
 
             // Start from i = 3 because there are multiple 1's in offset
             for (int i = 1; i < 17; i++) {
-                assertEquals(i + "string", lst.get(i + 2).getString(0));
+                assertEquals(i + "string", lst.get(i+2).getString(0));
             }
         });
     }
 
     // Tests whether eval arithmetics work after spath
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAfterSpath_arithmetics() {
         String query = "index=index_A | spath path= json | eval a = json - 1";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
@@ -3097,24 +2787,16 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("id")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> expected = new ArrayList<>(Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
-            assertEquals(expected, a);
-        });
+                List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                List<String> expected = new ArrayList<>(Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
+                assertEquals(expected, a);
+            }
+        );
     }
 
     // Tests whether eval arithmetics work after spath
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAfterSpath_arithmetics2() {
         String query = "index=index_A | spath path= json | eval a = json + 1";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
@@ -3122,24 +2804,16 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("id")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> expected = new ArrayList<>(Arrays.asList("2", "3", "4", "5", "6", "7", "8", "9", "10", "11"));
-            assertEquals(expected, a);
-        });
+                List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                List<String> expected = new ArrayList<>(Arrays.asList("2", "3", "4", "5", "6", "7", "8", "9", "10", "11"));
+                assertEquals(expected, a);
+            }
+        );
     }
 
     // Tests whether eval arithmetics work after spath
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAfterSpath_arithmetics3() {
         String query = "index=index_A | spath path= json | eval a = json / 2";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
@@ -3147,26 +2821,16 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("id")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> expected = new ArrayList<>(
-                    Arrays.asList("0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5")
-            );
-            assertEquals(expected, a);
-        });
+                List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                List<String> expected = new ArrayList<>(Arrays.asList("0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5"));
+                assertEquals(expected, a);
+            }
+        );
     }
 
     // Tests whether eval arithmetics work after spath
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAfterSpath_arithmetics4() {
         String query = "index=index_A | spath path= json | eval a = json / 3";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
@@ -3174,30 +2838,16 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("id")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> expected = new ArrayList<>(
-                    Arrays
-                            .asList(
-                                    "0.3333333", "0.6666667", "1", "1.3333333", "1.6666667", "2", "2.3333333",
-                                    "2.6666667", "3", "3.3333333"
-                            )
-            );
-            assertEquals(expected, a);
-        });
+                List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                List<String> expected = new ArrayList<>(Arrays.asList("0.3333333", "0.6666667", "1", "1.3333333", "1.6666667", "2", "2.3333333", "2.6666667", "3", "3.3333333"));
+                assertEquals(expected, a);
+            }
+        );
     }
 
     // Tests whether eval arithmetics work after spath
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAfterSpath_arithmetics5() {
         String query = "index=index_A | spath path= json | eval a = json * 5";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
@@ -3205,26 +2855,16 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("id")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> expected = new ArrayList<>(
-                    Arrays.asList("5", "10", "15", "20", "25", "30", "35", "40", "45", "50")
-            );
-            assertEquals(expected, a);
-        });
+                List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                List<String> expected = new ArrayList<>(Arrays.asList("5", "10", "15", "20", "25", "30", "35", "40", "45", "50"));
+                assertEquals(expected, a);
+            }
+        );
     }
 
     // Tests whether eval arithmetics work after spath
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAfterSpath_arithmetics6() {
         String query = "index=index_A | spath path= json | eval a = json % 2";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
@@ -3232,24 +2872,16 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("id")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> expected = new ArrayList<>(Arrays.asList("1", "0", "1", "0", "1", "0", "1", "0", "1", "0"));
-            assertEquals(expected, a);
-        });
+                    List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+                    List<String> expected = new ArrayList<>(Arrays.asList("1", "0", "1", "0", "1", "0", "1", "0", "1", "0"));
+                    assertEquals(expected, a);
+                }
+        );
     }
 
     // Eval comparisons with mixed types (string and number) isn't allowed and should throw an exception
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationExceptionTest() {
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
             new EvalOperation().call("string", DPLLexer.EVAL_LANGUAGE_MODE_GT, 4);
@@ -3271,10 +2903,7 @@ public class evalTest {
 
     // Tests EvalOperation equals
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationEqTest() {
         String query = "index=index_A | eval a = if(offset == 1, \"true\", \"false\") | eval b = if(sourcetype == \"A:X:0\", \"true\", \"false\")";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
@@ -3282,33 +2911,19 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("offset")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
-            List<String> b = ds
-                    .select("b")
-                    .orderBy("_time")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
+            List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
+            List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     assertEquals("true", a.get(i));
-                }
-                else {
+                } else {
                     assertEquals("false", a.get(i));
                 }
 
                 if (i < 3) {
                     assertEquals("true", b.get(i));
-                }
-                else {
+                } else {
                     assertEquals("false", b.get(i));
                 }
             }
@@ -3317,10 +2932,7 @@ public class evalTest {
 
     // Tests EvalOperation not equals
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationNeqTest() {
         String query = "index=index_A | eval a = if(offset != 1, \"true\", \"false\") | eval b = if(sourcetype != \"A:X:0\", \"true\", \"false\")";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
@@ -3328,33 +2940,19 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("offset")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
-            List<String> b = ds
-                    .select("b")
-                    .orderBy("_time")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
+            List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
+            List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     assertEquals("false", a.get(i));
-                }
-                else {
+                } else {
                     assertEquals("true", a.get(i));
                 }
 
                 if (i < 3) {
                     assertEquals("false", b.get(i));
-                }
-                else {
+                } else {
                     assertEquals("true", b.get(i));
                 }
             }
@@ -3363,10 +2961,7 @@ public class evalTest {
 
     // Tests EvalOperation greater than
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationGtTest() {
         String query = "index=index_A | eval a = if(offset > 1, \"true\", \"false\") | eval b = if(sourcetype > \"A:X:0\", \"true\", \"false\")";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
@@ -3374,33 +2969,19 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("offset")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
-            List<String> b = ds
-                    .select("b")
-                    .orderBy("_time")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
+            List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
+            List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     assertEquals("false", a.get(i));
-                }
-                else {
+                } else {
                     assertEquals("true", a.get(i));
                 }
 
                 if (i < 3) {
                     assertEquals("false", b.get(i));
-                }
-                else {
+                } else {
                     assertEquals("true", b.get(i));
                 }
             }
@@ -3409,10 +2990,7 @@ public class evalTest {
 
     // Tests EvalOperation greater than or equal to
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationGteTest() {
         String query = "index=index_A | eval a = if(offset >= 2, \"true\", \"false\") | eval b = if(sourcetype >= \"b:X:0\", \"true\", \"false\")";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
@@ -3420,33 +2998,19 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("offset")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
-            List<String> b = ds
-                    .select("b")
-                    .orderBy("_time")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
+            List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
+            List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     assertEquals("false", a.get(i));
-                }
-                else {
+                } else {
                     assertEquals("true", a.get(i));
                 }
 
                 if (i < 3 || i > 14) {
                     assertEquals("false", b.get(i));
-                }
-                else {
+                } else {
                     assertEquals("true", b.get(i));
                 }
             }
@@ -3455,10 +3019,7 @@ public class evalTest {
 
     // Tests EvalOperation less than
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationLtTest() {
         String query = "index=index_A | eval a = if(offset < 2, \"true\", \"false\") | eval b = if(sourcetype < \"b:X:0\", \"true\", \"false\")";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
@@ -3466,33 +3027,19 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("offset")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
-            List<String> b = ds
-                    .select("b")
-                    .orderBy("_time")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
+            List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
+            List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     assertEquals("true", a.get(i));
-                }
-                else {
+                } else {
                     assertEquals("false", a.get(i));
                 }
 
                 if (i < 3 || i > 14) {
                     assertEquals("true", b.get(i));
-                }
-                else {
+                } else {
                     assertEquals("false", b.get(i));
                 }
             }
@@ -3501,10 +3048,7 @@ public class evalTest {
 
     // Tests EvalOperation less than or equal to
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationLteTest() {
         String query = "index=index_A | eval a = if(offset <= 2, \"true\", \"false\") | eval b = if(sourcetype <= \"b:X:0\", \"true\", \"false\")";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
@@ -3512,33 +3056,19 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("offset")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
-            List<String> b = ds
-                    .select("b")
-                    .orderBy("_time")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getList(0).get(0).toString())
-                    .collect(Collectors.toList());
+            List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
+            List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 5) {
                     assertEquals("true", a.get(i));
-                }
-                else {
+                } else {
                     assertEquals("false", a.get(i));
                 }
 
                 if (i < 6 || i > 14) {
                     assertEquals("true", b.get(i));
-                }
-                else {
+                } else {
                     assertEquals("false", b.get(i));
                 }
             }
@@ -3547,10 +3077,7 @@ public class evalTest {
 
     // Tests EvalOperation after spath (spath makes all data into String)
     @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalAfterSpath_ComparisonTest() {
         String query = "index=index_A | spath path= json | eval a= json > 40";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,BooleanType,true))";
@@ -3558,16 +3085,8 @@ public class evalTest {
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             assertEquals(schema, ds.schema().toString());
-            List<String> a = ds
-                    .select("a")
-                    .orderBy("offset")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
-            List<String> expected = new ArrayList<>(
-                    Arrays.asList("false", "false", "false", "false", "true", "true", "true", "true", "true", "true")
-            );
+            List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
+            List<String> expected = new ArrayList<>(Arrays.asList("false", "false", "false", "false", "true", "true", "true", "true", "true", "true"));
 
             assertEquals(expected, a);
         });
