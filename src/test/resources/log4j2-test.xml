@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+  <Appenders>
+    <Console name="Console" target="SYSTEM_OUT">
+      <PatternLayout pattern="%5p [%d] [%C] ({%t} %F[%M]:%L) - %m%n"/>
+    </Console>
+  </Appenders>
+  <Loggers>
+    <Logger name="com.teragrep" level="info">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Logger name="org.apache.spark" level="warn">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Logger name="org.sparkproject.jetty" level="warn">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Root level="info">
+      <AppenderRef ref="Console"/>
+    </Root>
+  </Loggers>
+</Configuration>
