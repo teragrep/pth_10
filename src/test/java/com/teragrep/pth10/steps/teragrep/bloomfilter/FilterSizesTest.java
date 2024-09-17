@@ -48,7 +48,8 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.spark.util.sketch.BloomFilter;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.Properties;

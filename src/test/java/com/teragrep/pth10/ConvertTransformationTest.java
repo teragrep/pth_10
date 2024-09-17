@@ -46,7 +46,6 @@
 package com.teragrep.pth10;
 
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

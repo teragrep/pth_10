@@ -46,10 +46,10 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.DefaultTimeFormat;
-import org.apache.spark.sql.*;
-import org.junit.jupiter.api.Disabled;
+import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

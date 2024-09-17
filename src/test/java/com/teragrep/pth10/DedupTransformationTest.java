@@ -45,14 +45,16 @@
  */
 package com.teragrep.pth10;
 
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets

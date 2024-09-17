@@ -46,8 +46,9 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.DefaultTimeFormat;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.TimeZone;
