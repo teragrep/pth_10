@@ -9,7 +9,13 @@
     <Logger name="com.teragrep" level="info">
       <AppenderRef ref="Console"/>
     </Logger>
-    <Root level="warn">
+    <Logger name="org.apache.spark" level="warn">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Logger name="org.sparkproject.jetty" level="warn">
+      <AppenderRef ref="Console"/>
+    </Logger>
+    <Root level="info">
       <AppenderRef ref="Console"/>
     </Root>
   </Loggers>
