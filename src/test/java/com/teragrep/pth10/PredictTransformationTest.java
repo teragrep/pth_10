@@ -50,7 +50,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -59,8 +59,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class PredictTransformationTest {
@@ -82,18 +80,18 @@ public class PredictTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -114,9 +112,8 @@ public class PredictTransformationTest {
                 .performDPLTest(
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred upper 98 = u98 lower 98 = l98",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.asList("_time", "avgo", "pred", "u98(pred)", "l98(pred)"), Arrays.asList(ds.schema().fieldNames())
-                            );
+                            Assertions
+                                    .assertEquals(Arrays.asList("_time", "avgo", "pred", "u98(pred)", "l98(pred)"), Arrays.asList(ds.schema().fieldNames()));
 
                             // future_timespan=5 -> five nulls
                             List<Row> lr = ds
@@ -125,7 +122,7 @@ public class PredictTransformationTest {
                                     .stream()
                                     .filter(r -> r.get(0) == null)
                                     .collect(Collectors.toList());
-                            assertEquals(5, lr.size());
+                            Assertions.assertEquals(5, lr.size());
                         }
                 );
     }
@@ -140,9 +137,10 @@ public class PredictTransformationTest {
                 .performDPLTest(
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred future_timespan=10",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.asList("_time", "avgo", "pred", "upper95(pred)", "lower95(pred)"), Arrays.asList(ds.schema().fieldNames())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            Arrays.asList("_time", "avgo", "pred", "upper95(pred)", "lower95(pred)"), Arrays.asList(ds.schema().fieldNames())
+                                    );
 
                             // future_timespan=10 -> ten nulls
                             List<Row> lr = ds
@@ -151,7 +149,7 @@ public class PredictTransformationTest {
                                     .stream()
                                     .filter(r -> r.get(0) == null)
                                     .collect(Collectors.toList());
-                            assertEquals(10, lr.size());
+                            Assertions.assertEquals(10, lr.size());
                         }
                 );
     }
@@ -166,9 +164,10 @@ public class PredictTransformationTest {
                 .performDPLTest(
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred algorithm=LLT future_timespan=10 ",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.asList("_time", "avgo", "pred", "upper95(pred)", "lower95(pred)"), Arrays.asList(ds.schema().fieldNames())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            Arrays.asList("_time", "avgo", "pred", "upper95(pred)", "lower95(pred)"), Arrays.asList(ds.schema().fieldNames())
+                                    );
 
                             // future_timespan=10 -> ten nulls
                             List<Row> lr = ds
@@ -177,7 +176,7 @@ public class PredictTransformationTest {
                                     .stream()
                                     .filter(r -> r.get(0) == null)
                                     .collect(Collectors.toList());
-                            assertEquals(10, lr.size());
+                            Assertions.assertEquals(10, lr.size());
                         }
                 );
     }

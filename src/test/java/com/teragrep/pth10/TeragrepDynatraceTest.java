@@ -50,7 +50,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.mockserver.configuration.Configuration;
@@ -61,7 +61,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockserver.model.HttpRequest.request;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -85,7 +84,7 @@ public class TeragrepDynatraceTest {
     private ClientAndServer mockServer;
     private final int port = 9001;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
@@ -94,17 +93,17 @@ public class TeragrepDynatraceTest {
         mockServer = ClientAndServer.startClientAndServer(cfg, port);
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
 
-    @org.junit.jupiter.api.AfterAll
+    @AfterAll
     void stopServer() {
         mockServer.stop();
     }
@@ -154,7 +153,7 @@ public class TeragrepDynatraceTest {
                 );
 
         // should not work without aggregate
-        assertTrue(th.getMessage().endsWith("requires a preceding aggregate!"));
+        Assertions.assertTrue(th.getMessage().endsWith("requires a preceding aggregate!"));
 
         // 0 lines received
         mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.never());
@@ -180,7 +179,7 @@ public class TeragrepDynatraceTest {
                 );
 
         // should not work with non-numeric data
-        assertEquals("Non-numeric text was provided!", th.getCause().getMessage());
+        Assertions.assertEquals("Non-numeric text was provided!", th.getCause().getMessage());
 
         // 0 lines received
         mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.never());

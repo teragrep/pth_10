@@ -55,12 +55,10 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DplTest {
@@ -80,8 +78,8 @@ public class DplTest {
         ct.visitDplTransformation((DPLParser.DplTransformationContext) tree.getChild(1).getChild(0));
         DplStep cs = ct.dplStep;
 
-        assertEquals(AbstractDplStep.DplCommandType.PARSETREE, cs.getCommandType());
-        assertEquals("dpl", cs.getExplainStr());
-        assertEquals("[]", Arrays.toString(cs.getLines().toArray()));
+        Assertions.assertEquals(AbstractDplStep.DplCommandType.PARSETREE, cs.getCommandType());
+        Assertions.assertEquals("dpl", cs.getExplainStr());
+        Assertions.assertEquals("[]", Arrays.toString(cs.getLines().toArray()));
     }
 }

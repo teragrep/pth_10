@@ -49,7 +49,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -57,9 +57,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.Assert.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BloomFilterOperationsTest {
@@ -81,7 +78,7 @@ public class BloomFilterOperationsTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         streamingTestUtil = new StreamingTestUtil(this.testSchema);
         streamingTestUtil.setEnv();
@@ -92,7 +89,7 @@ public class BloomFilterOperationsTest {
          */
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         streamingTestUtil.setUp();
         /*
@@ -102,7 +99,7 @@ public class BloomFilterOperationsTest {
          */
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         streamingTestUtil.tearDown();
     }
@@ -121,9 +118,8 @@ public class BloomFilterOperationsTest {
                 .performDPLTest(
                         "index=index_A earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z | teragrep exec tokenizer | teragrep exec bloom estimate",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[partition, estimate(tokens)]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals("[partition, estimate(tokens)]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
                             List<Integer> results = ds
                                     .select("estimate(tokens)")
                                     .collectAsList()
@@ -131,8 +127,8 @@ public class BloomFilterOperationsTest {
                                     .map(r -> Integer.parseInt(r.get(0).toString()))
                                     .collect(Collectors.toList());
 
-                            assertEquals(results.get(0), 1);
-                            assertTrue(results.get(1) > 1);
+                            Assertions.assertEquals(results.get(0), 1);
+                            Assertions.assertTrue(results.get(1) > 1);
                         }
                 );
     }

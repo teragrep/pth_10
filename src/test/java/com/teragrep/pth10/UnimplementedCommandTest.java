@@ -49,13 +49,11 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class UnimplementedCommandTest {
@@ -77,18 +75,18 @@ public class UnimplementedCommandTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -107,7 +105,10 @@ public class UnimplementedCommandTest {
         IllegalArgumentException iae = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
                 });
-        assertEquals("The provided command 'dumpbasefilename=\"test\"' is not yet implemented.", iae.getMessage());
+        Assertions
+                .assertEquals(
+                        "The provided command 'dumpbasefilename=\"test\"' is not yet implemented.", iae.getMessage()
+                );
     }
 
     @Test
@@ -120,6 +121,9 @@ public class UnimplementedCommandTest {
         IllegalArgumentException iae = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
                 });
-        assertEquals("The provided command 'dumpbasefilename=\"test\"' is not yet implemented.", iae.getMessage());
+        Assertions
+                .assertEquals(
+                        "The provided command 'dumpbasefilename=\"test\"' is not yet implemented.", iae.getMessage()
+                );
     }
 }

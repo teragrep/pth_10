@@ -49,16 +49,13 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the EventstatsTransformation implementation Uses streaming datasets
@@ -84,18 +81,18 @@ public class EventstatsTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -110,10 +107,12 @@ public class EventstatsTransformationTest {
     ) // Standard eventstats, without wildcards in WITH-clause
     public void eventstats_test_NoByClause() {
         streamingTestUtil.performDPLTest("index=index_A | eventstats avg(offset) AS avg_offset", testFile, ds -> {
-            assertEquals(
-                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]",
-                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]", Arrays
+                                    .toString(ds.columns()),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
             List<String> listOfOffset = ds
                     .select("avg_offset")
                     .dropDuplicates()
@@ -121,8 +120,8 @@ public class EventstatsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(1, listOfOffset.size());
-            assertEquals("5.5", listOfOffset.get(0));
+            Assertions.assertEquals(1, listOfOffset.size());
+            Assertions.assertEquals("5.5", listOfOffset.get(0));
         });
     }
 
@@ -134,11 +133,11 @@ public class EventstatsTransformationTest {
     public void eventstats_test_WithByClause() {
         streamingTestUtil
                 .performDPLTest("index=index_A | eventstats avg(offset) AS avg_offset BY sourcetype", testFile, ds -> {
-                    assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]", Arrays
-                                    .toString(ds.columns()),
-                            "Batch handler dataset contained an unexpected column arrangement !"
-                    );
+                    Assertions
+                            .assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]",
+                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
                     List<String> listOfOffset = ds
                             .select("avg_offset")
                             .dropDuplicates()
@@ -146,9 +145,9 @@ public class EventstatsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(2, listOfOffset.size());
-                    assertEquals("6.0", listOfOffset.get(0));
-                    assertEquals("5.0", listOfOffset.get(1));
+                    Assertions.assertEquals(2, listOfOffset.size());
+                    Assertions.assertEquals("6.0", listOfOffset.get(0));
+                    Assertions.assertEquals("5.0", listOfOffset.get(1));
                 });
     }
 
@@ -159,10 +158,12 @@ public class EventstatsTransformationTest {
     ) // count with implied wildcard
     public void eventstats_test_count() {
         streamingTestUtil.performDPLTest("index=index_A | eventstats count", testFile, ds -> {
-            assertEquals(
-                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count]",
-                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count]", Arrays
+                                    .toString(ds.columns()),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
             List<String> listOfCount = ds
                     .select("count")
                     .dropDuplicates()
@@ -170,7 +171,7 @@ public class EventstatsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(1, listOfCount.size());
+            Assertions.assertEquals(1, listOfCount.size());
         });
     }
 
@@ -182,10 +183,11 @@ public class EventstatsTransformationTest {
     public void eventstats_test_multi() {
         streamingTestUtil
                 .performDPLTest("index=index_A | eventstats count avg(offset) stdevp(offset)", testFile, ds -> {
-                    assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count, avg(offset), stdevp(offset)]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                    );
+                    Assertions
+                            .assertEquals(
+                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count, avg(offset), stdevp(offset)]",
+                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            );
                     List<String> listOfCount = ds
                             .select("count")
                             .dropDuplicates()
@@ -193,7 +195,7 @@ public class EventstatsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(1, listOfCount.size());
+                    Assertions.assertEquals(1, listOfCount.size());
                     List<String> listOfAvg = ds
                             .select("avg(offset)")
                             .dropDuplicates()
@@ -201,7 +203,7 @@ public class EventstatsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(1, listOfAvg.size());
+                    Assertions.assertEquals(1, listOfAvg.size());
                     List<String> listOfStdevp = ds
                             .select("stdevp(offset)")
                             .dropDuplicates()
@@ -209,7 +211,7 @@ public class EventstatsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(1, listOfStdevp.size());
+                    Assertions.assertEquals(1, listOfStdevp.size());
                 });
     }
 }

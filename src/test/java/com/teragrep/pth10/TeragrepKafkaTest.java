@@ -59,7 +59,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -71,9 +71,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeragrepKafkaTest {
@@ -100,13 +97,13 @@ public class TeragrepKafkaTest {
     public static final SharedKafkaTestResource sharedKafkaTestResource = new SharedKafkaTestResource()
             .registerListener(new PlainListener().onPorts(42649));
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
 
@@ -129,7 +126,7 @@ public class TeragrepKafkaTest {
         this.streamingTestUtil.getCtx().setConfig(c);
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -173,14 +170,17 @@ public class TeragrepKafkaTest {
 
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka
-                        assertTrue(record.value().contains("\"source\":\"" + "127." + i + "." + i + "." + i + "\""));
+                        Assertions
+                                .assertTrue(
+                                        record.value().contains("\"source\":\"" + "127." + i + "." + i + "." + i + "\"")
+                                );
                         i++;
                     }
                 }
                 while (!records.isEmpty());
 
                 // rows of data saved to kafka
-                assertEquals(5, i);
+                Assertions.assertEquals(5, i);
             }
 
             // test the returned dataset
@@ -192,7 +192,7 @@ public class TeragrepKafkaTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
-            assertEquals(actualOffsets, offsets);
+            Assertions.assertEquals(actualOffsets, offsets);
         });
     }
 
@@ -235,7 +235,7 @@ public class TeragrepKafkaTest {
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (all offsets)
                         for (int j = 1; j < 6; j++) {
-                            assertTrue(record.value().contains("\"offset\":" + j));
+                            Assertions.assertTrue(record.value().contains("\"offset\":" + j));
                         }
 
                         i++;
@@ -244,7 +244,7 @@ public class TeragrepKafkaTest {
                 while (!records.isEmpty());
 
                 // rows of data saved to kafka (aggregation should result into one row of data containing an array)
-                assertEquals(1, i);
+                Assertions.assertEquals(1, i);
             }
 
             // test the returned dataset
@@ -256,7 +256,7 @@ public class TeragrepKafkaTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
-            assertEquals(actualOffsets, offsets);
+            Assertions.assertEquals(actualOffsets, offsets);
         });
     }
 
@@ -299,7 +299,7 @@ public class TeragrepKafkaTest {
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (all offsets)
                         for (int j = 1; j < 6; j++) {
-                            assertTrue(record.value().contains("\"offset\":" + j));
+                            Assertions.assertTrue(record.value().contains("\"offset\":" + j));
                         }
                         i++;
                     }
@@ -307,7 +307,7 @@ public class TeragrepKafkaTest {
                 while (!records.isEmpty());
 
                 // rows of data saved to kafka (aggregation should result into one row of data containing an array)
-                assertEquals(1, i);
+                Assertions.assertEquals(1, i);
             }
 
             // test the returned dataset
@@ -319,7 +319,7 @@ public class TeragrepKafkaTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
-            assertEquals(actualOffsets, offsets);
+            Assertions.assertEquals(actualOffsets, offsets);
         });
     }
 
@@ -360,14 +360,17 @@ public class TeragrepKafkaTest {
 
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (test the source column)
-                        assertTrue(record.value().contains("\"source\":\"" + "127." + i + "." + i + "." + i + "\""));
+                        Assertions
+                                .assertTrue(
+                                        record.value().contains("\"source\":\"" + "127." + i + "." + i + "." + i + "\"")
+                                );
                         i++;
                     }
                 }
                 while (!records.isEmpty());
 
                 // rows of data saved to kafka
-                assertEquals(1, i);
+                Assertions.assertEquals(1, i);
             }
 
             // test the returned dataset
@@ -379,7 +382,7 @@ public class TeragrepKafkaTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             List<String> actualOffsets = Arrays.asList("1", "2", "3", "4", "5");
-            assertEquals(actualOffsets, offsets);
+            Assertions.assertEquals(actualOffsets, offsets);
         });
     }
 }

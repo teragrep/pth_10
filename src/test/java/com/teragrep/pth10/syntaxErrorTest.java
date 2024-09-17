@@ -46,10 +46,7 @@
 package com.teragrep.pth10;
 
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.*;
 
 public class syntaxErrorTest {
 
@@ -59,9 +56,9 @@ public class syntaxErrorTest {
         String e;
         final String q;
         q = "index = archive_memory ( host = \"localhost\"  Deny";
-        e = "failed to parse at line 1:49 due to missing PARENTHESIS_R at '<EOF>'";
-        Throwable exception = assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
-        assertEquals(e, exception.getMessage());
+        e = "Assertions.failed to parse at line 1:49 due to missing PARENTHESIS_R at '<EOF>'";
+        Throwable exception = Assertions.assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
+        Assertions.assertEquals(e, exception.getMessage());
         throw new UnsupportedOperationException("Implement");
     }
 
@@ -72,9 +69,9 @@ public class syntaxErrorTest {
         final String q;
 
         q = "index = archive_memory ( host = \"localhost\" OR host = \"test\" @))) < AND sourcetype = \"memory\" Deny";
-        e = "failed to parse at line 1:61 due to extraneous input '@' expecting PARENTHESIS_R";
-        Throwable exception = assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
-        assertEquals(e, exception.getMessage());
+        e = "Assertions.failed to parse at line 1:61 due to extraneous input '@' expecting PARENTHESIS_R";
+        Throwable exception = Assertions.assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
+        Assertions.assertEquals(e, exception.getMessage());
         throw new UnsupportedOperationException("Implement");
 
     }
@@ -88,9 +85,9 @@ public class syntaxErrorTest {
         String e;
         final String q;
         q = "index = archive_memory host = test\"localhost";
-        e = "failed to parse at line 1:30 due to token recognition error at: '\"localhost'";
-        Throwable exception = assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
-        assertEquals(e, exception.getMessage());
+        e = "Assertions.failed to parse at line 1:30 due to token recognition error at: '\"localhost'";
+        Throwable exception = Assertions.assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
+        Assertions.assertEquals(e, exception.getMessage());
         throw new UnsupportedOperationException("Implement");
 
     }
@@ -101,9 +98,9 @@ public class syntaxErrorTest {
         String e;
         final String q;
         q = "index = \"cpu\" sourcetype=\"log:cpu:0\" host=\"sc-99-99-14-19\" OR host = \"sc-99-99-10-201\")";
-        e = "failed to parse at line 1:86 due to extraneous input ')' expecting {<EOF>, PIPE}";
-        Throwable exception = assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
-        assertEquals(e, exception.getMessage());
+        e = "Assertions.failed to parse at line 1:86 due to extraneous input ')' expecting {<EOF>, PIPE}";
+        Throwable exception = Assertions.assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
+        Assertions.assertEquals(e, exception.getMessage());
         throw new UnsupportedOperationException("Implement");
 
     }
@@ -114,9 +111,9 @@ public class syntaxErrorTest {
         String q, e;
         // missing parameter in IF-clause
         q = "index=*,cinnamon | where if(substr(_raw,0,14)==\"127.0.0.49\",\"true\")";
-        e = "failed to parse at line 1:69 due to mismatched input ')' expecting {EVAL_LANGUAGE_MODE_COMMA, EVAL_LANGUAGE_MODE_DEQ, EVAL_LANGUAGE_MODE_EQ, EVAL_LANGUAGE_MODE_NEQ, EVAL_LANGUAGE_MODE_LT, EVAL_LANGUAGE_MODE_LTE, EVAL_LANGUAGE_MODE_GT, EVAL_LANGUAGE_MODE_GTE, EVAL_LANGUAGE_MODE_DOT, EVAL_LANGUAGE_MODE_AND, EVAL_LANGUAGE_MODE_OR, EVAL_LANGUAGE_MODE_XOR, EVAL_LANGUAGE_MODE_WILDCARD, EVAL_LANGUAGE_MODE_PLUS, EVAL_LANGUAGE_MODE_MINUS, EVAL_LANGUAGE_MODE_SLASH, EVAL_LANGUAGE_MODE_Like, EVAL_LANGUAGE_MODE_PERCENT, EVAL_LANGUAGE_MODE_LIKE}";
-        Throwable exception = assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
-        assertEquals(e, exception.getMessage());
+        e = "Assertions.failed to parse at line 1:69 due to mismatched input ')' expecting {EVAL_LANGUAGE_MODE_COMMA, EVAL_LANGUAGE_MODE_DEQ, EVAL_LANGUAGE_MODE_EQ, EVAL_LANGUAGE_MODE_NEQ, EVAL_LANGUAGE_MODE_LT, EVAL_LANGUAGE_MODE_LTE, EVAL_LANGUAGE_MODE_GT, EVAL_LANGUAGE_MODE_GTE, EVAL_LANGUAGE_MODE_DOT, EVAL_LANGUAGE_MODE_AND, EVAL_LANGUAGE_MODE_OR, EVAL_LANGUAGE_MODE_XOR, EVAL_LANGUAGE_MODE_WILDCARD, EVAL_LANGUAGE_MODE_PLUS, EVAL_LANGUAGE_MODE_MINUS, EVAL_LANGUAGE_MODE_SLASH, EVAL_LANGUAGE_MODE_Like, EVAL_LANGUAGE_MODE_PERCENT, EVAL_LANGUAGE_MODE_LIKE}";
+        Throwable exception = Assertions.assertThrows(IllegalStateException.class, () -> utils.getQueryAnalysis(q));
+        Assertions.assertEquals(e, exception.getMessage());
         throw new UnsupportedOperationException("Implement");
     }
 

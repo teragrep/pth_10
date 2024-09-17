@@ -47,9 +47,7 @@ package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.*;
 
 public class UnquotedTextTest {
 
@@ -60,7 +58,7 @@ public class UnquotedTextTest {
         String expected = "foo";
 
         String actual = new UnquotedText(new TextString(original)).read();
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     // test with double quotes
@@ -70,7 +68,7 @@ public class UnquotedTextTest {
         String expected = "foo";
 
         String actual = new UnquotedText(new TextString(original)).read();
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     // test with no quotes, should return the same String back
@@ -79,6 +77,6 @@ public class UnquotedTextTest {
         String original = "foo";
 
         String actual = new UnquotedText(new TextString(original)).read();
-        assertEquals(original, actual);
+        Assertions.assertEquals(original, actual);
     }
 }

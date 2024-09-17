@@ -51,7 +51,7 @@ import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -59,8 +59,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -87,18 +85,18 @@ public class JoinTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -117,14 +115,14 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A earliest=-100y | eval a=12345 | teragrep exec hdfs save /tmp/join0 overwrite=true",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             Row r = ds.select("a").distinct().first();
-                            assertEquals("12345", r.getAs(0).toString());
+                            Assertions.assertEquals("12345", r.getAs(0).toString());
                         }
                 );
         this.streamingTestUtil.setUp(); // reset for another run
@@ -132,14 +130,14 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A earliest=-100y | join partition [ | teragrep exec hdfs load /tmp/join0 | where partition >= 0 ]",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             Row r = ds.select("R_a").distinct().first();
-                            assertEquals("12345", r.getAs(0).toString());
+                            Assertions.assertEquals("12345", r.getAs(0).toString());
                         }
                 );
     }
@@ -155,11 +153,11 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join type=left max=3 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ] <!--| fields + _time offset a ]-->",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             List<Row> listOfRows = ds.collectAsList();
 
@@ -171,7 +169,7 @@ public class JoinTransformationTest {
                                 }
                             }
 
-                            assertEquals(3, notNulls, "subsearch limit 3, so 3 should be not null");
+                            Assertions.assertEquals(3, notNulls, "subsearch limit 3, so 3 should be not null");
                         }
                 );
     }
@@ -187,13 +185,13 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=2 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
-                            assertEquals(2, ds.count(), "Should return 2 rows");
+                            Assertions.assertEquals(2, ds.count(), "Should return 2 rows");
                         }
                 );
     }
@@ -209,19 +207,19 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream3\", \"2\") | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
-                            assertEquals(10, ds.count(), "Should return 10 rows");
+                            Assertions.assertEquals(10, ds.count(), "Should return 10 rows");
 
                             List<Row> listOfAColumn = ds.select("a").collectAsList();
 
                             for (Row r : listOfAColumn) {
                                 String val = r.getString(0);
-                                assertTrue(val != null, "All rows should have a valid value (non-null) !");
+                                Assertions.assertTrue(val != null, "All rows should have a valid value (non-null) !");
                             }
                         }
                 );
@@ -238,13 +236,13 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
-                            assertEquals(1, ds.count(), "Should return 1 row");
+                            Assertions.assertEquals(1, ds.count(), "Should return 1 row");
                         }
                 );
     }
@@ -259,17 +257,18 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             List<Row> listOfRows = ds.collectAsList();
-                            assertEquals(
-                                    10, listOfRows.size(),
-                                    "Should return 10 rows, instead returned: " + listOfRows.size()
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            10, listOfRows.size(),
+                                            "Should return 10 rows, instead returned: " + listOfRows.size()
+                                    );
                         }
                 );
     }
@@ -285,13 +284,13 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=0 usetime=true earlier=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
-                            assertEquals(10, ds.count(), "Should return 10 rows");
+                            Assertions.assertEquals(10, ds.count(), "Should return 10 rows");
                         }
                 );
     }
@@ -307,16 +306,18 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=0 usetime=true earlier=false overwrite=false offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R__time, R_id, R__raw, R_index, R_sourcetype, R_host, R_source, R_partition, R_a]",
-                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R__time, R_id, R__raw, R_index, R_sourcetype, R_host, R_source, R_partition, R_a]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             List<Row> listOfRows = ds.collectAsList();
-                            assertEquals(
-                                    10, listOfRows.size(),
-                                    "Should return 10 rows, instead returned: " + listOfRows.size()
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            10, listOfRows.size(),
+                                            "Should return 10 rows, instead returned: " + listOfRows.size()
+                                    );
                         }
                 );
     }

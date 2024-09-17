@@ -50,13 +50,10 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FillnullTransformationTest {
@@ -78,18 +75,18 @@ public class FillnullTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -107,7 +104,7 @@ public class FillnullTransformationTest {
     public void fillnullBasicQueryTest() {
         streamingTestUtil.performDPLTest("index=* | fillnull", testFile, ds -> {
             long zeroesCount = ds.where(functions.col("_raw").equalTo(functions.lit("0"))).count();
-            assertEquals(4, zeroesCount);
+            Assertions.assertEquals(4, zeroesCount);
         });
     }
 
@@ -120,7 +117,7 @@ public class FillnullTransformationTest {
     public void fillnullExplicitFieldTest() {
         streamingTestUtil.performDPLTest("index=* | fillnull _raw", testFile, ds -> {
             long zeroesCount = ds.where(functions.col("_raw").equalTo(functions.lit("0"))).count();
-            assertEquals(4, zeroesCount);
+            Assertions.assertEquals(4, zeroesCount);
         });
     }
 
@@ -134,8 +131,8 @@ public class FillnullTransformationTest {
         streamingTestUtil.performDPLTest("index=* | fillnull _raw, source", testFile, ds -> {
             long zeroesCount = ds.where(functions.col("_raw").equalTo(functions.lit("0"))).count();
             long zeroesCount2 = ds.where(functions.col("source").equalTo(functions.lit("0"))).count();
-            assertEquals(4, zeroesCount);
-            assertEquals(2, zeroesCount2);
+            Assertions.assertEquals(4, zeroesCount);
+            Assertions.assertEquals(2, zeroesCount2);
         });
     }
 
@@ -150,7 +147,7 @@ public class FillnullTransformationTest {
             // for a field that does not exist, create it and fill with filler value
             // => all values will be zero
             long zeroesCount = ds.where(functions.col("fakeField").equalTo(functions.lit("0"))).count();
-            assertEquals(ds.count(), zeroesCount);
+            Assertions.assertEquals(ds.count(), zeroesCount);
         });
     }
 
@@ -163,7 +160,7 @@ public class FillnullTransformationTest {
     public void fillnullCustomFillerStringTest() {
         streamingTestUtil.performDPLTest("index=* | fillnull value=\"<EMPTY>\" _raw", testFile, ds -> {
             long zeroesCount = ds.where(functions.col("_raw").equalTo(functions.lit("<EMPTY>"))).count();
-            assertEquals(4, zeroesCount);
+            Assertions.assertEquals(4, zeroesCount);
         });
     }
 }

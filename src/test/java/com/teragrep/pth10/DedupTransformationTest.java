@@ -46,15 +46,13 @@
 package com.teragrep.pth10;
 
 import org.apache.spark.sql.*;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -71,18 +69,18 @@ public class DedupTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -103,16 +101,17 @@ public class DedupTransformationTest {
             );
             List<String> actualColumns = Arrays.asList(res.columns());
             // Columns should be the same. Order can be different because of .json file readStream might shuffle them
-            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions
+                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
-            assertEquals(2, listOfRaw.size());
+            Assertions.assertEquals(2, listOfRaw.size());
             String first = listOfRaw.get(0).get(0).toString();
             String second = listOfRaw.get(1).get(0).toString();
 
-            assertEquals("1", first);
-            assertEquals("2", second);
+            Assertions.assertEquals("1", first);
+            Assertions.assertEquals("2", second);
         });
     }
 
@@ -129,14 +128,15 @@ public class DedupTransformationTest {
             );
             List<String> actualColumns = Arrays.asList(res.columns());
             // Columns should be the same. Order can be different because of .json file readStream might shuffle them
-            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions
+                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
-            assertEquals(10, listOfRaw.size());
+            Assertions.assertEquals(10, listOfRaw.size());
             for (int i = 0; i < listOfRaw.size(); i = i + 2) {
-                assertEquals("1", listOfRaw.get(i).get(0).toString());
-                assertEquals("2", listOfRaw.get(i + 1).get(0).toString());
+                Assertions.assertEquals("1", listOfRaw.get(i).get(0).toString());
+                Assertions.assertEquals("2", listOfRaw.get(i + 1).get(0).toString());
             }
         });
     }
@@ -154,12 +154,13 @@ public class DedupTransformationTest {
             );
             List<String> actualColumns = Arrays.asList(res.columns());
             // Columns should be the same. Order can be different because of .json file readStream might shuffle them
-            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions
+                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
-            assertEquals(2, listOfRaw.size());
-            assertEquals("2", listOfRaw.get(0).get(0).toString());
-            assertEquals("1", listOfRaw.get(1).get(0).toString());
+            Assertions.assertEquals(2, listOfRaw.size());
+            Assertions.assertEquals("2", listOfRaw.get(0).get(0).toString());
+            Assertions.assertEquals("1", listOfRaw.get(1).get(0).toString());
         });
     }
 
@@ -176,15 +177,16 @@ public class DedupTransformationTest {
             );
             List<String> actualColumns = Arrays.asList(res.columns());
             // Columns should be the same. Order can be different because of .json file readStream might shuffle them
-            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions
+                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
-            assertEquals(10, listOfRaw.size());
-            assertEquals("1", listOfRaw.get(0).get(0));
-            assertEquals("2", listOfRaw.get(1).get(0));
+            Assertions.assertEquals(10, listOfRaw.size());
+            Assertions.assertEquals("1", listOfRaw.get(0).get(0));
+            Assertions.assertEquals("2", listOfRaw.get(1).get(0));
             for (int i = 2; i < 10; i++) {
-                assertNull(listOfRaw.get(i).get(0));
+                Assertions.assertNull(listOfRaw.get(i).get(0));
             }
         });
     }
@@ -203,14 +205,15 @@ public class DedupTransformationTest {
             );
             List<String> actualColumns = Arrays.asList(res.columns());
             // Columns should be the same. Order can be different because of .json file readStream might shuffle them
-            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions
+                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
-            assertEquals(3, listOfRaw.size());
-            assertEquals("1", listOfRaw.get(0).get(0));
-            assertEquals("2", listOfRaw.get(1).get(0));
-            assertNull(listOfRaw.get(2).get(0));
+            Assertions.assertEquals(3, listOfRaw.size());
+            Assertions.assertEquals("1", listOfRaw.get(0).get(0));
+            Assertions.assertEquals("2", listOfRaw.get(1).get(0));
+            Assertions.assertNull(listOfRaw.get(2).get(0));
         });
     }
 
@@ -227,12 +230,13 @@ public class DedupTransformationTest {
             );
             List<String> actualColumns = Arrays.asList(res.columns());
             // Columns should be the same. Order can be different because of .json file readStream might shuffle them
-            assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions
+                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
-            assertEquals(1, listOfRaw.size());
-            assertEquals("1", listOfRaw.get(0).get(0));
+            Assertions.assertEquals(1, listOfRaw.size());
+            Assertions.assertEquals("1", listOfRaw.get(0).get(0));
         });
     }
 }

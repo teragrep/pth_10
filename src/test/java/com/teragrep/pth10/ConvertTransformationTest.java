@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10;
 
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -58,9 +58,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ConvertTransformationTest {
 
@@ -71,18 +68,18 @@ public class ConvertTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -95,10 +92,11 @@ public class ConvertTransformationTest {
     void convert1_ctime() {
         // "%m/%d/%Y %H:%M:%S";
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset) AS new", testFile, ds -> {
-            assertEquals(
-                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, new]",
-                    Arrays.toString(ds.columns())
-            );
+            Assertions
+                    .assertEquals(
+                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, new]",
+                            Arrays.toString(ds.columns())
+                    );
 
             List<String> listOfResults = ds
                     .select("new")
@@ -110,7 +108,7 @@ public class ConvertTransformationTest {
                 // match 00/00/0000 00:00:00
                 Matcher m = Pattern.compile("\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}:\\d{2}").matcher(s);
 
-                assertTrue(m.find());
+                Assertions.assertTrue(m.find());
             }
         });
     }
@@ -122,10 +120,11 @@ public class ConvertTransformationTest {
     )
     void convert2_ctime() {
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset)", testFile, ds -> {
-            assertEquals(
-                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype]",
-                    Arrays.toString(ds.columns())
-            );
+            Assertions
+                    .assertEquals(
+                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype]",
+                            Arrays.toString(ds.columns())
+                    );
 
             List<String> listOfResults = ds
                     .select("offset")
@@ -141,7 +140,7 @@ public class ConvertTransformationTest {
                     );
 
             for (int i = 0; i < listOfResults.size(); i++) {
-                assertEquals(expectedResults.get(i), listOfResults.get(i));
+                Assertions.assertEquals(expectedResults.get(i), listOfResults.get(i));
             }
         });
     }
@@ -156,10 +155,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | convert timeformat=\"%Y-%m-%d'T'%H:%M:%S.%f%z\" mktime(_time) as epochTime",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, epochTime]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, epochTime]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("epochTime")
@@ -176,7 +176,7 @@ public class ConvertTransformationTest {
                                             "1046649783", "1012604522", "978300061"
                                     );
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
 
@@ -192,10 +192,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | eval a=\"2001-01-01T01:01:01.010\" | convert timeformat=\"%Y-%m-%d'T'%H:%M:%S.%f\" mktime(a) as epochTime",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, a, epochTime]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, a, epochTime]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("epochTime")
@@ -209,7 +210,7 @@ public class ConvertTransformationTest {
                                             "978303661" // +0300 timezone
                                     );
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
 
@@ -222,10 +223,11 @@ public class ConvertTransformationTest {
     )
     void convert4_dur2sec() {
         streamingTestUtil.performDPLTest("index=index_A | convert dur2sec(dur) as dur_sec", testFile, ds -> {
-            assertEquals(
-                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, dur_sec]",
-                    Arrays.toString(ds.columns())
-            );
+            Assertions
+                    .assertEquals(
+                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, dur_sec]",
+                            Arrays.toString(ds.columns())
+                    );
 
             List<String> listOfResults = ds
                     .select("dur_sec")
@@ -240,7 +242,7 @@ public class ConvertTransformationTest {
                             "45296"
                     );
 
-            assertEquals(expectedResults, listOfResults);
+            Assertions.assertEquals(expectedResults, listOfResults);
         });
 
     }
@@ -255,10 +257,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat offset \"m\" offsetM | strcat offset \"k\" offsetK | strcat offset \"g\" offsetG | convert memk(offsetM) as memk_M memk(offsetK) as memk_K memk(offsetG) as memk_G memk(offset) as memk_def",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, offsetM, offsetK, offsetG, memk_M, memk_K, memk_G, memk_def]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, offsetM, offsetK, offsetG, memk_M, memk_K, memk_G, memk_def]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> resDef = ds
                                     .select("memk_def")
@@ -302,10 +305,10 @@ public class ConvertTransformationTest {
                                             "2097152.0", "1048576.0"
                                     );
 
-                            assertEquals(expDef, resDef);
-                            assertEquals(expDef, resK); // def is same as K
-                            assertEquals(expM, resM);
-                            assertEquals(expG, resG);
+                            Assertions.assertEquals(expDef, resDef);
+                            Assertions.assertEquals(expDef, resK); // def is same as K
+                            Assertions.assertEquals(expM, resM);
+                            Assertions.assertEquals(expG, resG);
                         }
                 );
     }
@@ -320,10 +323,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"\" \"47.\" \"329\" mst | strcat \"32:\" \"47.\" \"329\" mst2 | convert mstime(mst) as res mstime(mst2) as res2",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, mst2, res, res2]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, mst2, res, res2]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -342,8 +346,8 @@ public class ConvertTransformationTest {
                             List<String> expectedResults = Collections.singletonList("47329");
                             List<String> expectedResults2 = Collections.singletonList("1967329");
 
-                            assertEquals(expectedResults, listOfResults);
-                            assertEquals(expectedResults2, listOfResults2);
+                            Assertions.assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults2, listOfResults2);
                         }
                 );
     }
@@ -358,10 +362,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"\" \"47,\" \"329\" mst | strcat \"32,\" \"47,\" \"329\" mst2 | convert rmcomma(mst) as res rmcomma(mst2) as res2",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, mst2, res, res2]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, mst2, res, res2]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -380,8 +385,8 @@ public class ConvertTransformationTest {
                             List<String> expectedResults = Collections.singletonList("47329");
                             List<String> expectedResults2 = Collections.singletonList("3247329");
 
-                            assertEquals(expectedResults, listOfResults);
-                            assertEquals(expectedResults2, listOfResults2);
+                            Assertions.assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults2, listOfResults2);
                         }
                 );
     }
@@ -395,10 +400,11 @@ public class ConvertTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"abc\" as mst | convert rmunit(mst) as res", testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -410,7 +416,7 @@ public class ConvertTransformationTest {
 
                             List<String> expectedResults = Collections.singletonList("329");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -425,10 +431,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"329.45\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -440,7 +447,7 @@ public class ConvertTransformationTest {
 
                             List<String> expectedResults = Collections.singletonList("329.45");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -455,10 +462,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \".54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -470,7 +478,7 @@ public class ConvertTransformationTest {
 
                             List<String> expectedResults = Collections.singletonList(".54E2");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -485,10 +493,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"-0.54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -499,7 +508,7 @@ public class ConvertTransformationTest {
                                     .collect(Collectors.toList());
                             List<String> expectedResults = Collections.singletonList("-0.54E2");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -514,10 +523,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"-0.21.54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -528,7 +538,7 @@ public class ConvertTransformationTest {
                                     .collect(Collectors.toList());
                             List<String> expectedResults = Collections.singletonList("");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -543,10 +553,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -557,7 +568,7 @@ public class ConvertTransformationTest {
                                     .collect(Collectors.toList());
                             List<String> expectedResults = Collections.singletonList("+21.54E23");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -572,10 +583,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e-23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -587,7 +599,7 @@ public class ConvertTransformationTest {
 
                             List<String> expectedResults = Collections.singletonList("+21.54E-23");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -602,10 +614,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e+23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -616,7 +629,7 @@ public class ConvertTransformationTest {
                                     .collect(Collectors.toList());
                             List<String> expectedResults = Collections.singletonList("+21.54E+23");
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }
@@ -631,10 +644,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"\" with_results |strcat \"329\" \"aa\" no_results | convert auto(with_results) | convert auto(no_results)",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, with_results, no_results]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, with_results, no_results]",
+                                            Arrays.toString(ds.columns())
+                                    );
                             List<String> listOfResults = ds
                                     .select("with_results")
                                     .limit(1)
@@ -654,8 +668,8 @@ public class ConvertTransformationTest {
 
                             List<String> expectedResults2 = Collections.singletonList("329aa");
 
-                            assertEquals(expectedResults, listOfResults);
-                            assertEquals(expectedResults2, listOfResults2);
+                            Assertions.assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults2, listOfResults2);
                         }
                 );
     }
@@ -670,10 +684,11 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"\" with_results |strcat \"329\" \"aa\" no_results | convert num(with_results) | convert num(no_results)",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, with_results, no_results]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, with_results, no_results]",
+                                            Arrays.toString(ds.columns())
+                                    );
                             List<String> listOfResults = ds
                                     .select("with_results")
                                     .limit(1)
@@ -693,8 +708,8 @@ public class ConvertTransformationTest {
 
                             List<String> expectedResults2 = Collections.singletonList("null");
 
-                            assertEquals(expectedResults, listOfResults);
-                            assertEquals(expectedResults2, listOfResults2);
+                            Assertions.assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults2, listOfResults2);
                         }
                 );
     }
@@ -708,10 +723,11 @@ public class ConvertTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | convert dur2sec(\"dur|offset\") AS dur_sec none(offset)", testFile, ds -> {
-                            assertEquals(
-                                    "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, dur_sec]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, dur_sec]",
+                                            Arrays.toString(ds.columns())
+                                    );
                             List<String> listOfResults = ds
                                     .select("dur_sec")
                                     .collectAsList()
@@ -725,7 +741,7 @@ public class ConvertTransformationTest {
                                             "24202", "45296"
                                     );
 
-                            assertEquals(expectedResults, listOfResults);
+                            Assertions.assertEquals(expectedResults, listOfResults);
                         }
                 );
     }

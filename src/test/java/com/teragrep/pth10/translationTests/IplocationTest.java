@@ -55,12 +55,10 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class IplocationTest {
@@ -85,10 +83,10 @@ public class IplocationTest {
         IplocationTransformation tf = new IplocationTransformation(ctx, visitor);
         tf.visitIplocationTransformation((DPLParser.IplocationTransformationContext) tree.getChild(1).getChild(0));
         IplocationStep step = tf.iplocationStep;
-        assertEquals("fieldName", step.getField());
-        assertEquals("", step.getPrefix());
-        assertEquals("en", step.getLang());
-        assertFalse(step.isAllFields());
+        Assertions.assertEquals("fieldName", step.getField());
+        Assertions.assertEquals("", step.getPrefix());
+        Assertions.assertEquals("en", step.getLang());
+        Assertions.assertFalse(step.isAllFields());
     }
 
     @Test
@@ -109,9 +107,9 @@ public class IplocationTest {
         IplocationTransformation tf = new IplocationTransformation(ctx, visitor);
         tf.visitIplocationTransformation((DPLParser.IplocationTransformationContext) tree.getChild(1).getChild(0));
         IplocationStep step = tf.iplocationStep;
-        assertEquals("fieldName", step.getField());
-        assertEquals("abc", step.getPrefix());
-        assertEquals("es", step.getLang());
-        assertTrue(step.isAllFields());
+        Assertions.assertEquals("fieldName", step.getField());
+        Assertions.assertEquals("abc", step.getPrefix());
+        Assertions.assertEquals("es", step.getLang());
+        Assertions.assertTrue(step.isAllFields());
     }
 }

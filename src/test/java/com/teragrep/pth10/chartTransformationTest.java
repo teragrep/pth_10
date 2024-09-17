@@ -61,7 +61,7 @@ import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -70,8 +70,6 @@ import org.slf4j.LoggerFactory;
 import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class chartTransformationTest {
@@ -82,18 +80,18 @@ public class chartTransformationTest {
     SparkSession spark = null;
     StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -106,7 +104,7 @@ public class chartTransformationTest {
         String q = "index = cinnamon | chart count(_raw) as count";
         String e = "SELECT count(_raw) AS count FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
         String result = utils.getQueryAnalysis(q);
-        assertEquals(e, result);
+        Assertions.assertEquals(e, result);
     }
 
     @Disabled(value = "Should be converted to a dataframe test")
@@ -121,10 +119,10 @@ public class chartTransformationTest {
             e = "SELECT count(_raw_) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("
                     + indexEarliestEpoch + ")";
             result = utils.getQueryAnalysis(q);
-            assertEquals(e, result);
+            Assertions.assertEquals(e, result);
         }
         catch (ParseException exception) {
-            fail(exception.getMessage());
+            Assertions.fail(exception.getMessage());
         }
     }
 
@@ -142,10 +140,10 @@ public class chartTransformationTest {
                     + indexEarliestEpoch2 + ") AND _time <= from_unixtime(" + indexLatestEpoch2
                     + ") GROUP BY timestamp";
             result = utils.getQueryAnalysis(q);
-            assertEquals(e, result);
+            Assertions.assertEquals(e, result);
         }
         catch (ParseException exception) {
-            fail(exception.getMessage());
+            Assertions.fail(exception.getMessage());
         }
     }
 
@@ -157,7 +155,7 @@ public class chartTransformationTest {
         q = "index = cinnamon | chart count(_raw) by host";
         e = "SELECT host,count(_raw) AS `count(_raw)` FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" GROUP BY host";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result);
+        Assertions.assertEquals(e, result);
     }
 
     @Disabled(value = "Should be converted to a dataframe test")
@@ -172,10 +170,10 @@ public class chartTransformationTest {
             e = "SELECT count(_raw) AS `count(_raw)` FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("
                     + earliestEpoch + ") AND _time <= from_unixtime(" + latestEpoch + ")";
             result = utils.getQueryAnalysis(q);
-            assertEquals(e, result);
+            Assertions.assertEquals(e, result);
         }
         catch (ParseException exception) {
-            fail(exception.getMessage());
+            Assertions.fail(exception.getMessage());
         }
     }
 
@@ -185,7 +183,7 @@ public class chartTransformationTest {
         String q = "index=fs_mon host=\"$form.host$\" sourcetype=\"fs:mon-01:pid-cpu:0\" earliest=\"09/24/2018:00:00:00\" latest=\"9/24/2018:04:00:00\"  | where 'usr-ms'!=\"184467440737095516160\" | where 'system-ms'!=\"184467440737095516160\" | eval ProcessWithPID=Command+\"@\"+PID | timechart useother=f sum(usr-ms) by ProcessWithPID";
         String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND GROUP BY ProcessWithPID";
         String result = null;
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled(value = "Should be converted to a dataframe test")
@@ -194,7 +192,7 @@ public class chartTransformationTest {
         String q = "earliest=-24h AND ( index = strawberry AND (sourcetype = \"example:strawberry:strawberry\" ) AND ( host = \"loadbalancer.example.com\" ) OR ( index = * AND host = \"firewall.example.com\" AND earliest = -90d Denied))";
         String e = "SELECT * FROM `strawberry` WHERE index LIKE \"strawberry\" AND _time >= from_unixtime(1618144982) AND ( AND (sourcetype LIKE \"example:strawberry:strawberry\") AND (host LIKE \"loadbalancer.example.com\") OR ( AND host LIKE \"firewall.example.com\" AND timestamp >= from_unixtime(1610455382) AND _raw LIKE '%Denied%'))";
         String result = null;
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled(value = "Should be converted to a dataframe test")
@@ -204,7 +202,7 @@ public class chartTransformationTest {
         q = "index=cpu sourcetype=log:cpu:0 (host=sc-99-99-11-48 OR host=sc-99-99-13-164) | chart count(_raw) as cnt by host";
         e = "SELECT host,count(_raw) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"cpu\" AND sourcetype LIKE \"log:cpu:0\" AND (host LIKE \"sc-99-99-11-48\" OR host LIKE \"sc-99-99-13-164\") GROUP BY host";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Test
@@ -218,7 +216,7 @@ public class chartTransformationTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
             String e = "[offset: bigint, count: bigint]"; // At least schema is correct
-            assertEquals(e, res.toString());
+            Assertions.assertEquals(e, res.toString());
 
             // 3 first rows are earlier than where _index_earliest is set to
             List<String> expectedValues = new ArrayList<>();
@@ -236,9 +234,9 @@ public class chartTransformationTest {
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
-            assertEquals(expectedValues, resultList);
+            Assertions.assertEquals(expectedValues, resultList);
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
+            Assertions.assertTrue(aggregates);
         });
     }
 
@@ -253,7 +251,7 @@ public class chartTransformationTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
             String e = "[offset: bigint, count: bigint]"; // At least schema is correct
-            assertEquals(e, res.toString());
+            Assertions.assertEquals(e, res.toString());
 
             List<String> expectedValues = new ArrayList<>();
             // Only first 5 rows have index: index_A
@@ -271,10 +269,10 @@ public class chartTransformationTest {
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
-            assertEquals(expectedValues, resultList);
+            Assertions.assertEquals(expectedValues, resultList);
             res.printSchema();
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
+            Assertions.assertTrue(aggregates);
         });
     }
 
@@ -289,7 +287,7 @@ public class chartTransformationTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
             String e = "[count(_raw): bigint]"; // At least schema is correct
-            assertEquals(e, res.toString());
+            Assertions.assertEquals(e, res.toString());
 
             List<String> expectedValues = new ArrayList<>();
             expectedValues.add("5"); // only last 5 rows have index: index_B
@@ -304,10 +302,10 @@ public class chartTransformationTest {
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
-            assertEquals(expectedValues, resultList);
+            Assertions.assertEquals(expectedValues, resultList);
             res.printSchema();
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
+            Assertions.assertTrue(aggregates);
         });
     }
 
@@ -329,7 +327,7 @@ public class chartTransformationTest {
                     new StructField("max(offset)", DataTypes.StringType, true, new MetadataBuilder().build())
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             // assert contents
             List<Row> count = res.select("count(_raw)").collectAsList();
@@ -344,13 +342,13 @@ public class chartTransformationTest {
             Row minr2 = min.get(1);
             Row maxr2 = max.get(1);
 
-            assertEquals("5", cr.getAs(0).toString());
-            assertEquals("1", minr.getAs(0).toString());
-            assertEquals("5", maxr.getAs(0).toString());
+            Assertions.assertEquals("5", cr.getAs(0).toString());
+            Assertions.assertEquals("1", minr.getAs(0).toString());
+            Assertions.assertEquals("5", maxr.getAs(0).toString());
 
-            assertEquals("5", cr2.getAs(0).toString());
-            assertEquals("6", minr2.getAs(0).toString());
-            assertEquals("10", maxr2.getAs(0).toString());
+            Assertions.assertEquals("5", cr2.getAs(0).toString());
+            Assertions.assertEquals("6", minr2.getAs(0).toString());
+            Assertions.assertEquals("10", maxr2.getAs(0).toString());
         });
     }
 
@@ -365,7 +363,7 @@ public class chartTransformationTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
+            Assertions.assertTrue(aggregates);
         });
     }
 
@@ -383,7 +381,7 @@ public class chartTransformationTest {
                     new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> time = res.select("_time").collectAsList();
             List<Row> offset = res.select("avg(offset)").collectAsList();
@@ -407,8 +405,8 @@ public class chartTransformationTest {
                     "1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0"
             };
 
-            assertArrayEquals(expectedTime, time.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals(expectedTime, time.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 
@@ -426,7 +424,7 @@ public class chartTransformationTest {
                     new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> sourcetype = res.select("sourcetype").collectAsList();
             List<Row> offset = res.select("avg(offset)").collectAsList();
@@ -439,8 +437,9 @@ public class chartTransformationTest {
                     "1.5", "4.0", "7.0", "9.5"
             };
 
-            assertArrayEquals(expectedSourcetype, sourcetype.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions
+                    .assertArrayEquals(expectedSourcetype, sourcetype.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 
@@ -458,7 +457,7 @@ public class chartTransformationTest {
                     new StructField("count(offset)", DataTypes.LongType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> offset = res.select("offset").collectAsList();
             List<Row> count = res.select("count(offset)").collectAsList();
@@ -471,8 +470,8 @@ public class chartTransformationTest {
                     "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"
             };
 
-            assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 
@@ -490,7 +489,7 @@ public class chartTransformationTest {
                     new StructField("count(offset)", DataTypes.LongType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> a = res.select("a").collectAsList();
             List<Row> count = res.select("count(offset)").collectAsList();
@@ -503,8 +502,8 @@ public class chartTransformationTest {
                     "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"
             };
 
-            assertArrayEquals(expectedA, a.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals(expectedA, a.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 
@@ -530,6 +529,6 @@ public class chartTransformationTest {
 
         CatalystNode n = (CatalystNode) visitor.visit(tree);
         boolean aggregates = visitor.getAggregatesUsed();
-        assertTrue(aggregates, visitor.getTraceBuffer().toString());
+        Assertions.assertTrue(aggregates, visitor.getTraceBuffer().toString());
     }
 }

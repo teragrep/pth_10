@@ -50,7 +50,7 @@ import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -60,9 +60,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeragrepTransformationTest {
@@ -85,19 +82,19 @@ public class TeragrepTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
         testResourcesPath = this.streamingTestUtil.getTestResourcesPath();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -125,7 +122,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
                         }
                 );
     }
@@ -150,7 +147,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
                         }
                 );
     }
@@ -199,7 +196,7 @@ public class TeragrepTransformationTest {
     public void tgHdfsLoadCustomCsvTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
         if (!Files.exists(Paths.get(dir))) {
-            fail("Expected file does not exist: " + dir);
+            Assertions.fail("Expected file does not exist: " + dir);
         }
 
         streamingTestUtil
@@ -211,16 +208,18 @@ public class TeragrepTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(
-                            Arrays
-                                    .asList(
-                                            "2023-01-01T00:00:00z,stuff,1", "2023-01-02T00:00:00z,other stuff,2",
-                                            "2023-01-03T00:00:00z,more other stuff,3",
-                                            "2023-01-04T00:00:00z,even more stuff,4",
-                                            "2023-01-05T00:00:00z,more otherer stuff,5", "_time,_raw,offset"
-                                    ),
-                            listOfResult
-                    );
+                    Assertions
+                            .assertEquals(
+                                    Arrays
+                                            .asList(
+                                                    "2023-01-01T00:00:00z,stuff,1",
+                                                    "2023-01-02T00:00:00z,other stuff,2",
+                                                    "2023-01-03T00:00:00z,more other stuff,3",
+                                                    "2023-01-04T00:00:00z,even more stuff,4",
+                                                    "2023-01-05T00:00:00z,more otherer stuff,5", "_time,_raw,offset"
+                                            ),
+                                    listOfResult
+                            );
                 });
     }
 
@@ -232,7 +231,7 @@ public class TeragrepTransformationTest {
     public void tgHdfsLoadCustomCsvWithHeaderTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
         if (!Files.exists(Paths.get(dir))) {
-            fail("Expected file does not exist: " + dir);
+            Assertions.fail("Expected file does not exist: " + dir);
         }
 
         streamingTestUtil
@@ -244,16 +243,18 @@ public class TeragrepTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(
-                            Arrays
-                                    .asList(
-                                            "2023-01-01T00:00:00z,stuff,1", "2023-01-02T00:00:00z,other stuff,2",
-                                            "2023-01-03T00:00:00z,more other stuff,3",
-                                            "2023-01-04T00:00:00z,even more stuff,4",
-                                            "2023-01-05T00:00:00z,more otherer stuff,5", "_time,_raw,offset"
-                                    ),
-                            listOfResult
-                    );
+                    Assertions
+                            .assertEquals(
+                                    Arrays
+                                            .asList(
+                                                    "2023-01-01T00:00:00z,stuff,1",
+                                                    "2023-01-02T00:00:00z,other stuff,2",
+                                                    "2023-01-03T00:00:00z,more other stuff,3",
+                                                    "2023-01-04T00:00:00z,even more stuff,4",
+                                                    "2023-01-05T00:00:00z,more otherer stuff,5", "_time,_raw,offset"
+                                            ),
+                                    listOfResult
+                            );
                 });
     }
 
@@ -265,7 +266,7 @@ public class TeragrepTransformationTest {
     public void tgHdfsLoadCustomCsvWithProvidedSchemaTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
         if (!Files.exists(Paths.get(dir))) {
-            fail("Expected file does not exist: " + dir);
+            Assertions.fail("Expected file does not exist: " + dir);
         }
 
         streamingTestUtil
@@ -279,7 +280,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
                         }
                 );
     }
@@ -304,7 +305,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
                         }
                 );
     }
@@ -323,7 +324,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Arrays.asList("another_dummy_file.txt", "dummy_file.txt"), listOfResult);
+            Assertions.assertEquals(Arrays.asList("another_dummy_file.txt", "dummy_file.txt"), listOfResult);
         });
     }
 
@@ -342,7 +343,7 @@ public class TeragrepTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(Arrays.asList("another_dummy_file.txt", "dummy_file.txt"), listOfResult);
+                    Assertions.assertEquals(Arrays.asList("another_dummy_file.txt", "dummy_file.txt"), listOfResult);
                 });
     }
 
@@ -360,7 +361,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.emptyList(), listOfResult);
+            Assertions.assertEquals(Collections.emptyList(), listOfResult);
         });
     }
 
@@ -382,7 +383,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Collections.singletonList("5"), listOfResult);
+                            Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -393,7 +394,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("5"), listOfResult);
+            Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
         });
     }
 
@@ -415,7 +416,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Collections.singletonList("3.0"), listOfResult);
+                            Assertions.assertEquals(Collections.singletonList("3.0"), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -426,7 +427,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("3.0"), listOfResult);
+            Assertions.assertEquals(Collections.singletonList("3.0"), listOfResult);
         });
     }
 
@@ -448,7 +449,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Collections.singletonList("3.0"), listOfResult);
+                            Assertions.assertEquals(Collections.singletonList("3.0"), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -459,7 +460,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("3.0"), listOfResult);
+            Assertions.assertEquals(Collections.singletonList("3.0"), listOfResult);
         });
     }
 
@@ -481,7 +482,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -493,7 +494,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
         });
     }
 
@@ -513,7 +514,7 @@ public class TeragrepTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                    Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
                 });
         this.streamingTestUtil.setUp();
         streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
@@ -524,7 +525,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
         });
     }
 
@@ -546,7 +547,7 @@ public class TeragrepTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -558,7 +559,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
         });
     }
 
@@ -576,7 +577,7 @@ public class TeragrepTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Arrays.asList("1", "2"), listOfResult);
+            Assertions.assertEquals(Arrays.asList("1", "2"), listOfResult);
         });
     }
 }

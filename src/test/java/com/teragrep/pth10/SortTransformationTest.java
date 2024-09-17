@@ -50,15 +50,13 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -86,18 +84,18 @@ public class SortTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -119,8 +117,8 @@ public class SortTransformationTest {
             long firstOffset = listOfOffset.get(0).getLong(0);
             long lastOffset = listOfOffset.get(listOfOffset.size() - 1).getLong(0);
 
-            assertEquals(10, firstOffset);
-            assertEquals(1, lastOffset);
+            Assertions.assertEquals(10, firstOffset);
+            Assertions.assertEquals(1, lastOffset);
         });
     }
 
@@ -133,9 +131,10 @@ public class SortTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A | sort 10 + str(offset)", testFile, ds -> {
             List<Row> listOfOffset = ds.select("offset").collectAsList();
 
-            assertEquals(
-                    "[1, 10, 2, 3, 4, 5, 6, 7, 8, 9]", Arrays.toString(listOfOffset.stream().map(r -> r.getAs(0).toString()).toArray())
-            );
+            Assertions
+                    .assertEquals(
+                            "[1, 10, 2, 3, 4, 5, 6, 7, 8, 9]", Arrays.toString(listOfOffset.stream().map(r -> r.getAs(0).toString()).toArray())
+                    );
         });
     }
 
@@ -148,10 +147,11 @@ public class SortTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A | sort limit=0 + sourcetype", testFile, ds -> {
             List<Row> listOfSourcetype = ds.select("sourcetype").collectAsList();
 
-            assertEquals(
-                    "[stream1, stream1, stream1, stream1, stream1, stream2, stream2, stream2, stream2, stream2]",
-                    Arrays.toString(listOfSourcetype.stream().map(r -> r.getAs(0).toString()).toArray())
-            );
+            Assertions
+                    .assertEquals(
+                            "[stream1, stream1, stream1, stream1, stream1, stream2, stream2, stream2, stream2, stream2]",
+                            Arrays.toString(listOfSourcetype.stream().map(r -> r.getAs(0).toString()).toArray())
+                    );
         });
     }
 
@@ -164,10 +164,11 @@ public class SortTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A | sort - ip(source)", testFile, ds -> {
             List<Row> listOfSource = ds.select("source").collectAsList();
 
-            assertEquals(
-                    "[127.9.9.9, 127.8.8.8, 127.7.7.7, 127.6.6.6, 127.5.5.5, 127.4.4.4, 127.3.3.3, 127.2.2.2, 127.1.1.1, 127.0.0.0]",
-                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-            );
+            Assertions
+                    .assertEquals(
+                            "[127.9.9.9, 127.8.8.8, 127.7.7.7, 127.6.6.6, 127.5.5.5, 127.4.4.4, 127.3.3.3, 127.2.2.2, 127.1.1.1, 127.0.0.0]",
+                            Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                    );
         });
     }
 
@@ -183,9 +184,8 @@ public class SortTransformationTest {
                         testFile, ds -> {
                             List<Row> listOfSource = ds.select("avg_offset").collectAsList();
 
-                            assertEquals(
-                                    "[5.0, 6.0]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-                            );
+                            Assertions
+                                    .assertEquals("[5.0, 6.0]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray()));
                         }
                 );
     }
@@ -199,9 +199,10 @@ public class SortTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A | sort - num(offset)", testFile, ds -> {
             List<Row> listOfSource = ds.select("offset").collectAsList();
 
-            assertEquals(
-                    "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-            );
+            Assertions
+                    .assertEquals(
+                            "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                    );
         });
     }
 
@@ -216,10 +217,11 @@ public class SortTransformationTest {
                         "index=index_A | stats max(offset) AS max_off by id | sort -num(max_off)", testFile, ds -> {
                             List<Row> listOfSource = ds.select("max_off").collectAsList();
 
-                            assertEquals(
-                                    "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]",
-                                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]",
+                                            Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                                    );
                         }
                 );
     }
@@ -235,10 +237,11 @@ public class SortTransformationTest {
                         "index=index_A | stats max(offset) AS max_off by id | sort +num(max_off)", testFile, ds -> {
                             List<Row> listOfSource = ds.select("max_off").collectAsList();
 
-                            assertEquals(
-                                    "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
-                                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]",
+                                            Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                                    );
                         }
                 );
     }
@@ -254,10 +257,11 @@ public class SortTransformationTest {
                         "index=index_A | stats max(offset) AS max_off by id | sort -auto(max_off)", testFile, ds -> {
                             List<Row> listOfSource = ds.select("max_off").collectAsList();
 
-                            assertEquals(
-                                    "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]",
-                                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[10, 9, 8, 7, 6, 5, 4, 3, 2, 1]",
+                                            Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                                    );
                         }
                 );
     }
@@ -271,9 +275,11 @@ public class SortTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A | eval a = offset + 4 | sort -auto(a)", testFile, ds -> {
             List<Row> listOfSource = ds.select("a").collectAsList();
 
-            assertEquals(
-                    "[14, 13, 12, 11, 10, 9, 8, 7, 6, 5]", Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-            );
+            Assertions
+                    .assertEquals(
+                            "[14, 13, 12, 11, 10, 9, 8, 7, 6, 5]",
+                            Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                    );
         });
     }
 
@@ -288,10 +294,11 @@ public class SortTransformationTest {
                         "index=index_A | eval a = if ( offset < 6, \"abc\", \"bcd\") | sort +auto(a)", testFile, ds -> {
                             List<Row> listOfSource = ds.select("a").collectAsList();
 
-                            assertEquals(
-                                    "[[abc], [abc], [abc], [abc], [abc], [bcd], [bcd], [bcd], [bcd], [bcd]]",
-                                    Arrays.toString(listOfSource.stream().map(r -> r.getList(0).toString()).toArray())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[[abc], [abc], [abc], [abc], [abc], [bcd], [bcd], [bcd], [bcd], [bcd]]",
+                                            Arrays.toString(listOfSource.stream().map(r -> r.getList(0).toString()).toArray())
+                                    );
                         }
                 );
     }
@@ -305,10 +312,11 @@ public class SortTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A | sort +auto(source)", testFile, ds -> {
             List<Row> listOfSource = ds.select("source").collectAsList();
 
-            assertEquals(
-                    "[127.0.0.0, 127.1.1.1, 127.2.2.2, 127.3.3.3, 127.4.4.4, 127.5.5.5, 127.6.6.6, 127.7.7.7, 127.8.8.8, 127.9.9.9]",
-                    Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
-            );
+            Assertions
+                    .assertEquals(
+                            "[127.0.0.0, 127.1.1.1, 127.2.2.2, 127.3.3.3, 127.4.4.4, 127.5.5.5, 127.6.6.6, 127.7.7.7, 127.8.8.8, 127.9.9.9]",
+                            Arrays.toString(listOfSource.stream().map(r -> r.getAs(0).toString()).toArray())
+                    );
         });
     }
 }

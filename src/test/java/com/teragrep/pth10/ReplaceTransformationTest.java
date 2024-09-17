@@ -49,7 +49,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -57,8 +57,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the ReplaceTransformation implementation Uses streaming datasets
@@ -85,18 +83,18 @@ public class ReplaceTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -119,8 +117,8 @@ public class ReplaceTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(1, listOfRawCol.size());
-                    assertEquals("SomethingNew", listOfRawCol.get(0));
+                    Assertions.assertEquals(1, listOfRawCol.size());
+                    Assertions.assertEquals("SomethingNew", listOfRawCol.get(0));
                 });
     }
 
@@ -139,8 +137,8 @@ public class ReplaceTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(1, listOfRawCol.size());
-                    assertEquals("SomethingNew^){", listOfRawCol.get(0));
+                    Assertions.assertEquals(1, listOfRawCol.size());
+                    Assertions.assertEquals("SomethingNew^){", listOfRawCol.get(0));
                 });
     }
 
@@ -159,8 +157,8 @@ public class ReplaceTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(1, listOfRawCol.size());
-                    assertEquals("SomethingNew?$.", listOfRawCol.get(0));
+                    Assertions.assertEquals(1, listOfRawCol.size());
+                    Assertions.assertEquals("SomethingNew?$.", listOfRawCol.get(0));
                 });
     }
 
@@ -179,8 +177,8 @@ public class ReplaceTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(1, listOfRawCol.size());
-                    assertEquals("?$.SomethingNew^){", listOfRawCol.get(0));
+                    Assertions.assertEquals(1, listOfRawCol.size());
+                    Assertions.assertEquals("?$.SomethingNew^){", listOfRawCol.get(0));
                 });
     }
 
@@ -193,10 +191,11 @@ public class ReplaceTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | replace host WITH lost, index_A WITH index_B IN host, index", testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                                    Arrays.toString(ds.columns())
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
+                                            Arrays.toString(ds.columns())
+                                    );
 
                             List<String> listOfHost = ds
                                     .select("host")
@@ -205,8 +204,8 @@ public class ReplaceTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(1, listOfHost.size());
-                            assertEquals("lost", listOfHost.get(0));
+                            Assertions.assertEquals(1, listOfHost.size());
+                            Assertions.assertEquals("lost", listOfHost.get(0));
 
                             List<String> listOfIndex = ds
                                     .select("index")
@@ -215,8 +214,8 @@ public class ReplaceTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(1, listOfIndex.size());
-                            assertEquals("index_B", listOfIndex.get(0));
+                            Assertions.assertEquals(1, listOfIndex.size());
+                            Assertions.assertEquals("index_B", listOfIndex.get(0));
                         }
                 );
     }

@@ -49,14 +49,11 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for RegexTransformation Uses streaming datasets
@@ -83,18 +80,18 @@ public class RegexTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -110,7 +107,7 @@ public class RegexTransformationTest {
     )
     public void regexTest1() {
         streamingTestUtil.performDPLTest("index=index_A | regex _raw != \"data data\"", testFile, ds -> {
-            assertEquals(0, ds.collectAsList().size());
+            Assertions.assertEquals(0, ds.collectAsList().size());
         });
     }
 
@@ -122,7 +119,7 @@ public class RegexTransformationTest {
     public void regexTest2() {
         streamingTestUtil.performDPLTest("index=index_A | regex _raw = \"data data\"", testFile, ds -> {
             int size = ds.collectAsList().size();
-            assertTrue(size > 1);
+            Assertions.assertTrue(size > 1);
         });
     }
 
@@ -134,7 +131,7 @@ public class RegexTransformationTest {
     public void regexTest3() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"data data\"", testFile, ds -> {
             int size = ds.collectAsList().size();
-            assertTrue(size > 1);
+            Assertions.assertTrue(size > 1);
         });
     }
 
@@ -146,7 +143,7 @@ public class RegexTransformationTest {
     public void regexTest4() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][a|B]\\s.{4}$\"", testFile, ds -> {
             int size = ds.collectAsList().size();
-            assertTrue(size > 1);
+            Assertions.assertTrue(size > 1);
         });
     }
 
@@ -157,7 +154,7 @@ public class RegexTransformationTest {
     )
     public void regexTest5() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][c|B]\\s.{4}$\"", testFile, ds -> {
-            assertEquals(0, ds.collectAsList().size());
+            Assertions.assertEquals(0, ds.collectAsList().size());
         });
     }
 }

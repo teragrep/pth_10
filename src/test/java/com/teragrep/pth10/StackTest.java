@@ -50,15 +50,13 @@ import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -85,18 +83,18 @@ public class StackTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -115,9 +113,8 @@ public class StackTest {
                 .performDPLTest(
                         "index=index_A | chart count(offset) as c_offset by partition | chart count(c_offset) as final",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
     }
@@ -129,9 +126,8 @@ public class StackTest {
     )
     public void stackTest_Streaming_1() {
         streamingTestUtil.performDPLTest("index=index_A", testFile, ds -> {
-            assertEquals(
-                    Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", "Batch handler dataset contained an unexpected column arrangement !");
         });
     }
 
@@ -142,9 +138,8 @@ public class StackTest {
     ) /* eval */
     public void stackTest_Streaming_Eval() {
         streamingTestUtil.performDPLTest("index=index_A | eval newField = offset * 5", testFile, ds -> {
-            assertEquals(
-                    Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset, newField]", "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset, newField]", "Batch handler dataset contained an unexpected column arrangement !");
         });
     }
 
@@ -158,9 +153,8 @@ public class StackTest {
                 .performDPLTest(
                         "index=index_A | stats count(_raw) as raw_count | chart count(raw_count) as count", testFile,
                         ds -> {
-                            assertEquals(
-                                    Arrays.toString(ds.columns()), "[count]", "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(Arrays.toString(ds.columns()), "[count]", "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
     }
@@ -175,9 +169,8 @@ public class StackTest {
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avg1 count(offset) as c_offset dc(offset) as dc | stats count(avg1) as c_avg count(c_offset) as c_count count(dc) as c_dc",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.toString(ds.columns()), "[c_avg, c_count, c_dc]", "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(Arrays.toString(ds.columns()), "[c_avg, c_count, c_dc]", "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
     }
@@ -192,9 +185,8 @@ public class StackTest {
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avg_offset | chart count(avg_offset) as c_avg_offset | eval final=c_avg_offset * 5",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.toString(ds.columns()), "[c_avg_offset, final]", "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(Arrays.toString(ds.columns()), "[c_avg_offset, final]", "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
     }
@@ -209,9 +201,8 @@ public class StackTest {
                 .performDPLTest(
                         "index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval x = a + b | stats var(x) as field | chart count(field) as final",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
     }
@@ -229,9 +220,8 @@ public class StackTest {
                 .performDPLTest(
                         "index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval c = a + b | stats var(c) as field | chart count(field) as final",
                         testFile, ds -> {
-                            assertEquals(
-                                    Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
     }

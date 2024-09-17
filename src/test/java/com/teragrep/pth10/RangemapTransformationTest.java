@@ -50,7 +50,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -58,8 +58,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RangemapTransformationTest {
@@ -80,18 +78,18 @@ public class RangemapTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -108,8 +106,8 @@ public class RangemapTransformationTest {
     public void rangemapTest0() {
         streamingTestUtil.performDPLTest("index=* | rangemap field=_raw", testFile, ds -> {
             List<Row> result = ds.select("range").distinct().collectAsList();
-            assertEquals(1, result.size());
-            assertEquals("None", result.get(0).getList(0).get(0));
+            Assertions.assertEquals(1, result.size());
+            Assertions.assertEquals("None", result.get(0).getList(0).get(0));
         });
     }
 
@@ -121,8 +119,8 @@ public class RangemapTransformationTest {
     public void rangemapTest1() {
         streamingTestUtil.performDPLTest("index=* | rangemap field=_raw default=xyz", testFile, ds -> {
             List<Row> result = ds.select("range").distinct().collectAsList();
-            assertEquals(1, result.size());
-            assertEquals("xyz", result.get(0).getList(0).get(0));
+            Assertions.assertEquals(1, result.size());
+            Assertions.assertEquals("xyz", result.get(0).getList(0).get(0));
         });
     }
 
@@ -135,26 +133,26 @@ public class RangemapTransformationTest {
         streamingTestUtil
                 .performDPLTest("index=* | rangemap field=_raw lo=0-5 med=6-34 hi=35-48 vlo=-20--10", testFile, ds -> {
                     List<Row> result = ds.select("_raw", "range").collectAsList();
-                    assertEquals(5, result.size());
+                    Assertions.assertEquals(5, result.size());
                     result.forEach(r -> {
                         double val = Double.parseDouble(r.getAs(0).toString());
                         if (val == 35d) {
-                            assertEquals("hi", r.getList(1).get(0));
+                            Assertions.assertEquals("hi", r.getList(1).get(0));
                         }
                         else if (val == 10d) {
-                            assertEquals("med", r.getList(1).get(0));
+                            Assertions.assertEquals("med", r.getList(1).get(0));
                         }
                         else if (val == -10d) {
-                            assertEquals("vlo", r.getList(1).get(0));
+                            Assertions.assertEquals("vlo", r.getList(1).get(0));
                         }
                         else if (val == 0d) {
-                            assertEquals("lo", r.getList(1).get(0));
+                            Assertions.assertEquals("lo", r.getList(1).get(0));
                         }
                         else if (val == 47.2d) {
-                            assertEquals("hi", r.getList(1).get(0));
+                            Assertions.assertEquals("hi", r.getList(1).get(0));
                         }
                         else {
-                            fail("Unexpected _raw value: " + val);
+                            Assertions.fail("Unexpected _raw value: " + val);
                         }
                     });
                 });
@@ -169,7 +167,7 @@ public class RangemapTransformationTest {
         IllegalArgumentException iae = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, "index=* | rangemap", testFile, ds -> {
                 });
-        assertEquals("Field parameter is required!", iae.getMessage());
+        Assertions.assertEquals("Field parameter is required!", iae.getMessage());
     }
 
     @Test
@@ -184,8 +182,8 @@ public class RangemapTransformationTest {
                         ds -> {
                             // strings result in default value
                             List<Row> result = ds.select("range").distinct().collectAsList();
-                            assertEquals(1, result.size());
-                            assertEquals("None", result.get(0).getList(0).get(0));
+                            Assertions.assertEquals(1, result.size());
+                            Assertions.assertEquals("None", result.get(0).getList(0).get(0));
                         }
                 );
     }
@@ -201,14 +199,14 @@ public class RangemapTransformationTest {
                         "index=* | eval a = mvappend(\"1\",\"3\",\"3\",\"a\") |rangemap field=a lo=1-2 hi=3-4",
                         testFile, ds -> {
                             List<Row> result = ds.select("range").distinct().collectAsList();
-                            assertEquals(1, result.size());
+                            Assertions.assertEquals(1, result.size());
                             List<String> resultList = result.get(0).getList(0);
-                            assertEquals(2, resultList.size());
+                            Assertions.assertEquals(2, resultList.size());
                             List<String> expected = Arrays.asList("lo", "hi");
 
                             for (String res : resultList) {
                                 if (!expected.contains(res)) {
-                                    fail("Expected values did not contain result value: " + res);
+                                    Assertions.fail("Expected values did not contain result value: " + res);
                                 }
                             }
                         }

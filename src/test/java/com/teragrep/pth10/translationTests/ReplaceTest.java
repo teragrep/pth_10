@@ -54,13 +54,10 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ReplaceTest {
@@ -80,10 +77,10 @@ public class ReplaceTest {
         ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(1).getChild(0));
         ReplaceStep cs = ct.replaceStep;
 
-        assertEquals(1, cs.replacements().size());
-        assertTrue(cs.replacements().containsKey("a"));
-        assertEquals("b", cs.replacements().get("a"));
-        assertEquals("[_raw]", Arrays.toString(cs.listOfFields().toArray()));
+        Assertions.assertEquals(1, cs.replacements().size());
+        Assertions.assertTrue(cs.replacements().containsKey("a"));
+        Assertions.assertEquals("b", cs.replacements().get("a"));
+        Assertions.assertEquals("[_raw]", Arrays.toString(cs.listOfFields().toArray()));
     }
 
     @Test
@@ -101,10 +98,10 @@ public class ReplaceTest {
         ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(1).getChild(0));
         ReplaceStep cs = ct.replaceStep;
 
-        assertEquals(1, cs.replacements().size());
-        assertTrue(cs.replacements().containsKey("a"));
-        assertEquals("b", cs.replacements().get("a"));
-        assertEquals("[_raw, anotherField]", Arrays.toString(cs.listOfFields().toArray()));
+        Assertions.assertEquals(1, cs.replacements().size());
+        Assertions.assertTrue(cs.replacements().containsKey("a"));
+        Assertions.assertEquals("b", cs.replacements().get("a"));
+        Assertions.assertEquals("[_raw, anotherField]", Arrays.toString(cs.listOfFields().toArray()));
     }
 
     @Test
@@ -122,11 +119,11 @@ public class ReplaceTest {
         ct.visitReplaceTransformation((DPLParser.ReplaceTransformationContext) tree.getChild(1).getChild(0));
         ReplaceStep cs = ct.replaceStep;
 
-        assertEquals(2, cs.replacements().size());
-        assertTrue(cs.replacements().containsKey("a"));
-        assertEquals("b", cs.replacements().get("a"));
-        assertTrue(cs.replacements().containsKey("x"));
-        assertEquals("y", cs.replacements().get("x"));
-        assertEquals("[_raw, anotherField]", Arrays.toString(cs.listOfFields().toArray()));
+        Assertions.assertEquals(2, cs.replacements().size());
+        Assertions.assertTrue(cs.replacements().containsKey("a"));
+        Assertions.assertEquals("b", cs.replacements().get("a"));
+        Assertions.assertTrue(cs.replacements().containsKey("x"));
+        Assertions.assertEquals("y", cs.replacements().get("x"));
+        Assertions.assertEquals("[_raw, anotherField]", Arrays.toString(cs.listOfFields().toArray()));
     }
 }

@@ -49,7 +49,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -57,8 +57,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class AddtotalsTransformationTest {
@@ -78,18 +76,18 @@ public class AddtotalsTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -109,12 +107,12 @@ public class AddtotalsTransformationTest {
                     .sorted()
                     .collect(Collectors.toList());
             List<String> expected = Arrays.asList("36.0", "11.0", "1.0", "-9.0", "48.2");
-            assertEquals(5, res.size());
-            assertEquals(5, expected.size());
+            Assertions.assertEquals(5, res.size());
+            Assertions.assertEquals(5, expected.size());
 
             for (String r : res) {
                 if (!expected.contains(r)) {
-                    fail("Value <" + r + "> was not one of the expected values!");
+                    Assertions.fail("Value <" + r + "> was not one of the expected values!");
                 }
             }
         });
@@ -135,12 +133,12 @@ public class AddtotalsTransformationTest {
                     .sorted(Double::compareTo)
                     .collect(Collectors.toList());
             List<Double> expected = Arrays.asList(-10d, 0d, 10d, 35d, 47.2d, 82.2d);
-            assertEquals(6, res.size());
-            assertEquals(6, expected.size());
+            Assertions.assertEquals(6, res.size());
+            Assertions.assertEquals(6, expected.size());
 
             for (Double r : res) {
                 if (!expected.contains(r)) {
-                    fail("Value <" + r + "> was not one of the expected values!");
+                    Assertions.fail("Value <" + r + "> was not one of the expected values!");
                 }
             }
         });
@@ -156,12 +154,12 @@ public class AddtotalsTransformationTest {
                 .performDPLTest("index=* | addtotals col=true row=true labelfield=x1 fieldname=x2", testFile, ds -> {
                     List<String> fieldsInData = Arrays.asList(ds.schema().fieldNames());
                     // source schema + labelfield and fieldname
-                    assertEquals(testSchema.length() + 2, fieldsInData.size());
+                    Assertions.assertEquals(testSchema.length() + 2, fieldsInData.size());
                     // check that fieldname and labelfield are present in schema
-                    assertTrue(fieldsInData.contains("x1"));
-                    assertTrue(fieldsInData.contains("x2"));
+                    Assertions.assertTrue(fieldsInData.contains("x1"));
+                    Assertions.assertTrue(fieldsInData.contains("x2"));
                     // 5 source rows plus last row for column sums
-                    assertEquals(6, ds.count());
+                    Assertions.assertEquals(6, ds.count());
                 });
     }
 }

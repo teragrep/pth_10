@@ -54,9 +54,7 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.*;
 
 public class PredictTest {
 
@@ -75,9 +73,9 @@ public class PredictTest {
         pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
         PredictStep ps = pt.predictStep;
 
-        assertEquals(5, ps.getFutureTimespan());
-        assertEquals(1, ps.getListOfColumnsToPredict().size());
-        assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
+        Assertions.assertEquals(5, ps.getFutureTimespan());
+        Assertions.assertEquals(1, ps.getListOfColumnsToPredict().size());
+        Assertions.assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
     }
 
     @Test
@@ -95,9 +93,9 @@ public class PredictTest {
         pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
         PredictStep ps = pt.predictStep;
 
-        assertEquals(5, ps.getFutureTimespan());
-        assertEquals(1, ps.getListOfColumnsToPredict().size());
-        assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
+        Assertions.assertEquals(5, ps.getFutureTimespan());
+        Assertions.assertEquals(1, ps.getListOfColumnsToPredict().size());
+        Assertions.assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
     }
 
     @Test
@@ -115,9 +113,9 @@ public class PredictTest {
         pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
         PredictStep ps = pt.predictStep;
 
-        assertEquals(20, ps.getFutureTimespan());
-        assertEquals(1, ps.getListOfColumnsToPredict().size());
-        assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
+        Assertions.assertEquals(20, ps.getFutureTimespan());
+        Assertions.assertEquals(1, ps.getListOfColumnsToPredict().size());
+        Assertions.assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
     }
 
     @Test
@@ -135,13 +133,13 @@ public class PredictTest {
         pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
         PredictStep ps = pt.predictStep;
 
-        assertEquals(5, ps.getFutureTimespan());
-        assertEquals(1, ps.getListOfColumnsToPredict().size());
-        assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
-        assertEquals(70, ps.getLower());
-        assertEquals("a", ps.getUpperField());
-        assertEquals(69, ps.getUpper());
-        assertEquals("b", ps.getLowerField());
+        Assertions.assertEquals(5, ps.getFutureTimespan());
+        Assertions.assertEquals(1, ps.getListOfColumnsToPredict().size());
+        Assertions.assertEquals("field AS xyz", ps.getListOfColumnsToPredict().get(0).toString());
+        Assertions.assertEquals(70, ps.getLower());
+        Assertions.assertEquals("a", ps.getUpperField());
+        Assertions.assertEquals(69, ps.getUpper());
+        Assertions.assertEquals("b", ps.getLowerField());
     }
 
     @Test
@@ -159,10 +157,10 @@ public class PredictTest {
         pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
         PredictStep ps = pt.predictStep;
 
-        assertEquals(5, ps.getFutureTimespan());
-        assertEquals(1, ps.getListOfColumnsToPredict().size());
-        assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
-        assertEquals("LL", ps.getAlgorithm().name());
+        Assertions.assertEquals(5, ps.getFutureTimespan());
+        Assertions.assertEquals(1, ps.getListOfColumnsToPredict().size());
+        Assertions.assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
+        Assertions.assertEquals("LL", ps.getAlgorithm().name());
     }
 
     @Test
@@ -180,9 +178,9 @@ public class PredictTest {
         pt.visitPredictTransformation((DPLParser.PredictTransformationContext) tree.getChild(1).getChild(0));
         PredictStep ps = pt.predictStep;
 
-        assertEquals(5, ps.getFutureTimespan());
-        assertEquals(1, ps.getListOfColumnsToPredict().size());
-        assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
-        assertEquals("LLT", ps.getAlgorithm().name());
+        Assertions.assertEquals(5, ps.getFutureTimespan());
+        Assertions.assertEquals(1, ps.getListOfColumnsToPredict().size());
+        Assertions.assertEquals("field", ps.getListOfColumnsToPredict().get(0).toString());
+        Assertions.assertEquals("LLT", ps.getAlgorithm().name());
     }
 }

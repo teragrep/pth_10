@@ -49,16 +49,13 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FormatTransformationTest {
@@ -79,18 +76,18 @@ public class FormatTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -107,7 +104,7 @@ public class FormatTransformationTest {
                 .performDPLTest(
                         q, testFile, res -> {
                             // Check if result contains the column that was created for format result
-                            assertTrue(Arrays.toString(res.columns()).contains("search"));
+                            Assertions.assertTrue(Arrays.toString(res.columns()).contains("search"));
 
                             // List of expected values for the format destination field
                             List<String> expectedValues = Collections
@@ -143,7 +140,7 @@ public class FormatTransformationTest {
                             List<String> searchAsList = res.select("search").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
                             // Assert search field contents as equals with expected contents
-                            assertEquals(expectedValues, searchAsList);
+                            Assertions.assertEquals(expectedValues, searchAsList);
                         }
                 );
     }
@@ -160,7 +157,7 @@ public class FormatTransformationTest {
                 .performDPLTest(
                         q, testFile, res -> {
                             // Check if result contains the column that was created for format result
-                            assertTrue(Arrays.toString(res.columns()).contains("search"));
+                            Assertions.assertTrue(Arrays.toString(res.columns()).contains("search"));
 
                             // List of expected values for the format destination field
                             List<String> expectedValues = Collections
@@ -177,7 +174,7 @@ public class FormatTransformationTest {
                             List<String> searchAsList = res.select("search").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
                             // Assert search field contents as equals with expected contents
-                            assertEquals(expectedValues, searchAsList);
+                            Assertions.assertEquals(expectedValues, searchAsList);
                         }
                 );
     }
@@ -194,7 +191,7 @@ public class FormatTransformationTest {
                 .performDPLTest(
                         q, testFile, res -> {
                             // Check if result contains the column that was created for format result
-                            assertTrue(Arrays.toString(res.columns()).contains("search"));
+                            Assertions.assertTrue(Arrays.toString(res.columns()).contains("search"));
 
                             // List of expected values for the format destination field
                             List<String> expectedValues = Collections
@@ -216,7 +213,7 @@ public class FormatTransformationTest {
                             List<String> searchAsList = res.select("search").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
                             // Assert search field contents as equals with expected contents
-                            assertEquals(expectedValues, searchAsList);
+                            Assertions.assertEquals(expectedValues, searchAsList);
                         }
                 );
     }

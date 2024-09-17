@@ -53,7 +53,7 @@ import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -62,8 +62,6 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.Consumer;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for | teragrep exec syslog stream Uses streaming datasets
@@ -90,18 +88,18 @@ public class SyslogStreamTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -123,30 +121,30 @@ public class SyslogStreamTest {
 
         final Consumer<byte[]> cbFunction = (message) -> {
             LOGGER.debug("Server received the following syslog message:\n <[{}]>\n-----", new String(message));
-            assertTrue(numberOfSyslogMessagesSent.get() <= expectedSyslogs);
+            Assertions.assertTrue(numberOfSyslogMessagesSent.get() <= expectedSyslogs);
             arrayOfSyslogs.set(numberOfSyslogMessagesSent.getAndIncrement(), new String(message));
         };
 
         final int port = 9999;
         final Server server = new Server(port, new SyslogFrameProcessor(cbFunction));
-        assertDoesNotThrow(server::start);
+        Assertions.assertDoesNotThrow(server::start);
 
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | teragrep exec syslog stream host 127.0.0.1 port " + port, testFile, ds -> {
                             LOGGER.debug("Syslog msgs = <{}>", numberOfSyslogMessagesSent.get());
-                            assertEquals(expectedSyslogs, numberOfSyslogMessagesSent.get());
+                            Assertions.assertEquals(expectedSyslogs, numberOfSyslogMessagesSent.get());
 
                             for (int i = 0; i < expectedSyslogs; i++) {
                                 String s = arrayOfSyslogs.get(i);
                                 for (int j = 0; j < expectedSyslogs; j++) {
                                     if (i == j)
                                         continue;
-                                    assertFalse(arrayOfSyslogs.compareAndSet(j, s, s));
+                                    Assertions.assertFalse(arrayOfSyslogs.compareAndSet(j, s, s));
                                 }
 
                             }
-                            assertAll("stop server", server::stop);
+                            Assertions.assertAll("stop server", server::stop);
                         }
                 );
     }
@@ -158,14 +156,15 @@ public class SyslogStreamTest {
             matches = "true"
     ) // teragrep exec syslog stream, with preceding aggregation command
     public void syslogStreamSendingFailureTest() {
-        assertThrows(
-                StreamingQueryException.class,
-                () -> streamingTestUtil
-                        .performDPLTest(
-                                "index=index_A | stats count(_raw) as craw | teragrep exec syslog stream host 127.0.0.1 port 9998",
-                                testFile, ds -> {
-                                }
-                        )
-        );
+        Assertions
+                .assertThrows(
+                        StreamingQueryException.class,
+                        () -> streamingTestUtil
+                                .performDPLTest(
+                                        "index=index_A | stats count(_raw) as craw | teragrep exec syslog stream host 127.0.0.1 port 9998",
+                                        testFile, ds -> {
+                                        }
+                                )
+                );
     }
 }

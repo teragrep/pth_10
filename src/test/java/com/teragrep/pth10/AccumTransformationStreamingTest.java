@@ -49,7 +49,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -58,8 +58,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class AccumTransformationStreamingTest {
@@ -81,18 +79,18 @@ public class AccumTransformationStreamingTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -115,7 +113,7 @@ public class AccumTransformationStreamingTest {
                     .map(r -> r.getAs(0))
                     .collect(Collectors.toList());
             List<Object> expected = Arrays.asList("-10", "-10", "0", "35", "82.2");
-            assertTrue(rawCol.containsAll(expected));
+            Assertions.assertTrue(rawCol.containsAll(expected));
         });
     }
 
@@ -133,7 +131,7 @@ public class AccumTransformationStreamingTest {
                     .map(r -> r.getAs(0))
                     .collect(Collectors.toList());
             List<Object> expected = Arrays.asList("-10", "-10", "0", "35", "82.2");
-            assertTrue(newCol.containsAll(expected));
+            Assertions.assertTrue(newCol.containsAll(expected));
         });
     }
 
@@ -152,7 +150,7 @@ public class AccumTransformationStreamingTest {
                     .collect(Collectors.toList());
             // expect to skip strings in data and return original data as-is
             List<Object> expected = Arrays.asList("10", "string", "110", "another_string", "165.0");
-            assertTrue(rawCol.containsAll(expected));
+            Assertions.assertTrue(rawCol.containsAll(expected));
         });
     }
 
@@ -175,7 +173,7 @@ public class AccumTransformationStreamingTest {
                             "10", streamingTestUtil.getCtx().nullValue.value(), "110",
                             streamingTestUtil.getCtx().nullValue.value(), "165.0"
                     );
-            assertTrue(newCol.containsAll(expected));
+            Assertions.assertTrue(newCol.containsAll(expected));
         });
     }
 }

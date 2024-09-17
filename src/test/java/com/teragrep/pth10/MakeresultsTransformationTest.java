@@ -50,13 +50,11 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author eemhu
@@ -66,18 +64,18 @@ public class MakeresultsTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -93,10 +91,10 @@ public class MakeresultsTransformationTest {
     )
     public void makeresults_BasicQuery_Test() {
         this.streamingTestUtil.performDPLTest("| makeresults", "", ds -> {
-            assertEquals(new StructType(new StructField[] {
+            Assertions.assertEquals(new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build())
             }), ds.schema());
-            assertEquals(1, ds.count());
+            Assertions.assertEquals(1, ds.count());
         });
     }
 
@@ -107,7 +105,7 @@ public class MakeresultsTransformationTest {
     )
     public void makeresults_Annotate_Test() {
         this.streamingTestUtil.performDPLTest("| makeresults annotate=true", "", ds -> {
-            assertEquals(new StructType(new StructField[] {
+            Assertions.assertEquals(new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
@@ -116,16 +114,16 @@ public class MakeresultsTransformationTest {
                     new StructField("struck_server", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("struck_server_group", DataTypes.StringType, true, new MetadataBuilder().build())
             }), ds.schema());
-            assertEquals(1, ds.count());
+            Assertions.assertEquals(1, ds.count());
 
             // get all rows except '_time'
             List<Row> rows = ds.drop("_time").collectAsList();
-            assertEquals(1, rows.size());
+            Assertions.assertEquals(1, rows.size());
             // assert all of them to be null
             rows.forEach(row -> {
-                assertEquals(6, row.length());
+                Assertions.assertEquals(6, row.length());
                 for (int i = 0; i < row.length(); i++) {
-                    assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
+                    Assertions.assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
                 }
             });
         });
@@ -138,10 +136,10 @@ public class MakeresultsTransformationTest {
     )
     public void makeresults_Count100_Test() {
         this.streamingTestUtil.performDPLTest("| makeresults count=100", "", ds -> {
-            assertEquals(new StructType(new StructField[] {
+            Assertions.assertEquals(new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             }), ds.schema());
-            assertEquals(100, ds.count());
+            Assertions.assertEquals(100, ds.count());
         });
     }
 
@@ -152,11 +150,11 @@ public class MakeresultsTransformationTest {
     )
     public void makeresults_WithEval_Test() {
         this.streamingTestUtil.performDPLTest("| makeresults | eval a = 1", "", ds -> {
-            assertEquals(new StructType(new StructField[] {
+            Assertions.assertEquals(new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, false, new MetadataBuilder().build())
             }), ds.schema());
-            assertEquals(1, ds.count());
+            Assertions.assertEquals(1, ds.count());
         });
     }
 }

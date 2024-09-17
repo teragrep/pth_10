@@ -54,10 +54,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class Rex4jTest {
@@ -76,10 +74,10 @@ public class Rex4jTest {
         ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
         Rex4jStep cs = ct.rex4jStep;
 
-        assertEquals("host", cs.getField());
-        assertEquals("s/from/to/g", cs.getRegexStr());
-        assertNotNull(cs.getSedMode());
-        assertNull(cs.getMaxMatch());
+        Assertions.assertEquals("host", cs.getField());
+        Assertions.assertEquals("s/from/to/g", cs.getRegexStr());
+        Assertions.assertNotNull(cs.getSedMode());
+        Assertions.assertNull(cs.getMaxMatch());
     }
 
     @Test
@@ -97,10 +95,10 @@ public class Rex4jTest {
         ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
         Rex4jStep cs = ct.rex4jStep;
 
-        assertEquals("host", cs.getField());
-        assertEquals("s/,/\\n/g", cs.getRegexStr());
-        assertNotNull(cs.getSedMode());
-        assertNull(cs.getMaxMatch());
+        Assertions.assertEquals("host", cs.getField());
+        Assertions.assertEquals("s/,/\\n/g", cs.getRegexStr());
+        Assertions.assertNotNull(cs.getSedMode());
+        Assertions.assertNull(cs.getMaxMatch());
     }
 
     @Test
@@ -118,10 +116,10 @@ public class Rex4jTest {
         ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
         Rex4jStep cs = ct.rex4jStep;
 
-        assertEquals("_raw", cs.getField());
-        assertEquals("s/from/to/g", cs.getRegexStr());
-        assertNotNull(cs.getSedMode());
-        assertNull(cs.getMaxMatch());
+        Assertions.assertEquals("_raw", cs.getField());
+        Assertions.assertEquals("s/from/to/g", cs.getRegexStr());
+        Assertions.assertNotNull(cs.getSedMode());
+        Assertions.assertNull(cs.getMaxMatch());
 
     }
 
@@ -140,9 +138,9 @@ public class Rex4jTest {
         ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
         Rex4jStep cs = ct.rex4jStep;
 
-        assertEquals("_raw", cs.getField());
-        assertEquals(".*key_in_json\\\":\\s(?<keyInJson>\\d+.\\d+\\\")", cs.getRegexStr());
-        assertNull(cs.getSedMode());
-        assertNull(cs.getMaxMatch());
+        Assertions.assertEquals("_raw", cs.getField());
+        Assertions.assertEquals(".*key_in_json\\\":\\s(?<keyInJson>\\d+.\\d+\\\")", cs.getRegexStr());
+        Assertions.assertNull(cs.getSedMode());
+        Assertions.assertNull(cs.getMaxMatch());
     }
 }

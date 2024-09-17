@@ -52,15 +52,13 @@ import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class whereTest {
@@ -84,18 +82,18 @@ public class whereTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -117,7 +115,7 @@ public class whereTest {
         LOGGER.info("SQL ="+result);
         LOGGER.info("EXP ="+e);
          */
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     /**
@@ -152,7 +150,7 @@ public class whereTest {
         e = "SELECT * FROM ( SELECT _time,count(_raw) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("
                 + indexEarliestEpoch5 + ") GROUP BY _time ) WHERE cnt > 70 OR cnt < 75";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -165,7 +163,7 @@ public class whereTest {
         e = "SELECT * FROM ( SELECT _time,count(_raw) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("
                 + indexEarliestEpoch4 + ") GROUP BY _time ) WHERE cnt > 70 AND cnt < 75";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -178,7 +176,7 @@ public class whereTest {
         e = "SELECT * FROM ( SELECT _time,count(_raw) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("
                 + indexEarliestEpoch6 + ") GROUP BY _time ) WHERE cnt > 70 AND cnt < 75 OR cnt != 72";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -190,7 +188,7 @@ public class whereTest {
         e = "SELECT * FROM ( SELECT * FROM ( SELECT _time,count(_raw) AS cnt FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" AND _time >= from_unixtime("
                 + indexEarliestEpoch2 + ") GROUP BY _time ) WHERE cnt > 70 ) WHERE cnt < 75";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -204,7 +202,7 @@ public class whereTest {
                 + indexEarliestEpoch8
                 + ") GROUP BY _time ) WHERE ( cnt > 70 AND cnt < 75 ) OR ( cnt > 30 AND cnt < 40 )";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -219,7 +217,7 @@ public class whereTest {
                 + indexEarliestEpoch
                 + ") GROUP BY _time ) WHERE ( cnt > 70 AND cnt < 75 ) OR ( cnt > 30 AND cnt < 40 AND cnt != 35 OR cnt = 65 )";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -234,7 +232,7 @@ public class whereTest {
                 + indexEarliestEpoch
                 + "\"/></AND><transformStatements><transform><divideBy field=\"_time\"><chart field=\"_raw\" fieldRename=\"cnt\" function=\"count\" type=\"aggregate\"><transform><where><OR><AND><evalCompareStatement field=\"cnt\" operation=\"GT\" value=\"70\"/><evalCompareStatement field=\"cnt\" operation=\"LT\" value=\"75\"/></AND><OR><AND><AND><evalCompareStatement field=\"cnt\" operation=\"GT\" value=\"30\"/><evalCompareStatement field=\"cnt\" operation=\"LT\" value=\"40\"/></AND><evalCompareStatement field=\"cnt\" operation=\"NOT_EQUALS\" value=\"35\"/></AND><evalCompareStatement field=\"cnt\" operation=\"EQUALS\" value=\"65\"/></OR></OR></where></transform></chart></divideBy></transform></transformStatements></logicalStatement></search></root>";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -255,7 +253,7 @@ public class whereTest {
             // Was generated row-name so accept that as expected one
             e = e.replace("__count_UUID", "__count_" + uuid);
         }
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Disabled
@@ -269,7 +267,7 @@ public class whereTest {
                 + indexEarliestEpoch
                 + ") GROUP BY _time ) WHERE 'count(_raw)' > 71 AND 'count(_raw)' < 75 OR 'count(_raw)' != 72";
         result = utils.getQueryAnalysis(q);
-        assertEquals(e, result, q);
+        Assertions.assertEquals(e, result, q);
     }
 
     @Test
@@ -279,12 +277,14 @@ public class whereTest {
     )
     public void whereTestIntegerColumnLessThan() {
         streamingTestUtil.performDPLTest("index=index_A | where offset < 3", testFile, ds -> {
-            assertEquals(
-                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", Arrays
+                                    .toString(ds.columns()),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
 
-            assertEquals(2, ds.collectAsList().size());
+            Assertions.assertEquals(2, ds.collectAsList().size());
         });
     }
 
@@ -299,11 +299,10 @@ public class whereTest {
                         "index=index_A " + "| chart avg(offset) as aoffset" + "| chart values(aoffset) as voffset"
                                 + "| chart sum(voffset) as soffset" + "| where soffset > 3",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[soffset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals("[soffset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
 
-                            assertEquals(1, ds.collectAsList().size());
+                            Assertions.assertEquals(1, ds.collectAsList().size());
                         }
                 );
     }

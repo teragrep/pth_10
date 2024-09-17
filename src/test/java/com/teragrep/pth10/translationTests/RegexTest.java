@@ -54,10 +54,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RegexTest {
@@ -77,9 +75,9 @@ public class RegexTest {
         ct.visitRegexTransformation((DPLParser.RegexTransformationContext) tree.getChild(1).getChild(0));
         RegexStep cs = ct.regexStep;
 
-        assertEquals("\"data\"", cs.getRegexString());
-        assertEquals("_raw", cs.getFromField());
-        assertFalse(cs.isEquals());
+        Assertions.assertEquals("\"data\"", cs.getRegexString());
+        Assertions.assertEquals("_raw", cs.getFromField());
+        Assertions.assertFalse(cs.isEquals());
 
     }
 
@@ -98,8 +96,8 @@ public class RegexTest {
         ct.visitRegexTransformation((DPLParser.RegexTransformationContext) tree.getChild(1).getChild(0));
         RegexStep cs = ct.regexStep;
 
-        assertEquals("\"data\"", cs.getRegexString());
-        assertEquals("_raw", cs.getFromField());
-        assertTrue(cs.isEquals());
+        Assertions.assertEquals("\"data\"", cs.getRegexString());
+        Assertions.assertEquals("_raw", cs.getFromField());
+        Assertions.assertTrue(cs.isEquals());
     }
 }

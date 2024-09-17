@@ -55,10 +55,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.SparkSession;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EvalTest {
@@ -66,7 +64,7 @@ public class EvalTest {
     SparkSession spark = null;
     DPLParserCatalystContext ctx = null;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         spark = SparkSession.builder().appName("Java Spark SQL basic example").master("local[2]").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
@@ -88,8 +86,8 @@ public class EvalTest {
         ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
         final EvalStep cs = ct.evalStatement.evalStep;
 
-        assertEquals("a", cs.getLeftSide());
-        assertEquals("abs(-3)", cs.getRightSide().toString());
+        Assertions.assertEquals("a", cs.getLeftSide());
+        Assertions.assertEquals("abs(-3)", cs.getRightSide().toString());
 
     }
 
@@ -108,8 +106,8 @@ public class EvalTest {
         ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
         final EvalStep cs = ct.evalStatement.evalStep;
 
-        assertEquals("a", cs.getLeftSide());
-        assertEquals("EvalArithmetic(EvalArithmetic(3, +, 4), *, 7)", cs.getRightSide().toString());
+        Assertions.assertEquals("a", cs.getLeftSide());
+        Assertions.assertEquals("EvalArithmetic(EvalArithmetic(3, +, 4), *, 7)", cs.getRightSide().toString());
     }
 
     @Test
@@ -127,7 +125,7 @@ public class EvalTest {
         ct.visitEvalTransformation((DPLParser.EvalTransformationContext) tree.getChild(1).getChild(0));
         final EvalStep cs = ct.evalStatement.evalStep;
 
-        assertEquals("a", cs.getLeftSide());
-        assertEquals("string", cs.getRightSide().toString());
+        Assertions.assertEquals("a", cs.getLeftSide());
+        Assertions.assertEquals("string", cs.getRightSide().toString());
     }
 }

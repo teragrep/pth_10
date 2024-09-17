@@ -54,8 +54,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,8 +62,6 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class IplocationTransformationTest {
@@ -100,18 +97,18 @@ public class IplocationTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -150,12 +147,11 @@ public class IplocationTransformationTest {
             // run mapper on ip to assert expected
             List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
             for (Row ip : ips) {
-                Map<String, String> result = assertDoesNotThrow(
-                        () -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true)
-                );
+                Map<String, String> result = Assertions
+                        .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                 for (String col : expectedCols) {
-                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                    Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
                 }
             }
         });
@@ -187,13 +183,12 @@ public class IplocationTransformationTest {
             // run mapper on ip to assert expected
             List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
             for (Row ip : ips) {
-                Map<String, String> result = assertDoesNotThrow(
-                        () -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true)
-                );
+                Map<String, String> result = Assertions
+                        .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                 for (String col : expectedCols) {
                     String expected = result.get(col);
-                    assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
+                    Assertions.assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
                 }
             }
         });
@@ -229,12 +224,11 @@ public class IplocationTransformationTest {
             // run mapper on ip to assert expected
             List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
             for (Row ip : ips) {
-                Map<String, String> result = assertDoesNotThrow(
-                        () -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true)
-                );
+                Map<String, String> result = Assertions
+                        .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                 for (String col : expectedCols) {
-                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                    Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
                 }
             }
         });
@@ -270,12 +264,11 @@ public class IplocationTransformationTest {
             // run mapper on ip to assert expected
             List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
             for (Row ip : ips) {
-                Map<String, String> result = assertDoesNotThrow(
-                        () -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true)
-                );
+                Map<String, String> result = Assertions
+                        .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                 for (String col : expectedCols) {
-                    assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                    Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
                 }
             }
         });
@@ -316,12 +309,11 @@ public class IplocationTransformationTest {
                     // run mapper on ip to assert expected
                     List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
                     for (Row ip : ips) {
-                        Map<String, String> result = assertDoesNotThrow(
-                                () -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true)
-                        );
+                        Map<String, String> result = Assertions
+                                .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                         for (String col : expectedCols) {
-                            assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                            Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
                         }
                     }
                 });
@@ -362,12 +354,11 @@ public class IplocationTransformationTest {
                     // run mapper on ip to assert expected
                     List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
                     for (Row ip : ips) {
-                        Map<String, String> result = assertDoesNotThrow(
-                                () -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true)
-                        );
+                        Map<String, String> result = Assertions
+                                .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                         for (String col : expectedCols) {
-                            assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                            Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
                         }
                     }
                 });
@@ -408,13 +399,12 @@ public class IplocationTransformationTest {
                     // run mapper on ip to assert expected
                     List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
                     for (Row ip : ips) {
-                        Map<String, String> result = assertDoesNotThrow(
-                                () -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true)
-                        );
+                        Map<String, String> result = Assertions
+                                .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                         for (String col : expectedCols) {
                             String expected = result.get(col);
-                            assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
+                            Assertions.assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
                         }
                     }
                 });
@@ -436,10 +426,11 @@ public class IplocationTransformationTest {
                         }
                 );
 
-        assertEquals(
-                "Caused by: java.lang.RuntimeException: Invalid database file path given for iplocation command.",
-                this.streamingTestUtil.getInternalCauseString(sqe.cause(), RuntimeException.class)
-        );
+        Assertions
+                .assertEquals(
+                        "Caused by: java.lang.RuntimeException: Invalid database file path given for iplocation command.",
+                        this.streamingTestUtil.getInternalCauseString(sqe.cause(), RuntimeException.class)
+                );
     }
 
     // ----------------------------------------

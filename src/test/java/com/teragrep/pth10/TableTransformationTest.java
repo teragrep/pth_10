@@ -49,15 +49,13 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -84,18 +82,18 @@ public class TableTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -111,9 +109,8 @@ public class TableTransformationTest {
     )
     public void table_test_1() {
         streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table _time*", testFile, ds -> {
-            assertEquals(
-                    "[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals("[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
         });
     }
 
@@ -124,9 +121,8 @@ public class TableTransformationTest {
     )
     public void table_test_2() {
         streamingTestUtil.performDPLTest("index=index_A | table index, offset", testFile, ds -> {
-            assertEquals(
-                    "[index, offset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals("[index, offset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
         });
     }
 
@@ -137,9 +133,8 @@ public class TableTransformationTest {
     )
     public void table_test_3() {
         streamingTestUtil.performDPLTest("index=index_A | table _time offset index", testFile, ds -> {
-            assertEquals(
-                    "[_time, offset, index]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals("[_time, offset, index]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
         });
     }
 
@@ -151,9 +146,8 @@ public class TableTransformationTest {
     )
     public void table_test_4_issue283() {
         streamingTestUtil.performDPLTest("index=index_A | table \"?????\"", testFile, ds -> {
-            assertEquals(
-                    "[]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals("[]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
         });
     }
 
@@ -164,9 +158,8 @@ public class TableTransformationTest {
     )
     public void table_test_5() {
         streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table *ime*", testFile, ds -> {
-            assertEquals(
-                    "[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals("[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
         });
     }
 }

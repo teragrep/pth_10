@@ -54,10 +54,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TopTest {
@@ -77,8 +75,8 @@ public class TopTest {
         ct.visitTopTransformation((DPLParser.TopTransformationContext) tree.getChild(1).getChild(0));
         final TopStep cs = ct.topStep;
 
-        assertEquals("_raw", cs.getListOfFields().get(0));
-        assertEquals(10, cs.getLimit());
+        Assertions.assertEquals("_raw", cs.getListOfFields().get(0));
+        Assertions.assertEquals(10, cs.getLimit());
     }
 
 }

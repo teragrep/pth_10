@@ -46,10 +46,7 @@
 package com.teragrep.pth10;
 
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.*;
 
 public class indexQueryTest {
 
@@ -59,8 +56,8 @@ public class indexQueryTest {
         String q, e, result;
         q = "index=cinnamon";
         e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
-        result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        assertEquals(e, result);
+        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        Assertions.assertEquals(e, result);
     }
 
     @Disabled(value = "Should be converted to a dataframe test")
@@ -69,7 +66,7 @@ public class indexQueryTest {
         String q, e, result;
         q = "index=kafka_topic conn";
         e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%'";
-        result = assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        assertEquals(e, result);
+        result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
+        Assertions.assertEquals(e, result);
     }
 }

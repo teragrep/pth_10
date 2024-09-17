@@ -49,15 +49,13 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for the RenameTransformationTest implementation Uses streaming datasets
@@ -84,18 +82,18 @@ public class RenameTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -114,11 +112,11 @@ public class RenameTransformationTest {
                 .performDPLTest(
                         "index=index_A | rename _raw AS DATA , offset AS number, sourcetype AS typeOfSource, INVALID_FIELD AS fieldOfInvalid",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, DATA, index, typeOfSource, host, source, partition, number]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, DATA, index, typeOfSource, host, source, partition, number]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }

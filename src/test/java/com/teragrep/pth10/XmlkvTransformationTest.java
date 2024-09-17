@@ -49,7 +49,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -57,8 +57,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Tests for xmlkv command Uses streaming datasets
@@ -84,18 +82,18 @@ public class XmlkvTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -116,10 +114,11 @@ public class XmlkvTransformationTest {
     )
     public void xmlkvTest0() {
         streamingTestUtil.performDPLTest("index=index_A | xmlkv _raw", XML_DATA_2, ds -> {
-            assertEquals(
-                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, item, something]",
-                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, item, something]",
+                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                    );
 
             String result = ds
                     .select("item", "something")
@@ -129,7 +128,7 @@ public class XmlkvTransformationTest {
                     .map(r -> r.getAs(0).toString().concat(";").concat(r.getAs(1).toString()))
                     .collect(Collectors.toList())
                     .get(0);
-            assertEquals("b;123", result);
+            Assertions.assertEquals("b;123", result);
         });
     }
 
@@ -140,10 +139,12 @@ public class XmlkvTransformationTest {
     )
     public void xmlkvTest1() {
         streamingTestUtil.performDPLTest("index=index_A | xmlkv _raw", XML_DATA_1, ds -> {
-            assertEquals(
-                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, item]",
-                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, item]", Arrays
+                                    .toString(ds.columns()),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
 
             String result = ds
                     .select("item")
@@ -153,7 +154,7 @@ public class XmlkvTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList())
                     .get(0);
-            assertEquals("Hello world", result);
+            Assertions.assertEquals("Hello world", result);
         });
     }
 
@@ -168,7 +169,7 @@ public class XmlkvTransformationTest {
                         "index=index_A | xmlkv _raw", INVALID_DATA, ds -> {
                             // invalid data does not generate a result; only checking column arrangement
                             // to be the same as the input data.
-                            assertEquals(Arrays.toString(testSchema.fieldNames()), Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                            Assertions.assertEquals(Arrays.toString(testSchema.fieldNames()), Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
     }

@@ -54,12 +54,10 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class StrcatTest {
@@ -79,8 +77,8 @@ public class StrcatTest {
         ct.visitStrcatTransformation((DPLParser.StrcatTransformationContext) tree.getChild(1).getChild(0));
         final StrcatStep cs = ct.strcatStep;
 
-        assertEquals("[\"Hello\", \"World\"]", Arrays.toString(cs.getListOfFields().toArray()));
-        assertEquals("hello_world", cs.getDestField());
-        assertEquals(2, cs.getNumberOfSrcFieldsOriginally());
+        Assertions.assertEquals("[\"Hello\", \"World\"]", Arrays.toString(cs.getListOfFields().toArray()));
+        Assertions.assertEquals("hello_world", cs.getDestField());
+        Assertions.assertEquals(2, cs.getNumberOfSrcFieldsOriginally());
     }
 }

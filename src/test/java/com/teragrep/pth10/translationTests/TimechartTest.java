@@ -55,12 +55,10 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TimechartTest {
@@ -87,12 +85,13 @@ public class TimechartTest {
         tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
         TimechartStep tcs = tct.timechartStep;
 
-        assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
-        assertEquals(
-                "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
-                tcs.getAggCols().get(0).toString()
-        );
-        assertEquals("product", tcs.getDivByInsts().get(0));
+        Assertions.assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
+        Assertions
+                .assertEquals(
+                        "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
+                        tcs.getAggCols().get(0).toString()
+                );
+        Assertions.assertEquals("product", tcs.getDivByInsts().get(0));
     }
 
     @Test
@@ -112,12 +111,13 @@ public class TimechartTest {
         tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
         TimechartStep tcs = tct.timechartStep;
 
-        assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
-        assertEquals(
-                "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
-                tcs.getAggCols().get(0).toString()
-        );
-        assertEquals(0, tcs.getDivByInsts().size());
+        Assertions.assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
+        Assertions
+                .assertEquals(
+                        "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
+                        tcs.getAggCols().get(0).toString()
+                );
+        Assertions.assertEquals(0, tcs.getDivByInsts().size());
     }
 
     @Test
@@ -137,11 +137,12 @@ public class TimechartTest {
         tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
         TimechartStep tcs = tct.timechartStep;
 
-        assertEquals("window(_time, 86400000000, 86400000000, 0) AS window", tcs.getSpan().toString());
-        assertEquals(
-                "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS count",
-                tcs.getAggCols().get(0).toString()
-        );
-        assertEquals(0, tcs.getDivByInsts().size());
+        Assertions.assertEquals("window(_time, 86400000000, 86400000000, 0) AS window", tcs.getSpan().toString());
+        Assertions
+                .assertEquals(
+                        "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS count",
+                        tcs.getAggCols().get(0).toString()
+                );
+        Assertions.assertEquals(0, tcs.getDivByInsts().size());
     }
 }

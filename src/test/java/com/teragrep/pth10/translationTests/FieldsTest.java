@@ -55,14 +55,12 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class FieldsTest {
@@ -86,8 +84,8 @@ public class FieldsTest {
         ct.visitFieldsTransformation((DPLParser.FieldsTransformationContext) tree.getChild(1).getChild(0));
         FieldsStep cs = ct.fieldsStep;
 
-        assertEquals(AbstractFieldsStep.FieldMode.KEEP_FIELDS, cs.getMode());
-        assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
+        Assertions.assertEquals(AbstractFieldsStep.FieldMode.KEEP_FIELDS, cs.getMode());
+        Assertions.assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
     }
 
     @Test
@@ -107,7 +105,7 @@ public class FieldsTest {
         ct.visitFieldsTransformation((DPLParser.FieldsTransformationContext) tree.getChild(1).getChild(0));
         FieldsStep cs = ct.fieldsStep;
 
-        assertEquals(AbstractFieldsStep.FieldMode.REMOVE_FIELDS, cs.getMode());
-        assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
+        Assertions.assertEquals(AbstractFieldsStep.FieldMode.REMOVE_FIELDS, cs.getMode());
+        Assertions.assertEquals("[_raw, _time, offset]", Arrays.toString(cs.getListOfFields().toArray()));
     }
 }
