@@ -2171,11 +2171,10 @@ public class evalTest {
     }
 
     // Test eval typeof(x)
-    // TODO uncomment eval d= ... when eval supports non-existing fields
     @Test
 	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalTypeofCatalystTest() {
-        String q = "index=index_A | eval a = typeof(12) | eval b = typeof(\"string\") | eval c = typeof(1==2) <!--| eval d = typeof(badfield)-->";
+        String q = "index=index_A | eval a = typeof(12) | eval b = typeof(\"string\") | eval c = typeof(1==2)";
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true),StructField(c,StringType,true))";
 
@@ -2195,11 +2194,24 @@ public class evalTest {
             Dataset<Row> dsBoolean = res.select("c").orderBy("c").distinct();
             List<Row> dsBooleanLst = dsBoolean.collectAsList();
             assertEquals("Boolean", dsBooleanLst.get(0).getString(0));
+        });
+    }
+
+    @Disabled(value = "eval does not support non-existing fields, pth-10 issue #47")
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void testEvalTypeofInvalid() {
+        String q = "index=index_A | eval d = typeof(badfield)";
+        String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(d,StringType,true))";
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            assertEquals(schema, res.schema().toString());
 
             // invalid
-//            Dataset<Row> dsInvalid = res.select("d").orderBy("d").distinct();
-//            List<Row> dsInvalidLst = dsInvalid.collectAsList();
-//            assertEquals("Invalid", dsInvalidLst.get(0).getString(0));
+            Dataset<Row> dsInvalid = res.select("d").orderBy("d").distinct();
+            List<Row> dsInvalidLst = dsInvalid.collectAsList();
+            assertEquals("Invalid", dsInvalidLst.get(0).getString(0));
         });
     }
 
@@ -2268,7 +2280,7 @@ public class evalTest {
     }
 
     // Test eval method mvfilter(x)
-    @Disabled
+    @Disabled("mvfilter is not implemented yet, PTH-10 issue #327")
 	@Test
     public void parseMvfilterCatalystTest() {
         String q = "index=index_A | eval email = mvappend(\"aa@bb.example.test\",\"aa@yy.example.test\",\"oo@ii.example.test\",\"zz@uu.example.test\",\"auau@uiui.example.test\") | eval a = mvfilter( email != \"aa@bb.example.test\" )";
@@ -2514,9 +2526,8 @@ public class evalTest {
     }
 
     // Test spath() with JSON
-    @Disabled
+    @Disabled("broken due to spath udf changes, to be looked at in PTH-10 issue #295")
 	@Test
-    // FIXME broken due to spath udf changes
     public void parseEvalSpathJSONCatalystTest() {
     	String q = "index=index_A | eval a=spath(json_field, \"name\") | eval b=spath(json_field,\"invalid_spath\")";
         String testFile = "src/test/resources/eval_test_json*.json"; // * to make the path into a directory path
@@ -2551,9 +2562,7 @@ public class evalTest {
     }
 
     // Test spath() with XML
-    // //person[age=30]/name/text()
-    // FIXME broken due to spath udf changes
-    @Disabled
+    @Disabled(value = "broken due to spath udf changes, to be looked at in PTH-10 issue #295")
 	@Test
     public void parseEvalSpathXMLCatalystTest() {
     	String q = "index=index_A | eval a=spath(xml_field, \"people.person.name\")";

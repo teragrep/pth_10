@@ -283,18 +283,15 @@ public class logicalOperationTest {
         String q = "index=abc sourcetype=\"cd:ef:gh:0\"  \"1848c85bfe2c4323955dd5469f18baf6\"";
         String testFile = "src/test/resources/uuidTestData*.json"; // * to make the path into a directory path
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-
-            // Get raw field and check results. Should be only 1 match
             Dataset<Row> selected = res.select("_raw");
-            //selected.show(false);
             List<String> lst = selected
                     .collectAsList()
                     .stream()
                     .map(r -> r.getString(0))
                     .sorted()
                     .collect(Collectors.toList());
-            // check result count
-            assertEquals(3, lst.size());
+
+            assertEquals(3, lst.size()); // check result count
             // Compare values
             assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6  computer01.example.com", lst.get(1));
             assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6666  computer01.example.com", lst.get(2));
@@ -312,12 +309,10 @@ public class logicalOperationTest {
         String testFile = "src/test/resources/latitudeTestData*.json"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            // Get raw field and check results. Should be only 1 match
             Dataset<Row> selected = res.select("_raw");
-            //selected.show(false);
             List<Row> lst = selected.collectAsList();
-            // check result count
-            assertEquals(2, lst.size());
+
+            assertEquals(2, lst.size()); // check result count
             // Compare values
             assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(0).getString(0));
             assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(1).getString(0));
