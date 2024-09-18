@@ -103,7 +103,7 @@ public class StreamingTestUtil {
     }
 
     /**
-     * Set to Assertions.fail tests if ANTLR encounters any lexing or parsing errors, even if it can auto-recover.
+     * Set to fail tests if ANTLR encounters any lexing or parsing errors, even if it can auto-recover.
      * 
      * @param strictParserMode Fail tests on any parsing error
      */
