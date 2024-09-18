@@ -91,7 +91,7 @@ public class utils {
                     RecognitionException e
             ) {
                 throw new IllegalStateException(
-                        "Assertions.failed to parse at line " + line + ":" + charPositionInLine + " due to " + msg,
+                        "failed to parse at line " + line + ":" + charPositionInLine + " due to " + msg,
                         e
                 );
             }
