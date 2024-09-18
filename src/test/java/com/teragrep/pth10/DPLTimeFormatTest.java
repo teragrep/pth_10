@@ -52,8 +52,6 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.text.SimpleDateFormat;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DPLTimeFormatTest {
 
@@ -64,7 +62,7 @@ public class DPLTimeFormatTest {
 
         SimpleDateFormat format = new DPLTimeFormat(dplPattern).createSimpleDateFormat();
         String formattedPattern = format.toPattern();
-        assertEquals(expectedPattern, formattedPattern);
+        Assertions.assertEquals(expectedPattern, formattedPattern);
     }
 
     @Test
@@ -75,6 +73,6 @@ public class DPLTimeFormatTest {
 
         DPLTimeFormat format = new DPLTimeFormat(dplPattern);
         long actualEpoch = Assertions.assertDoesNotThrow(() -> format.getEpoch(dplDate));
-        assertEquals(expectedEpoch, actualEpoch);
+        Assertions.assertEquals(expectedEpoch, actualEpoch);
     }
 }

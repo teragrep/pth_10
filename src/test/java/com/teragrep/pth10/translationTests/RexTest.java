@@ -54,10 +54,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RexTest {
@@ -77,11 +76,11 @@ public class RexTest {
         rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
         RexStep rs = rexTf.rexStep;
 
-        assertEquals("abc", rs.getRegexStr());
-        assertEquals("host", rs.getField());
-        assertFalse(rs.isSedMode());
-        assertEquals(-1, rs.getMaxMatch());
-        assertNull(rs.getOffsetField());
+        Assertions.assertEquals("abc", rs.getRegexStr());
+        Assertions.assertEquals("host", rs.getField());
+        Assertions.assertFalse(rs.isSedMode());
+        Assertions.assertEquals(-1, rs.getMaxMatch());
+        Assertions.assertNull(rs.getOffsetField());
     }
 
     @Test
@@ -99,11 +98,11 @@ public class RexTest {
         rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
         RexStep rs = rexTf.rexStep;
 
-        assertEquals("abc", rs.getRegexStr());
-        assertEquals("_raw", rs.getField());
-        assertFalse(rs.isSedMode());
-        assertEquals(-1, rs.getMaxMatch());
-        assertNull(rs.getOffsetField());
+        Assertions.assertEquals("abc", rs.getRegexStr());
+        Assertions.assertEquals("_raw", rs.getField());
+        Assertions.assertFalse(rs.isSedMode());
+        Assertions.assertEquals(-1, rs.getMaxMatch());
+        Assertions.assertNull(rs.getOffsetField());
     }
 
     @Test
@@ -121,11 +120,11 @@ public class RexTest {
         rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
         RexStep rs = rexTf.rexStep;
 
-        assertEquals("s/old/new/g", rs.getRegexStr());
-        assertEquals("_raw", rs.getField());
-        assertTrue(rs.isSedMode());
-        assertEquals(-1, rs.getMaxMatch());
-        assertNull(rs.getOffsetField());
+        Assertions.assertEquals("s/old/new/g", rs.getRegexStr());
+        Assertions.assertEquals("_raw", rs.getField());
+        Assertions.assertTrue(rs.isSedMode());
+        Assertions.assertEquals(-1, rs.getMaxMatch());
+        Assertions.assertNull(rs.getOffsetField());
     }
 
     @Test
@@ -143,10 +142,10 @@ public class RexTest {
         rexTf.visitRexTransformation((DPLParser.RexTransformationContext) tree.getChild(1).getChild(0));
         RexStep rs = rexTf.rexStep;
 
-        assertEquals("string", rs.getRegexStr());
-        assertEquals("def", rs.getField());
-        assertFalse(rs.isSedMode());
-        assertEquals(10, rs.getMaxMatch());
-        assertEquals("abc", rs.getOffsetField());
+        Assertions.assertEquals("string", rs.getRegexStr());
+        Assertions.assertEquals("def", rs.getField());
+        Assertions.assertFalse(rs.isSedMode());
+        Assertions.assertEquals(10, rs.getMaxMatch());
+        Assertions.assertEquals("abc", rs.getOffsetField());
     }
 }

@@ -54,10 +54,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class StatsTest {
@@ -77,11 +76,12 @@ public class StatsTest {
         ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(1).getChild(0));
         final StatsStep cs = ct.statsStep;
 
-        assertEquals(
-                "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",
-                cs.getListOfAggregationExpressions().get(0).toString()
-        );
-        assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
+        Assertions
+                .assertEquals(
+                        "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",
+                        cs.getListOfAggregationExpressions().get(0).toString()
+                );
+        Assertions.assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
 
     }
 
@@ -100,12 +100,13 @@ public class StatsTest {
         ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(1).getChild(0));
         final StatsStep cs = ct.statsStep;
 
-        assertEquals(
-                "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",
-                cs.getListOfAggregationExpressions().get(0).toString()
-        );
-        assertEquals("avg(_raw) AS `avg(_raw)`", cs.getListOfAggregationExpressions().get(1).toString());
-        assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
+        Assertions
+                .assertEquals(
+                        "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",
+                        cs.getListOfAggregationExpressions().get(0).toString()
+                );
+        Assertions.assertEquals("avg(_raw) AS `avg(_raw)`", cs.getListOfAggregationExpressions().get(1).toString());
+        Assertions.assertEquals("_time", cs.getListOfGroupBys().get(0).toString());
     }
 
     @Test
@@ -123,11 +124,12 @@ public class StatsTest {
         ct.visitStatsTransformation((DPLParser.StatsTransformationContext) tree.getChild(1).getChild(0));
         final StatsStep cs = ct.statsStep;
 
-        assertEquals(
-                "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",
-                cs.getListOfAggregationExpressions().get(0).toString()
-        );
-        assertEquals("avg(_raw) AS `avg(_raw)`", cs.getListOfAggregationExpressions().get(1).toString());
-        assertEquals(0, cs.getListOfGroupBys().size());
+        Assertions
+                .assertEquals(
+                        "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`",
+                        cs.getListOfAggregationExpressions().get(0).toString()
+                );
+        Assertions.assertEquals("avg(_raw) AS `avg(_raw)`", cs.getListOfAggregationExpressions().get(1).toString());
+        Assertions.assertEquals(0, cs.getListOfGroupBys().size());
     }
 }

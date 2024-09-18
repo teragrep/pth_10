@@ -54,12 +54,11 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TableTest {
@@ -79,6 +78,6 @@ public class TableTest {
         ct.visitTableTransformation((DPLParser.TableTransformationContext) tree.getChild(1).getChild(0));
         final TableStep cs = ct.tableStep;
 
-        assertEquals("[a, b, c, d]", Arrays.toString(cs.getListOfFields().toArray()));
+        Assertions.assertEquals("[a, b, c, d]", Arrays.toString(cs.getListOfFields().toArray()));
     }
 }

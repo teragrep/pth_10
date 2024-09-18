@@ -47,9 +47,9 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.apache.spark.util.sketch.BloomFilter;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import org.apache.spark.util.sketch.BloomFilter;
 import org.junit.jupiter.api.*;
 
 import java.io.ByteArrayInputStream;

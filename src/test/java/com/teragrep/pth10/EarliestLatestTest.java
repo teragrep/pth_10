@@ -51,9 +51,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,8 +65,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests time-related aspects of the project, such as TimeStatement. Uses streaming datasets
@@ -85,18 +81,18 @@ public class EarliestLatestTest {
     private final String epochTestFile = "src/test/resources/earliestLatestTest_epoch_data*.json";
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -123,8 +119,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertTrue(indexAsList.contains("strawberry"));
-                    assertFalse(indexAsList.contains("seagull"));
+                    Assertions.assertTrue(indexAsList.contains("strawberry"));
+                    Assertions.assertFalse(indexAsList.contains("seagull"));
                 });
     }
 
@@ -143,8 +139,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertTrue(indexAsList.contains("strawberry"));
-            assertTrue(indexAsList.contains("seagull"));
+            Assertions.assertTrue(indexAsList.contains("strawberry"));
+            Assertions.assertTrue(indexAsList.contains("seagull"));
         });
     }
 
@@ -164,8 +160,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertTrue(indexAsList.contains("strawberry"));
-                    assertTrue(indexAsList.contains("seagull"));
+                    Assertions.assertTrue(indexAsList.contains("strawberry"));
+                    Assertions.assertTrue(indexAsList.contains("seagull"));
                 });
     }
 
@@ -185,8 +181,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertTrue(indexAsList.contains("strawberry"));
-                    assertTrue(indexAsList.contains("seagull"));
+                    Assertions.assertTrue(indexAsList.contains("strawberry"));
+                    Assertions.assertTrue(indexAsList.contains("seagull"));
                 });
     }
 
@@ -206,8 +202,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertTrue(indexAsList.contains("strawberry"));
-                    assertFalse(indexAsList.contains("seagull"));
+                    Assertions.assertTrue(indexAsList.contains("strawberry"));
+                    Assertions.assertFalse(indexAsList.contains("seagull"));
                 });
     }
 
@@ -227,8 +223,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertFalse(indexAsList.contains("strawberry"));
-                    assertFalse(indexAsList.contains("seagull"));
+                    Assertions.assertFalse(indexAsList.contains("strawberry"));
+                    Assertions.assertFalse(indexAsList.contains("seagull"));
                 });
     }
 
@@ -248,8 +244,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertTrue(indexAsList.contains("strawberry"));
-                    assertTrue(indexAsList.contains("seagull"));
+                    Assertions.assertTrue(indexAsList.contains("strawberry"));
+                    Assertions.assertTrue(indexAsList.contains("seagull"));
                 });
     }
 
@@ -269,8 +265,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertFalse(indexAsList.contains("strawberry"));
-                    assertFalse(indexAsList.contains("seagull"));
+                    Assertions.assertFalse(indexAsList.contains("strawberry"));
+                    Assertions.assertFalse(indexAsList.contains("seagull"));
                 });
     }
 
@@ -290,8 +286,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertFalse(indexAsList.contains("strawberry"));
-                    assertFalse(indexAsList.contains("seagull"));
+                    Assertions.assertFalse(indexAsList.contains("strawberry"));
+                    Assertions.assertFalse(indexAsList.contains("seagull"));
                 });
     }
 
@@ -311,8 +307,8 @@ public class EarliestLatestTest {
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
 
-                    assertTrue(indexAsList.contains("strawberry"));
-                    assertTrue(indexAsList.contains("seagull"));
+                    Assertions.assertTrue(indexAsList.contains("strawberry"));
+                    Assertions.assertTrue(indexAsList.contains("seagull"));
                 });
     }
 
@@ -331,8 +327,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals("2014-04-15 08:23:17", time.get(0));
-            assertEquals("2014-03-15 21:54:14", time.get(1));
+            Assertions.assertEquals("2014-04-15 08:23:17", time.get(0));
+            Assertions.assertEquals("2014-03-15 21:54:14", time.get(1));
         });
     }
 
@@ -346,7 +342,8 @@ public class EarliestLatestTest {
         RuntimeException sqe = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
                 });
-        assertEquals("TimeQualifier conversion error: <31/31/2014:00:00:00> can't be parsed.", sqe.getMessage());
+        Assertions
+                .assertEquals("TimeQualifier conversion error: <31/31/2014:00:00:00> can't be parsed.", sqe.getMessage());
     }
 
     @Test
@@ -364,8 +361,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals("2014-04-15 08:23:17", time.get(0));
-            assertEquals("2014-03-15 21:54:14", time.get(1));
+            Assertions.assertEquals("2014-04-15 08:23:17", time.get(0));
+            Assertions.assertEquals("2014-03-15 21:54:14", time.get(1));
         });
     }
 
@@ -384,8 +381,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals("2014-04-15 08:23:17", time.get(0));
-            assertEquals("2014-03-15 21:54:14", time.get(1));
+            Assertions.assertEquals("2014-04-15 08:23:17", time.get(0));
+            Assertions.assertEquals("2014-03-15 21:54:14", time.get(1));
         });
     }
 
@@ -403,7 +400,7 @@ public class EarliestLatestTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertTrue(time.isEmpty());
+            Assertions.assertTrue(time.isEmpty());
         });
     }
 
@@ -418,8 +415,8 @@ public class EarliestLatestTest {
             String maxTime = res.agg(functions.max("_time")).first().getString(0);
             String minTime = res.agg(functions.min("_time")).first().getString(0);
 
-            assertEquals("2014-03-15 21:54:14", maxTime);
-            assertEquals("2013-07-15 10:01:50", minTime);
+            Assertions.assertEquals("2014-03-15 21:54:14", maxTime);
+            Assertions.assertEquals("2013-07-15 10:01:50", minTime);
         });
     }
 
@@ -435,8 +432,8 @@ public class EarliestLatestTest {
             String maxTime = res.agg(functions.max("_time")).first().getString(0);
             String minTime = res.agg(functions.min("_time")).first().getString(0);
 
-            assertEquals("2050-03-15 21:54:14", maxTime);
-            assertEquals("1970-01-01 00:00:00", minTime);
+            Assertions.assertEquals("2050-03-15 21:54:14", maxTime);
+            Assertions.assertEquals("1970-01-01 00:00:00", minTime);
         });
     }
 
@@ -452,8 +449,8 @@ public class EarliestLatestTest {
             String maxTime = res.agg(functions.max("_time")).first().getString(0);
             String minTime = res.agg(functions.min("_time")).first().getString(0);
 
-            assertEquals("2030-01-14 00:56:08", maxTime);
-            assertEquals("2030-01-14 00:56:08", minTime);
+            Assertions.assertEquals("2030-01-14 00:56:08", maxTime);
+            Assertions.assertEquals("2030-01-14 00:56:08", minTime);
         });
     }
 
@@ -474,7 +471,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100sec etc.
-            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
         });
     }
 
@@ -494,7 +491,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
         });
     }
 
@@ -514,7 +511,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100hour etc.
-            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
         });
     }
 
@@ -534,7 +531,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
         });
     }
 
@@ -554,7 +551,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
         });
     }
 
@@ -574,7 +571,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
         });
     }
 
@@ -594,7 +591,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
         });
     }
 
@@ -608,7 +605,7 @@ public class EarliestLatestTest {
         final long expected = Timestamp.valueOf("9999-10-10 15:15:30.00").toInstant().getEpochSecond();
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
-        assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
     }
 
     @Test
@@ -622,7 +619,7 @@ public class EarliestLatestTest {
         final long expected = now.minusYears(1010).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
-        assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
     }
 
     @Test
@@ -631,7 +628,7 @@ public class EarliestLatestTest {
         final String relativeTimestamp = "xyz";
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
-        assertThrows(RuntimeException.class, () -> {
+        Assertions.assertThrows(RuntimeException.class, () -> {
             rtParser.parse(relativeTimestamp);
         }, "Relative timestamp contained an invalid time unit");
     }
@@ -653,7 +650,7 @@ public class EarliestLatestTest {
         // positive overflow epoch should be long max value
         RelativeTimeParser rtParser = new RelativeTimeParser();
         long result = rtParser.parse("+" + v + "h").calculate(ts);
-        assertEquals(expected, result);
+        Assertions.assertEquals(expected, result);
     }
 
     @Test
@@ -667,7 +664,7 @@ public class EarliestLatestTest {
         // negative overflow epoch should be epoch=0
         RelativeTimeParser rtParser = new RelativeTimeParser();
         long result = rtParser.parse(v + "h").calculate(ts);
-        assertEquals(0, result);
+        Assertions.assertEquals(0, result);
     }
 
     @Test
@@ -688,8 +685,8 @@ public class EarliestLatestTest {
         final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND></OR>";
         final String expSpark = "(((index RLIKE (?i)^strawberry AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^seagull AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))))";
 
-        assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
-        assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        Assertions.assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        Assertions.assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
     }
 
     @Test
@@ -710,8 +707,8 @@ public class EarliestLatestTest {
         final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1394913254\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><earliest operation=\"GE\" value=\"-1\"/></AND><latest operation=\"LE\" value=\"1\"/></AND></OR>";
         final String expSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1394913254, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^seagull AND (_time >= from_unixtime(-1, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))))";
 
-        assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
-        assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        Assertions.assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        Assertions.assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
     }
 
     @Test
@@ -733,16 +730,16 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, time.size());
-            assertEquals("2014-04-15 08:23:17", time.get(0));
-            assertEquals("2014-03-15 21:54:14", time.get(1));
+            Assertions.assertEquals(2, time.size());
+            Assertions.assertEquals("2014-04-15 08:23:17", time.get(0));
+            Assertions.assertEquals("2014-03-15 21:54:14", time.get(1));
         });
 
         final String expXml = "<OR><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1678713103\"/></AND><earliest operation=\"GE\" value=\"1394913254\"/></AND><AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><latest operation=\"LE\" value=\"1678713103\"/></AND><earliest operation=\"GE\" value=\"1397539397\"/></AND></OR>";
         final String expSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1678713103, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1394913254, yyyy-MM-dd HH:mm:ss))) OR ((index RLIKE (?i)^seagull AND (_time <= from_unixtime(1678713103, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1397539397, yyyy-MM-dd HH:mm:ss))))";
 
-        assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
-        assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        Assertions.assertEquals(expXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        Assertions.assertEquals(expSpark, this.streamingTestUtil.getCtx().getSparkQuery());
     }
 
     @Test
@@ -773,8 +770,8 @@ public class EarliestLatestTest {
                 + " OR ((index RLIKE ^seagull$ AND (_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss))) AND (_time <= from_unixtime(4102437600, yyyy-MM-dd HH:mm:ss))))"
                 + " OR (index RLIKE ^strawberry$ AND (_time <= from_unixtime(1678711652, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(-631159200, yyyy-MM-dd HH:mm:ss)))";
 
-        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
-        assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        Assertions.assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
     @Test
@@ -795,8 +792,8 @@ public class EarliestLatestTest {
         final String expectedXml = "<AND><OR><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND></OR><earliest operation=\"GE\" value=\"1577829600\"/></AND>";
         final String expectedSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) OR (index RLIKE (?i)^seagull AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(1577829600, yyyy-MM-dd HH:mm:ss)))";
 
-        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
-        assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        Assertions.assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
     @Test
@@ -818,8 +815,8 @@ public class EarliestLatestTest {
         final String expectedXml = "<AND><AND><index operation=\"EQUALS\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND><AND><OR><earliest operation=\"GE\" value=\"-7200\"/><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND></OR><earliest operation=\"GE\" value=\"1293746400\"/></AND></AND>";
         final String expectedSpark = "((index RLIKE (?i)^seagull AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (((_time >= from_unixtime(-7200, yyyy-MM-dd HH:mm:ss)) OR (index RLIKE ^strawberry$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss)))) AND (_time >= from_unixtime(1293746400, yyyy-MM-dd HH:mm:ss))))";
 
-        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
-        assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+        Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        Assertions.assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
     }
 
     @Test
@@ -837,8 +834,8 @@ public class EarliestLatestTest {
             final String expectedXml = "<AND><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1546293600\"/></AND><AND><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1230760800\"/></AND></AND>";
             final String expectedSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1546293600, yyyy-MM-dd HH:mm:ss))) AND ((index RLIKE ^seagull$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1230760800, yyyy-MM-dd HH:mm:ss))))";
 
-            assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
-            assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+            Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
         });
     }
 
@@ -857,8 +854,8 @@ public class EarliestLatestTest {
             final String expectedXml = "<AND><AND><AND><index operation=\"EQUALS\" value=\"strawberry\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1546293600\"/></AND><AND><AND><comparisonstatement field=\"index\" operation=\"=\" value=\"seagull\"/><latest operation=\"LE\" value=\"1\"/></AND><earliest operation=\"GE\" value=\"1230760800\"/></AND></AND>";
             final String expectedSpark = "(((index RLIKE (?i)^strawberry AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1546293600, yyyy-MM-dd HH:mm:ss))) AND ((index RLIKE ^seagull$ AND (_time <= from_unixtime(1, yyyy-MM-dd HH:mm:ss))) AND (_time >= from_unixtime(1230760800, yyyy-MM-dd HH:mm:ss))))";
 
-            assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
-            assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
+            Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(expectedXml, this.streamingTestUtil.getCtx().getArchiveQuery());
         });
     }
 
@@ -873,7 +870,7 @@ public class EarliestLatestTest {
         String query = " index=abc earliest=\"01/01/2022:00:00:00\" latest=\"01/02/2022:00:00:00\" \"XYZ=\\\"yes asd\\\"\" ";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND (((_time >= from_unixtime(1640988000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1641074400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
-            assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
         });
     }
 
@@ -891,7 +888,7 @@ public class EarliestLatestTest {
         });
 
         final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*))";
-        assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
     }
 
     @Test
@@ -909,10 +906,11 @@ public class EarliestLatestTest {
             Row r = res.select("_raw").first();
             String s = r.getAs(0).toString();
 
-            assertEquals(
-                    "[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"",
-                    s
-            );
+            Assertions
+                    .assertEquals(
+                            "[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"",
+                            s
+                    );
         });
     }
 
@@ -930,10 +928,11 @@ public class EarliestLatestTest {
             Row r = res.select("_raw").first();
             String s = r.getAs(0).toString();
 
-            assertEquals(
-                    "[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"",
-                    s
-            );
+            Assertions
+                    .assertEquals(
+                            "[17/Aug/2023:08:03:55.441546368 +0300] conn=917818 op=5 EXT oid=\"2.16.840.1.113730.3.5.12\" name=\"replication-multimaster-extop\"",
+                            s
+                    );
         });
     }
 
@@ -947,7 +946,7 @@ public class EarliestLatestTest {
         // case: index=* earliest=x latest=y abcdef and index=*abc* earliest=x latest=y abcdef match differently (data/no data)
         this.streamingTestUtil.performDPLTest("index=*g*", this.testFile, res -> {
             if (res.count() == 0) {
-                fail("(index=*g*) Expected result rows, instead got 0");
+                Assertions.fail("(index=*g*) Expected result rows, instead got 0");
             }
         });
     }
@@ -962,7 +961,7 @@ public class EarliestLatestTest {
         // index=* case
         this.streamingTestUtil.performDPLTest("index=*", this.testFile, res -> {
             if (res.count() == 0) {
-                fail("(index=*) Expected result rows, instead got 0");
+                Assertions.fail("(index=*) Expected result rows, instead got 0");
             }
         });
     }

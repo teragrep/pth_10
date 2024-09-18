@@ -49,8 +49,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +58,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class statsTransformationStreamingTest {
@@ -82,18 +79,18 @@ public class statsTransformationStreamingTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -115,9 +112,8 @@ public class statsTransformationStreamingTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(
-                    Arrays.asList("25"), listOfResult, "Batch consumer dataset did not contain the expected values !"
-            );
+            Assertions
+                    .assertEquals(Arrays.asList("25"), listOfResult, "Batch consumer dataset did not contain the expected values !");
         });
     }
 
@@ -135,9 +131,8 @@ public class statsTransformationStreamingTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(
-                            Arrays.asList("15"), listOfResult, "Batch consumer dataset did not contain the expected values !"
-                    );
+                    Assertions
+                            .assertEquals(Arrays.asList("15"), listOfResult, "Batch consumer dataset did not contain the expected values !");
                 });
     }
 
@@ -161,9 +156,11 @@ public class statsTransformationStreamingTest {
                                     "13.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0", "11.0",
                                     "12.0", "13.0", "14.0"
                             ); // weird timestamps in the JSON file
-                    assertEquals(
-                            expected, listOfResult, "Batch consumer dataset did not contain the expected values !"
-                    );
+                    Assertions
+                            .assertEquals(
+                                    expected, listOfResult,
+                                    "Batch consumer dataset did not contain the expected values !"
+                            );
                 });
     }
 
@@ -183,10 +180,11 @@ public class statsTransformationStreamingTest {
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
                             List<String> expected = Arrays.asList("3.0", "8.0", "13.0", "18.0", "23.0");
-                            assertEquals(
-                                    expected, listOfResult,
-                                    "Batch consumer dataset did not contain the expected values !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            expected, listOfResult,
+                                            "Batch consumer dataset did not contain the expected values !"
+                                    );
                         }
                 );
     }
@@ -211,9 +209,11 @@ public class statsTransformationStreamingTest {
                                     "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0", "20.0", "21.0",
                                     "22.0", "23.0", "24.0", "25.0"
                             );
-                    assertEquals(
-                            expected, listOfResult, "Batch consumer dataset did not contain the expected values !"
-                    );
+                    Assertions
+                            .assertEquals(
+                                    expected, listOfResult,
+                                    "Batch consumer dataset did not contain the expected values !"
+                            );
                 });
     }
 
@@ -239,10 +239,11 @@ public class statsTransformationStreamingTest {
                                             "15.0", "11.0", "12.0", "13.0", "14.0", "16.0", "17.0", "18.0", "19.0",
                                             "20.0", "21.0", "22.0", "23.0", "24.0", "25.0"
                                     );
-                            assertEquals(
-                                    expected, listOfResult,
-                                    "Batch consumer dataset did not contain the expected values !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            expected, listOfResult,
+                                            "Batch consumer dataset did not contain the expected values !"
+                                    );
                         }
                 );
     }
@@ -269,10 +270,11 @@ public class statsTransformationStreamingTest {
                                             "11.0", "12.0", "13.0", "14.0", "15.0", "16.0", "17.0", "18.0", "19.0",
                                             "20.0", "21.0", "22.0", "23.0", "24.0", "25.0"
                                     );
-                            assertEquals(
-                                    expected, listOfResult,
-                                    "Batch consumer dataset did not contain the expected values !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            expected, listOfResult,
+                                            "Batch consumer dataset did not contain the expected values !"
+                                    );
                         }
                 );
     }
@@ -286,13 +288,14 @@ public class statsTransformationStreamingTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(
-                    Collections
-                            .singletonList(
-                                    "1\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n2\n20\n21\n22\n23\n24\n25\n3\n4\n5\n6\n7\n8\n9"
-                            ),
-                    listOfResult, "Batch consumer dataset did not contain the expected values !"
-            );
+            Assertions
+                    .assertEquals(
+                            Collections
+                                    .singletonList(
+                                            "1\n10\n11\n12\n13\n14\n15\n16\n17\n18\n19\n2\n20\n21\n22\n23\n24\n25\n3\n4\n5\n6\n7\n8\n9"
+                                    ),
+                            listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
         });
     }
 
@@ -306,9 +309,8 @@ public class statsTransformationStreamingTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(
-                            Collections.singletonList("13.0"), listOfResult, "Batch consumer dataset did not contain the expected values !"
-                    );
+                    Assertions
+                            .assertEquals(Collections.singletonList("13.0"), listOfResult, "Batch consumer dataset did not contain the expected values !");
                 });
     }
 }

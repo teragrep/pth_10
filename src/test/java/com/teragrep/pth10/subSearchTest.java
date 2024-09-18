@@ -46,18 +46,13 @@
 package com.teragrep.pth10;
 
 import org.apache.spark.sql.Row;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class subSearchTest {
@@ -66,18 +61,18 @@ public class subSearchTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -94,13 +89,13 @@ public class subSearchTest {
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             String e = "RLIKE(index, (?i)^index_A$)";
             // Check that sub-query get executed and result is used as query parameter
-            assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
 
             // Should have all the columns, fields command in subsearch shouldn't affect the main search
-            assertEquals(9, res.columns().length);
+            Assertions.assertEquals(9, res.columns().length);
 
             // Check that the first (and only) value is correct
-            assertEquals("computer01.example.com", res.select("host").collectAsList().get(0).getString(0));
+            Assertions.assertEquals("computer01.example.com", res.select("host").collectAsList().get(0).getString(0));
         });
     }
 
@@ -117,10 +112,10 @@ public class subSearchTest {
             String e = "RLIKE(index, (?i)^index_A$)";
 
             // Check that sub-query get executed and result is used as query parameter
-            assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
 
             // Should have all the columns, fields command in subsearch shouldn't affect the main search
-            assertEquals(9, res.columns().length);
+            Assertions.assertEquals(9, res.columns().length);
 
             List<String> lst = res
                     .select("host")
@@ -131,11 +126,11 @@ public class subSearchTest {
                     .map(r -> r.getString(0))
                     .collect(Collectors.toList());
 
-            assertEquals(2, lst.size());
+            Assertions.assertEquals(2, lst.size());
 
             // check that the rows have correct values
-            assertEquals("computer01.example.com", lst.get(0));
-            assertEquals("computer02.example.com", lst.get(1));
+            Assertions.assertEquals("computer01.example.com", lst.get(0));
+            Assertions.assertEquals("computer02.example.com", lst.get(1));
         });
     }
 
@@ -150,7 +145,7 @@ public class subSearchTest {
             String e = "(`index` LIKE 'index_A' AND ((`_raw` LIKE '%computer01.example.com%' AND `_raw` LIKE '%computer02.example.com%') AND `_raw` LIKE '%computer01.example.com%'))";
 
             // Check that sub-query get executed and result is used as query parameter
-            assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
             // Check full result
             e = "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n"
                     + "|value                                                                                                                                                                                                                                                                                                                                                                                                                                                     |\n"
@@ -158,7 +153,7 @@ public class subSearchTest {
                     + "|{\"_raw\":\"127.0.0.123:4567 [26/Nov/2021:07:02:44.809] https-in~ https-in/<NOSRV> 0/-1/-1/-1/0 302 104 - - LR-- 1/1/0/0/0 0/0 \\\"GET /Monster_boy_normal_(entity) HTTP/1.1\\\" A:X:0 computer01.example.com computer02.example.com\",\"_time\":\"2001-01-01T01:01:01.011+03:00\",\"host\":\"computer02.example.com\",\"index\":\"index_A\",\"offset\":1,\"partition\":\"hundred-year/2001/01-01/computer01.example.com/01/01.logGLOB-2001010101.log.gz\",\"source\":\"imfile:computer01.example.com:01.log\",\"sourcetype\":\"A:X:0\"}|\n"
                     + "+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+\n";
             String jsonStr = res.toJSON().showString(7, 0, false);
-            assertEquals(e, jsonStr);
+            Assertions.assertEquals(e, jsonStr);
         });
     }
 
@@ -175,9 +170,9 @@ public class subSearchTest {
             String head = res.head().getString(0);
             List<Row> lst = res.collectAsList();
             // Correct  item count
-            assertEquals(2, lst.size());
-            assertEquals("computer01.example.com", lst.get(0).getString(0));
-            assertEquals("computer02.example.com", lst.get(1).getString(0));
+            Assertions.assertEquals(2, lst.size());
+            Assertions.assertEquals("computer01.example.com", lst.get(0).getString(0));
+            Assertions.assertEquals("computer02.example.com", lst.get(1).getString(0));
         });
     }
 
@@ -192,7 +187,7 @@ public class subSearchTest {
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertFalse(aggregates);
+            Assertions.assertFalse(aggregates);
         });
     }
 
@@ -211,10 +206,10 @@ public class subSearchTest {
                 LOGGER.info("item value={}", item.getString(0));
             });
             // Correct  item count
-            assertEquals(1, lst.size());
-            assertEquals("computer03.example.com", lst.get(0).getString(0));
+            Assertions.assertEquals(1, lst.size());
+            Assertions.assertEquals("computer03.example.com", lst.get(0).getString(0));
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertFalse(aggregates);
+            Assertions.assertFalse(aggregates);
         });
     }
 

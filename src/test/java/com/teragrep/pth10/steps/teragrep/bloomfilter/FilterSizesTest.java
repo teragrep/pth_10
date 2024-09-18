@@ -48,12 +48,11 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.spark.util.sketch.BloomFilter;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.Properties;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class FilterSizesTest {
 
@@ -74,10 +73,10 @@ class FilterSizesTest {
 
         Map<Long, Double> resultMap = sizeMap.asSortedMap();
 
-        assertEquals(0.01, resultMap.get(1000L));
-        assertEquals(0.01, resultMap.get(2000L));
-        assertEquals(0.01, resultMap.get(3000L));
-        assertEquals(3, resultMap.size());
+        Assertions.assertEquals(0.01, resultMap.get(1000L));
+        Assertions.assertEquals(0.01, resultMap.get(2000L));
+        Assertions.assertEquals(0.01, resultMap.get(3000L));
+        Assertions.assertEquals(3, resultMap.size());
 
     }
 
@@ -98,10 +97,10 @@ class FilterSizesTest {
 
         Map<Long, Long> bitSizeMap = sizeMap.asBitsizeSortedMap();
 
-        assertEquals(1000L, bitSizeMap.get(BloomFilter.create(1000, 0.01).bitSize()));
-        assertEquals(2000L, bitSizeMap.get(BloomFilter.create(2000, 0.01).bitSize()));
-        assertEquals(3000L, bitSizeMap.get(BloomFilter.create(3000, 0.01).bitSize()));
-        assertEquals(3, bitSizeMap.size());
+        Assertions.assertEquals(1000L, bitSizeMap.get(BloomFilter.create(1000, 0.01).bitSize()));
+        Assertions.assertEquals(2000L, bitSizeMap.get(BloomFilter.create(2000, 0.01).bitSize()));
+        Assertions.assertEquals(3000L, bitSizeMap.get(BloomFilter.create(3000, 0.01).bitSize()));
+        Assertions.assertEquals(3, bitSizeMap.size());
 
     }
 }

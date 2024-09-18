@@ -49,17 +49,13 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class Rex4jTransformationTest {
@@ -81,18 +77,18 @@ public class Rex4jTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -135,14 +131,14 @@ public class Rex4jTransformationTest {
                                     .collect(Collectors.toList());
 
                             // every value should be unique
-                            assertEquals(1, latitude.size());
-                            assertEquals(1, windSpeed.size());
-                            assertEquals(1, rainfallRate.size());
+                            Assertions.assertEquals(1, latitude.size());
+                            Assertions.assertEquals(1, windSpeed.size());
+                            Assertions.assertEquals(1, rainfallRate.size());
 
                             // check values
-                            assertEquals("25.5", rainfallRate.get(0));
-                            assertEquals("51.0", windSpeed.get(0));
-                            assertEquals("-89.625", latitude.get(0));
+                            Assertions.assertEquals("25.5", rainfallRate.get(0));
+                            Assertions.assertEquals("51.0", windSpeed.get(0));
+                            Assertions.assertEquals("-89.625", latitude.get(0));
                         }
                 );
     }
@@ -160,10 +156,10 @@ public class Rex4jTransformationTest {
                             List<String> rainfallRate = ds.select("rainFALL").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
                             // every value should be unique
-                            assertEquals(1, rainfallRate.size());
+                            Assertions.assertEquals(1, rainfallRate.size());
 
                             // check values
-                            assertEquals("25.5", rainfallRate.get(0));
+                            Assertions.assertEquals("25.5", rainfallRate.get(0));
                         }
                 );
     }
@@ -181,10 +177,10 @@ public class Rex4jTransformationTest {
                             List<Object> rainfallRate = ds.select("rainFALL").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0)).collect(Collectors.toList());
 
                             // every value should be unique
-                            assertEquals(1, rainfallRate.size());
+                            Assertions.assertEquals(1, rainfallRate.size());
 
                             // check values
-                            assertEquals(streamingTestUtil.getCtx().nullValue.value(), rainfallRate.get(0));
+                            Assertions.assertEquals(streamingTestUtil.getCtx().nullValue.value(), rainfallRate.get(0));
                         }
                 );
     }
@@ -202,13 +198,14 @@ public class Rex4jTransformationTest {
                             List<String> rawData = ds.select("_raw").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
                             // every value should be unique
-                            assertEquals(1, rawData.size());
+                            Assertions.assertEquals(1, rawData.size());
 
                             // check values
-                            assertEquals(
-                                    "{\"meltdown_rate\": 25.5, \"wind_speed\": 51.0, \"atmosphere_water_vapor_content\": 76.5, \"atmosphere_cloud_liquid_water_content\": 2.5, \"latitude\": -89.625, \"longitude\": 139.875}",
-                                    rawData.get(0)
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "{\"meltdown_rate\": 25.5, \"wind_speed\": 51.0, \"atmosphere_water_vapor_content\": 76.5, \"atmosphere_cloud_liquid_water_content\": 2.5, \"latitude\": -89.625, \"longitude\": 139.875}",
+                                            rawData.get(0)
+                                    );
                         }
                 );
     }
@@ -235,10 +232,10 @@ public class Rex4jTransformationTest {
                             List<String> rawData = ds.select("resZone").dropDuplicates().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
                             // every value should be unique
-                            assertEquals(1, rawData.size());
+                            Assertions.assertEquals(1, rawData.size());
 
                             // check values
-                            assertEquals("main", rawData.get(0));
+                            Assertions.assertEquals("main", rawData.get(0));
                         }
                 );
     }

@@ -58,9 +58,6 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.TimeZone;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class relativeTimeTest {
 
@@ -110,7 +107,7 @@ public class relativeTimeTest {
 
             String regex = "^.*_time >= from_unixtime\\(1587032680.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -129,7 +126,7 @@ public class relativeTimeTest {
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             LOGGER.info("Complex timeformat<{}>", q);
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -147,7 +144,7 @@ public class relativeTimeTest {
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -166,7 +163,7 @@ public class relativeTimeTest {
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             LOGGER.info("Complex timeformat<{}>", q);
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -184,7 +181,7 @@ public class relativeTimeTest {
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -200,7 +197,7 @@ public class relativeTimeTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String regex = "^.*_time >= from_unixtime\\(1587032680.*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -216,7 +213,7 @@ public class relativeTimeTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String regex = "^.*_time <= from_unixtime\\(1587032680.*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
 
     }
@@ -237,40 +234,39 @@ public class relativeTimeTest {
         LocalDateTime etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
         RelativeTimestamp rtTimestamp = rtParser.parse("-1h");
         long rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(
-                etime.getHour(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getHour()
-        );
+        Assertions
+                .assertEquals(etime.getHour(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getHour());
 
         // -3 min
         exp = t1.plus(-3, ChronoUnit.MINUTES);
         etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
         rtTimestamp = rtParser.parse("-3m");
         rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(
-                etime.getMinute(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMinute()
-        );
+        Assertions
+                .assertEquals(etime.getMinute(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMinute());
         // Using localDateTime-method
         // -1 week
         LocalDateTime dt = timestamp.toLocalDateTime();
         LocalDateTime et = dt.minusWeeks(1);
         rtTimestamp = rtParser.parse("-1w");
         rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(
-                et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getDayOfWeek()
-        );
+        Assertions
+                .assertEquals(et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getDayOfWeek());
         // -3 month
         dt = timestamp.toLocalDateTime();
         et = dt.minusMonths(3);
         rtTimestamp = rtParser.parse("-3mon");
         rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(et.getMonth(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMonth());
+        Assertions
+                .assertEquals(et.getMonth(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMonth());
 
         // -7 year
         dt = timestamp.toLocalDateTime();
         et = dt.minusYears(7);
         rtTimestamp = rtParser.parse("-7y");
         rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(et.getYear(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getYear());
+        Assertions
+                .assertEquals(et.getYear(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getYear());
     }
 
     // test snap-to-time "@d"
@@ -293,9 +289,8 @@ public class relativeTimeTest {
 
         RelativeTimestamp rtTimestamp = rtParser.parse("@d");
         long rtEpoch = rtTimestamp.calculate(timestamp);
-        assertEquals(
-                et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.systemDefault()).getDayOfWeek()
-        );
+        Assertions
+                .assertEquals(et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.systemDefault()).getDayOfWeek());
     }
 
     @Test
@@ -313,7 +308,7 @@ public class relativeTimeTest {
             String expected = String.valueOf(now.getEpochSecond()).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
             String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -332,7 +327,7 @@ public class relativeTimeTest {
             String expected = String.valueOf(now.getEpochSecond()).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
             String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -349,7 +344,7 @@ public class relativeTimeTest {
                 .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
                 });
 
-        assertEquals(expected, exception.getMessage());
+        Assertions.assertEquals(expected, exception.getMessage());
     }
 
     @Test
@@ -368,7 +363,7 @@ public class relativeTimeTest {
 
             String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -389,7 +384,7 @@ public class relativeTimeTest {
 
             String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -408,7 +403,7 @@ public class relativeTimeTest {
             String expected = String.valueOf(now.getEpochSecond()).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
             String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -431,7 +426,7 @@ public class relativeTimeTest {
                     + expectedLatestString + ".*$";
             ;
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -450,7 +445,7 @@ public class relativeTimeTest {
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
                 });
 
-        assertEquals(expected, exception.getMessage());
+        Assertions.assertEquals(expected, exception.getMessage());
     }
 
     // should throw an exception
@@ -467,7 +462,7 @@ public class relativeTimeTest {
                 .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
                 });
 
-        assertEquals(e, exception.getMessage());
+        Assertions.assertEquals(e, exception.getMessage());
     }
 
     // test with quotes
@@ -487,7 +482,7 @@ public class relativeTimeTest {
             String regex = "^.*_time >= from_unixtime\\(" + earliest.getEpochSecond() + ".*_time < from_unixtime\\("
                     + latest.getEpochSecond() + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -507,7 +502,7 @@ public class relativeTimeTest {
             String earliestString = String.valueOf(earliestEpoch).substring(0, 7); // don't check last 2 indexes as the query takes some time and the "now" is different
             String regex = "^.*_time >= from_unixtime\\(" + earliestString + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -528,7 +523,7 @@ public class relativeTimeTest {
 
             String regex = "^.*_time >= from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -546,7 +541,7 @@ public class relativeTimeTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -564,7 +559,7 @@ public class relativeTimeTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -584,7 +579,7 @@ public class relativeTimeTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -603,7 +598,7 @@ public class relativeTimeTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -621,7 +616,7 @@ public class relativeTimeTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -639,7 +634,7 @@ public class relativeTimeTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 
@@ -657,7 +652,7 @@ public class relativeTimeTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertTrue(result.matches(regex));
+            Assertions.assertTrue(result.matches(regex));
         });
     }
 }

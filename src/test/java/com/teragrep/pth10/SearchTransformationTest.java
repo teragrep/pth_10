@@ -49,16 +49,16 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SearchTransformationTest {
@@ -78,18 +78,18 @@ public class SearchTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -115,7 +115,10 @@ public class SearchTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             List<String> expectedValues = Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1");
-            assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
+            Assertions
+                    .assertEquals(
+                            expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
         });
     }
 
@@ -136,7 +139,10 @@ public class SearchTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             List<String> expectedValues = Arrays.asList("stream1", "stream1");
-            assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
+            Assertions
+                    .assertEquals(
+                            expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
         });
     }
 
@@ -157,7 +163,10 @@ public class SearchTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             List<String> expectedValues = Collections.emptyList();
-            assertEquals(expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !");
+            Assertions
+                    .assertEquals(
+                            expectedValues, listOfResult, "Batch consumer dataset did not contain the expected values !"
+                    );
         });
     }
 
@@ -181,7 +190,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = new ArrayList<>(Arrays.asList("50", "60", "70", "80", "90", "100"));
 
-            assertEquals(expected, json);
+            Assertions.assertEquals(expected, json);
         });
     }
 
@@ -205,7 +214,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = new ArrayList<>(Arrays.asList("7", "8", "9", "40"));
 
-            assertEquals(expected, json);
+            Assertions.assertEquals(expected, json);
         });
     }
 
@@ -229,7 +238,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1");
 
-            assertEquals(expected, sourcetype);
+            Assertions.assertEquals(expected, sourcetype);
         });
     }
 
@@ -257,7 +266,7 @@ public class SearchTransformationTest {
                             "stream1", "stream2"
                     );
 
-            assertEquals(expected, sourcetype);
+            Assertions.assertEquals(expected, sourcetype);
         });
     }
 
@@ -281,7 +290,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9");
 
-            assertEquals(expected, id);
+            Assertions.assertEquals(expected, id);
         });
     }
 
@@ -305,7 +314,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = Collections.singletonList("10");
 
-            assertEquals(expected, id);
+            Assertions.assertEquals(expected, id);
         });
     }
 
@@ -329,7 +338,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = Arrays.asList("9", "10");
 
-            assertEquals(expected, id);
+            Assertions.assertEquals(expected, id);
         });
     }
 
@@ -353,7 +362,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9");
 
-            assertEquals(expected, id);
+            Assertions.assertEquals(expected, id);
         });
     }
 
@@ -377,7 +386,7 @@ public class SearchTransformationTest {
                     .collect(Collectors.toList());
             List<String> expected = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
 
-            assertEquals(expected, id);
+            Assertions.assertEquals(expected, id);
         });
     }
 
@@ -405,7 +414,7 @@ public class SearchTransformationTest {
                             "127.7.7.7", "127.8.8.8", "127.9.9.9"
                     );
 
-            assertEquals(expected, json);
+            Assertions.assertEquals(expected, json);
         });
     }
 }

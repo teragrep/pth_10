@@ -55,12 +55,11 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class JoinTest {
@@ -89,13 +88,13 @@ public class JoinTest {
         ct.visitJoinTransformation((DPLParser.JoinTransformationContext) tree.getChild(1).getChild(0));
         JoinStep cs = ct.joinStep;
 
-        assertEquals("inner", cs.getJoinMode());
-        assertEquals(1, cs.getMax());
-        assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
-        assertTrue(cs.getEarlier());
-        assertNotNull(cs.getPathForSubsearchSave());
-        assertTrue(cs.getOverwrite());
-        assertFalse(cs.getUsetime());
+        Assertions.assertEquals("inner", cs.getJoinMode());
+        Assertions.assertEquals(1, cs.getMax());
+        Assertions.assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
+        Assertions.assertTrue(cs.getEarlier());
+        Assertions.assertNotNull(cs.getPathForSubsearchSave());
+        Assertions.assertTrue(cs.getOverwrite());
+        Assertions.assertFalse(cs.getUsetime());
     }
 
     @Test
@@ -115,12 +114,12 @@ public class JoinTest {
         ct.visitJoinTransformation((DPLParser.JoinTransformationContext) tree.getChild(1).getChild(0));
         JoinStep cs = ct.joinStep;
 
-        assertEquals("left", cs.getJoinMode());
-        assertEquals(1, cs.getMax());
-        assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
-        assertTrue(cs.getEarlier());
-        assertNotNull(cs.getPathForSubsearchSave());
-        assertTrue(cs.getOverwrite());
-        assertFalse(cs.getUsetime());
+        Assertions.assertEquals("left", cs.getJoinMode());
+        Assertions.assertEquals(1, cs.getMax());
+        Assertions.assertEquals("[offset]", Arrays.toString(cs.getListOfFields().toArray()));
+        Assertions.assertTrue(cs.getEarlier());
+        Assertions.assertNotNull(cs.getPathForSubsearchSave());
+        Assertions.assertTrue(cs.getOverwrite());
+        Assertions.assertFalse(cs.getUsetime());
     }
 }

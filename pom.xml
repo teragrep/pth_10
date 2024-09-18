@@ -149,6 +149,12 @@
       <artifactId>greenmail-junit5</artifactId>
       <version>1.6.13</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.sun.mail</groupId>
@@ -314,6 +320,11 @@
             </goals>
             <configuration>
               <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>junit:junit</exclude>
+                  </excludes>
+                </bannedDependencies>
                 <requireMavenVersion>
                   <version>3.2.5</version>
                 </requireMavenVersion>

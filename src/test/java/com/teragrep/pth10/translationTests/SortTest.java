@@ -56,6 +56,7 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
@@ -63,8 +64,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SortTest {
@@ -100,9 +99,9 @@ public class SortTest {
         SortByClause testSbc = cs.getListOfSortByClauses().get(0);
 
         // check contents rather than objects
-        assertEquals(sbc.getSortAsType(), testSbc.getSortAsType());
-        assertEquals(sbc.getFieldName(), testSbc.getFieldName());
-        assertEquals(sbc.getLimit(), testSbc.getLimit());
+        Assertions.assertEquals(sbc.getSortAsType(), testSbc.getSortAsType());
+        Assertions.assertEquals(sbc.getFieldName(), testSbc.getFieldName());
+        Assertions.assertEquals(sbc.getLimit(), testSbc.getLimit());
 
     }
 
@@ -162,11 +161,11 @@ public class SortTest {
             SortByClause fromExpected = expected.get(i);
 
             // check contents rather than objects
-            assertEquals(fromExpected.getSortAsType(), fromRun.getSortAsType());
-            assertEquals(fromExpected.getFieldName(), fromRun.getFieldName());
-            assertEquals(fromExpected.getLimit(), fromRun.getLimit());
+            Assertions.assertEquals(fromExpected.getSortAsType(), fromRun.getSortAsType());
+            Assertions.assertEquals(fromExpected.getFieldName(), fromRun.getFieldName());
+            Assertions.assertEquals(fromExpected.getLimit(), fromRun.getLimit());
         }
 
-        assertEquals(1234, cs.getLimit());
+        Assertions.assertEquals(1234, cs.getLimit());
     }
 }

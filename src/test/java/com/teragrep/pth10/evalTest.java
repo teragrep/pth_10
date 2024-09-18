@@ -62,7 +62,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class evalTest {
@@ -72,13 +71,13 @@ public class evalTest {
 
     private static TimeZone originalTimeZone = null;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
@@ -88,7 +87,7 @@ public class evalTest {
         TimeZone.setDefault(originalTimeZone);
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -100,7 +99,7 @@ public class evalTest {
         String e = "SELECT IF (error == 200, \"OK\", \"Error\") AS err FROM `temporaryDPLView` WHERE index LIKE\"cinnamon\"";
         String result = null;
         //utils.printDebug(e,result);
-        assertEquals(e,result);
+        Assertions.assertEquals(e,result);
     }
 
     @Disabled(value="Should be changed to a dataframe test")
@@ -111,7 +110,7 @@ public class evalTest {
         q = "index=cinnamon | eval err = if( substr(raw,115,5) == \"0 pol\", \"null\", \"x>0\")";
         e = "SELECT IF (SUBSTR(raw, 115, 5) == \"0 pol\", \"null\", \"x>0\") AS err FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
         result = null;
-        assertEquals(e,result);
+        Assertions.assertEquals(e,result);
     }
 
     @Disabled(value="Should be changed to a dataframe test")
@@ -123,7 +122,7 @@ public class evalTest {
         q = "index=cinnamon | where if ( substr(_raw,0,14) == \"127.0.0.49\", true(),false())";
         e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\" IF (SUBSTR(_raw, 0, 14) == \"127.0.0.49\", true, false)";
         result = Assertions.assertDoesNotThrow(() -> utils.getQueryAnalysis(q));
-        assertEquals(e,result);
+        Assertions.assertEquals(e,result);
     }
 
     @Test
@@ -137,14 +136,14 @@ public class evalTest {
                 "StructField(a,IntegerType,false),StructField(b,IntegerType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             List<String> listOfA = res.select("a").distinct().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
             List<String> listOfB = res.select("b").distinct().collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
-            assertEquals(1, listOfA.size());
-            assertEquals("1", listOfA.get(0));
-            assertEquals(1, listOfB.size());
-            assertEquals("2", listOfB.get(0));
+            Assertions.assertEquals(1, listOfA.size());
+            Assertions.assertEquals("1", listOfA.get(0));
+            Assertions.assertEquals(1, listOfB.size());
+            Assertions.assertEquals("2", listOfB.get(0));
         });
     }
 
@@ -157,16 +156,16 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(lenField,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("lenField").orderBy("lenField").distinct();
             List<Integer> lst = orderedDs.collectAsList().stream().map(r->r.getInt(0)).sorted().collect(Collectors.toList());
             // we should get 3 distinct values
-            assertEquals(3,lst.size());
+            Assertions.assertEquals(3,lst.size());
             // Compare values
-            assertEquals(158,lst.get(0));
-            assertEquals(187,lst.get(1));
-            assertEquals(210,lst.get(2));
+            Assertions.assertEquals(158,lst.get(0));
+            Assertions.assertEquals(187,lst.get(1));
+            Assertions.assertEquals(210,lst.get(2));
         });
     }
     
@@ -181,7 +180,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lstA = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -190,8 +189,8 @@ public class evalTest {
             Dataset<Row> resB = res.select("b").orderBy("b").distinct();
             List<String> lstB = resB.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
-            assertEquals("HELLO WORLD", lstA.get(0));
-            assertEquals("hello world", lstB.get(0));
+            Assertions.assertEquals("HELLO WORLD", lstA.get(0));
+            Assertions.assertEquals("hello world", lstB.get(0));
         });
     }
     
@@ -206,7 +205,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lstA = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -215,8 +214,8 @@ public class evalTest {
             Dataset<Row> resB = res.select("b").orderBy("b").distinct();
             List<String> lstB = resB.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
-            assertEquals("http://www.example.com/download?r=latest", lstA.get(0));
-            assertEquals("https://www.longer-domain-here.example.com/api/v1/getData?mode=all&type=update&random=true", lstB.get(0));
+            Assertions.assertEquals("http://www.example.com/download?r=latest", lstA.get(0));
+            Assertions.assertEquals("https://www.longer-domain-here.example.com/api/v1/getData?mode=all&type=update&random=true", lstB.get(0));
         });
     }
     
@@ -233,7 +232,7 @@ public class evalTest {
                 "StructField(c,StringType,false),StructField(d,StringType,false),StructField(e,StringType,false),StructField(f,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // ltrim()
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
@@ -263,16 +262,16 @@ public class evalTest {
 
 
             // ltrim()
-            assertEquals("aabbccdd ", lstA.get(0));
-            assertEquals("aabcdzz ", lstB.get(0));
+            Assertions.assertEquals("aabbccdd ", lstA.get(0));
+            Assertions.assertEquals("aabcdzz ", lstB.get(0));
 
             // rtrim()
-            assertEquals("\t abcd", lstC.get(0));
-            assertEquals(" AbcDe", lstD.get(0));
+            Assertions.assertEquals("\t abcd", lstC.get(0));
+            Assertions.assertEquals(" AbcDe", lstD.get(0));
 
             // trim()
-            assertEquals("abcd", lstE.get(0));
-            assertEquals("abcd", lstF.get(0));
+            Assertions.assertEquals("abcd", lstE.get(0));
+            Assertions.assertEquals("abcd", lstF.get(0));
         });
     }
     
@@ -285,7 +284,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lstA = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -294,8 +293,8 @@ public class evalTest {
             Dataset<Row> resB = res.select("b").orderBy("b").distinct();
             List<String> lstB = resB.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
-            assertEquals("Hallo world", lstA.get(0));
-            assertEquals("Hallo welt", lstB.get(0));
+            Assertions.assertEquals("Hallo world", lstA.get(0));
+            Assertions.assertEquals("Hallo welt", lstB.get(0));
         });
     }
 
@@ -307,14 +306,14 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(str,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1,lst.size());
+            Assertions.assertEquals(1,lst.size());
             // Compare values
-            assertEquals("127.0.0.123:45",lst.get(0).getString(0));
+            Assertions.assertEquals("127.0.0.123:45",lst.get(0).getString(0));
         });
     }
 
@@ -326,16 +325,16 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(str,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
             List<String> lst = orderedDs.collectAsList().stream().map(r->r.getString(0)).sorted().collect(Collectors.toList());
             // we should get 3 distinct values
-            assertEquals(3,lst.size());
+            Assertions.assertEquals(3,lst.size());
             // Compare values
-            assertEquals("",lst.get(0));
-            assertEquals("com",lst.get(1));
-            assertEquals("com cOmPuter02.example.com", lst.get(2));
+            Assertions.assertEquals("",lst.get(0));
+            Assertions.assertEquals("com",lst.get(1));
+            Assertions.assertEquals("com cOmPuter02.example.com", lst.get(2));
         });
     }
 
@@ -347,15 +346,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(val2,ArrayType(StringType,true),true))";
         
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
 
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1,lst.size());
+            Assertions.assertEquals(1,lst.size());
             // Compare values
-            assertEquals(Collections.singletonList("a"),lst.get(0).getList(0));
+            Assertions.assertEquals(Collections.singletonList("a"),lst.get(0).getList(0));
         });
     }
 
@@ -367,15 +366,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(mvf,ArrayType(StringType,false),false),StructField(val2,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
 
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1,lst.size());
+            Assertions.assertEquals(1,lst.size());
             // Compare values
-            assertEquals(Collections.singletonList("t"),lst.get(0).getList(0));
+            Assertions.assertEquals(Collections.singletonList("t"),lst.get(0).getList(0));
         });
     }
 
@@ -387,15 +386,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(mvf,ArrayType(StringType,false),false),StructField(val2,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
 
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
-            assertEquals(1,lst.size());
+            Assertions.assertEquals(1,lst.size());
             // Compare values
-            assertEquals(Arrays.asList("tr", "ue"),lst.get(0).getList(0));
+            Assertions.assertEquals(Arrays.asList("tr", "ue"),lst.get(0).getList(0));
         });
     }
 
@@ -407,21 +406,21 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(val2,ArrayType(StringType,true),true))";
         
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
             orderedDs.show(false);
 
             List<String> lst = orderedDs.collectAsList().stream()
                     .map(r->r.getList(0).get(0).toString()).sorted().collect(Collectors.toList());
             // we should get 5 distinct values
-            assertEquals(5, lst.size());
+            Assertions.assertEquals(5, lst.size());
 
             // Compare values
-            assertEquals("",lst.get(0));
-            assertEquals(" computer01.example.com",lst.get(1));
-            assertEquals(" computer01.example.com cOmPuter02.example.com",lst.get(2));
-            assertEquals(" computer02.example.com",lst.get(3));
-            assertEquals(" computer03.example.com",lst.get(4));
+            Assertions.assertEquals("",lst.get(0));
+            Assertions.assertEquals(" computer01.example.com",lst.get(1));
+            Assertions.assertEquals(" computer01.example.com cOmPuter02.example.com",lst.get(2));
+            Assertions.assertEquals(" computer02.example.com",lst.get(3));
+            Assertions.assertEquals(" computer03.example.com",lst.get(4));
 
         });
     }
@@ -434,17 +433,17 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             //  Get only distinct field and sort it by value
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<String> lst = orderedDs.collectAsList().stream().map(r->r.getList(0).get(0).toString()).sorted().collect(Collectors.toList());
 
             // check result count
-            assertEquals(3,lst.size()); // column a has 3 different values, as the data has 3 different lengths of _raw values
+            Assertions.assertEquals(3,lst.size()); // column a has 3 different values, as the data has 3 different lengths of _raw values
             // Compare values
-            assertEquals("158",lst.get(0));
-            assertEquals("187",lst.get(1));
-            assertEquals("210",lst.get(2));
+            Assertions.assertEquals("158",lst.get(0));
+            Assertions.assertEquals("187",lst.get(1));
+            Assertions.assertEquals("210",lst.get(2));
         });
     }
     
@@ -457,14 +456,14 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get only distinct field 'a' and sort it by value
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values (all should be null)
-            assertEquals(1,lst.size());
+            Assertions.assertEquals(1,lst.size());
             // Compare values (is it null?)
-            assertEquals(this.streamingTestUtil.getCtx().nullValue.value(),lst.get(0).get(0));
+            Assertions.assertEquals(this.streamingTestUtil.getCtx().nullValue.value(),lst.get(0).get(0));
         });
     }
     
@@ -477,20 +476,20 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order it by the values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<Double> expectedLst = Arrays.asList(
                     1.0, 1.0, 1.0, 1.0, 4.0, 9.0, 16.0, 25.0, 36.0,
                     49.0, 64.0, 81.0, 100.0, 121.0, 144.0,
                     169.0, 196.0, 225.0, 256.0);
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -503,18 +502,18 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<String> expectedLst = Arrays.asList(
                     "1","1","1","1","10","11","12","13","14","15","16","2","3","4","5","6","7","8","9");
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -527,17 +526,17 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order it by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<Long> expectedLst = Arrays.asList(1L,1L,1L,1L,2L,3L,4L,5L,6L,7L,8L,9L,10L,11L,12L,13L,14L,15L,16L);
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -550,7 +549,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -559,7 +558,7 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<Long> expectedLst = new ArrayList<>();
 
@@ -568,7 +567,7 @@ public class evalTest {
                 expectedLst.add(v.longValue());
             }
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -581,7 +580,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -590,8 +589,8 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("a");
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
             // we should get the same amount of values back as we put in
-            assertEquals(19, srcLst.size());
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, srcLst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             int i = 0;
 
@@ -599,7 +598,7 @@ public class evalTest {
                 Double vExp = Math.exp(val.doubleValue());
                 Double vGot = lst.get(i++);
                 if (!vExp.toString().substring(0,10).equals(vGot.toString().substring(0,10))) {
-                    fail(vExp + "!=" + vGot);
+                    Assertions.fail(vExp + "!=" + vGot);
                 }
 
             }
@@ -615,7 +614,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by value
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -624,7 +623,7 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<Long> expectedLst = new ArrayList<>();
 
@@ -633,7 +632,7 @@ public class evalTest {
                 expectedLst.add(v.longValue());
             }
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -646,7 +645,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -655,7 +654,7 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             int i = 0;
 
@@ -664,7 +663,7 @@ public class evalTest {
                 Double vReal = lst.get(i++);
                 if (!vExp.toString().substring(0, Math.min(vExp.toString().length(),10))
                         .equals(vReal.toString().substring(0,Math.min(vReal.toString().length(),10)))) {
-                    fail(vExp + "!=" + vReal);
+                    Assertions.fail(vExp + "!=" + vReal);
                 }
             }
         });
@@ -679,7 +678,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // for rounding since there are small deviations between spark log10 and java log10
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
@@ -691,7 +690,7 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
 
@@ -710,7 +709,7 @@ public class evalTest {
                 expectedLst.add(Double.valueOf(df.format(v)));
             }
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
 
@@ -723,7 +722,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // for rounding since there are small deviations between spark log10 and java log10
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
@@ -736,7 +735,7 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in (log input param -> log output)
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
 
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
@@ -758,7 +757,7 @@ public class evalTest {
                 expectedLst.add(Double.valueOf(df.format(v)));
             }
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -771,14 +770,14 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Integer> lst = resA.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
 
             // Check that random() produced a result within set limits
-            assertTrue(lst.get(0) <= Math.pow(2d, 31d) - 1);
-            assertTrue(lst.get(0) >= 0);
+            Assertions.assertTrue(lst.get(0) <= Math.pow(2d, 31d) - 1);
+            Assertions.assertTrue(lst.get(0) >= 0);
         });
     }
     
@@ -791,12 +790,12 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
 
-            assertEquals(3.14159265358d, lst.get(0));
+            Assertions.assertEquals(3.14159265358d, lst.get(0));
         });
     }
     
@@ -811,7 +810,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Double> lstA = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -820,8 +819,8 @@ public class evalTest {
             Dataset<Row> resB = res.select("b").orderBy("b").distinct();
             List<Double> lstB = resB.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
 
-            assertEquals(2d, lstA.get(0));
-            assertEquals(5.743d, lstB.get(0));
+            Assertions.assertEquals(2d, lstA.get(0));
+            Assertions.assertEquals(5.743d, lstB.get(0));
         });
     }
     
@@ -837,7 +836,7 @@ public class evalTest {
                 "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             /*
              *  eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245)
              */
@@ -859,16 +858,16 @@ public class evalTest {
             List<Double> lstD = resD.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
 
             boolean isOfEqualSize = (lstA.size() == lstB.size()) && (lstB.size() == lstC.size()) && (lstC.size() == lstD.size());
-            assertTrue(isOfEqualSize);
+            Assertions.assertTrue(isOfEqualSize);
 
             for (int i = 0 ; i < lstA.size() ; i++) {
-                assertFalse(Double.isNaN(lstA.get(i)));
-                assertFalse(Double.isNaN(lstB.get(i)));
-                assertFalse(Double.isNaN(lstC.get(i)));
-                assertFalse(Double.isNaN(lstD.get(i)));
+                Assertions.assertFalse(Double.isNaN(lstA.get(i)));
+                Assertions.assertFalse(Double.isNaN(lstB.get(i)));
+                Assertions.assertFalse(Double.isNaN(lstC.get(i)));
+                Assertions.assertFalse(Double.isNaN(lstD.get(i)));
 
                 // 1.00 * 1111 => 1110(.0)
-                assertEquals(1110d, lstA.get(i));
+                Assertions.assertEquals(1110d, lstA.get(i));
             }
         });
     }
@@ -882,7 +881,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -893,7 +892,7 @@ public class evalTest {
 
             // Assert
             for (int i = 0; i < srcLst.size(); i++) {
-                assertEquals(Math.sqrt(srcLst.get(i)),lst.get(i));
+                Assertions.assertEquals(Math.sqrt(srcLst.get(i)),lst.get(i));
             }
         });
     }
@@ -906,7 +905,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -917,13 +916,13 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // Assert
-            assertEquals(19, srcLst.size());
+            Assertions.assertEquals(19, srcLst.size());
             int loopsExecuted = 0;
             for (int i = 0; i < srcLst.size(); i++) {
                 loopsExecuted++;
-                assertEquals(srcLst.get(i) + 1 + 3, lst.get(i));
+                Assertions.assertEquals(srcLst.get(i) + 1 + 3, lst.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -935,7 +934,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -946,13 +945,13 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // Assert
-            assertEquals(19, srcLst.size());
+            Assertions.assertEquals(19, srcLst.size());
             int loopsExecuted = 0;
             for (int i = 0; i < srcLst.size(); i++) {
                 loopsExecuted++;
-                assertEquals(srcLst.get(i) + 2, lst.get(i));
+                Assertions.assertEquals(srcLst.get(i) + 2, lst.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -964,7 +963,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -975,13 +974,13 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // Assert
-            assertEquals(19, srcLst.size());
+            Assertions.assertEquals(19, srcLst.size());
             int loopsExecuted = 0;
             for (int i = 0; i < srcLst.size(); i++) {
                 loopsExecuted++;
-                assertEquals(srcLst.get(i) + 2.6 + 3.5, lst.get(i));
+                Assertions.assertEquals(srcLst.get(i) + 2.6 + 3.5, lst.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -993,7 +992,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1004,13 +1003,13 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // Assert
-            assertEquals(19, srcLst.size());
+            Assertions.assertEquals(19, srcLst.size());
             int loopsExecuted = 0;
             for (int i = 0; i < srcLst.size(); i++) {
                 loopsExecuted++;
-                assertEquals(srcLst.get(i) + 2 + 5, lst.get(i));
+                Assertions.assertEquals(srcLst.get(i) + 2 + 5, lst.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -1023,15 +1022,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
             // we should get 1
-            assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lst.size());
             // Compare values to expected
-            assertEquals("abcd", lst.get(0));
+            Assertions.assertEquals("abcd", lst.get(0));
         });
     }
     
@@ -1044,15 +1043,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
             // we should get 1
-            assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lst.size());
             // Compare values to expected
-            assertEquals(1.5d, Double.parseDouble(lst.get(0)));
+            Assertions.assertEquals(1.5d, Double.parseDouble(lst.get(0)));
         });
     }
     
@@ -1065,7 +1064,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1075,10 +1074,10 @@ public class evalTest {
             List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             for (int i = 0; i < lst.size(); i++) {
-                assertEquals(lstOffset.get(i)-1, Double.parseDouble(lst.get(i)));
+                Assertions.assertEquals(lstOffset.get(i)-1, Double.parseDouble(lst.get(i)));
             }
         });
     }
@@ -1092,7 +1091,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1102,10 +1101,10 @@ public class evalTest {
             List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             for (int i = 0; i < lst.size(); i++) {
-                assertEquals(lstOffset.get(i) * lstOffset.get(i),Long.parseLong(lst.get(i)));
+                Assertions.assertEquals(lstOffset.get(i) * lstOffset.get(i),Long.parseLong(lst.get(i)));
             }
         });
     }
@@ -1119,7 +1118,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1129,10 +1128,10 @@ public class evalTest {
             List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             for (int i = 0; i < lst.size(); i++) {
-                assertEquals((double)lstOffset.get(i)/(double)lstOffset.get(i),Double.parseDouble(lst.get(i)));
+                Assertions.assertEquals((double)lstOffset.get(i)/(double)lstOffset.get(i),Double.parseDouble(lst.get(i)));
             }
         });
     }
@@ -1146,7 +1145,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1156,10 +1155,10 @@ public class evalTest {
             List<Long> lstOffset = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get 19
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             for (int i = 0; i < lst.size(); i++) {
-                assertEquals(lstOffset.get(i) % 2, Double.parseDouble(lst.get(i)));
+                Assertions.assertEquals(lstOffset.get(i) % 2, Double.parseDouble(lst.get(i)));
             }
         });
     }
@@ -1173,7 +1172,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(md5,StringType,true),StructField(sha1,StringType,true),StructField(sha256,StringType,true),StructField(sha512,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column '_raw'
             Dataset<Row> resRaw = res.select("_raw").orderBy("offset");
             List<String> lstRaw = resRaw.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1197,17 +1196,17 @@ public class evalTest {
             // Assert expected to result
 
             // Amount of data
-            assertEquals(lstRaw.size(),lstMd5.size());
-            assertEquals(lstRaw.size(),lstS1.size());
-            assertEquals(lstRaw.size(),lstS256.size());
-            assertEquals(lstRaw.size(),lstS512.size());
+            Assertions.assertEquals(lstRaw.size(),lstMd5.size());
+            Assertions.assertEquals(lstRaw.size(),lstS1.size());
+            Assertions.assertEquals(lstRaw.size(),lstS256.size());
+            Assertions.assertEquals(lstRaw.size(),lstS512.size());
 
             // Contents
             for (int i = 0; i < lstRaw.size(); ++i) {
-                assertEquals(DigestUtils.md5Hex(lstRaw.get(i)),lstMd5.get(i));
-                assertEquals(DigestUtils.sha1Hex(lstRaw.get(i)),lstS1.get(i));
-                assertEquals(DigestUtils.sha256Hex(lstRaw.get(i)),lstS256.get(i));
-                assertEquals(DigestUtils.sha512Hex(lstRaw.get(i)),lstS512.get(i));
+                Assertions.assertEquals(DigestUtils.md5Hex(lstRaw.get(i)),lstMd5.get(i));
+                Assertions.assertEquals(DigestUtils.sha1Hex(lstRaw.get(i)),lstS1.get(i));
+                Assertions.assertEquals(DigestUtils.sha256Hex(lstRaw.get(i)),lstS256.get(i));
+                Assertions.assertEquals(DigestUtils.sha512Hex(lstRaw.get(i)),lstS512.get(i));
             }
         });
     }
@@ -1221,20 +1220,20 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<String> expectedLst = Arrays.asList(
                     "Less than two", "Less than two","Less than two","Less than two","Exactly two","More than two","More than two","More than two",
                     "More than two","More than two","More than two","More than two","More than two",
                     "More than two","More than two","More than two","More than two","More than two",
                     "More than two");
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1247,13 +1246,13 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<String> expectedLst = Arrays.asList(
                     "Not 0","Not 0","Not 0","Not 0","Not 0","Not 0","Not 0","Not 0",
@@ -1262,7 +1261,7 @@ public class evalTest {
                     "Not less than 10","Not less than 10","Not less than 10"
             );
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1275,18 +1274,18 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<String> lst = orderedDs.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
 
             // we should get one result because all = "true"
-            assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lst.size());
             // Compare values to expected
             List<String> expectedLst = Arrays.asList("true");
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1299,7 +1298,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1308,7 +1307,7 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
             // check amount of results
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<String> expectedLst = new ArrayList<>();
 
@@ -1316,7 +1315,7 @@ public class evalTest {
                 expectedLst.add("0x".concat(Integer.toHexString(item.intValue()).toUpperCase()));
             }
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1330,7 +1329,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1339,7 +1338,7 @@ public class evalTest {
             Dataset<Row> resOffset = res.select("offset").orderBy("offset");
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
             // check amount of results
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
             // Compare values to expected
             List<String> expectedLst = new ArrayList<>();
 
@@ -1347,7 +1346,7 @@ public class evalTest {
                 expectedLst.add("00:00:".concat(item < 10 ? "0".concat(item.toString()) : item.toString()));
             }
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1360,15 +1359,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
             // we should get one result
-            assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lst.size());
             // Compare values to expected
-            assertEquals("12,345.68", lst.get(0));
+            Assertions.assertEquals("12,345.68", lst.get(0));
         });
     }
     
@@ -1381,15 +1380,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get one result
-            assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lst.size());
             // Compare values to expected
-            assertEquals(164L, lst.get(0));
+            Assertions.assertEquals(164L, lst.get(0));
         });
     }
     
@@ -1402,15 +1401,15 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get one result
-            assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lst.size());
             // Compare values to expected
-            assertEquals(12345L, lst.get(0));
+            Assertions.assertEquals(12345L, lst.get(0));
         });
     }
     
@@ -1423,7 +1422,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Without orderBy collectAsList will change the order randomly. Order every column by offset.
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
@@ -1446,10 +1445,10 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
-            assertEquals(19, lstB.size());
-            assertEquals(19, lstC.size());
-            assertEquals(19, lstD.size());
+            Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lstB.size());
+            Assertions.assertEquals(19, lstC.size());
+            Assertions.assertEquals(19, lstD.size());
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
             List<Double> expectedLstB = new ArrayList<>();
@@ -1466,10 +1465,10 @@ public class evalTest {
                 expectedLstD.add(Math.cosh(Double.valueOf((double)val/10d)));
             }
 
-            assertEquals(expectedLst, lst);
-            assertEquals(expectedLstB, lstB);
-            assertEquals(expectedLstC, lstC);
-            assertEquals(expectedLstD, lstD);
+            Assertions.assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLstB, lstB);
+            Assertions.assertEquals(expectedLstC, lstC);
+            Assertions.assertEquals(expectedLstD, lstD);
         });
     }
     
@@ -1485,7 +1484,7 @@ public class evalTest {
                 "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1507,10 +1506,10 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(19, lst.size());
-            assertEquals(19, lstB.size());
-            assertEquals(19, lstC.size());
-            assertEquals(19, lstD.size());
+            Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lstB.size());
+            Assertions.assertEquals(19, lstC.size());
+            Assertions.assertEquals(19, lstD.size());
 
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
@@ -1527,10 +1526,10 @@ public class evalTest {
                 expectedLstC.add(Math.sin(Double.valueOf((double)val/10d)));
                 expectedLstD.add(Math.sinh(Double.valueOf((double)val/10d)));
             }
-            assertEquals(expectedLst, lst);
-            assertEquals(expectedLstB, lstB);
-            assertEquals(expectedLstC, lstC);
-            assertEquals(expectedLstD, lstD);
+            Assertions.assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLstB, lstB);
+            Assertions.assertEquals(expectedLstC, lstC);
+            Assertions.assertEquals(expectedLstD, lstD);
         });
     }
     
@@ -1543,7 +1542,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),StructField(c,DoubleType,true),StructField(d,DoubleType,true),StructField(e,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a' atan
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1569,11 +1568,11 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(srcLst.size(),lst.size());
-            assertEquals(srcLst.size(),lstB.size());
-            assertEquals(srcLst.size(),lstC.size());
-            assertEquals(srcLst.size(),lstD.size());
-            assertEquals(srcLst.size(),lstE.size());
+            Assertions.assertEquals(srcLst.size(),lst.size());
+            Assertions.assertEquals(srcLst.size(),lstB.size());
+            Assertions.assertEquals(srcLst.size(),lstC.size());
+            Assertions.assertEquals(srcLst.size(),lstD.size());
+            Assertions.assertEquals(srcLst.size(),lstE.size());
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
             List<Double> expectedLstB = new ArrayList<>();
@@ -1591,11 +1590,11 @@ public class evalTest {
                 expectedLstD.add(Math.tanh(Double.valueOf((double)val/10d))); // tanh
                 expectedLstE.add(Math.atan2(Double.valueOf((double)val/10d),Double.valueOf((double)val/20d))); // atan
             }
-            assertEquals(expectedLst, lst);
-            assertEquals(expectedLstB, lstB);
-            assertEquals(expectedLstC, lstC);
-            assertEquals(expectedLstD, lstD);
-            assertEquals(expectedLstE, lstE);
+            Assertions.assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLstB, lstB);
+            Assertions.assertEquals(expectedLstC, lstC);
+            Assertions.assertEquals(expectedLstD, lstD);
+            Assertions.assertEquals(expectedLstE, lstE);
         });
     }
 
@@ -1609,7 +1608,7 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q,testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1619,13 +1618,13 @@ public class evalTest {
             Dataset<Row> offset = res.select("offset").orderBy("offset");
             List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
-            assertEquals(19, offsetList.size());
+            Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
                 loopsExecuted++;
                 Assertions.assertEquals(Math.round((offsetList.get(i) + 1 + 2) / 3.0), (long) aList.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -1639,7 +1638,7 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1649,13 +1648,13 @@ public class evalTest {
             Dataset<Row> offset = res.select("offset").orderBy("offset");
             List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
-            assertEquals(19, offsetList.size());
+            Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
                 loopsExecuted++;
                 Assertions.assertEquals(Math.round((offsetList.get(i) + 1) / 2.0), (long) aList.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -1669,7 +1668,7 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1679,13 +1678,13 @@ public class evalTest {
             Dataset<Row> offset = res.select("offset").orderBy("offset");
             List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
-            assertEquals(19, offsetList.size());
+            Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
                 loopsExecuted++;
                 Assertions.assertEquals(Math.round((offsetList.get(i) + 1.5 + 3.5) / 3.0), (long) aList.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -1699,7 +1698,7 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1709,13 +1708,13 @@ public class evalTest {
             Dataset<Row> offset = res.select("offset").orderBy("offset");
             List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
-            assertEquals(19, offsetList.size());
+            Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
                 loopsExecuted++;
                 Assertions.assertEquals(Math.round((offsetList.get(i) + 5 + 11) / 3.0), (long) aList.get(i));
             }
-            assertEquals(19, loopsExecuted);
+            Assertions.assertEquals(19, loopsExecuted);
         });
     }
 
@@ -1730,7 +1729,7 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1740,7 +1739,7 @@ public class evalTest {
             List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(srcLst.size(),lst.size());
+            Assertions.assertEquals(srcLst.size(),lst.size());
 
             // Compare values to expected
             List<Double> expectedLst = new ArrayList<>();
@@ -1749,7 +1748,7 @@ public class evalTest {
                 expectedLst.add(Math.hypot(Double.valueOf(val),Double.valueOf(val)));
             }
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1762,19 +1761,19 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(3, lst.size());
+            Assertions.assertEquals(3, lst.size());
             // Compare values to expected
             List<Boolean> expectedLst = Arrays.asList(
                     true, false, true
             );
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1790,7 +1789,7 @@ public class evalTest {
                 "StructField(a,StringType,true),StructField(b,StringType,true),StructField(c,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -1804,12 +1803,12 @@ public class evalTest {
             List<Row> lstC = resC.collectAsList();
 
             // Compare values to expected
-            assertEquals(1, lst.size());
-            assertEquals(1, lstB.size());
-            assertEquals(1, lstC.size());
-            assertEquals("index_A", lst.get(0).getString(0));
-            assertEquals("index_A", lstB.get(0).getString(0));
-            assertEquals(null, lstC.get(0).getString(0));
+            Assertions.assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lstB.size());
+            Assertions.assertEquals(1, lstC.size());
+            Assertions.assertEquals("index_A", lst.get(0).getString(0));
+            Assertions.assertEquals("index_A", lstB.get(0).getString(0));
+            Assertions.assertEquals(null, lstC.get(0).getString(0));
         });
     }
     
@@ -1822,19 +1821,19 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(3, lst.size());
+            Assertions.assertEquals(3, lst.size());
             // Compare values to expected
             List<Boolean> expectedLst = Arrays.asList(
                     true, false, true
             );
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1847,19 +1846,19 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(3, lst.size());
+            Assertions.assertEquals(3, lst.size());
             // Compare values to expected
             List<Boolean> expectedLst = Arrays.asList(
                     false, true, false
             );
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
     
@@ -1872,19 +1871,19 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(3, lst.size());
+            Assertions.assertEquals(3, lst.size());
             // Compare values to expected
             List<Boolean> expectedLst = Arrays.asList(
                     true, true, true
             );
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
 
@@ -1899,19 +1898,19 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            assertEquals(3, lst.size());
+            Assertions.assertEquals(3, lst.size());
             // Compare values to expected
             List<String> expectedLst = Arrays.asList(
                     "0", "1", "0"
             );
 
-            assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedLst, lst);
         });
     }
 
@@ -1924,13 +1923,13 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Integer> lst = resA.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals(1, lst.get(0));
+            Assertions.assertEquals(1, lst.get(0));
         });
     }
     
@@ -1945,7 +1944,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true),StructField(c,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -1959,9 +1958,9 @@ public class evalTest {
             List<List<Object>> lstC = resC.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals("[mv3]", lst.get(0).toString());
-            assertEquals("[mv3, mv4]", lstB.get(0).toString());
-            assertEquals("[mv5]", lstC.get(0).toString());
+            Assertions.assertEquals("[mv3]", lst.get(0).toString());
+            Assertions.assertEquals("[mv3, mv4]", lstB.get(0).toString());
+            Assertions.assertEquals("[mv5]", lstC.get(0).toString());
         });
     }
     
@@ -1975,13 +1974,13 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals("mv1;;mv2;;mv3;;mv4;;mv5", lst.get(0));
+            Assertions.assertEquals("mv1;;mv2;;mv3;;mv4;;mv5", lst.get(0));
         });
     }
     
@@ -1995,7 +1994,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -2005,7 +2004,7 @@ public class evalTest {
             List<List<Object>> lstB = resB.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals("[1514834731, "
+            Assertions.assertEquals("[1514834731, "
                     + "1515439531, "
                     + "1516044331, "
                     + "1516649131, "
@@ -2021,7 +2020,7 @@ public class evalTest {
                     + "1522697131, "
                     + "1523301931, "
                     + "1523906731]", lst.get(0).toString());
-            assertEquals("[1, "
+            Assertions.assertEquals("[1, "
                     + "3, "
                     + "5, "
                     + "7, "
@@ -2041,13 +2040,13 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals("[10, "
+            Assertions.assertEquals("[10, "
                     + "100, "
                     + "11, "
                     + "4, "
@@ -2071,7 +2070,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(mv1,ArrayType(StringType,false),false),StructField(mv2,ArrayType(StringType,false),false),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -2081,10 +2080,10 @@ public class evalTest {
             List<List<Object>> lstB = resB.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals("[mv1-1,mv2-1, "
+            Assertions.assertEquals("[mv1-1,mv2-1, "
                     + "mv1-2,mv2-2, "
                     + "mv1-3,mv2-3]", lst.get(0).toString());
-            assertEquals("[mv1-1=mv2-1, "
+            Assertions.assertEquals("[mv1-1=mv2-1, "
                     + "mv1-2=mv2-2, "
                     + "mv1-3=mv2-3]", lstB.get(0).toString());
         });
@@ -2103,7 +2102,7 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
 
@@ -2114,8 +2113,8 @@ public class evalTest {
             List<List<Object>> lstB = resB.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
 
             // Compare values to expected
-            assertEquals("[search, stats, sort]", lst.get(0).toString());
-            assertEquals("[eval, eval, stats, table]", lstB.get(0).toString());
+            Assertions.assertEquals("[search, stats, sort]", lst.get(0).toString());
+            Assertions.assertEquals("[eval, eval, stats, table]", lstB.get(0).toString());
         });
     }
     
@@ -2132,45 +2131,45 @@ public class evalTest {
 
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Boolean
             Dataset<Row> ds_isBoolean = res.select("isBoolean").orderBy("isBoolean").distinct();
             List<Row> lst_isBoolean = ds_isBoolean.collectAsList();
-            assertTrue(lst_isBoolean.get(0).getBoolean(0));
+            Assertions.assertTrue(lst_isBoolean.get(0).getBoolean(0));
 
             Dataset<Row> ds_isNotBoolean = res.select("isNotBoolean").orderBy("isNotBoolean").distinct();
             List<Row> lst_isNotBoolean = ds_isNotBoolean.collectAsList();
-            assertFalse(lst_isNotBoolean.get(0).getBoolean(0));
+            Assertions.assertFalse(lst_isNotBoolean.get(0).getBoolean(0));
 
 
             // Integer
             Dataset<Row> ds_isInt = res.select("isInt").orderBy("isInt").distinct();
             List<Row> lst_isInt = ds_isInt.collectAsList();
-            assertTrue(lst_isInt.get(0).getBoolean(0));
+            Assertions.assertTrue(lst_isInt.get(0).getBoolean(0));
 
             Dataset<Row> ds_isNotInt = res.select("isNotInt").orderBy("isNotInt").distinct();
             List<Row> lst_isNotInt = ds_isNotInt.collectAsList();
-            assertFalse(lst_isNotInt.get(0).getBoolean(0));
+            Assertions.assertFalse(lst_isNotInt.get(0).getBoolean(0));
 
 
             // Numeric
             Dataset<Row> ds_isNum = res.select("isNum").orderBy("isNum").distinct();
             List<Row> lst_isNum = ds_isNum.collectAsList();
-            assertTrue(lst_isNum.get(0).getBoolean(0));
+            Assertions.assertTrue(lst_isNum.get(0).getBoolean(0));
 
             Dataset<Row> ds_isNotNum = res.select("isNotNum").orderBy("isNotNum").distinct();
             List<Row> lst_isNotNum = ds_isNotNum.collectAsList();
-            assertFalse(lst_isNotNum.get(0).getBoolean(0));
+            Assertions.assertFalse(lst_isNotNum.get(0).getBoolean(0));
 
 
             // String
             Dataset<Row> ds_isStr = res.select("isStr").orderBy("isStr").distinct();
             List<Row> lst_isStr = ds_isStr.collectAsList();
-            assertTrue(lst_isStr.get(0).getBoolean(0));
+            Assertions.assertTrue(lst_isStr.get(0).getBoolean(0));
 
             Dataset<Row> ds_isNotStr = res.select("isNotStr").orderBy("isNotStr").distinct();
             List<Row> lst_isNotStr = ds_isNotStr.collectAsList();
-            assertFalse(lst_isNotStr.get(0).getBoolean(0));
+            Assertions.assertFalse(lst_isNotStr.get(0).getBoolean(0));
         });
     }
     
@@ -2183,23 +2182,23 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,false),StructField(b,BooleanType,false),StructField(c,BooleanType,false),StructField(d,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Boolean
             Dataset<Row> ds_isNull = res.select("a").orderBy("a").distinct();
             List<Row> lst_isNull = ds_isNull.collectAsList();
-            assertTrue(lst_isNull.get(0).getBoolean(0));
+            Assertions.assertTrue(lst_isNull.get(0).getBoolean(0));
 
             Dataset<Row> ds_isNotNull = res.select("b").orderBy("b").distinct();
             List<Row> lst_isNotNull = ds_isNotNull.collectAsList();
-            assertFalse(lst_isNotNull.get(0).getBoolean(0));
+            Assertions.assertFalse(lst_isNotNull.get(0).getBoolean(0));
 
             Dataset<Row> ds_isNull2 = res.select("c").orderBy("c").distinct();
             List<Row> lst_isNull2 = ds_isNull2.collectAsList();
-            assertFalse(lst_isNull2.get(0).getBoolean(0));
+            Assertions.assertFalse(lst_isNull2.get(0).getBoolean(0));
 
             Dataset<Row> ds_isNotNull2 = res.select("d").orderBy("d").distinct();
             List<Row> lst_isNotNull2 = ds_isNotNull2.collectAsList();
-            assertTrue(lst_isNotNull2.get(0).getBoolean(0));
+            Assertions.assertTrue(lst_isNotNull2.get(0).getBoolean(0));
         });
     }
     
@@ -2213,26 +2212,26 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true),StructField(c,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // number
             Dataset<Row> dsNumber = res.select("a").orderBy("a").distinct();
             List<Row> dsNumberLst = dsNumber.collectAsList();
-            assertEquals("Number", dsNumberLst.get(0).getString(0));
+            Assertions.assertEquals("Number", dsNumberLst.get(0).getString(0));
 
             // string
             Dataset<Row> dsString = res.select("b").orderBy("b").distinct();
             List<Row> dsStringLst = dsString.collectAsList();
-            assertEquals("String", dsStringLst.get(0).getString(0));
+            Assertions.assertEquals("String", dsStringLst.get(0).getString(0));
 
             // boolean
             Dataset<Row> dsBoolean = res.select("c").orderBy("c").distinct();
             List<Row> dsBooleanLst = dsBoolean.collectAsList();
-            assertEquals("Boolean", dsBooleanLst.get(0).getString(0));
+            Assertions.assertEquals("Boolean", dsBooleanLst.get(0).getString(0));
 
             // invalid
 //            Dataset<Row> dsInvalid = res.select("d").orderBy("d").distinct();
 //            List<Row> dsInvalidLst = dsInvalid.collectAsList();
-//            assertEquals("Invalid", dsInvalidLst.get(0).getString(0));
+//            Assertions.assertEquals("Invalid", dsInvalidLst.get(0).getString(0));
         });
     }
     
@@ -2246,12 +2245,12 @@ public class evalTest {
                 + "StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resMvAppend = res.select("a").orderBy("a").distinct();
             List<Row> lst = resMvAppend.collectAsList();
 
-            assertEquals("[Hello, World]", lst.get(0).getList(0).toString());
-            assertEquals(1, lst.size());
+            Assertions.assertEquals("[Hello, World]", lst.get(0).getList(0).toString());
+            Assertions.assertEquals(1, lst.size());
         });
     }
     
@@ -2267,7 +2266,7 @@ public class evalTest {
                 "StructField(two_values,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get results
             Dataset<Row> res1V = res.select("one_value").orderBy("one_value").distinct();
             Dataset<Row> res2V = res.select("two_values").orderBy("two_values").distinct();
@@ -2277,8 +2276,8 @@ public class evalTest {
             List<Row> lst2V = res2V.collectAsList();
 
             // Assert to expected values
-            assertEquals("1", lst1V.get(0).get(0));
-            assertEquals("2", lst2V.get(0).get(0));
+            Assertions.assertEquals("1", lst1V.get(0).get(0));
+            Assertions.assertEquals("2", lst2V.get(0).get(0));
         });
     }
     
@@ -2293,10 +2292,10 @@ public class evalTest {
                 "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
-            assertEquals("[1, 2, 3, 4]", lstA.get(0).getList(0).toString());
+            Assertions.assertEquals("[1, 2, 3, 4]", lstA.get(0).getList(0).toString());
         });
     }
     
@@ -2312,12 +2311,12 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resEmail = res.select("email");
 
             Dataset<Row> resA = res.select("a");
 //            List<Row> lstA = resA.collectAsList();
-//            assertEquals("1\n2\n3\n4", lstA.get(0).getString(0));
+//            Assertions.assertEquals("1\n2\n3\n4", lstA.get(0).getString(0));
         });
     }
     
@@ -2331,7 +2330,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true),StructField(b,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -2339,8 +2338,8 @@ public class evalTest {
             List<Row> lstB = resB.collectAsList();
 
             // Assert equals with expected
-            assertEquals(1534159353L, lstA.get(0).getLong(0));
-            assertEquals(1534184553L, lstB.get(0).getLong(0));
+            Assertions.assertEquals(1534159353L, lstA.get(0).getLong(0));
+            Assertions.assertEquals(1534184553L, lstB.get(0).getLong(0));
         });
     }
     
@@ -2353,7 +2352,7 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
 
          streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
              StructType expectedSchema = new StructType(new StructField[] {
                      new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
                      new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
@@ -2368,7 +2367,7 @@ public class evalTest {
                      new StructField("c", DataTypes.StringType, true, new MetadataBuilder().build())
              });
 
-             // assertEquals(expectedSchema, res.schema());
+             // Assertions.assertEquals(expectedSchema, res.schema());
 
 	      *//*   Dataset<Row> resA = res.select("a").orderBy("a").distinct();
 	         List<Row> lstA = resA.collectAsList();
@@ -2380,9 +2379,9 @@ public class evalTest {
              List<Row> lstC = resC.collectAsList();*//*
 
              // Assert equals with expected
-             // assertEquals("2018-08-13 11:22:33", lstA.get(0).getString(0));
-             // assertEquals("2018-08-13 19:22:33 07 PM UTC", lstB.get(0).getString(0));
-             // assertEquals("2000-12-31 23:01:01", lstC.get(0).getString(0)); // _time in GMT+3, result UTC
+             // Assertions.assertEquals("2018-08-13 11:22:33", lstA.get(0).getString(0));
+             // Assertions.assertEquals("2018-08-13 19:22:33 07 PM UTC", lstB.get(0).getString(0));
+             // Assertions.assertEquals("2000-12-31 23:01:01", lstC.get(0).getString(0)); // _time in GMT+3, result UTC
          });*/
     }
     
@@ -2396,7 +2395,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false),StructField(b,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -2404,8 +2403,8 @@ public class evalTest {
             List<Row> lstB = resB.collectAsList();
 
             // Assert equals with expected
-            assertEquals("[a, b, c, d, e, f, g, h]", lstA.get(0).getList(0).toString());
-            assertEquals("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]", lstB.get(0).getList(0).toString());
+            Assertions.assertEquals("[a, b, c, d, e, f, g, h]", lstA.get(0).getList(0).toString());
+            Assertions.assertEquals("[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]", lstB.get(0).getList(0).toString());
         });
     }
     
@@ -2421,7 +2420,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true),StructField(b,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -2429,8 +2428,8 @@ public class evalTest {
             List<Row> lstB = resB.collectAsList();
 
             // Assert equals with expected
-            assertEquals(1644487237L, lstA.get(0).getLong(0));
-            assertEquals(1645048800L, lstB.get(0).getLong(0));
+            Assertions.assertEquals(1644487237L, lstA.get(0).getLong(0));
+            Assertions.assertEquals(1645048800L, lstB.get(0).getLong(0));
         });
     }
     
@@ -2445,7 +2444,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2457,8 +2456,8 @@ public class evalTest {
 
             // Assert equals with expected
             for (int i = 0; i < srcLst.size(); i++) {
-                assertEquals(srcLst.get(i).getLong(0) - 5, Double.parseDouble(lstA.get(i).getString(0)));
-                assertEquals(srcLst.get(i).getLong(0) + 5, Double.parseDouble(lstB.get(i).getString(0)));
+                Assertions.assertEquals(srcLst.get(i).getLong(0) - 5, Double.parseDouble(lstA.get(i).getString(0)));
+                Assertions.assertEquals(srcLst.get(i).getLong(0) + 5, Double.parseDouble(lstB.get(i).getString(0)));
             }
         });
     }
@@ -2474,7 +2473,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2486,8 +2485,8 @@ public class evalTest {
 
             // Assert equals with expected
             for (int i = 0; i < srcLst.size(); i++) {
-                assertEquals(srcLst.get(i).getLong(0),Long.parseLong(lstA.get(i).getString(0)));
-                assertEquals("foo", lstB.get(i).getString(0));
+                Assertions.assertEquals(srcLst.get(i).getLong(0),Long.parseLong(lstA.get(i).getString(0)));
+                Assertions.assertEquals("foo", lstB.get(i).getString(0));
             }
         });
     }
@@ -2503,7 +2502,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2512,8 +2511,8 @@ public class evalTest {
 
             // Assert equals with expected
             for (int i = 0; i < lstA.size(); i++) {
-                assertEquals("10", lstA.get(i).getString(0));
-                assertEquals("foo", lstB.get(i).getString(0));
+                Assertions.assertEquals("10", lstA.get(i).getString(0));
+                Assertions.assertEquals("foo", lstB.get(i).getString(0));
             }
         });
     }
@@ -2529,7 +2528,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2538,8 +2537,8 @@ public class evalTest {
 
             // Assert equals with expected
             for (int i = 0; i < lstA.size(); i++) {
-                assertEquals("4.7", lstA.get(i).getString(0));
-                assertEquals("10.0", lstB.get(i).getString(0));
+                Assertions.assertEquals("4.7", lstA.get(i).getString(0));
+                Assertions.assertEquals("10.0", lstB.get(i).getString(0));
             }
         });
     }
@@ -2556,7 +2555,7 @@ public class evalTest {
                 "StructField(b,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2565,8 +2564,8 @@ public class evalTest {
             Dataset<Row> resB = res.select("b").orderBy("b").distinct();
             List<Row> lstB = resB.collectAsList();
 
-            assertFalse(lst.get(0).getBoolean(0)); // _raw IS NOT json
-            assertTrue(lstB.get(0).getBoolean(0)); // json_field IS json
+            Assertions.assertFalse(lst.get(0).getBoolean(0)); // _raw IS NOT json
+            Assertions.assertTrue(lstB.get(0).getBoolean(0)); // json_field IS json
         });
     }
     
@@ -2583,7 +2582,7 @@ public class evalTest {
                 "StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a"); //.orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2593,17 +2592,17 @@ public class evalTest {
             List<Row> lstB = resB.collectAsList();
 
 
-            assertEquals("John A", lst.get(0).getString(0));
-            assertEquals("John", lst.get(1).getString(0));
-            assertEquals("John B", lst.get(2).getString(0));
-            assertEquals("John C", lst.get(3).getString(0));
-            assertEquals("John D", lst.get(4).getString(0));
-            assertEquals("John E", lst.get(5).getString(0));
-            assertEquals("John F", lst.get(6).getString(0));
-            assertEquals("John G", lst.get(7).getString(0));
-            assertEquals("John H", lst.get(8).getString(0));
+            Assertions.assertEquals("John A", lst.get(0).getString(0));
+            Assertions.assertEquals("John", lst.get(1).getString(0));
+            Assertions.assertEquals("John B", lst.get(2).getString(0));
+            Assertions.assertEquals("John C", lst.get(3).getString(0));
+            Assertions.assertEquals("John D", lst.get(4).getString(0));
+            Assertions.assertEquals("John E", lst.get(5).getString(0));
+            Assertions.assertEquals("John F", lst.get(6).getString(0));
+            Assertions.assertEquals("John G", lst.get(7).getString(0));
+            Assertions.assertEquals("John H", lst.get(8).getString(0));
 
-            assertEquals(null, lstB.get(0).getString(0));
+            Assertions.assertEquals(null, lstB.get(0).getString(0));
         });
     }
     
@@ -2620,7 +2619,7 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,StringType,true))"; //, " +
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
 
             //"StructField(b,StringType,true))";
 
@@ -2633,17 +2632,17 @@ public class evalTest {
 //            List<Row> lstB = resB.collectAsList();
 
 
-            assertEquals("John", lst.get(0).getString(0));
-            assertEquals("John", lst.get(1).getString(0));
-            assertEquals("John", lst.get(2).getString(0));
-            assertEquals("John", lst.get(3).getString(0));
-            assertEquals("John", lst.get(4).getString(0));
-            assertEquals("John", lst.get(5).getString(0));
-            assertEquals("John", lst.get(6).getString(0));
-            assertEquals("John", lst.get(7).getString(0));
-            assertEquals("John", lst.get(8).getString(0));
+            Assertions.assertEquals("John", lst.get(0).getString(0));
+            Assertions.assertEquals("John", lst.get(1).getString(0));
+            Assertions.assertEquals("John", lst.get(2).getString(0));
+            Assertions.assertEquals("John", lst.get(3).getString(0));
+            Assertions.assertEquals("John", lst.get(4).getString(0));
+            Assertions.assertEquals("John", lst.get(5).getString(0));
+            Assertions.assertEquals("John", lst.get(6).getString(0));
+            Assertions.assertEquals("John", lst.get(7).getString(0));
+            Assertions.assertEquals("John", lst.get(8).getString(0));
 
-            //assertEquals(null, lstB.get(0).getString(0));
+            //Assertions.assertEquals(null, lstB.get(0).getString(0));
         });
     }
     
@@ -2656,7 +2655,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2666,7 +2665,7 @@ public class evalTest {
             List<Row> lstB = resB.collectAsList();
 
             // with and without exact() should be the same
-            assertEquals(lst, lstB);
+            Assertions.assertEquals(lst, lstB);
         });
     }
    
@@ -2682,7 +2681,7 @@ public class evalTest {
                 "StructField(test2,BooleanType,false),StructField(test3,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'test'
             Dataset<Row> resA = res.select("test").orderBy("offset");
             List<Row> lst = resA.collectAsList();
@@ -2701,28 +2700,28 @@ public class evalTest {
              */
 
             // assert that all rows are kept
-            assertEquals(19, lst.size());
-            assertEquals(19, lstB.size());
-            assertEquals(19, lstC.size());
+            Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lstB.size());
+            Assertions.assertEquals(19, lstC.size());
 
             int loopCount = 0;
             for (int i = 0; i < lst.size(); i++) {
                 // eval test results in all TRUE
-                assertTrue(lst.get(i).getBoolean(0));
+                Assertions.assertTrue(lst.get(i).getBoolean(0));
                 // eval test2 results in all FALSE
-                assertFalse(lstB.get(i).getBoolean(0));
+                Assertions.assertFalse(lstB.get(i).getBoolean(0));
 
 
                 // eval test3, values between i=0..6 are TRUE, otherwise FALSE
                 if (i < 6) {
-                    assertTrue(lstC.get(i).getBoolean(0));
+                    Assertions.assertTrue(lstC.get(i).getBoolean(0));
                 }
                 else {
-                    assertFalse(lstC.get(i).getBoolean(0));
+                    Assertions.assertFalse(lstC.get(i).getBoolean(0));
                 }
                 loopCount++;
             }
-            assertEquals(19, loopCount);
+            Assertions.assertEquals(19, loopCount);
         });
     }
 
@@ -2736,21 +2735,21 @@ public class evalTest {
                 "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(test,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'test'
             Dataset<Row> resA = res.select("_raw", "test").orderBy("offset");
             List<Row> lst = resA.collectAsList();
 
             // assert that all rows are kept
-            assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lst.size());
 
             // check that _raw column contains the expected string, and it matches the result of searchmatch
             int loopCount = 0;
             for (Row r : lst) {
-                assertEquals(r.getString(0).toLowerCase().contains("computer02.example.com"), r.getBoolean(1));
+                Assertions.assertEquals(r.getString(0).toLowerCase().contains("computer02.example.com"), r.getBoolean(1));
                 loopCount++;
             }
-            assertEquals(19, loopCount);
+            Assertions.assertEquals(19, loopCount);
         });
     }
 
@@ -2763,7 +2762,7 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,false),StructField(b,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2780,8 +2779,8 @@ public class evalTest {
             Pattern p = Pattern.compile("\\d+\\.\\d{6}");
             Matcher m = p.matcher(lstB.get(0).getString(0));
 
-            assertTrue(isOk);
-            assertTrue(m.matches());
+            Assertions.assertTrue(isOk);
+            Assertions.assertTrue(m.matches());
         });
     }
 
@@ -2789,28 +2788,28 @@ public class evalTest {
     @Test
     @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void parseEvalArithmeticsWithStringTest() {
-        Exception exceptionMinus = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exceptionMinus = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             new EvalArithmetic().call("string", "-", "string");
         });
 
-        Exception exceptionMultiply = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exceptionMultiply = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             new EvalArithmetic().call("string", "*", "string");
         });
 
-        Exception exceptionDivide = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exceptionDivide = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             new EvalArithmetic().call("string", "/", "string");
         });
 
-        Exception exceptionRemainder = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exceptionRemainder = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             new EvalArithmetic().call("string", "%", "string");
         });
 
         String expectedMessage = "Eval arithmetics only allow Strings for the + operator.";
 
-        assertEquals(expectedMessage, exceptionMinus.getMessage());
-        assertEquals(expectedMessage, exceptionMultiply.getMessage());
-        assertEquals(expectedMessage, exceptionDivide.getMessage());
-        assertEquals(expectedMessage, exceptionRemainder.getMessage());
+        Assertions.assertEquals(expectedMessage, exceptionMinus.getMessage());
+        Assertions.assertEquals(expectedMessage, exceptionMultiply.getMessage());
+        Assertions.assertEquals(expectedMessage, exceptionDivide.getMessage());
+        Assertions.assertEquals(expectedMessage, exceptionRemainder.getMessage());
     }
 
     // Test that eval arithmetic + operation concatenates Strings
@@ -2822,14 +2821,14 @@ public class evalTest {
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            assertEquals(schema, res.schema().toString());
+            Assertions.assertEquals(schema, res.schema().toString());
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lst = resA.collectAsList();
 
             // Start from i = 3 because there are multiple 1's in offset
             for (int i = 1; i < 17; i++) {
-                assertEquals(i + "string", lst.get(i+2).getString(0));
+                Assertions.assertEquals(i + "string", lst.get(i+2).getString(0));
             }
         });
     }
@@ -2843,10 +2842,10 @@ public class evalTest {
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
                 List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
                 List<String> expected = new ArrayList<>(Arrays.asList("0", "1", "2", "3", "4", "5", "6", "7", "8", "9"));
-                assertEquals(expected, a);
+                Assertions.assertEquals(expected, a);
             }
         );
     }
@@ -2860,10 +2859,10 @@ public class evalTest {
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
                 List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
                 List<String> expected = new ArrayList<>(Arrays.asList("2", "3", "4", "5", "6", "7", "8", "9", "10", "11"));
-                assertEquals(expected, a);
+                Assertions.assertEquals(expected, a);
             }
         );
     }
@@ -2877,10 +2876,10 @@ public class evalTest {
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
                 List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
                 List<String> expected = new ArrayList<>(Arrays.asList("0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5"));
-                assertEquals(expected, a);
+                Assertions.assertEquals(expected, a);
             }
         );
     }
@@ -2894,10 +2893,10 @@ public class evalTest {
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
                 List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
                 List<String> expected = new ArrayList<>(Arrays.asList("0.3333333", "0.6666667", "1", "1.3333333", "1.6666667", "2", "2.3333333", "2.6666667", "3", "3.3333333"));
-                assertEquals(expected, a);
+                Assertions.assertEquals(expected, a);
             }
         );
     }
@@ -2911,10 +2910,10 @@ public class evalTest {
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
                 List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
                 List<String> expected = new ArrayList<>(Arrays.asList("5", "10", "15", "20", "25", "30", "35", "40", "45", "50"));
-                assertEquals(expected, a);
+                Assertions.assertEquals(expected, a);
             }
         );
     }
@@ -2928,10 +2927,10 @@ public class evalTest {
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
                     List<String> a = ds.select("a").orderBy("id").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
                     List<String> expected = new ArrayList<>(Arrays.asList("1", "0", "1", "0", "1", "0", "1", "0", "1", "0"));
-                    assertEquals(expected, a);
+                    Assertions.assertEquals(expected, a);
                 }
         );
     }
@@ -2940,22 +2939,22 @@ public class evalTest {
     @Test
     @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
     public void evalOperationExceptionTest() {
-        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             new EvalOperation().call("string", DPLLexer.EVAL_LANGUAGE_MODE_GT, 4);
         });
-        Exception exception2 = assertThrows(IllegalArgumentException.class, () -> {
+        Exception exception2 = Assertions.assertThrows(IllegalArgumentException.class, () -> {
             new EvalOperation().call(0, DPLLexer.EVAL_LANGUAGE_MODE_EQ, "string");
         });
-        assertDoesNotThrow(() -> {
+        Assertions.assertDoesNotThrow(() -> {
             new EvalOperation().call(5, DPLLexer.EVAL_LANGUAGE_MODE_EQ, 4.5);
         });
-        assertDoesNotThrow(() -> {
+        Assertions.assertDoesNotThrow(() -> {
             new EvalOperation().call("string", DPLLexer.EVAL_LANGUAGE_MODE_EQ, "another string");
         });
 
         String expectedMessage = "Eval comparisons only allow using two numbers or two strings.";
-        assertEquals(expectedMessage, exception.getMessage());
-        assertEquals(expectedMessage, exception2.getMessage());
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+        Assertions.assertEquals(expectedMessage, exception2.getMessage());
     }
 
     // Tests EvalOperation equals
@@ -2967,21 +2966,21 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
             List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
-                    assertEquals("true", a.get(i));
+                    Assertions.assertEquals("true", a.get(i));
                 } else {
-                    assertEquals("false", a.get(i));
+                    Assertions.assertEquals("false", a.get(i));
                 }
 
                 if (i < 3) {
-                    assertEquals("true", b.get(i));
+                    Assertions.assertEquals("true", b.get(i));
                 } else {
-                    assertEquals("false", b.get(i));
+                    Assertions.assertEquals("false", b.get(i));
                 }
             }
         });
@@ -2996,21 +2995,21 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
             List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
-                    assertEquals("false", a.get(i));
+                    Assertions.assertEquals("false", a.get(i));
                 } else {
-                    assertEquals("true", a.get(i));
+                    Assertions.assertEquals("true", a.get(i));
                 }
 
                 if (i < 3) {
-                    assertEquals("false", b.get(i));
+                    Assertions.assertEquals("false", b.get(i));
                 } else {
-                    assertEquals("true", b.get(i));
+                    Assertions.assertEquals("true", b.get(i));
                 }
             }
         });
@@ -3025,21 +3024,21 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
             List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
-                    assertEquals("false", a.get(i));
+                    Assertions.assertEquals("false", a.get(i));
                 } else {
-                    assertEquals("true", a.get(i));
+                    Assertions.assertEquals("true", a.get(i));
                 }
 
                 if (i < 3) {
-                    assertEquals("false", b.get(i));
+                    Assertions.assertEquals("false", b.get(i));
                 } else {
-                    assertEquals("true", b.get(i));
+                    Assertions.assertEquals("true", b.get(i));
                 }
             }
         });
@@ -3054,21 +3053,21 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
             List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
-                    assertEquals("false", a.get(i));
+                    Assertions.assertEquals("false", a.get(i));
                 } else {
-                    assertEquals("true", a.get(i));
+                    Assertions.assertEquals("true", a.get(i));
                 }
 
                 if (i < 3 || i > 14) {
-                    assertEquals("false", b.get(i));
+                    Assertions.assertEquals("false", b.get(i));
                 } else {
-                    assertEquals("true", b.get(i));
+                    Assertions.assertEquals("true", b.get(i));
                 }
             }
         });
@@ -3083,21 +3082,21 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
             List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
-                    assertEquals("true", a.get(i));
+                    Assertions.assertEquals("true", a.get(i));
                 } else {
-                    assertEquals("false", a.get(i));
+                    Assertions.assertEquals("false", a.get(i));
                 }
 
                 if (i < 3 || i > 14) {
-                    assertEquals("true", b.get(i));
+                    Assertions.assertEquals("true", b.get(i));
                 } else {
-                    assertEquals("false", b.get(i));
+                    Assertions.assertEquals("false", b.get(i));
                 }
             }
         });
@@ -3112,21 +3111,21 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
             List<String> b = ds.select("b").orderBy("_time").collectAsList().stream().map(r -> r.getList(0).get(0).toString()).collect(Collectors.toList());
 
             for (int i = 0; i < a.size(); i++) {
                 if (i < 5) {
-                    assertEquals("true", a.get(i));
+                    Assertions.assertEquals("true", a.get(i));
                 } else {
-                    assertEquals("false", a.get(i));
+                    Assertions.assertEquals("false", a.get(i));
                 }
 
                 if (i < 6 || i > 14) {
-                    assertEquals("true", b.get(i));
+                    Assertions.assertEquals("true", b.get(i));
                 } else {
-                    assertEquals("false", b.get(i));
+                    Assertions.assertEquals("false", b.get(i));
                 }
             }
         });
@@ -3141,11 +3140,11 @@ public class evalTest {
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            assertEquals(schema, ds.schema().toString());
+            Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds.select("a").orderBy("offset").collectAsList().stream().map(r -> r.getAs(0).toString()).collect(Collectors.toList());
             List<String> expected = new ArrayList<>(Arrays.asList("false", "false", "false", "false", "true", "true", "true", "true", "true", "true"));
 
-            assertEquals(expected, a);
+            Assertions.assertEquals(expected, a);
         });
     }
 
@@ -3155,7 +3154,7 @@ public class evalTest {
         String q = "index=cinnamon | eval l = split (\"a,b,d,e,f\",\",\")";
         String e = "SELECT split(\"a,b,d,e,f\", \",\") AS l FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
         String result = null;
-        assertEquals(e,result);
+        Assertions.assertEquals(e,result);
     }
 
     @Disabled(value="Should be changed to a dataframe test")
@@ -3164,7 +3163,7 @@ public class evalTest {
         String q = "index=cinnamon | eval l = strftime (\"1593612703049000000\",\"%Y-%m-%dT%H:%M:%S\")";
         String e = "SELECT from_unixtime(\"1593612703049000000\", \"%Y-%m-%dT%H:%M:%S\") AS l FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
         String result = null;
-        assertEquals(e,result);
+        Assertions.assertEquals(e,result);
     }
 
     @Disabled(value="Should be changed to a dataframe test")
@@ -3174,6 +3173,6 @@ public class evalTest {
         q = "index=cinnamon | eval l = strptime (\"2020-07-02T10:25:11\",\"%Y-%m-%dT%H:%M:%S\")";
         e = "SELECT to_unix_timestamp(\"2020-07-02T10:25:11\", \"%Y-%m-%dT%H:%M:%S\") AS l FROM `temporaryDPLView` WHERE index LIKE \"cinnamon\"";
         result = null;
-        assertEquals(e,result);
+        Assertions.assertEquals(e,result);
     }
 }

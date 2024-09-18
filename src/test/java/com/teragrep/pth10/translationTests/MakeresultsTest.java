@@ -54,10 +54,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class MakeresultsTest {
@@ -77,8 +76,8 @@ public class MakeresultsTest {
         ct.visitMakeresultsTransformation((DPLParser.MakeresultsTransformationContext) tree.getChild(1).getChild(0));
         MakeresultsStep cs = ct.makeresultsStep;
 
-        assertEquals(10, cs.getCount());
-        assertTrue(cs.isAnnotate());
+        Assertions.assertEquals(10, cs.getCount());
+        Assertions.assertTrue(cs.isAnnotate());
     }
 
     @Test
@@ -96,7 +95,7 @@ public class MakeresultsTest {
         ct.visitMakeresultsTransformation((DPLParser.MakeresultsTransformationContext) tree.getChild(1).getChild(0));
         MakeresultsStep cs = ct.makeresultsStep;
 
-        assertEquals(1, cs.getCount());
-        assertFalse(cs.isAnnotate());
+        Assertions.assertEquals(1, cs.getCount());
+        Assertions.assertFalse(cs.isAnnotate());
     }
 }

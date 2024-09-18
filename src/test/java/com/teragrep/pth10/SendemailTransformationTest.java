@@ -53,8 +53,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.slf4j.Logger;
@@ -69,8 +68,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author eemhu
@@ -95,13 +92,13 @@ public class SendemailTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() throws IOException {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
 
@@ -119,7 +116,7 @@ public class SendemailTransformationTest {
         greenMail.start();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         greenMail.stop();
         this.streamingTestUtil.tearDown();
@@ -144,31 +141,31 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | sendemail to=exa@mple.test from=from@example.test cc=cc@example.test server=localhost:2525",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
 
         // Get message
         MimeMessage msg = greenMail.getReceivedMessages()[0];
-        String msgStr = assertDoesNotThrow(() -> msgToString(msg));
+        String msgStr = Assertions.assertDoesNotThrow(() -> msgToString(msg));
 
         // Get toEmails and subject.
-        String[] toEmails = assertDoesNotThrow(() -> msg.getHeader("to"));
-        String subject = assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
-        String cc = assertDoesNotThrow(() -> msg.getHeader("cc")[0]);
-        String from = assertDoesNotThrow(() -> msg.getHeader("from")[0]);
+        String[] toEmails = Assertions.assertDoesNotThrow(() -> msg.getHeader("to"));
+        String subject = Assertions.assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
+        String cc = Assertions.assertDoesNotThrow(() -> msg.getHeader("cc")[0]);
+        String from = Assertions.assertDoesNotThrow(() -> msg.getHeader("from")[0]);
 
         // Assertions
-        assertTrue(msgStr.contains("Search complete."));
-        assertEquals(1, toEmails.length);
-        assertEquals("exa@mple.test", toEmails[0]);
-        assertEquals("cc@example.test", cc);
-        assertEquals("from@example.test", from);
-        assertEquals("Teragrep Results", subject);
+        Assertions.assertTrue(msgStr.contains("Search complete."));
+        Assertions.assertEquals(1, toEmails.length);
+        Assertions.assertEquals("exa@mple.test", toEmails[0]);
+        Assertions.assertEquals("cc@example.test", cc);
+        Assertions.assertEquals("from@example.test", from);
+        Assertions.assertEquals("Teragrep Results", subject);
     }
 
     // basic email with two preceding eval commands
@@ -183,26 +180,27 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | eval extraField=null() | eval oneMoreField=true() | sendemail to=\"exa@mple.test\" server=localhost:2525",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, extraField, oneMoreField]",
-                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, extraField, oneMoreField]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
 
         // Get message
         MimeMessage msg = greenMail.getReceivedMessagesForDomain("exa@mple.test")[0];
-        String msgStr = assertDoesNotThrow(() -> msgToString(msg));
+        String msgStr = Assertions.assertDoesNotThrow(() -> msgToString(msg));
 
         // Get toEmails and subject.
-        String[] toEmails = assertDoesNotThrow(() -> msg.getHeader("to"));
-        String subject = assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
+        String[] toEmails = Assertions.assertDoesNotThrow(() -> msg.getHeader("to"));
+        String subject = Assertions.assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
 
         // Assertions
-        assertTrue(msgStr.contains("Search complete."));
-        assertEquals(1, toEmails.length);
-        assertEquals("exa@mple.test", toEmails[0]);
-        assertEquals("Teragrep Results", subject);
+        Assertions.assertTrue(msgStr.contains("Search complete."));
+        Assertions.assertEquals(1, toEmails.length);
+        Assertions.assertEquals("exa@mple.test", toEmails[0]);
+        Assertions.assertEquals("Teragrep Results", subject);
     }
 
     @Test
@@ -222,20 +220,20 @@ public class SendemailTransformationTest {
 
         // Get message
         MimeMessage msg = greenMail.getReceivedMessagesForDomain("exa@mple.test")[0];
-        String msgStr = assertDoesNotThrow(() -> msgToString(msg));
+        String msgStr = Assertions.assertDoesNotThrow(() -> msgToString(msg));
 
         // Get toEmails and subject.
-        String[] toEmails = assertDoesNotThrow(() -> msg.getHeader("to"));
-        String subject = assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
+        String[] toEmails = Assertions.assertDoesNotThrow(() -> msg.getHeader("to"));
+        String subject = Assertions.assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
 
         // Assertions
-        assertTrue(msgStr.contains("Search results."));
+        Assertions.assertTrue(msgStr.contains("Search results."));
 
         // if message contains the column headers like this it will contain the csv too
-        assertTrue(msgStr.contains("result"));
-        assertEquals(1, toEmails.length);
-        assertEquals("exa@mple.test", toEmails[0]);
-        assertEquals("Teragrep Results", subject);
+        Assertions.assertTrue(msgStr.contains("result"));
+        Assertions.assertEquals(1, toEmails.length);
+        Assertions.assertEquals("exa@mple.test", toEmails[0]);
+        Assertions.assertEquals("Teragrep Results", subject);
     }
 
     @Test
@@ -249,30 +247,30 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | sendemail to=\"exa@mple.test\" subject=\"Custom subject\" sendresults=true inline=true format=csv server=localhost:2525",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", Arrays
-                                            .toString(ds.columns()),
-                                    "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals(
+                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
+                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
 
         // Get message
         MimeMessage msg = greenMail.getReceivedMessagesForDomain("exa@mple.test")[0];
-        String msgStr = assertDoesNotThrow(() -> msgToString(msg));
+        String msgStr = Assertions.assertDoesNotThrow(() -> msgToString(msg));
 
         // Get toEmails and subject.;
-        String[] toEmails = assertDoesNotThrow(() -> msg.getHeader("to"));
-        String subject = assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
+        String[] toEmails = Assertions.assertDoesNotThrow(() -> msg.getHeader("to"));
+        String subject = Assertions.assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
 
         // Assertions
-        assertTrue(msgStr.contains("Search results."));
+        Assertions.assertTrue(msgStr.contains("Search results."));
 
         // if message contains the column headers like this it will contain the csv too
-        assertTrue(msgStr.contains("_time,id,_raw,index,sourcetype,host,source,partition,offset"));
-        assertEquals(1, toEmails.length);
-        assertEquals("exa@mple.test", toEmails[0]);
-        assertEquals("Custom subject", subject);
+        Assertions.assertTrue(msgStr.contains("_time,id,_raw,index,sourcetype,host,source,partition,offset"));
+        Assertions.assertEquals(1, toEmails.length);
+        Assertions.assertEquals("exa@mple.test", toEmails[0]);
+        Assertions.assertEquals("Custom subject", subject);
     }
 
     // pipe where after stats, then send email
@@ -287,25 +285,24 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avgo count(offset) as co | where co > 1 | sendemail to=\"exa@mple.test\" server=localhost:2525",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[avgo, co]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals("[avgo, co]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
                         }
                 );
 
         // Get message
         MimeMessage msg = greenMail.getReceivedMessagesForDomain("exa@mple.test")[0];
-        String msgStr = assertDoesNotThrow(() -> msgToString(msg));
+        String msgStr = Assertions.assertDoesNotThrow(() -> msgToString(msg));
 
         // Get toEmails and subject.
-        String[] toEmails = assertDoesNotThrow(() -> msg.getHeader("to"));
-        String subject = assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
+        String[] toEmails = Assertions.assertDoesNotThrow(() -> msg.getHeader("to"));
+        String subject = Assertions.assertDoesNotThrow(() -> msg.getHeader("subject")[0]);
 
         // Assertions
-        assertTrue(msgStr.contains("Search complete."));
-        assertEquals(1, toEmails.length);
-        assertEquals("exa@mple.test", toEmails[0]);
-        assertEquals("Teragrep Results", subject);
+        Assertions.assertTrue(msgStr.contains("Search complete."));
+        Assertions.assertEquals(1, toEmails.length);
+        Assertions.assertEquals("exa@mple.test", toEmails[0]);
+        Assertions.assertEquals("Teragrep Results", subject);
     }
 
     // empty resultset must not send email
@@ -319,12 +316,12 @@ public class SendemailTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A" + "|chart count(_raw) as craw" + "|where craw < 0 " + // filter out all
                 "|sendemail to=\"1@example.com\" server=localhost:2525", testFile, ds -> {
                     // returns empty dataframe, but has column names present
-                    assertEquals("[craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    Assertions.assertEquals("[craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
                 }
         );
 
         // must not send any message
-        assertEquals(0, greenMail.getReceivedMessagesForDomain("1@example.com").length);
+        Assertions.assertEquals(0, greenMail.getReceivedMessagesForDomain("1@example.com").length);
     }
 
     // ----------------------------------------

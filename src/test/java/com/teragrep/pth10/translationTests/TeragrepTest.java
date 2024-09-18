@@ -60,14 +60,13 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeragrepTest {
@@ -91,11 +90,11 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepSyslogStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepSyslogStep.class, step.getClass());
         TeragrepSyslogStep syslogStep = (TeragrepSyslogStep) step;
 
-        assertEquals("127.0.0.123", syslogStep.relpHost);
-        assertEquals(1337, syslogStep.relpPort);
+        Assertions.assertEquals("127.0.0.123", syslogStep.relpHost);
+        Assertions.assertEquals(1337, syslogStep.relpPort);
     }
 
     @Test
@@ -115,11 +114,11 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepSyslogStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepSyslogStep.class, step.getClass());
         final TeragrepSyslogStep syslogStep = (TeragrepSyslogStep) step;
 
-        assertEquals("127.0.0.1", syslogStep.relpHost);
-        assertEquals(601, syslogStep.relpPort);
+        Assertions.assertEquals("127.0.0.1", syslogStep.relpHost);
+        Assertions.assertEquals(601, syslogStep.relpPort);
     }
 
     @Test
@@ -149,11 +148,11 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepSyslogStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepSyslogStep.class, step.getClass());
         final TeragrepSyslogStep syslogStep = (TeragrepSyslogStep) step;
 
-        assertEquals(host, syslogStep.relpHost);
-        assertEquals(port, syslogStep.relpPort);
+        Assertions.assertEquals(host, syslogStep.relpHost);
+        Assertions.assertEquals(port, syslogStep.relpPort);
     }
 
     @Test
@@ -173,11 +172,11 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
         final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
-        assertEquals("/tmp/path", saveStep.pathStr);
-        assertNull(saveStep.retentionSpan);
+        Assertions.assertEquals("/tmp/path", saveStep.pathStr);
+        Assertions.assertNull(saveStep.retentionSpan);
     }
 
     @Test
@@ -199,11 +198,11 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
         final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
-        assertEquals("/tmp/path", saveStep.pathStr);
-        assertEquals("1d", saveStep.retentionSpan);
+        Assertions.assertEquals("/tmp/path", saveStep.pathStr);
+        Assertions.assertEquals("1d", saveStep.retentionSpan);
     }
 
     @Test
@@ -225,12 +224,12 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
         final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
-        assertEquals("/tmp/path", saveStep.pathStr);
-        assertTrue(saveStep.overwrite);
-        assertNull(saveStep.retentionSpan);
+        Assertions.assertEquals("/tmp/path", saveStep.pathStr);
+        Assertions.assertTrue(saveStep.overwrite);
+        Assertions.assertNull(saveStep.retentionSpan);
     }
 
     @Test
@@ -250,10 +249,10 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepHdfsLoadStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepHdfsLoadStep.class, step.getClass());
         TeragrepHdfsLoadStep loadStep = (TeragrepHdfsLoadStep) step;
 
-        assertEquals("/tmp/path", loadStep.pathStr);
+        Assertions.assertEquals("/tmp/path", loadStep.pathStr);
     }
 
     @Test
@@ -273,10 +272,10 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         final AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepKafkaStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepKafkaStep.class, step.getClass());
         TeragrepKafkaStep kafkaStep = (TeragrepKafkaStep) step;
 
-        assertEquals("MY-TOPIC", kafkaStep.kafkaTopic);
+        Assertions.assertEquals("MY-TOPIC", kafkaStep.kafkaTopic);
     }
 
     @Test
@@ -296,10 +295,10 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepHdfsListStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepHdfsListStep.class, step.getClass());
         TeragrepHdfsListStep listStep = (TeragrepHdfsListStep) step;
 
-        assertEquals("/tmp/", listStep.getPathStr());
+        Assertions.assertEquals("/tmp/", listStep.getPathStr());
     }
 
     @Test
@@ -319,10 +318,10 @@ public class TeragrepTest {
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
         AbstractStep step = stepNode.get();
 
-        assertEquals(TeragrepHdfsDeleteStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepHdfsDeleteStep.class, step.getClass());
         TeragrepHdfsDeleteStep deleteStep = (TeragrepHdfsDeleteStep) step;
 
-        assertEquals("/tmp/something", deleteStep.pathStr);
+        Assertions.assertEquals("/tmp/something", deleteStep.pathStr);
     }
 
     @Test
@@ -343,13 +342,13 @@ public class TeragrepTest {
         final AbstractStep step = stepNode.asList().get(0); // first is an aggregation step
         final AbstractStep step1 = stepNode.asList().get(1); // second is bloom create
 
-        assertEquals(TeragrepBloomStep.class, step.getClass());
-        assertEquals(TeragrepBloomStep.class, step1.getClass());
+        Assertions.assertEquals(TeragrepBloomStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepBloomStep.class, step1.getClass());
         TeragrepBloomStep bloomStep = (TeragrepBloomStep) step;
         TeragrepBloomStep bloomStep1 = (TeragrepBloomStep) step1;
 
-        assertEquals(TeragrepBloomStep.BloomMode.AGGREGATE, bloomStep.mode);
-        assertEquals(TeragrepBloomStep.BloomMode.CREATE, bloomStep1.mode);
+        Assertions.assertEquals(TeragrepBloomStep.BloomMode.AGGREGATE, bloomStep.mode);
+        Assertions.assertEquals(TeragrepBloomStep.BloomMode.CREATE, bloomStep1.mode);
     }
 
     @Test
@@ -370,12 +369,12 @@ public class TeragrepTest {
         final AbstractStep step = stepNode.asList().get(0); // first is an aggregation step
         final AbstractStep step1 = stepNode.asList().get(1); // second is bloom update
 
-        assertEquals(TeragrepBloomStep.class, step.getClass());
-        assertEquals(TeragrepBloomStep.class, step1.getClass());
+        Assertions.assertEquals(TeragrepBloomStep.class, step.getClass());
+        Assertions.assertEquals(TeragrepBloomStep.class, step1.getClass());
         TeragrepBloomStep bloomStep = (TeragrepBloomStep) step;
         TeragrepBloomStep bloomStep1 = (TeragrepBloomStep) step1;
 
-        assertEquals(TeragrepBloomStep.BloomMode.AGGREGATE, bloomStep.mode);
-        assertEquals(TeragrepBloomStep.BloomMode.UPDATE, bloomStep1.mode);
+        Assertions.assertEquals(TeragrepBloomStep.BloomMode.AGGREGATE, bloomStep.mode);
+        Assertions.assertEquals(TeragrepBloomStep.BloomMode.UPDATE, bloomStep1.mode);
     }
 }

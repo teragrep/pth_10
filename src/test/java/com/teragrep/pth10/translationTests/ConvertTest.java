@@ -55,10 +55,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ConvertTest {
@@ -80,11 +79,11 @@ public class ConvertTest {
 
         ConvertCommand cmd = cs.getListOfCommands().get(0);
 
-        assertEquals(ConvertCommand.ConvertCommandType.DUR2SEC, cmd.getCommandType());
-        assertEquals("duration", cmd.getFieldParam());
-        assertEquals("result", cmd.getRenameField());
-        assertEquals(0, cs.getListOfFieldsToOmit().size());
-        assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
+        Assertions.assertEquals(ConvertCommand.ConvertCommandType.DUR2SEC, cmd.getCommandType());
+        Assertions.assertEquals("duration", cmd.getFieldParam());
+        Assertions.assertEquals("result", cmd.getRenameField());
+        Assertions.assertEquals(0, cs.getListOfFieldsToOmit().size());
+        Assertions.assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
     }
 
     @Test
@@ -104,11 +103,11 @@ public class ConvertTest {
 
         ConvertCommand cmd = cs.getListOfCommands().get(0);
 
-        assertEquals(ConvertCommand.ConvertCommandType.MEMK, cmd.getCommandType());
-        assertEquals("field", cmd.getFieldParam());
-        assertEquals("result", cmd.getRenameField());
-        assertEquals(0, cs.getListOfFieldsToOmit().size());
-        assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
+        Assertions.assertEquals(ConvertCommand.ConvertCommandType.MEMK, cmd.getCommandType());
+        Assertions.assertEquals("field", cmd.getFieldParam());
+        Assertions.assertEquals("result", cmd.getRenameField());
+        Assertions.assertEquals(0, cs.getListOfFieldsToOmit().size());
+        Assertions.assertEquals("%m/%d/%Y %H:%M:%S", cs.getTimeformat());
 
     }
 
@@ -129,11 +128,11 @@ public class ConvertTest {
 
         ConvertCommand cmd = cs.getListOfCommands().get(0);
 
-        assertEquals(ConvertCommand.ConvertCommandType.AUTO, cmd.getCommandType());
-        assertEquals("duration", cmd.getFieldParam());
-        assertEquals("result", cmd.getRenameField());
-        assertEquals(0, cs.getListOfFieldsToOmit().size());
-        assertEquals("%H:%M:%s %Y-%m-%d", cs.getTimeformat());
+        Assertions.assertEquals(ConvertCommand.ConvertCommandType.AUTO, cmd.getCommandType());
+        Assertions.assertEquals("duration", cmd.getFieldParam());
+        Assertions.assertEquals("result", cmd.getRenameField());
+        Assertions.assertEquals(0, cs.getListOfFieldsToOmit().size());
+        Assertions.assertEquals("%H:%M:%s %Y-%m-%d", cs.getTimeformat());
 
     }
 }

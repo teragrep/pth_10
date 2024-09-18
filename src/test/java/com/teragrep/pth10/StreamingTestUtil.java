@@ -61,6 +61,7 @@ import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.util.Arrays;
@@ -70,8 +71,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * StreamingTestUtil is used to perform DPL queries in streaming tests. Also has functions for setting up the test and
@@ -249,10 +248,11 @@ public class StreamingTestUtil {
             Consumer<Dataset<Row>> assertions
     ) {
         if (doesThrow) {
-            return assertThrows(clazz, () -> internalDPLTest(query, testDirectory, dataCustomizations, assertions));
+            return Assertions
+                    .assertThrows(clazz, () -> internalDPLTest(query, testDirectory, dataCustomizations, assertions));
         }
         else {
-            assertDoesNotThrow(() -> internalDPLTest(query, testDirectory, dataCustomizations, assertions));
+            Assertions.assertDoesNotThrow(() -> internalDPLTest(query, testDirectory, dataCustomizations, assertions));
         }
         return null;
     }
@@ -310,7 +310,8 @@ public class StreamingTestUtil {
                         String msg,
                         RecognitionException e
                 ) {
-                    fail(String.format("Lexer error at line %s:%s due to %s %s", line, charPosInLine, msg, e));
+                    Assertions
+                            .fail(String.format("Lexer error at line %s:%s due to %s %s", line, charPosInLine, msg, e));
                 }
             });
         }
@@ -329,7 +330,8 @@ public class StreamingTestUtil {
                         String msg,
                         RecognitionException e
                 ) {
-                    fail(String.format("Parser error at line %s:%s due to %s %s", line, charPosInLine, msg, e));
+                    Assertions
+                            .fail(String.format("Parser error at line %s:%s due to %s %s", line, charPosInLine, msg, e));
                 }
             });
         }
@@ -357,7 +359,7 @@ public class StreamingTestUtil {
             sq.stop();
         }
         else {
-            fail("DataStreamWriter was null! Streaming dataset was not generated like it should be");
+            Assertions.fail("DataStreamWriter was null! Streaming dataset was not generated like it should be");
         }
     }
 
