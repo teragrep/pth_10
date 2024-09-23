@@ -85,6 +85,7 @@ public final class BloomFilterForeachPartitionFunction implements ForeachPartiti
             final byte[] filterBytes = (byte[]) row.get(1);
             final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
             tgFilter.saveFilter(overwrite);
+
             conn.commit();
 
         }
