@@ -2341,6 +2341,22 @@ public class evalTest {
         });
     }
 
+    @Test
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void testEvalStrftimeOnField() {
+        String q = "index=index_A | eval unix_time=\"1534159353\"" +
+                "| eval a=strftime(unix_time,\"%Y-%m-%d %H:%M:%S\")";
+        String testFile = "src/test/resources/eval_test_data1*.json"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            Dataset<Row> resA = res.select("a").orderBy("a").distinct();
+            List<Row> lstA = resA.collectAsList();
+
+            //Assert equals with expected
+            assertEquals("2018-08-13 11:22:33", lstA.get(0).getString(0));
+        });
+    }
+
     // Test eval method split(field,delimiter)
     @Test
 	@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
