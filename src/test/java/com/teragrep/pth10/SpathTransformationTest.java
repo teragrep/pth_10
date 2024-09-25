@@ -256,15 +256,13 @@ public class SpathTransformationTest {
                                     .toString(ds.columns()),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
-            String result = ds
+            List<Row> result = ds
                     .select("json", "lil")
                     .dropDuplicates()
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.mkString(","))
-                    .collect(Collectors.toList())
-                    .get(0);
-            Assertions.assertEquals("debugo,xml", result);
+                    .collectAsList();
+            Assertions.assertEquals(1, result.size());
+            Assertions.assertEquals("debugo",result.get(0).getAs("json"));
+            Assertions.assertEquals("xml", result.get(0).getAs("lil"));
         });
     }
 
@@ -412,6 +410,7 @@ public class SpathTransformationTest {
                     Dataset<Row> res = ds.select("cat").orderBy("offset").distinct();
                     List<Row> catList = res.collectAsList();
 
+                    Assertions.assertEquals(1, catList.size());
                     Assertions.assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, catworld, cat]", Arrays.toString(ds.columns()));
                     Assertions.assertEquals("fluff", catList.get(0).getString(0));
                 });
