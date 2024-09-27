@@ -81,14 +81,6 @@ public final class TeragrepBloomStep extends AbstractStep {
     private final String outputCol;
     private final String estimateCol;
 
-    // Bloom filter consts
-    public final static String BLOOMDB_USERNAME_CONFIG_ITEM = "dpl.pth_10.bloom.db.username";
-    public final static String BLOOMDB_PASSWORD_CONFIG_ITEM = "dpl.pth_10.bloom.db.password";
-    public final static String BLOOMDB_URL_CONFIG_ITEM = "dpl.pth_06.bloom.db.url";
-    public final static String BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM = "dpl.pth_06.bloom.db.fields";
-    public final static String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
-    public final static String BLOOM_TABLE_NAME_ITEM = "dpl.pth_06.bloom.table.name";
-
     public TeragrepBloomStep(
             Config zeppelinConfig,
             BloomMode mode,
