@@ -46,6 +46,7 @@
 package com.teragrep.pth10.steps.tokenizer;
 
 import com.teragrep.pth10.steps.AbstractStep;
+import com.typesafe.config.Config;
 
 public abstract class AbstractTokenizerStep extends AbstractStep {
 
@@ -53,9 +54,9 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
         STRING, BYTES
     }
 
+    protected Config config;
     protected String inputCol = "_raw";
     protected String outputCol = "tokens";
-
     protected TokenizerFormat tokenizerFormat = TokenizerFormat.STRING;
 
     public AbstractTokenizerStep() {
