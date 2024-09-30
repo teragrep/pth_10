@@ -45,18 +45,53 @@
  */
 package com.teragrep.pth10.steps.tokenizer;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.typesafe.config.Config;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
-public abstract class AbstractTokenizerStep extends AbstractStep {
+public class ConfiguredUDF implements TokenizerApplicable {
 
-    public enum TokenizerFormat {
-        STRING, BYTES
+    private final Config config;
+    private final TokenizerUDF tokenizerUDF;
+    private final RegexTokenizerUDF regexUDF;
+
+    public ConfiguredUDF(
+            Config config,
+            AbstractTokenizerStep.TokenizerFormat format,
+            String inputCol,
+            String outputCol
+    ) {
+        this(
+                config,
+                new TokenizerUDF(format, inputCol, outputCol),
+                new RegexTokenizerUDF(config, format, inputCol, outputCol)
+        );
     }
 
-    protected ConfiguredUDF fromConfig;
-
-    public AbstractTokenizerStep() {
-        super();
+    public ConfiguredUDF(Config config, TokenizerUDF tokenizerUDF, RegexTokenizerUDF regexUDF) {
+        this.config = config;
+        this.tokenizerUDF = tokenizerUDF;
+        this.regexUDF = regexUDF;
     }
 
+    @Override
+    public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
+        final Dataset<Row> result;
+        if (configContainsPattern()) {
+            result = regexUDF.appliedDataset(dataset);
+        }
+        else {
+            result = tokenizerUDF.appliedDataset(dataset);
+        }
+        return result;
+    }
+
+    private boolean configContainsPattern() {
+        final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
+        if (config != null && config.hasPath(BLOOM_PATTERN_CONFIG_ITEM)) {
+            final String patternFromConfig = config.getString(BLOOM_PATTERN_CONFIG_ITEM);
+            return patternFromConfig != null && !patternFromConfig.isEmpty();
+        }
+        return false;
+    }
 }

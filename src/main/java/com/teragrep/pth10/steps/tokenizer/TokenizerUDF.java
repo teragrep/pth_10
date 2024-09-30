@@ -45,18 +45,43 @@
  */
 package com.teragrep.pth10.steps.tokenizer;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
 
-public abstract class AbstractTokenizerStep extends AbstractStep {
+import static org.apache.spark.sql.types.DataTypes.StringType;
 
-    public enum TokenizerFormat {
-        STRING, BYTES
+public class TokenizerUDF implements TokenizerApplicable {
+
+    private final AbstractTokenizerStep.TokenizerFormat format;
+    private final String inputCol;
+    private final String outputCol;
+
+    public TokenizerUDF(AbstractTokenizerStep.TokenizerFormat format, String inputCol, String outputCol) {
+        this.format = format;
+        this.inputCol = inputCol;
+        this.outputCol = outputCol;
     }
 
-    protected ConfiguredUDF fromConfig;
+    public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
+        final UserDefinedFunction tokenizerUDF = functions
+                .udf(
+                        new com.teragrep.functions.dpf_03.TokenizerUDF(),
+                        DataTypes.createArrayType(DataTypes.BinaryType, false)
+                );
 
-    public AbstractTokenizerStep() {
-        super();
+        if (format == AbstractTokenizerStep.TokenizerFormat.BYTES) {
+            return dataset.withColumn(outputCol, tokenizerUDF.apply(functions.col(inputCol)));
+        }
+        else if (format == AbstractTokenizerStep.TokenizerFormat.STRING) {
+            final UserDefinedFunction byteArrayListAsStringListUDF = functions
+                    .udf(new ByteArrayListAsStringListUDF(), DataTypes.createArrayType(StringType));
+            return dataset
+                    .withColumn(outputCol, byteArrayListAsStringListUDF.apply(tokenizerUDF.apply(functions.col(inputCol))));
+        }
+        throw new IllegalStateException("Unexpected tokenizerFormat: " + format);
     }
-
 }

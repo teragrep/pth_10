@@ -45,19 +45,11 @@
  */
 package com.teragrep.pth10.steps.tokenizer;
 
-import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
-import com.teragrep.functions.dpf_03.TokenizerUDF;
-import com.teragrep.functions.dpf_03.RegexTokenizerUDF;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.expressions.UserDefinedFunction;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.apache.spark.sql.types.DataTypes.StringType;
 
 /**
  * Runs the dpf_03 TokenAggregator on given field - Returns a Row with type String[], if dpl.pth_06.bloom.pattern option
@@ -66,7 +58,6 @@ import static org.apache.spark.sql.types.DataTypes.StringType;
 public final class TokenizerStep extends AbstractTokenizerStep {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenizerStep.class);
-    private final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
 
     public TokenizerStep(
             Config config,
@@ -74,66 +65,19 @@ public final class TokenizerStep extends AbstractTokenizerStep {
             String inputCol,
             String outputCol
     ) {
-        super();
-        this.config = config;
-        this.tokenizerFormat = tokenizerFormat;
-        this.inputCol = inputCol;
-        this.outputCol = outputCol;
+        this(new ConfiguredUDF(config, tokenizerFormat, inputCol, outputCol));
+    }
 
+    public TokenizerStep(ConfiguredUDF fromConfig) {
+        super();
+        this.fromConfig = fromConfig;
     }
 
     @Override
-    public Dataset<Row> get(Dataset<Row> dataset) {
+    public Dataset<Row> get(final Dataset<Row> dataset) {
         if (dataset == null) {
             return null;
         }
-        System.out.println(configContainsPattern());
-        // dpf_03 custom regex tokenizer udf
-        if (configContainsPattern()) {
-            final String pattern = config.getString(BLOOM_PATTERN_CONFIG_ITEM).trim();
-            LOGGER.info("Tokenizer selected regex tokenizer using pattern <[{}]>", pattern);
-            final UserDefinedFunction regexUDF = functions
-                    .udf(new RegexTokenizerUDF(), DataTypes.createArrayType(DataTypes.BinaryType, false));
-
-            if (this.tokenizerFormat == AbstractTokenizerStep.TokenizerFormat.BYTES) {
-                return dataset
-                        .withColumn("regex_column", functions.lit(pattern))
-                        .withColumn(this.getOutputCol(), regexUDF.apply(functions.col(this.getInputCol()), functions.col("regex_column"))).drop("regex_column"); // drop literal from result
-            }
-            else {
-                throw new UnsupportedOperationException(
-                        "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option"
-                );
-            }
-        }
-
-        // dpf_03 custom tokenizer udf
-        final UserDefinedFunction tokenizerUDF = functions
-                .udf(new TokenizerUDF(), DataTypes.createArrayType(DataTypes.BinaryType, false));
-
-        if (this.tokenizerFormat == AbstractTokenizerStep.TokenizerFormat.BYTES) {
-            return dataset.withColumn(this.getOutputCol(), tokenizerUDF.apply(functions.col(this.getInputCol())));
-        }
-        else if (this.tokenizerFormat == AbstractTokenizerStep.TokenizerFormat.STRING) {
-            final UserDefinedFunction byteArrayListAsStringListUDF = functions
-                    .udf(new ByteArrayListAsStringListUDF(), DataTypes.createArrayType(StringType));
-            return dataset
-                    .withColumn(
-                            this.getOutputCol(),
-                            byteArrayListAsStringListUDF.apply(tokenizerUDF.apply(functions.col(this.getInputCol())))
-                    );
-        }
-
-        throw new IllegalStateException("Unexpected tokenizerFormat: " + this.tokenizerFormat);
-    }
-
-    private boolean configContainsPattern() {
-        if (config != null && config.hasPath(BLOOM_PATTERN_CONFIG_ITEM)) {
-            final String patternFromConfig = config.getString(BLOOM_PATTERN_CONFIG_ITEM);
-            return patternFromConfig != null && !patternFromConfig.isEmpty();
-        }
-        else {
-            return false;
-        }
+        return fromConfig.appliedDataset(dataset);
     }
 }

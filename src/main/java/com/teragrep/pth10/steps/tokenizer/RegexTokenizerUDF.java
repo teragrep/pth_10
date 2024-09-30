@@ -45,18 +45,51 @@
  */
 package com.teragrep.pth10.steps.tokenizer;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.typesafe.config.Config;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
 
-public abstract class AbstractTokenizerStep extends AbstractStep {
+public class RegexTokenizerUDF implements TokenizerApplicable {
 
-    public enum TokenizerFormat {
-        STRING, BYTES
+    private final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
+    private final Config config;
+    private final AbstractTokenizerStep.TokenizerFormat format;
+    private final String inputCol;
+    private final String outputCol;
+
+    public RegexTokenizerUDF(
+            Config config,
+            AbstractTokenizerStep.TokenizerFormat format,
+            String inputCol,
+            String outputCol
+    ) {
+        this.config = config;
+        this.format = format;
+        this.inputCol = inputCol;
+        this.outputCol = outputCol;
     }
 
-    protected ConfiguredUDF fromConfig;
+    public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
+        final String pattern = config.getString(BLOOM_PATTERN_CONFIG_ITEM).trim();
+        final UserDefinedFunction regexUDF = functions
+                .udf(
+                        new com.teragrep.functions.dpf_03.RegexTokenizerUDF(),
+                        DataTypes.createArrayType(DataTypes.BinaryType, false)
+                );
 
-    public AbstractTokenizerStep() {
-        super();
+        if (this.format == AbstractTokenizerStep.TokenizerFormat.BYTES) {
+            return dataset
+                    .withColumn("regex_column", functions.lit(pattern))
+                    .withColumn(outputCol, regexUDF.apply(functions.col(inputCol), functions.col("regex_column")))
+                    .drop("regex_column"); // drop literal from result
+        }
+        else {
+            throw new UnsupportedOperationException(
+                    "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option"
+            );
+        }
     }
-
 }

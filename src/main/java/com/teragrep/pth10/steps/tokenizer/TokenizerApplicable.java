@@ -45,18 +45,10 @@
  */
 package com.teragrep.pth10.steps.tokenizer;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
-public abstract class AbstractTokenizerStep extends AbstractStep {
+public interface TokenizerApplicable {
 
-    public enum TokenizerFormat {
-        STRING, BYTES
-    }
-
-    protected ConfiguredUDF fromConfig;
-
-    public AbstractTokenizerStep() {
-        super();
-    }
-
+    Dataset<Row> appliedDataset(Dataset<Row> dataset);
 }
