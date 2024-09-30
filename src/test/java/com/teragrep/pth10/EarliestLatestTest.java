@@ -77,8 +77,8 @@ public class EarliestLatestTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(EarliestLatestTest.class);
 
     // Use this file for dataset initialization
-    private final String testFile = "src/test/resources/earliestLatestTest_data*.json"; // * to make the path into a directory path
-    private final String epochTestFile = "src/test/resources/earliestLatestTest_epoch_data*.json";
+    private final String testFile = "src/test/resources/earliestLatestTest_data*.jsonl"; // * to make the path into a directory path
+    private final String epochTestFile = "src/test/resources/earliestLatestTest_epoch_data*.jsonl";
     private StreamingTestUtil streamingTestUtil;
 
     @BeforeAll

@@ -84,7 +84,7 @@ public class subSearchTest {
     )
     void endToEndSubSearch2Test() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host]";
-        String testFile = "src/test/resources/subsearchData*.json";
+        String testFile = "src/test/resources/subsearchData*.jsonl";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             String e = "RLIKE(index, (?i)^index_A$)";
@@ -106,7 +106,7 @@ public class subSearchTest {
     )
     void endToEndSubSearch3Test() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]";
-        String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             String e = "RLIKE(index, (?i)^index_A$)";
@@ -138,7 +138,7 @@ public class subSearchTest {
     @Test
     void endToEndSubSearch4Test() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host] [ search sourcetype= c:X:0| top limit=1 host | fields + host]";
-        String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
         //        q="index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host] [ search host= computer03.example.com | top limit=1 host | fields + host]";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -183,7 +183,7 @@ public class subSearchTest {
     )
     void endToEndSearch1Test() {
         String q = "index = index_A AND computer01.example.com AND computer02.example.com";
-        String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
@@ -198,7 +198,7 @@ public class subSearchTest {
     )
     void endToEndSearch3Test() {
         String q = "sourcetype=c:X:0| top limit=1 host | fields + host";
-        String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             List<Row> lst = res.collectAsList();

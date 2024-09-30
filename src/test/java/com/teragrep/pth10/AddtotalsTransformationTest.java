@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
 public class AddtotalsTransformationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AddtotalsTransformationTest.class);
-    private final String testFile = "src/test/resources/numberData_0*.json"; // * to make the path into a directory path
+    private final String testFile = "src/test/resources/numberData_0*.jsonl"; // * to make the path into a directory path
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),

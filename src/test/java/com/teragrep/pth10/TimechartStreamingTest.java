@@ -69,7 +69,7 @@ public class TimechartStreamingTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartStreamingTest.class);
 
-    private final String testFile = "src/test/resources/dedup_test_data*.json"; // * to make the path into a directory path
+    private final String testFile = "src/test/resources/dedup_test_data*.jsonl"; // * to make the path into a directory path
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),

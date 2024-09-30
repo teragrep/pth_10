@@ -62,7 +62,7 @@ import java.util.stream.Collectors;
 public class BloomFilterOperationsTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterOperationsTest.class);
-    private final String testFile = "src/test/resources/xmlWalkerTestDataStreaming/bloomTeragrepStep_data*.json";
+    private final String testFile = "src/test/resources/xmlWalkerTestDataStreaming/bloomTeragrepStep_data*.jsonl";
 
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),

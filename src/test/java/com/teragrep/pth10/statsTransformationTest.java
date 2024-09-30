@@ -61,7 +61,7 @@ public class statsTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(statsTransformationTest.class);
 
     // Use this file for dataset initialization
-    String testFile = "src/test/resources/statsTransformationTestData*.json"; // * to make the path into a directory path
+    String testFile = "src/test/resources/statsTransformationTestData*.jsonl"; // * to make the path into a directory path
     private StreamingTestUtil streamingTestUtil;
 
     @BeforeAll

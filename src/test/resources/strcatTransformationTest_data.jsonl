@@ -1,0 +1,5 @@
+{"_time": "2023-09-06 11:22:31+03:00", "id": 1, "_raw": "raw 01", "index": "index_A", "sourcetype": "A:X:0", "host": "host", "source": "input", "partition": "0", "offset": 1}
+{"_time": "2023-09-06 12:22:31+03:00", "id": 2, "_raw": "raw 02", "index": "index_A", "sourcetype": "A:X:0", "host": "host", "source": "input", "partition": "0", "offset": 2}
+{"_time": "2023-09-06 13:22:31+03:00", "id": 3, "_raw": "raw 03", "index": "index_A", "sourcetype": "A:Y:0", "host": "host", "source": "input", "partition": "0", "offset": 3}
+{"_time": "2023-09-06 14:22:31+03:00", "id": 4, "_raw": "raw 04", "index": "index_A", "sourcetype": "A:Y:0", "host": "host", "source": "input", "partition": "0", "offset": 4}
+{"_time": "2023-09-06 15:22:31+03:00", "id": 5, "_raw": "raw 05", "index": "index_A", "sourcetype": "A:Y:0", "host": "host", "source": "input", "partition": "0", "offset": 5}
