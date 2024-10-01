@@ -143,9 +143,8 @@ public class whereTest {
 
             Assertions.assertEquals(6, ds.count());
             Assertions.assertEquals(Arrays.asList("1", "3", "5", "7", "9", "10"), offsetList); // correct column contents
-            Assertions.assertEquals(
-                    Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1", "stream2"), sourcetypeList
-            );
+            Assertions
+                    .assertEquals(Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1", "stream2"), sourcetypeList);
         });
     }
 
@@ -226,7 +225,8 @@ public class whereTest {
                     .collect(Collectors.toList());
 
             Assertions.assertEquals(5, ds.count());
-            Assertions.assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
+            Assertions
+                    .assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
         });
     }
 
@@ -246,7 +246,8 @@ public class whereTest {
                     .collect(Collectors.toList());
 
             Assertions.assertEquals(5, ds.count());
-            Assertions.assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
+            Assertions
+                    .assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
         });
     }
 
@@ -277,10 +278,12 @@ public class whereTest {
     )
     public void whereTestIntegerColumnLessThan() {
         streamingTestUtil.performDPLTest("index=index_A | where offset < 3", testFile, ds -> {
-            Assertions.assertEquals(
-                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", Arrays
+                                    .toString(ds.columns()),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
 
             Assertions.assertEquals(2, ds.collectAsList().size());
         });
@@ -297,9 +300,8 @@ public class whereTest {
                         "index=index_A " + "| chart avg(offset) as aoffset" + "| chart values(aoffset) as voffset"
                                 + "| chart sum(voffset) as soffset" + "| where soffset > 3",
                         testFile, ds -> {
-                            Assertions.assertEquals(
-                                    "[soffset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals("[soffset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
 
                             Assertions.assertEquals(1, ds.collectAsList().size());
                         }

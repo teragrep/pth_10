@@ -108,15 +108,12 @@ public class fieldTransformationTest {
                     .collect(Collectors.toList());
             Collections.sort(expectedValues);
 
-            Assertions.assertEquals
-(5, dsAsList.size());
+            Assertions.assertEquals(5, dsAsList.size());
             for (int i = 0; i < expectedValues.size(); i++) {
-                Assertions.assertEquals
-(expectedValues.get(i), dsAsList.get(i));
+                Assertions.assertEquals(expectedValues.get(i), dsAsList.get(i));
             }
 
-            Assertions.assertEquals
-("[_time: string]", ds.toString());
+            Assertions.assertEquals("[_time: string]", ds.toString());
         });
     }
 
@@ -128,10 +125,8 @@ public class fieldTransformationTest {
     void parseFieldsTransformCat2Test() {
         String q = "index=index_B | fields _time host";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Assertions.assertEquals
-(5, res.count());
-            Assertions.assertEquals
-("[_time: string, host: string]", res.toString());
+            Assertions.assertEquals(5, res.count());
+            Assertions.assertEquals("[_time: string, host: string]", res.toString());
         });
     }
 
@@ -144,13 +139,12 @@ public class fieldTransformationTest {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host", this.testFile, res -> {
             // check that we drop only host-column
             String schema = res.schema().toString();
-            Assertions.assertEquals
-(5, res.count());
-            Assertions.assertEquals
-(
-                    "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
-                    schema
-            );
+            Assertions.assertEquals(5, res.count());
+            Assertions
+                    .assertEquals(
+                            "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
+                            schema
+                    );
         });
     }
 
@@ -162,13 +156,12 @@ public class fieldTransformationTest {
     void parseFieldsTransformCatDropSeveralTest() {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host index partition", this.testFile, res -> {
             String schema = res.schema().toString();
-            Assertions.assertEquals
-(5, res.count());
-            Assertions.assertEquals
-(
-                    "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
-                    schema
-            );
+            Assertions.assertEquals(5, res.count());
+            Assertions
+                    .assertEquals(
+                            "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
+                            schema
+                    );
         });
     }
 
@@ -180,10 +173,8 @@ public class fieldTransformationTest {
     void fieldsWithPlusTest() {
         String query = "index = index_B | fields + offset";
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
-            Assertions.assertEquals
-(5, ds.count());
-            Assertions.assertEquals
-("[offset: bigint]", ds.toString()); //check schema is correct
+            Assertions.assertEquals(5, ds.count());
+            Assertions.assertEquals("[offset: bigint]", ds.toString()); //check schema is correct
         });
 
     }
@@ -196,10 +187,8 @@ public class fieldTransformationTest {
     void fieldsWithMultiplePlusTest() {
         String query = "index = index_B | fields + offset, source, host";
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
-            Assertions.assertEquals
-(5, ds.count());
-            Assertions.assertEquals
-("[offset, source, host]", Arrays.toString(ds.columns())); //check schema is correct
+            Assertions.assertEquals(5, ds.count());
+            Assertions.assertEquals("[offset, source, host]", Arrays.toString(ds.columns())); //check schema is correct
         });
 
     }
@@ -213,10 +202,9 @@ public class fieldTransformationTest {
     void fieldsWithWildcardTest() {
         String query = "index = index_B | fields - _*"; // remove internal fields
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
-            Assertions.assertEquals
-(5, ds.count());
-            Assertions.assertEquals
-("[index, sourcetype, source, host, partition, offset]", Arrays.toString(ds.columns())); //check schema is correct
+            Assertions.assertEquals(5, ds.count());
+            Assertions
+                    .assertEquals("[index, sourcetype, source, host, partition, offset]", Arrays.toString(ds.columns())); //check schema is correct
         });
 
     }

@@ -61,7 +61,7 @@ public class logicalOperationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(logicalOperationTest.class);
 
     // Use this file for  dataset initialization
-    String testFile = "src/test/resources/logicalOperationTestData*.json"; // * to make the path into a directory path
+    String testFile = "src/test/resources/logicalOperationTestData*.jsonl"; // * to make the path into a directory path
     private StreamingTestUtil streamingTestUtil;
 
     @BeforeAll
