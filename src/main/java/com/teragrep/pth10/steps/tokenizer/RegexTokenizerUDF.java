@@ -83,6 +83,8 @@ public final class RegexTokenizerUDF implements TokenizerApplicable {
         if (this.format == AbstractTokenizerStep.TokenizerFormat.BYTES) {
             return dataset.withColumn(outputCol, regexUDF.apply(functions.col(inputCol), functions.lit(pattern)));
         }
-        throw new UnsupportedOperationException("TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option");
+        throw new UnsupportedOperationException(
+                "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option"
+        );
     }
 }

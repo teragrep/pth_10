@@ -46,6 +46,7 @@
 package com.teragrep.pth10.steps.tokenizer;
 
 import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
@@ -72,20 +73,19 @@ public final class TokenizerUDF implements TokenizerApplicable {
                         new com.teragrep.functions.dpf_03.TokenizerUDF(),
                         DataTypes.createArrayType(DataTypes.BinaryType, false)
                 );
-        final Dataset<Row> appliedDataset;
+        final Column appliedColumn;
         switch (format) {
             case BYTES:
-                appliedDataset = dataset.withColumn(outputCol, tokenizerUDF.apply(functions.col(inputCol)));
+                appliedColumn = tokenizerUDF.apply(functions.col(inputCol));
                 break;
             case STRING:
                 final UserDefinedFunction byteArrayListAsStringListUDF = functions
                         .udf(new ByteArrayListAsStringListUDF(), DataTypes.createArrayType(StringType));
-                appliedDataset = dataset
-                        .withColumn(outputCol, byteArrayListAsStringListUDF.apply(tokenizerUDF.apply(functions.col(inputCol))));
+                appliedColumn = byteArrayListAsStringListUDF.apply(tokenizerUDF.apply(functions.col(inputCol)));
                 break;
             default:
                 throw new IllegalStateException("Unexpected tokenizerFormat: " + format);
         }
-        return appliedDataset;
+        return dataset.withColumn(outputCol, appliedColumn);
     }
 }

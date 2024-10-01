@@ -56,42 +56,29 @@ import java.sql.SQLException;
 public final class BloomFilterTable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterTable.class);
-    private final boolean ignoreConstraints;
-    private final FilterTypes filterTypes;
+    private final CreateTableSQL table;
     private final LazyConnection conn;
 
     public BloomFilterTable(Config config) {
-        this(new FilterTypes(config), new LazyConnection(config), false);
+        this(new CreateTableSQL(new FilterTypes(config).tableName(), false), new LazyConnection(config));
     }
 
     // used in testing
     public BloomFilterTable(Config config, boolean ignoreConstraints) {
-        this(new FilterTypes(config), new LazyConnection(config), ignoreConstraints);
+        this(new CreateTableSQL(new FilterTypes(config).tableName(), ignoreConstraints), new LazyConnection(config));
     }
 
-    public BloomFilterTable(FilterTypes filterTypes, LazyConnection conn, boolean ignoreConstraints) {
-        this.filterTypes = filterTypes;
+    public BloomFilterTable(CreateTableSQL table, LazyConnection conn) {
+        this.table = table;
         this.conn = conn;
-        this.ignoreConstraints = ignoreConstraints;
     }
 
     public void create() {
-        if (ignoreConstraints && LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Ignore database constraints active this should be only used in testing");
-        }
-        final String name = filterTypes.tableName();
-        final CreateTableSQL table = new CreateTableSQL(name);
-        final String sql;
-        if (ignoreConstraints) {
-            sql = table.ignoreConstraintsSql();
-        } else {
-            sql = table.sql();
-        }
+        final String sql = table.sql();
         final Connection connection = conn.get();
         try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.execute();
             connection.commit();
-            LOGGER.info("Created a bloom filter table name <[{}]>", name);
             LOGGER.debug("Create table SQL <{}>", sql);
         }
         catch (SQLException e) {
@@ -108,7 +95,6 @@ public final class BloomFilterTable {
         if (object.getClass() != this.getClass())
             return false;
         final BloomFilterTable cast = (BloomFilterTable) object;
-        return this.filterTypes.equals(cast.filterTypes) && this.conn.equals(cast.conn)
-                && this.ignoreConstraints == cast.ignoreConstraints;
+        return this.table.equals(cast.table) && this.conn.equals(cast.conn);
     }
 }
