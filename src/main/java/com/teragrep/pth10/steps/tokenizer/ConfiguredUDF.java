@@ -43,51 +43,55 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.teragrep.bloomfilter;
+package com.teragrep.pth10.steps.tokenizer;
 
 import com.typesafe.config.Config;
-import org.apache.spark.api.java.function.ForeachPartitionFunction;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import java.sql.Connection;
-import java.util.Iterator;
+public final class ConfiguredUDF implements TokenizerApplicable {
 
-public final class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
+    private final Config config;
+    private final TokenizerUDF tokenizerUDF;
+    private final RegexTokenizerUDF regexUDF;
 
-    private final FilterTypes filterTypes;
-    private final LazyConnection lazyConnection;
-    private final boolean overwrite;
-
-    public BloomFilterForeachPartitionFunction(Config config) {
-        this(new FilterTypes(config), new LazyConnection(config), false);
-    }
-
-    public BloomFilterForeachPartitionFunction(Config config, boolean overwrite) {
-        this(new FilterTypes(config), new LazyConnection(config), overwrite);
-    }
-
-    public BloomFilterForeachPartitionFunction(
-            FilterTypes filterTypes,
-            LazyConnection lazyConnection,
-            boolean overwrite
+    public ConfiguredUDF(
+            Config config,
+            AbstractTokenizerStep.TokenizerFormat format,
+            String inputCol,
+            String outputCol
     ) {
-        this.filterTypes = filterTypes;
-        this.lazyConnection = lazyConnection;
-        this.overwrite = overwrite;
+        this(
+                config,
+                new TokenizerUDF(format, inputCol, outputCol),
+                new RegexTokenizerUDF(config, format, inputCol, outputCol)
+        );
+    }
+
+    public ConfiguredUDF(Config config, TokenizerUDF tokenizerUDF, RegexTokenizerUDF regexUDF) {
+        this.config = config;
+        this.tokenizerUDF = tokenizerUDF;
+        this.regexUDF = regexUDF;
     }
 
     @Override
-    public void call(final Iterator<Row> iter) throws Exception {
-        final Connection conn = lazyConnection.get();
-        while (iter.hasNext()) {
-            final Row row = iter.next(); // Row[partitionID, filterBytes]
-            final String partition = row.getString(0);
-            final byte[] filterBytes = (byte[]) row.get(1);
-            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
-            tgFilter.saveFilter(overwrite);
-
-            conn.commit();
-
+    public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
+        final Dataset<Row> result;
+        if (configContainsPattern()) {
+            result = regexUDF.appliedDataset(dataset);
         }
+        else {
+            result = tokenizerUDF.appliedDataset(dataset);
+        }
+        return result;
+    }
+
+    private boolean configContainsPattern() {
+        final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
+        if (config != null && config.hasPath(BLOOM_PATTERN_CONFIG_ITEM)) {
+            final String patternFromConfig = config.getString(BLOOM_PATTERN_CONFIG_ITEM);
+            return patternFromConfig != null && !patternFromConfig.isEmpty();
+        }
+        return false;
     }
 }

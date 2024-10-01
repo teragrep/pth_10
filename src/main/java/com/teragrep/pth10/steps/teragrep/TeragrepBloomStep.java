@@ -48,7 +48,8 @@ package com.teragrep.pth10.steps.teragrep;
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
 import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterForeachPartitionFunction;
-import com.teragrep.pth10.steps.teragrep.bloomfilter.FilterSizes;
+import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterTable;
+import com.teragrep.pth10.steps.teragrep.bloomfilter.FilterTypes;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.LazyConnection;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
@@ -66,7 +67,7 @@ import java.util.SortedMap;
 /**
  * teragrep exec bloom
  */
-public class TeragrepBloomStep extends AbstractStep {
+public final class TeragrepBloomStep extends AbstractStep {
 
     public enum BloomMode {
         UPDATE, CREATE, ESTIMATE, AGGREGATE, DEFAULT
@@ -76,16 +77,9 @@ public class TeragrepBloomStep extends AbstractStep {
 
     private final Config zeppelinConfig;
     public final BloomMode mode;
-    private String inputCol;
-    private String outputCol;
-    private String estimateCol;
-
-    // Bloom filter consts
-    public final static String BLOOMDB_USERNAME_CONFIG_ITEM = "dpl.pth_10.bloom.db.username";
-    public final static String BLOOMDB_PASSWORD_CONFIG_ITEM = "dpl.pth_10.bloom.db.password";
-    public final static String BLOOMDB_URL_CONFIG_ITEM = "dpl.pth_06.bloom.db.url";
-    public final static String BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM = "dpl.pth_06.bloom.db.fields";
-    public final static Double MAX_FPP = 0.01;
+    private final String inputCol;
+    private final String outputCol;
+    private final String estimateCol;
 
     public TeragrepBloomStep(
             Config zeppelinConfig,
@@ -100,7 +94,7 @@ public class TeragrepBloomStep extends AbstractStep {
         this.outputCol = outputCol;
         this.estimateCol = estimateCol;
 
-        if (mode == BloomMode.ESTIMATE) {
+        if (mode == BloomMode.ESTIMATE || mode == BloomMode.AGGREGATE) {
             // estimate is run as an aggregation
             this.properties.add(CommandProperty.AGGREGATE);
         }
@@ -134,31 +128,29 @@ public class TeragrepBloomStep extends AbstractStep {
 
     /**
      * Create and store a bloom filter byte generated from Datasets rows _raw column (Ignores duplicates)
-     * 
+     *
      * @param dataset Dataset that is used to update database
      * @return Dataset unmodified
      */
     private Dataset<Row> createBloomFilter(Dataset<Row> dataset) {
-
-        writeFilterSizesToDatabase(this.zeppelinConfig);
-
+        writeFilterTypes(this.zeppelinConfig);
+        final BloomFilterTable table = new BloomFilterTable(zeppelinConfig);
+        table.create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(this.zeppelinConfig));
-
         return dataset;
     }
 
     /**
      * Create and store a bloom filter byte arrays generated from Datasets rows _raw column (Replaces duplicates)
-     * 
+     *
      * @param dataset Dataset that is used to update database
      * @return Dataset unmodified
      */
     private Dataset<Row> updateBloomFilter(Dataset<Row> dataset) {
-
-        writeFilterSizesToDatabase(this.zeppelinConfig);
-
+        writeFilterTypes(this.zeppelinConfig);
+        final BloomFilterTable table = new BloomFilterTable(zeppelinConfig);
+        table.create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(this.zeppelinConfig, true));
-
         return dataset;
     }
 
@@ -171,45 +163,44 @@ public class TeragrepBloomStep extends AbstractStep {
 
     public Dataset<Row> aggregate(Dataset<Row> dataset) {
 
-        FilterSizes filterSizes = new FilterSizes(this.zeppelinConfig);
+        FilterTypes filterTypes = new FilterTypes(this.zeppelinConfig);
 
-        BloomFilterAggregator agg = new BloomFilterAggregator(inputCol, estimateCol, filterSizes.asSortedMap());
+        BloomFilterAggregator agg = new BloomFilterAggregator(inputCol, estimateCol, filterTypes.sortedMap());
 
         return dataset.groupBy("partition").agg(agg.toColumn().as("bloomfilter"));
 
     }
 
-    private void writeFilterSizesToDatabase(Config config) {
-
-        FilterSizes filterSizes = new FilterSizes(config);
-        Connection connection = new LazyConnection(config).get();
-        SortedMap<Long, Double> filterSizeMap = filterSizes.asSortedMap();
-
-        for (Map.Entry<Long, Double> entry : filterSizeMap.entrySet()) {
-            LOGGER
-                    .info(
-                            "Writing filtertype[expected: <{}>, fpp: <{}>] to bloomdb.filtertype", entry.getKey(),
-                            entry.getValue()
-                    );
-
-            String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`) VALUES (?, ?)";
-
-            try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-
+    private void writeFilterTypes(final Config config) {
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final Connection connection = new LazyConnection(config).get();
+        final SortedMap<Long, Double> filterSizeMap = filterTypes.sortedMap();
+        final String pattern = filterTypes.pattern();
+        for (final Map.Entry<Long, Double> entry : filterSizeMap.entrySet()) {
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER
+                        .info(
+                                "Writing filtertype (expected <[{}]>, fpp: <[{}]>, pattern: <[{}]>)", entry.getKey(),
+                                entry.getValue(), pattern
+                        );
+            }
+            final String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`, `pattern`) VALUES (?, ?, ?)";
+            try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
                 stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
                 stmt.setDouble(2, entry.getValue()); // filtertype.targetFpp
+                stmt.setString(3, pattern); // filtertype.pattern
                 stmt.executeUpdate();
                 stmt.clearParameters();
-
                 connection.commit();
-
             }
             catch (SQLException e) {
-                LOGGER
-                        .error(
-                                "Error writing filter[expected: <{}>, fpp: <{}>] into database", entry.getKey(),
-                                entry.getValue()
-                        );
+                if (LOGGER.isErrorEnabled()) {
+                    LOGGER
+                            .error(
+                                    "Error writing filter[expected: <{}>, fpp: <{}>, pattern: <{}>] into database",
+                                    entry.getKey(), entry.getValue(), pattern
+                            );
+                }
                 throw new RuntimeException(e);
             }
         }

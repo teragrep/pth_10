@@ -43,51 +43,12 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.teragrep.bloomfilter;
+package com.teragrep.pth10.steps.tokenizer;
 
-import com.typesafe.config.Config;
-import org.apache.spark.api.java.function.ForeachPartitionFunction;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-import java.sql.Connection;
-import java.util.Iterator;
+public interface TokenizerApplicable {
 
-public final class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
-
-    private final FilterTypes filterTypes;
-    private final LazyConnection lazyConnection;
-    private final boolean overwrite;
-
-    public BloomFilterForeachPartitionFunction(Config config) {
-        this(new FilterTypes(config), new LazyConnection(config), false);
-    }
-
-    public BloomFilterForeachPartitionFunction(Config config, boolean overwrite) {
-        this(new FilterTypes(config), new LazyConnection(config), overwrite);
-    }
-
-    public BloomFilterForeachPartitionFunction(
-            FilterTypes filterTypes,
-            LazyConnection lazyConnection,
-            boolean overwrite
-    ) {
-        this.filterTypes = filterTypes;
-        this.lazyConnection = lazyConnection;
-        this.overwrite = overwrite;
-    }
-
-    @Override
-    public void call(final Iterator<Row> iter) throws Exception {
-        final Connection conn = lazyConnection.get();
-        while (iter.hasNext()) {
-            final Row row = iter.next(); // Row[partitionID, filterBytes]
-            final String partition = row.getString(0);
-            final byte[] filterBytes = (byte[]) row.get(1);
-            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
-            tgFilter.saveFilter(overwrite);
-
-            conn.commit();
-
-        }
-    }
+    Dataset<Row> appliedDataset(Dataset<Row> dataset);
 }

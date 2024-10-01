@@ -45,51 +45,39 @@
  */
 package com.teragrep.pth10.steps.tokenizer;
 
-import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
-import com.teragrep.functions.dpf_03.TokenizerUDF;
+import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.expressions.UserDefinedFunction;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.DataTypes;
-
-import static org.apache.spark.sql.types.DataTypes.StringType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Runs the dpf_03 TokenAggregator on given field - Returns a Row with type String[]
+ * Runs the dpf_03 TokenAggregator on given field - Returns a Row with type String[], if dpl.pth_06.bloom.pattern option
+ * is present uses regex filtering for resulting tokens
  */
 public final class TokenizerStep extends AbstractTokenizerStep {
 
-    public TokenizerStep(AbstractTokenizerStep.TokenizerFormat tokenizerFormat, String inputCol, String outputCol) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenizerStep.class);
+
+    public TokenizerStep(
+            Config config,
+            AbstractTokenizerStep.TokenizerFormat tokenizerFormat,
+            String inputCol,
+            String outputCol
+    ) {
+        this(new ConfiguredUDF(config, tokenizerFormat, inputCol, outputCol));
+    }
+
+    public TokenizerStep(ConfiguredUDF fromConfig) {
         super();
-        this.tokenizerFormat = tokenizerFormat;
-        this.inputCol = inputCol;
-        this.outputCol = outputCol;
+        this.fromConfig = fromConfig;
     }
 
     @Override
-    public Dataset<Row> get(Dataset<Row> dataset) {
+    public Dataset<Row> get(final Dataset<Row> dataset) {
         if (dataset == null) {
             return null;
         }
-
-        // dpf_03 custom tokenizer udf
-        UserDefinedFunction tokenizerUDF = functions
-                .udf(new TokenizerUDF(), DataTypes.createArrayType(DataTypes.BinaryType, false));
-
-        if (this.tokenizerFormat == AbstractTokenizerStep.TokenizerFormat.BYTES) {
-            return dataset.withColumn(this.getOutputCol(), tokenizerUDF.apply(functions.col(this.getInputCol())));
-        }
-        else if (this.tokenizerFormat == AbstractTokenizerStep.TokenizerFormat.STRING) {
-            UserDefinedFunction byteArrayListAsStringListUDF = functions
-                    .udf(new ByteArrayListAsStringListUDF(), DataTypes.createArrayType(StringType));
-            return dataset
-                    .withColumn(
-                            this.getOutputCol(),
-                            byteArrayListAsStringListUDF.apply(tokenizerUDF.apply(functions.col(this.getInputCol())))
-                    );
-        }
-
-        throw new IllegalStateException("Unexpected tokenizerFormat: " + this.tokenizerFormat);
+        return fromConfig.appliedDataset(dataset);
     }
 }
