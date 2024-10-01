@@ -52,9 +52,8 @@
     <teragrep.dpf_03.version>11.0.1</teragrep.dpf_03.version>
     <teragrep.jpr_01.version>3.1.1</teragrep.jpr_01.version>
     <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
-    <teragrep.pth_03.version>6.1.4</teragrep.pth_03.version>
+    <teragrep.pth_03.version>8.1.0</teragrep.pth_03.version>
     <teragrep.pth_06.version>3.1.2</teragrep.pth_06.version>
-    <teragrep.rlo_06.version>4.3.0</teragrep.rlo_06.version>
     <teragrep.rlp_01.version>4.0.1</teragrep.rlp_01.version>
     <teragrep.rlp_03.version>1.7.6</teragrep.rlp_03.version>
   </properties>
@@ -89,12 +88,6 @@
       <groupId>com.typesafe</groupId>
       <artifactId>config</artifactId>
       <version>1.4.0</version>
-    </dependency>
-    <!-- rfc5424-parser -->
-    <dependency>
-      <groupId>com.teragrep</groupId>
-      <artifactId>rlo_06</artifactId>
-      <version>${teragrep.rlo_06.version}</version>
     </dependency>
     <!-- unix-utils -->
     <dependency>
@@ -156,6 +149,12 @@
       <artifactId>greenmail-junit5</artifactId>
       <version>1.6.13</version>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.sun.mail</groupId>
@@ -198,6 +197,7 @@
       <groupId>com.teragrep</groupId>
       <artifactId>rlp_03</artifactId>
       <version>${teragrep.rlp_03.version}</version>
+      <scope>test</scope>
     </dependency>
     <!-- iplocation command -->
     <!-- DO NOT UPDATE - 2.16.1 final Java8 compatible version -->
@@ -247,9 +247,8 @@
     </dependency>
     <dependency>
       <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-simple</artifactId>
-      <version>1.7.36</version>
-      <scope>test</scope>
+      <artifactId>slf4j-api</artifactId>
+      <version>2.0.16</version>
     </dependency>
   </dependencies>
   <build>
@@ -321,6 +320,11 @@
             </goals>
             <configuration>
               <rules>
+                <bannedDependencies>
+                  <excludes>
+                    <exclude>junit:junit</exclude>
+                  </excludes>
+                </bannedDependencies>
                 <requireMavenVersion>
                   <version>3.2.5</version>
                 </requireMavenVersion>
@@ -396,12 +400,15 @@
             <exclude>.github/workflows/*.yml</exclude>
             <exclude>.github/workflows/*.yaml</exclude>
             <exclude>.github/ISSUE_TEMPLATE/*</exclude>
+            <exclude>.github/PULL_REQUEST_TEMPLATE/*</exclude>
             <exclude>toolchains.xml</exclude>
             <exclude>settings.xml</exclude>
             <exclude>dependencies.settings.xml</exclude>
             <!-- readme -->
             <exclude>README.adoc</exclude>
             <exclude>README.md</exclude>
+            <!-- test logging config -->
+            <exclude>src/test/resources/log4j2-test.xml</exclude>
             <!-- dummy files -->
             <exclude>src/test/resources/hdfslist/**</exclude>
             <exclude>src/test/resources/csv/**</exclude>

@@ -55,10 +55,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ExplainTest {
@@ -78,7 +77,7 @@ public class ExplainTest {
         ct.visitExplainTransformation((DPLParser.ExplainTransformationContext) tree.getChild(1).getChild(0));
         ExplainStep cs = ct.explainStep;
 
-        assertEquals(AbstractExplainStep.ExplainMode.BRIEF, cs.getMode());
+        Assertions.assertEquals(AbstractExplainStep.ExplainMode.BRIEF, cs.getMode());
     }
 
     @Test
@@ -96,6 +95,6 @@ public class ExplainTest {
         ct.visitExplainTransformation((DPLParser.ExplainTransformationContext) tree.getChild(1).getChild(0));
         ExplainStep cs = ct.explainStep;
 
-        assertEquals(AbstractExplainStep.ExplainMode.EXTENDED, cs.getMode());
+        Assertions.assertEquals(AbstractExplainStep.ExplainMode.EXTENDED, cs.getMode());
     }
 }

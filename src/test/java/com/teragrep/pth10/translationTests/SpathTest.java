@@ -54,10 +54,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SpathTest {
@@ -77,10 +76,10 @@ public class SpathTest {
         ct.visitSpathTransformation((DPLParser.SpathTransformationContext) tree.getChild(1).getChild(0));
         final SpathStep cs = ct.spathStep;
 
-        assertEquals("this.is.a.path", cs.getPath());
-        assertEquals("_raw", cs.getInputColumn());
-        assertFalse(cs.getAutoExtractionMode());
-        assertEquals("out", cs.getOutputColumn());
+        Assertions.assertEquals("this.is.a.path", cs.getPath());
+        Assertions.assertEquals("_raw", cs.getInputColumn());
+        Assertions.assertFalse(cs.getAutoExtractionMode());
+        Assertions.assertEquals("out", cs.getOutputColumn());
     }
 
     @Test
@@ -98,11 +97,11 @@ public class SpathTest {
         ct.visitSpathTransformation((DPLParser.SpathTransformationContext) tree.getChild(1).getChild(0));
         final SpathStep cs = ct.spathStep;
 
-        assertNull(cs.getPath());
-        assertEquals("_raw", cs.getInputColumn());
-        assertTrue(cs.getAutoExtractionMode());
+        Assertions.assertNull(cs.getPath());
+        Assertions.assertEquals("_raw", cs.getInputColumn());
+        Assertions.assertTrue(cs.getAutoExtractionMode());
 
         // internal column name used for auto-extraction
-        assertEquals("$$dpl_pth10_internal_column_spath_output$$", cs.getOutputColumn());
+        Assertions.assertEquals("$$dpl_pth10_internal_column_spath_output$$", cs.getOutputColumn());
     }
 }

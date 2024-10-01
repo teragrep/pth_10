@@ -51,16 +51,12 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class commandTest {
@@ -72,18 +68,18 @@ public class commandTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -102,9 +98,9 @@ public class commandTest {
             });
             List<Row> resAsList = res.collectAsList();
 
-            assertEquals(expectedSchema, res.schema());
-            assertEquals(1, resAsList.size());
-            assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
+            Assertions.assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(1, resAsList.size());
+            Assertions.assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
         });
     }
 
@@ -122,10 +118,10 @@ public class commandTest {
             });
             List<Row> resAsList = res.collectAsList();
 
-            assertEquals(expectedSchema, res.schema());
-            assertEquals(1, resAsList.size());
-            assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
-            assertTrue(resAsList.get(0).toString().contains("Optimized Logical Plan"));
+            Assertions.assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(1, resAsList.size());
+            Assertions.assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
+            Assertions.assertTrue(resAsList.get(0).toString().contains("Optimized Logical Plan"));
         });
     }
 
@@ -143,10 +139,10 @@ public class commandTest {
             });
             List<Row> resAsList = res.collectAsList();
 
-            assertEquals(expectedSchema, res.schema());
-            assertEquals(1, resAsList.size());
-            assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
-            assertTrue(resAsList.get(0).toString().contains("Optimized Logical Plan"));
+            Assertions.assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals(1, resAsList.size());
+            Assertions.assertTrue(resAsList.get(0).toString().contains("Physical Plan"));
+            Assertions.assertTrue(resAsList.get(0).toString().contains("Optimized Logical Plan"));
         });
     }
 
@@ -161,9 +157,9 @@ public class commandTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             DPLAuditInformation ainf = this.streamingTestUtil.getCtx().getAuditInformation();
             // Check auditInformation
-            assertEquals("TestUser", ainf.getUser());
-            assertEquals(q, ainf.getQuery());
-            assertEquals("Testing audit log", ainf.getReason());
+            Assertions.assertEquals("TestUser", ainf.getUser());
+            Assertions.assertEquals(q, ainf.getQuery());
+            Assertions.assertEquals("Testing audit log", ainf.getReason());
         });
 
     }
@@ -179,7 +175,7 @@ public class commandTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
             for (Row r : sourcetypeCol) {
-                assertTrue(r.getString(0).contains("teragrep version"));
+                Assertions.assertTrue(r.getString(0).contains("teragrep version"));
             }
 
             List<Row> rawCol = res.select("_raw").collectAsList();
@@ -188,7 +184,7 @@ public class commandTest {
                 // _ raw should contain TG version information
                 // teragrep.XXX_XX.version: X.X.X
                 // Teragrep version: X.X.X
-                assertTrue(r.getAs(0).toString().contains("version:"));
+                Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
             }
         });
     }
@@ -204,7 +200,7 @@ public class commandTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
             for (Row r : sourcetypeCol) {
-                assertTrue(r.getString(0).contains("teragrep version"));
+                Assertions.assertTrue(r.getString(0).contains("teragrep version"));
             }
 
             List<Row> rawCol = res.select("_raw").collectAsList();
@@ -213,7 +209,7 @@ public class commandTest {
                 // _ raw should contain TG version information
                 // teragrep.XXX_XX.version: X.X.X
                 // Teragrep version: X.X.X
-                assertTrue(r.getAs(0).toString().contains("version:"));
+                Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
             }
         });
     }

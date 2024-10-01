@@ -54,13 +54,12 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SendemailTest {
@@ -80,19 +79,19 @@ public class SendemailTest {
         ct.visitSendemailTransformation((DPLParser.SendemailTransformationContext) tree.getChild(1).getChild(0));
         SendemailStep cs = ct.sendemailStep;
 
-        assertNotNull(cs.getSendemailResultsProcessor());
+        Assertions.assertNotNull(cs.getSendemailResultsProcessor());
 
         Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
         Map<String, String> expected = buildParamMap(new Object() {
         }.getClass().getEnclosingMethod().getName());
-        assertEquals(expected.size(), params.size());
+        Assertions.assertEquals(expected.size(), params.size());
 
         for (Map.Entry<String, String> ent : params.entrySet()) {
             String currentKey = ent.getKey();
             String currentValue = ent.getValue();
 
             String expectedValue = expected.get(currentKey);
-            assertEquals(expectedValue, currentValue);
+            Assertions.assertEquals(expectedValue, currentValue);
         }
     }
 
@@ -111,19 +110,19 @@ public class SendemailTest {
         ct.visitSendemailTransformation((DPLParser.SendemailTransformationContext) tree.getChild(1).getChild(0));
         SendemailStep cs = ct.sendemailStep;
 
-        assertNotNull(cs.getSendemailResultsProcessor());
+        Assertions.assertNotNull(cs.getSendemailResultsProcessor());
 
         Map<String, String> params = cs.getSendemailResultsProcessor().getParameters();
         Map<String, String> expected = buildParamMap(new Object() {
         }.getClass().getEnclosingMethod().getName());
-        assertEquals(expected.size(), params.size());
+        Assertions.assertEquals(expected.size(), params.size());
 
         for (Map.Entry<String, String> ent : params.entrySet()) {
             String currentKey = ent.getKey();
             String currentValue = ent.getValue();
 
             String expectedValue = expected.get(currentKey);
-            assertEquals(expectedValue, currentValue);
+            Assertions.assertEquals(expectedValue, currentValue);
         }
     }
 
@@ -190,7 +189,7 @@ public class SendemailTest {
             params.put("smtpDebug", "false");
         }
         else {
-            fail("Invalid test name provided for buildParamMap: " + testName);
+            Assertions.fail("Invalid test name provided for buildParamMap: " + testName);
         }
 
         return params;

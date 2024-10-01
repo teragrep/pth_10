@@ -45,8 +45,7 @@
  */
 package com.teragrep.pth10;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,8 +54,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class statsTransformationTest {
@@ -67,18 +64,18 @@ public class statsTransformationTest {
     String testFile = "src/test/resources/statsTransformationTestData*.json"; // * to make the path into a directory path
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -132,7 +129,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggExactPerc_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats exactperc50(offset) AS perc_offset", testFile, ds -> {
-            assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("perc_offset")
@@ -140,7 +137,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("6.5"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("6.5"), destAsList);
         });
     }
 
@@ -152,7 +149,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggPerc_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats perc50(offset) AS perc_offset", testFile, ds -> {
-            assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[perc_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("perc_offset")
@@ -160,7 +157,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("6"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("6"), destAsList);
         });
     }
 
@@ -172,7 +169,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggRate_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats rate(offset) AS rate_offset", testFile, ds -> {
-            assertEquals("[rate_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[rate_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("rate_offset")
@@ -180,7 +177,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("3.2425553062149416E-8"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("3.2425553062149416E-8"), destAsList);
         });
     }
 
@@ -192,7 +189,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggEarliest_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats earliest(offset) AS earliest_offset", testFile, ds -> {
-            assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("earliest_offset")
@@ -200,7 +197,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("1"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("1"), destAsList);
         });
     }
 
@@ -213,7 +210,7 @@ public class statsTransformationTest {
     void statsTransform_AggEarliestNoData_Test() {
         streamingTestUtil
                 .performDPLTest("index=index_XYZ | stats earliest(offset) AS earliest_offset", testFile, ds -> {
-                    assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
+                    Assertions.assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
 
                     List<String> destAsList = ds
                             .select("earliest_offset")
@@ -221,7 +218,7 @@ public class statsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(Collections.singletonList(""), destAsList);
+                    Assertions.assertEquals(Collections.singletonList(""), destAsList);
                 });
     }
 
@@ -233,7 +230,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggLatestNoData_Test() {
         streamingTestUtil.performDPLTest("index=index_XYZ | stats latest(offset) AS latest_offset", testFile, ds -> {
-            assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("latest_offset")
@@ -241,7 +238,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList(""), destAsList);
+            Assertions.assertEquals(Collections.singletonList(""), destAsList);
         });
     }
 
@@ -254,7 +251,7 @@ public class statsTransformationTest {
     void statsTransform_AggEarliestTime_Test() {
         streamingTestUtil
                 .performDPLTest("index=index_A | stats earliest_time(offset) AS earliest_time_offset", testFile, ds -> {
-                    assertEquals("[earliest_time_offset]", Arrays.toString(ds.columns()));
+                    Assertions.assertEquals("[earliest_time_offset]", Arrays.toString(ds.columns()));
 
                     List<String> destAsList = ds
                             .select("earliest_time_offset")
@@ -262,7 +259,7 @@ public class statsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("978310861"), destAsList);
+                    Assertions.assertEquals(Collections.singletonList("978310861"), destAsList);
                 });
     }
 
@@ -274,7 +271,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggValues_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats values(offset) AS values_offset", testFile, ds -> {
-            assertEquals("[values_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[values_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("values_offset")
@@ -282,7 +279,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("1\n10\n11\n2\n3\n4\n5\n6\n7\n8\n9"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("1\n10\n11\n2\n3\n4\n5\n6\n7\n8\n9"), destAsList);
         });
     }
 
@@ -294,7 +291,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggList_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats list(offset) AS list_offset", testFile, ds -> {
-            assertEquals("[list_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[list_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("list_offset")
@@ -302,7 +299,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n11"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n11"), destAsList);
         });
     }
 
@@ -314,7 +311,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggMedian_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats median(offset) AS median_offset", testFile, ds -> {
-            assertEquals("[median_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[median_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("median_offset")
@@ -322,7 +319,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("6.5"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("6.5"), destAsList);
         });
     }
 
@@ -334,7 +331,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggMode_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats mode(offset) AS mode_offset", testFile, ds -> {
-            assertEquals("[mode_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[mode_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("mode_offset")
@@ -342,7 +339,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("11"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("11"), destAsList);
         });
     }
 
@@ -354,7 +351,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggMin_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats min(offset) AS min_offset", testFile, ds -> {
-            assertEquals("[min_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[min_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("min_offset")
@@ -362,7 +359,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("1"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("1"), destAsList);
         });
     }
 
@@ -374,7 +371,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggMax_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats max(offset) AS max_offset", testFile, ds -> {
-            assertEquals("[max_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[max_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("max_offset")
@@ -382,7 +379,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("11"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("11"), destAsList);
         });
     }
 
@@ -394,7 +391,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggStdev_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats stdev(offset) AS stdev_offset", testFile, ds -> {
-            assertEquals("[stdev_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[stdev_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("stdev_offset")
@@ -402,7 +399,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("3.4761089357690347"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("3.4761089357690347"), destAsList);
         });
     }
 
@@ -414,7 +411,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggStdevp_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats stdevp(offset) AS stdevp_offset", testFile, ds -> {
-            assertEquals("[stdevp_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[stdevp_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("stdevp_offset")
@@ -422,7 +419,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("3.3281209246193093"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("3.3281209246193093"), destAsList);
         });
     }
 
@@ -434,7 +431,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggSum_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats sum(offset) AS sum_offset", testFile, ds -> {
-            assertEquals("[sum_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[sum_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("sum_offset")
@@ -442,7 +439,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("77"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("77"), destAsList);
         });
     }
 
@@ -457,7 +454,7 @@ public class statsTransformationTest {
                 .performDPLTest(
                         "index=index_A | eval mv = mvappend(offset, offset+1) | stats sum(mv) AS sum_mv", testFile,
                         ds -> {
-                            assertEquals("[sum_mv]", Arrays.toString(ds.columns()));
+                            Assertions.assertEquals("[sum_mv]", Arrays.toString(ds.columns()));
 
                             List<String> destAsList = ds
                                     .select("sum_mv")
@@ -465,7 +462,7 @@ public class statsTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Collections.singletonList("166"), destAsList);
+                            Assertions.assertEquals(Collections.singletonList("166"), destAsList);
                         }
                 );
     }
@@ -503,13 +500,13 @@ public class statsTransformationTest {
                                     .collect(Collectors.toList());
 
                             // should be one of each
-                            assertEquals(1, atk.size());
-                            assertEquals(1, def.size());
-                            assertEquals(1, spy.size());
+                            Assertions.assertEquals(1, atk.size());
+                            Assertions.assertEquals(1, def.size());
+                            Assertions.assertEquals(1, spy.size());
                             // aggregate results
-                            assertEquals("0", atk.get(0));
-                            assertEquals("3", def.get(0));
-                            assertEquals("10", spy.get(0));
+                            Assertions.assertEquals("0", atk.get(0));
+                            Assertions.assertEquals("3", def.get(0));
+                            Assertions.assertEquals("10", spy.get(0));
                         }
                 );
     }
@@ -522,7 +519,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggSumsq_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats sumsq(offset) AS sumsq_offset", testFile, ds -> {
-            assertEquals("[sumsq_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[sumsq_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("sumsq_offset")
@@ -530,7 +527,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("627.0"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("627.0"), destAsList);
         });
     }
 
@@ -542,7 +539,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggDc_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats dc(offset) AS dc_offset", testFile, ds -> {
-            assertEquals("[dc_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[dc_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("dc_offset")
@@ -550,7 +547,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("11"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("11"), destAsList);
         });
     }
 
@@ -566,7 +563,7 @@ public class statsTransformationTest {
                 .performDPLTest(
                         "| makeresults | eval raw=\"kissa@1\"| rex4j field=raw \"koira@(?<koira>\\d)\" | stats dc(koira)",
                         testFile, ds -> {
-                            assertEquals("[dc(koira)]", Arrays.toString(ds.columns()));
+                            Assertions.assertEquals("[dc(koira)]", Arrays.toString(ds.columns()));
 
                             List<String> destAsList = ds
                                     .select("dc(koira)")
@@ -574,7 +571,7 @@ public class statsTransformationTest {
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            assertEquals(Collections.singletonList("0"), destAsList);
+                            Assertions.assertEquals(Collections.singletonList("0"), destAsList);
                         }
                 );
     }
@@ -587,7 +584,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggEstdc_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats estdc(offset) AS estdc_offset", testFile, ds -> {
-            assertEquals("[estdc_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[estdc_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("estdc_offset")
@@ -595,7 +592,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("11"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("11"), destAsList);
         });
     }
 
@@ -608,7 +605,7 @@ public class statsTransformationTest {
     void statsTransform_AggEstdc_error_Test() {
         streamingTestUtil
                 .performDPLTest("index=index_A | stats estdc_error(offset) AS estdc_error_offset", testFile, ds -> {
-                    assertEquals("[estdc_error_offset]", Arrays.toString(ds.columns()));
+                    Assertions.assertEquals("[estdc_error_offset]", Arrays.toString(ds.columns()));
 
                     List<String> destAsList = ds
                             .select("estdc_error_offset")
@@ -616,7 +613,7 @@ public class statsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("0.0"), destAsList);
+                    Assertions.assertEquals(Collections.singletonList("0.0"), destAsList);
                 });
     }
 
@@ -628,7 +625,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggRange_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats range(offset) AS range_offset", testFile, ds -> {
-            assertEquals("[range_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[range_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("range_offset")
@@ -636,7 +633,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("10"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("10"), destAsList);
         });
     }
 
@@ -648,7 +645,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggCount_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats count(offset) AS count_offset", testFile, ds -> {
-            assertEquals("[count_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[count_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("count_offset")
@@ -656,7 +653,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("12"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("12"), destAsList);
         });
     }
 
@@ -668,7 +665,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggAvg_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats avg(offset)", testFile, ds -> {
-            assertEquals("[avg(offset)]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[avg(offset)]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("avg(offset)")
@@ -676,7 +673,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
         });
     }
 
@@ -688,7 +685,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggMean_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats mean(offset)", testFile, ds -> {
-            assertEquals("[mean(offset)]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[mean(offset)]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("mean(offset)")
@@ -696,7 +693,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("6.416666666666667"), destAsList);
         });
     }
 
@@ -708,7 +705,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggVar_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats var(offset) AS var_offset", testFile, ds -> {
-            assertEquals("[var_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[var_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("var_offset")
@@ -716,7 +713,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("12.083333333333332"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("12.083333333333332"), destAsList);
         });
     }
 
@@ -728,7 +725,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggVarp_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats varp(offset) AS varp_offset", testFile, ds -> {
-            assertEquals("[varp_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[varp_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("varp_offset")
@@ -736,7 +733,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("11.076388888888888"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("11.076388888888888"), destAsList);
         });
     }
 
@@ -750,7 +747,7 @@ public class statsTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats var(offset) AS var_offset avg(offset) AS avg_offset", testFile, ds -> {
-                            assertEquals("[var_offset, avg_offset]", Arrays.toString(ds.columns()));
+                            Assertions.assertEquals("[var_offset, avg_offset]", Arrays.toString(ds.columns()));
                         }
                 );
     }
@@ -764,7 +761,7 @@ public class statsTransformationTest {
     void statsTransform_Agg_ByTest() {
         streamingTestUtil
                 .performDPLTest("index=index_A | stats avg(offset) AS avg_offset BY sourcetype,host", testFile, ds -> {
-                    assertEquals("[sourcetype, host, avg_offset]", Arrays.toString(ds.columns()));
+                    Assertions.assertEquals("[sourcetype, host, avg_offset]", Arrays.toString(ds.columns()));
                 });
     }
 
@@ -776,7 +773,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggFirst_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats first(offset) AS first_offset", testFile, ds -> {
-            assertEquals("[first_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[first_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("first_offset")
@@ -784,7 +781,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("1"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("1"), destAsList);
         });
     }
 
@@ -796,7 +793,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggLast_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats last(offset) AS last_offset", testFile, ds -> {
-            assertEquals("[last_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[last_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("last_offset")
@@ -804,7 +801,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("11"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("11"), destAsList);
         });
     }
 
@@ -816,7 +813,7 @@ public class statsTransformationTest {
     )
     void statsTransform_AggLatest_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats latest(offset) AS latest_offset", testFile, ds -> {
-            assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
+            Assertions.assertEquals("[latest_offset]", Arrays.toString(ds.columns()));
 
             List<String> destAsList = ds
                     .select("latest_offset")
@@ -824,7 +821,7 @@ public class statsTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            assertEquals(Collections.singletonList("11"), destAsList);
+            Assertions.assertEquals(Collections.singletonList("11"), destAsList);
         });
     }
 
@@ -837,7 +834,7 @@ public class statsTransformationTest {
     void statsTransform_AggLatestTime_Test() {
         streamingTestUtil
                 .performDPLTest("index=index_A | stats latest_time(offset) AS latest_time_offset", testFile, ds -> {
-                    assertEquals("[latest_time_offset]", Arrays.toString(ds.columns()));
+                    Assertions.assertEquals("[latest_time_offset]", Arrays.toString(ds.columns()));
 
                     List<String> destAsList = ds
                             .select("latest_time_offset")
@@ -845,7 +842,7 @@ public class statsTransformationTest {
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    assertEquals(Collections.singletonList("1286709610"), destAsList);
+                    Assertions.assertEquals(Collections.singletonList("1286709610"), destAsList);
                 });
     }
 }

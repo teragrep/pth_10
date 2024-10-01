@@ -46,13 +46,12 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.DefaultTimeFormat;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.TimeZone;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DefaultTimeFormatTest {
@@ -68,7 +67,7 @@ public class DefaultTimeFormatTest {
         long expected = 1702892453L;
         long actual = new DefaultTimeFormat().getEpoch(time);
 
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
@@ -77,7 +76,7 @@ public class DefaultTimeFormatTest {
         long expected = 1702896053L;
         long actual = new DefaultTimeFormat().getEpoch(time);
 
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
@@ -86,7 +85,7 @@ public class DefaultTimeFormatTest {
         long expected = 1702896053L;
         long actual = new DefaultTimeFormat().getEpoch(time);
 
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
@@ -95,6 +94,6 @@ public class DefaultTimeFormatTest {
         long expected = 1587021940L;
         long actual = new DefaultTimeFormat().getEpoch(time);
 
-        assertEquals(expected, actual);
+        Assertions.assertEquals(expected, actual);
     }
 }

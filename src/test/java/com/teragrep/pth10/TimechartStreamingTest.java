@@ -45,22 +45,19 @@
  */
 package com.teragrep.pth10;
 
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -87,18 +84,18 @@ public class TimechartStreamingTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -116,14 +113,13 @@ public class TimechartStreamingTest {
                 .performDPLTest(
                         "index=index_A earliest=2020-01-01T00:00:00z latest=2021-01-01T00:00:00z | timechart span=1mon count(_raw) as craw by sourcetype",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
 
                             List<Row> listOfTime = ds.select("_time").collectAsList();
 
                             // span buckets one per month (one extra due to timezones)
-                            assertEquals(13, listOfTime.size());
+                            Assertions.assertEquals(13, listOfTime.size());
                         }
                 );
     }
@@ -138,14 +134,13 @@ public class TimechartStreamingTest {
                 .performDPLTest(
                         "index=index_A earliest=2020-12-12T00:00:00z latest=2020-12-12T00:30:00z | timechart span=1min count(_raw) as craw by sourcetype",
                         testFile, ds -> {
-                            assertEquals(
-                                    "[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
 
                             List<Row> listOfTime = ds.select("_time").collectAsList();
 
                             // span buckets one per minute for 30mins
-                            assertEquals(31, listOfTime.size());
+                            Assertions.assertEquals(31, listOfTime.size());
                         }
                 );
     }
@@ -159,9 +154,8 @@ public class TimechartStreamingTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | timechart span=1min count(_raw) as craw by sourcetype", testFile, ds -> {
-                            assertEquals(
-                                    "[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                            Assertions
+                                    .assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
 
                             List<String> listOfSourcetype = ds
                                     .select("sourcetype")
@@ -174,8 +168,9 @@ public class TimechartStreamingTest {
                                     .filter(str -> !str.equals("0"))
                                     .collect(Collectors.toList());
 
-                            assertTrue(listOfSourcetype.contains("stream1") && listOfSourcetype.contains("stream2"));
-                            assertEquals(2, listOfSourcetype.size());
+                            Assertions
+                                    .assertTrue(listOfSourcetype.contains("stream1") && listOfSourcetype.contains("stream2"));
+                            Assertions.assertEquals(2, listOfSourcetype.size());
                         }
                 );
     }
@@ -187,9 +182,8 @@ public class TimechartStreamingTest {
     )
     public void timechartStreamingTest_3() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count by host", testFile, ds -> {
-            assertEquals(
-                    "[_time, host, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals("[_time, host, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
 
             List<String> listOfHosts = ds
                     .select("host")
@@ -200,7 +194,7 @@ public class TimechartStreamingTest {
                     .filter(str -> !str.equals("0"))
                     .collect(Collectors.toList());
 
-            assertEquals(1, listOfHosts.size());
+            Assertions.assertEquals(1, listOfHosts.size());
         });
     }
 
@@ -211,9 +205,8 @@ public class TimechartStreamingTest {
     )
     public void timechartStreamingTest_4() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count", testFile, ds -> {
-            assertEquals(
-                    "[_time, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-            );
+            Assertions
+                    .assertEquals("[_time, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
 
             List<String> listOfCount = ds
                     .select("count")
@@ -224,8 +217,8 @@ public class TimechartStreamingTest {
                     .filter(str -> !str.equals("0"))
                     .collect(Collectors.toList());
 
-            assertEquals(1, listOfCount.size());
-            assertEquals("10", listOfCount.get(0));
+            Assertions.assertEquals(1, listOfCount.size());
+            Assertions.assertEquals("10", listOfCount.get(0));
         });
     }
 }

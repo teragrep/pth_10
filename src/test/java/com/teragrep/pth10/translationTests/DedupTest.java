@@ -54,14 +54,13 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DedupTest {
@@ -86,8 +85,8 @@ public class DedupTest {
         dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
         DedupStep ds = dt.dedupStep;
 
-        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        Assertions.assertEquals(0, ds.getMaxDuplicates());
     }
 
     @Test
@@ -108,8 +107,8 @@ public class DedupTest {
         dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
         DedupStep ds = dt.dedupStep;
 
-        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        assertEquals(3, ds.getMaxDuplicates());
+        Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        Assertions.assertEquals(3, ds.getMaxDuplicates());
 
     }
 
@@ -131,9 +130,9 @@ public class DedupTest {
         dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
         DedupStep ds = dt.dedupStep;
 
-        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        assertEquals(0, ds.getMaxDuplicates());
-        assertTrue(ds.getConsecutive());
+        Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertTrue(ds.getConsecutive());
     }
 
     @Test
@@ -154,9 +153,9 @@ public class DedupTest {
         dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
         DedupStep ds = dt.dedupStep;
 
-        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        assertEquals(0, ds.getMaxDuplicates());
-        assertTrue(ds.getKeepEmpty());
+        Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertTrue(ds.getKeepEmpty());
 
     }
 
@@ -178,9 +177,9 @@ public class DedupTest {
         dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
         DedupStep ds = dt.dedupStep;
 
-        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        assertEquals(0, ds.getMaxDuplicates());
-        assertTrue(ds.getKeepEvents());
+        Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertTrue(ds.getKeepEvents());
     }
 
     @Test
@@ -201,8 +200,8 @@ public class DedupTest {
         dt.visitDedupTransformation((DPLParser.DedupTransformationContext) tree.getChild(1).getChild(0));
         DedupStep ds = dt.dedupStep;
 
-        assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
+        Assertions.assertEquals(0, ds.getMaxDuplicates());
         // TODO add assertion for sort by clause
     }
 }

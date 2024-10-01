@@ -48,6 +48,7 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.spark.util.sketch.BloomFilter;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
@@ -69,10 +70,14 @@ class FilterTypesTest {
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         Map<Long, Double> resultMap = filterTypes.sortedMap();
-        assertEquals(0.01, resultMap.get(1000L));
-        assertEquals(0.01, resultMap.get(2000L));
-        assertEquals(0.01, resultMap.get(3000L));
-        assertEquals(3, resultMap.size());
+
+        Map<Long, Double> resultMap = sizeMap.asSortedMap();
+
+        Assertions.assertEquals(0.01, filterTypes.get(1000L));
+        Assertions.assertEquals(0.01, filterTypes.get(2000L));
+        Assertions.assertEquals(0.01, filterTypes.get(3000L));
+        Assertions.assertEquals(3, filterTypes.size());
+
     }
 
     @Test
@@ -84,13 +89,15 @@ class FilterTypesTest {
                         "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.01},"
                                 + "{expected: 3000, fpp: 0.01}" + "]"
                 );
+
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         Map<Long, Long> bitSizeMap = filterTypes.bitSizeMap();
-        assertEquals(1000L, bitSizeMap.get(BloomFilter.create(1000, 0.01).bitSize()));
-        assertEquals(2000L, bitSizeMap.get(BloomFilter.create(2000, 0.01).bitSize()));
-        assertEquals(3000L, bitSizeMap.get(BloomFilter.create(3000, 0.01).bitSize()));
-        assertEquals(3, bitSizeMap.size());
+        Assertions.assertEquals(1000L, filterTypes.get(BloomFilter.create(1000, 0.01).bitSize()));
+        Assertions.assertEquals(2000L, filterTypes.get(BloomFilter.create(2000, 0.01).bitSize()));
+        Assertions.assertEquals(3000L, filterTypes.get(BloomFilter.create(3000, 0.01).bitSize()));
+        Assertions.assertEquals(3, bitSizeMap.size());
+
     }
 
     @Test

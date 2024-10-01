@@ -54,10 +54,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RenameTest {
@@ -77,7 +76,7 @@ public class RenameTest {
         ct.visitRenameTransformation((DPLParser.RenameTransformationContext) tree.getChild(1).getChild(0));
         RenameStep cs = ct.renameStep;
 
-        assertEquals("new", cs.getMapOfRenamedFields().get("field"));
+        Assertions.assertEquals("new", cs.getMapOfRenamedFields().get("field"));
     }
 
     @Test
@@ -95,6 +94,6 @@ public class RenameTest {
         ct.visitRenameTransformation((DPLParser.RenameTransformationContext) tree.getChild(1).getChild(0));
         RenameStep cs = ct.renameStep;
 
-        assertEquals("new name", cs.getMapOfRenamedFields().get("field"));
+        Assertions.assertEquals("new name", cs.getMapOfRenamedFields().get("field"));
     }
 }

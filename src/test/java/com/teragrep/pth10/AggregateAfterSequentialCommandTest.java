@@ -49,13 +49,10 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class AggregateAfterSequentialCommandTest {
@@ -77,18 +74,18 @@ public class AggregateAfterSequentialCommandTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -107,7 +104,7 @@ public class AggregateAfterSequentialCommandTest {
                 .performDPLTest(
                         "index=index_A | spath path=rainfall_rate | dedup rainfall_rate | stats sum(rainfall_rate)",
                         testFile, ds -> {
-                            assertEquals("139.875", ds.select("sum(rainfall_rate)").first().getString(0));
+                            Assertions.assertEquals("139.875", ds.select("sum(rainfall_rate)").first().getString(0));
                         }
                 );
     }
@@ -122,7 +119,7 @@ public class AggregateAfterSequentialCommandTest {
                 .performDPLTest(
                         "index=index_A | spath path=rainfall_rate | stats count(rainfall_rate) as cr by _raw | dedup cr | stats sum(cr)",
                         testFile, ds -> {
-                            assertEquals("5", ds.select("sum(cr)").first().getString(0));
+                            Assertions.assertEquals("5", ds.select("sum(cr)").first().getString(0));
                         }
                 );
     }
@@ -137,7 +134,7 @@ public class AggregateAfterSequentialCommandTest {
                 .performDPLTest(
                         "index=index_A | spath | teragrep exec hdfs save /tmp/pth_10/aggregateAfterHdfsLoadTest overwrite=true",
                         testFile, ds -> {
-                            assertEquals(new StructType(new StructField[] {
+                            Assertions.assertEquals(new StructType(new StructField[] {
                                     new StructField(
                                             "_time",
                                             DataTypes.TimestampType,
@@ -163,7 +160,7 @@ public class AggregateAfterSequentialCommandTest {
                 .performDPLTest(
                         "| teragrep exec hdfs load /tmp/pth_10/aggregateAfterHdfsLoadTest | dedup rainfall_rate | stats sum(rainfall_rate)",
                         testFile, ds -> {
-                            assertEquals("139.875", ds.select("sum(rainfall_rate)").first().getString(0));
+                            Assertions.assertEquals("139.875", ds.select("sum(rainfall_rate)").first().getString(0));
                         }
                 );
     }

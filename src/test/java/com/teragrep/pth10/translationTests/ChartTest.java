@@ -54,12 +54,11 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ChartTest {
@@ -79,11 +78,12 @@ public class ChartTest {
         ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
         ChartStep cs = ct.chartStep;
 
-        assertEquals(
-                "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
-                Arrays.toString(cs.getListOfExpr().toArray())
-        );
-        assertEquals("[_time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
+        Assertions
+                .assertEquals(
+                        "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
+                        Arrays.toString(cs.getListOfExpr().toArray())
+                );
+        Assertions.assertEquals("[_time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
 
     }
 
@@ -102,11 +102,12 @@ public class ChartTest {
         ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
         ChartStep cs = ct.chartStep;
 
-        assertEquals(
-                "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
-                Arrays.toString(cs.getListOfExpr().toArray())
-        );
-        assertEquals("[_time, fieldTwo]", Arrays.toString(cs.getListOfGroupBy().toArray()));
+        Assertions
+                .assertEquals(
+                        "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
+                        Arrays.toString(cs.getListOfExpr().toArray())
+                );
+        Assertions.assertEquals("[_time, fieldTwo]", Arrays.toString(cs.getListOfGroupBy().toArray()));
     }
 
     @Test
@@ -124,11 +125,12 @@ public class ChartTest {
         ct.visitChartTransformation((DPLParser.ChartTransformationContext) tree.getChild(1).getChild(0));
         ChartStep cs = ct.chartStep;
 
-        assertEquals(
-                "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
-                Arrays.toString(cs.getListOfExpr().toArray())
-        );
-        assertEquals("[fieldTwo, _time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
+        Assertions
+                .assertEquals(
+                        "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
+                        Arrays.toString(cs.getListOfExpr().toArray())
+                );
+        Assertions.assertEquals("[fieldTwo, _time]", Arrays.toString(cs.getListOfGroupBy().toArray()));
 
     }
 }

@@ -49,16 +49,13 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class WhereTransformationTest {
@@ -80,18 +77,18 @@ public class WhereTransformationTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -116,7 +113,7 @@ public class WhereTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, rawColumn.size());
+            Assertions.assertEquals(1, rawColumn.size());
         });
     }
 
@@ -136,7 +133,7 @@ public class WhereTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, indexColumn.size());
+            Assertions.assertEquals(1, indexColumn.size());
         });
     }
 
@@ -156,7 +153,7 @@ public class WhereTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(0, indexColumn.size());
+            Assertions.assertEquals(0, indexColumn.size());
         });
     }
 
@@ -176,7 +173,7 @@ public class WhereTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, hostColumn.size());
+            Assertions.assertEquals(1, hostColumn.size());
         });
     }
 }

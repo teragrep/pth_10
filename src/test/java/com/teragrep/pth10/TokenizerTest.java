@@ -57,24 +57,21 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import java.util.regex.Pattern;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TokenizerTest {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(RexTransformationTest.class);
 
     private final String testFile = "src/test/resources/rexTransformationTest_data*.json"; // * to make the path into a directory path
     private final StructType testSchema = new StructType(new StructField[] {
@@ -91,18 +88,18 @@ public class TokenizerTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -118,7 +115,7 @@ public class TokenizerTest {
     )
     public void tokenize() {
         streamingTestUtil.performDPLTest("index=index_A | teragrep exec tokenizer", testFile, ds -> {
-            assertEquals("tokens", ds.columns()[ds.columns().length - 1]);
+            Assertions.assertEquals("tokens", ds.columns()[ds.columns().length - 1]);
         });
     }
 
@@ -133,8 +130,8 @@ public class TokenizerTest {
                         "index=index_A | teragrep exec tokenizer format string input _raw output strtokens", testFile,
                         ds -> {
                             String row = ds.select("strtokens").first().getList(0).toString();
-                            assertTrue(row.startsWith("[{, \", rainfall"));
-                            assertEquals("strtokens", ds.columns()[ds.columns().length - 1]);
+                            Assertions.assertTrue(row.startsWith("[{, \", rainfall"));
+                            Assertions.assertEquals("strtokens", ds.columns()[ds.columns().length - 1]);
                         }
                 );
     }
@@ -150,8 +147,8 @@ public class TokenizerTest {
                         "index=index_A | teragrep exec tokenizer format bytes input _raw output bytetokens", testFile,
                         ds -> {
                             String row = ds.select("bytetokens").first().getList(0).toString();
-                            assertTrue(row.startsWith("[[B")); // bytes start with '[[B'
-                            assertEquals("bytetokens", ds.columns()[ds.columns().length - 1]);
+                            Assertions.assertTrue(row.startsWith("[[B")); // bytes start with '[[B'
+                            Assertions.assertEquals("bytetokens", ds.columns()[ds.columns().length - 1]);
                         }
                 );
     }

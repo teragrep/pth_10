@@ -55,10 +55,10 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.SparkSession;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class WhereTest {
@@ -66,7 +66,7 @@ public class WhereTest {
     SparkSession spark = null;
     DPLParserCatalystContext ctx = null;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         spark = SparkSession.builder().appName("Java Spark SQL basic example").master("local[2]").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
@@ -85,9 +85,11 @@ public class WhereTest {
         ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
         final WhereStep cs = ct.whereStep;
 
-        assertEquals(
-                "EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_LT + ", 5)", cs.getWhereColumn().toString()
-        );
+        Assertions
+                .assertEquals(
+                        "EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_LT + ", 5)",
+                        cs.getWhereColumn().toString()
+                );
     }
 
     @Test
@@ -105,7 +107,7 @@ public class WhereTest {
         ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
         final WhereStep cs = ct.whereStep;
 
-        assertEquals("field LIKE %5%", cs.getWhereColumn().toString());
+        Assertions.assertEquals("field LIKE %5%", cs.getWhereColumn().toString());
     }
 
     @Test
@@ -120,9 +122,11 @@ public class WhereTest {
         ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
         final WhereStep cs = ct.whereStep;
 
-        assertEquals(
-                "EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_EQ + ", 5)", cs.getWhereColumn().toString()
-        );
+        Assertions
+                .assertEquals(
+                        "EvalOperation(offset, " + DPLLexer.EVAL_LANGUAGE_MODE_EQ + ", 5)",
+                        cs.getWhereColumn().toString()
+                );
     }
 
     @Test
@@ -139,6 +143,6 @@ public class WhereTest {
         ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));
         final WhereStep cs = ct.whereStep;
 
-        assertEquals("(NOT field LIKE %40%)", cs.getWhereColumn().toString());
+        Assertions.assertEquals("(NOT field LIKE %40%)", cs.getWhereColumn().toString());
     }
 }
