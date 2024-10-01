@@ -50,9 +50,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
-public class CreateTableSQL {
+public class TableSQL {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(CreateTableSQL.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TableSQL.class);
     private final String name;
     private final boolean ignoreConstraints;
 
@@ -71,16 +71,16 @@ public class CreateTableSQL {
         }
     }
 
-    public CreateTableSQL(String name) {
+    public TableSQL(String name) {
         this(name, false);
     }
 
-    public CreateTableSQL(String name, boolean ignoreConstraints) {
+    public TableSQL(String name, boolean ignoreConstraints) {
         this.name = name;
         this.ignoreConstraints = ignoreConstraints;
     }
 
-    public String sql() {
+    public String createTableSQL() {
         nameIsValid();
         final String sql;
         if (ignoreConstraints) {
@@ -109,7 +109,7 @@ public class CreateTableSQL {
             return false;
         if (object.getClass() != this.getClass())
             return false;
-        final CreateTableSQL cast = (CreateTableSQL) object;
+        final TableSQL cast = (TableSQL) object;
         return this.name.equals(cast.name) && this.ignoreConstraints == cast.ignoreConstraints;
     }
 }

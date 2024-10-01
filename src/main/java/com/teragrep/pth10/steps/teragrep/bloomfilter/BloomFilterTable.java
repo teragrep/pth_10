@@ -56,25 +56,25 @@ import java.sql.SQLException;
 public final class BloomFilterTable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterTable.class);
-    private final CreateTableSQL table;
+    private final TableSQL tableSQL;
     private final LazyConnection conn;
 
     public BloomFilterTable(Config config) {
-        this(new CreateTableSQL(new FilterTypes(config).tableName(), false), new LazyConnection(config));
+        this(new TableSQL(new FilterTypes(config).tableName(), false), new LazyConnection(config));
     }
 
     // used in testing
     public BloomFilterTable(Config config, boolean ignoreConstraints) {
-        this(new CreateTableSQL(new FilterTypes(config).tableName(), ignoreConstraints), new LazyConnection(config));
+        this(new TableSQL(new FilterTypes(config).tableName(), ignoreConstraints), new LazyConnection(config));
     }
 
-    public BloomFilterTable(CreateTableSQL table, LazyConnection conn) {
-        this.table = table;
+    public BloomFilterTable(TableSQL tableSQL, LazyConnection conn) {
+        this.tableSQL = tableSQL;
         this.conn = conn;
     }
 
     public void create() {
-        final String sql = table.sql();
+        final String sql = tableSQL.createTableSQL();
         final Connection connection = conn.get();
         try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.execute();
@@ -95,6 +95,6 @@ public final class BloomFilterTable {
         if (object.getClass() != this.getClass())
             return false;
         final BloomFilterTable cast = (BloomFilterTable) object;
-        return this.table.equals(cast.table) && this.conn.equals(cast.conn);
+        return this.tableSQL.equals(cast.tableSQL) && this.conn.equals(cast.conn);
     }
 }

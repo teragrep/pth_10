@@ -48,29 +48,29 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-class CreateTableSQLTest {
+class TableSQLTest {
 
     @Test
-    public void testSql() {
+    public void testCreateTableSQL() {
         String name = "test_table";
-        CreateTableSQL table = new CreateTableSQL(name);
+        TableSQL table = new TableSQL(name);
         String e = "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL,CONSTRAINT `test_table_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)ON DELETE CASCADE,CONSTRAINT `test_table_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)ON DELETE CASCADE);";
-        Assertions.assertEquals(e, table.sql());
+        Assertions.assertEquals(e, table.createTableSQL());
     }
 
     @Test
-    public void testIgnoreConstraintsSql() {
+    public void testIgnoreConstraintsCreateTableSQL() {
         String name = "test_table";
-        CreateTableSQL table = new CreateTableSQL(name, true);
+        TableSQL table = new TableSQL(name, true);
         String e = "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL);";
-        Assertions.assertEquals(e, table.sql());
+        Assertions.assertEquals(e, table.createTableSQL());
     }
 
     @Test
     public void testInvalidInputCharacters() {
         String injection = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
-        CreateTableSQL table = new CreateTableSQL(injection);
-        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::sql);
+        TableSQL table = new TableSQL(injection);
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
                         "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _", e.getMessage()
@@ -78,10 +78,10 @@ class CreateTableSQLTest {
     }
 
     @Test
-    public void testInvalidInputCharactersIgnoreConstraintsSql() {
+    public void testInvalidInputCharactersIgnoreConstraintsCreateTableSQL() {
         String injection = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
-        CreateTableSQL table = new CreateTableSQL(injection, true);
-        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::sql);
+        TableSQL table = new TableSQL(injection, true);
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
                         "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _", e.getMessage()
@@ -91,8 +91,8 @@ class CreateTableSQLTest {
     @Test
     public void testInputOverMaxLimit() {
         String tooLongName = "testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati";
-        CreateTableSQL table = new CreateTableSQL(tooLongName);
-        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::sql);
+        TableSQL table = new TableSQL(tooLongName);
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
                         "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters",
@@ -101,10 +101,10 @@ class CreateTableSQLTest {
     }
 
     @Test
-    public void testInputOverMaxLimitIgnoreConstraintsSql() {
+    public void testInputOverMaxLimitIgnoreConstraintsCreateTableSQL() {
         String tooLongName = "testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati";
-        CreateTableSQL table = new CreateTableSQL(tooLongName, true);
-        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::sql);
+        TableSQL table = new TableSQL(tooLongName, true);
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
                         "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters",
@@ -115,22 +115,22 @@ class CreateTableSQLTest {
     @Test
     public void testEquality() {
         String name = "test_table";
-        CreateTableSQL table1 = new CreateTableSQL(name);
-        CreateTableSQL table2 = new CreateTableSQL(name);
+        TableSQL table1 = new TableSQL(name);
+        TableSQL table2 = new TableSQL(name);
         Assertions.assertEquals(table1, table2);
     }
 
     @Test
     public void testNotEqualNames() {
-        CreateTableSQL table1 = new CreateTableSQL("table_1");
-        CreateTableSQL table2 = new CreateTableSQL("table_2");
+        TableSQL table1 = new TableSQL("table_1");
+        TableSQL table2 = new TableSQL("table_2");
         Assertions.assertNotEquals(table1, table2);
     }
 
     @Test
     public void testNotEqualIgnoreConstraints() {
-        CreateTableSQL table1 = new CreateTableSQL("table_1", true);
-        CreateTableSQL table2 = new CreateTableSQL("table_2");
+        TableSQL table1 = new TableSQL("table_1", true);
+        TableSQL table2 = new TableSQL("table_2");
         Assertions.assertNotEquals(table1, table2);
     }
 }
