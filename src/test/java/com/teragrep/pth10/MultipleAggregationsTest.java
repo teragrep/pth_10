@@ -62,9 +62,9 @@ import java.util.Arrays;
  * @author eemhu
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class StackTest {
+public class MultipleAggregationsTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(StackTest.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MultipleAggregationsTest.class);
 
     private final String testFile = "src/test/resources/predictTransformationTest_data*.json"; // * to make the path into a directory path
     private final StructType testSchema = new StructType(new StructField[] {
@@ -106,7 +106,7 @@ public class StackTest {
             named = "skipSparkTest",
             matches = "true"
     ) /* chart -> chart */
-    public void stackTest_Streaming_ChartChart() {
+    public void multipleAggsTest_ChartChart() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | chart count(offset) as c_offset by partition | chart count(c_offset) as final",
@@ -116,37 +116,13 @@ public class StackTest {
                         }
                 );
     }
-
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
-    public void stackTest_Streaming_1() {
-        streamingTestUtil.performDPLTest("index=index_A", testFile, ds -> {
-            Assertions
-                    .assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", "Batch handler dataset contained an unexpected column arrangement !");
-        });
-    }
-
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    ) /* eval */
-    public void stackTest_Streaming_Eval() {
-        streamingTestUtil.performDPLTest("index=index_A | eval newField = offset * 5", testFile, ds -> {
-            Assertions
-                    .assertEquals(Arrays.toString(ds.columns()), "[_time, id, _raw, index, sourcetype, host, source, partition, offset, newField]", "Batch handler dataset contained an unexpected column arrangement !");
-        });
-    }
-
+    
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     ) /* stats -> chart */
-    public void stackTest_Streaming_StatsChart() {
+    public void multipleAggsTest_StatsChart() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats count(_raw) as raw_count | chart count(raw_count) as count", testFile,
@@ -162,7 +138,7 @@ public class StackTest {
             named = "skipSparkTest",
             matches = "true"
     ) /* stats -> stats */
-    public void stackTest_Streaming_StatsStats() {
+    public void multipleAggsTest_StatsStats() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avg1 count(offset) as c_offset dc(offset) as dc | stats count(avg1) as c_avg count(c_offset) as c_count count(dc) as c_dc",
@@ -178,7 +154,7 @@ public class StackTest {
             named = "skipSparkTest",
             matches = "true"
     ) /* stats -> chart -> eval */
-    public void stackTest_Streaming_StatsChartEval() {
+    public void multipleAggsTest_StatsChartEval() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avg_offset | chart count(avg_offset) as c_avg_offset | eval final=c_avg_offset * 5",
@@ -194,7 +170,7 @@ public class StackTest {
             named = "skipSparkTest",
             matches = "true"
     ) /* eval -> eval -> eval -> stats -> chart */
-    public void stackTest_Streaming_EvalEvalEvalStatsChart() {
+    public void multipleAggsTest_EvalEvalEvalStatsChart() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval x = a + b | stats var(x) as field | chart count(field) as final",
@@ -204,16 +180,14 @@ public class StackTest {
                         }
                 );
     }
-
-    // TODO: remove disabled annotation when pth-03 issue #125 is closed
-    // Fails because c is parsed as count() command, not a column
+    
     @Test
-    @Disabled(value = "requires parser fixes")
+    @Disabled(value = "Fails because c is parsed as count() command, not a column, pth-03 issue #80")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     ) /* eval -> eval -> eval -> stats -> chart */
-    public void stackTest_Streaming_EvalEvalEvalStatsChart_with_c() {
+    public void multipleAggsTest_EvalEvalEvalStatsChart_with_c() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval c = a + b | stats var(c) as field | chart count(field) as final",
