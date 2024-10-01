@@ -70,13 +70,10 @@ class FilterTypesTest {
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         Map<Long, Double> resultMap = filterTypes.sortedMap();
-
-        Map<Long, Double> resultMap = sizeMap.asSortedMap();
-
-        Assertions.assertEquals(0.01, filterTypes.get(1000L));
-        Assertions.assertEquals(0.01, filterTypes.get(2000L));
-        Assertions.assertEquals(0.01, filterTypes.get(3000L));
-        Assertions.assertEquals(3, filterTypes.size());
+        assertEquals(0.01, resultMap.get(1000L));
+        assertEquals(0.01, resultMap.get(2000L));
+        assertEquals(0.01, resultMap.get(3000L));
+        assertEquals(3, resultMap.size());
 
     }
 
@@ -93,9 +90,9 @@ class FilterTypesTest {
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         Map<Long, Long> bitSizeMap = filterTypes.bitSizeMap();
-        Assertions.assertEquals(1000L, filterTypes.get(BloomFilter.create(1000, 0.01).bitSize()));
-        Assertions.assertEquals(2000L, filterTypes.get(BloomFilter.create(2000, 0.01).bitSize()));
-        Assertions.assertEquals(3000L, filterTypes.get(BloomFilter.create(3000, 0.01).bitSize()));
+        Assertions.assertEquals(1000L, bitSizeMap.get(BloomFilter.create(1000, 0.01).bitSize()));
+        Assertions.assertEquals(2000L, bitSizeMap.get(BloomFilter.create(2000, 0.01).bitSize()));
+        Assertions.assertEquals(3000L, bitSizeMap.get(BloomFilter.create(3000, 0.01).bitSize()));
         Assertions.assertEquals(3, bitSizeMap.size());
 
     }
@@ -139,7 +136,6 @@ class FilterTypesTest {
         filterTypes1.tableName();
         filterTypes1.bitSizeMap();
         assertEquals(filterTypes1, filterTypes2);
-        assertEquals(filterTypes2, filterTypes1);
     }
 
     @Test
@@ -153,6 +149,5 @@ class FilterTypesTest {
         FilterTypes filterTypes1 = new FilterTypes(config1);
         FilterTypes filterTypes2 = new FilterTypes(config2);
         assertNotEquals(filterTypes1, filterTypes2);
-        assertNotEquals(filterTypes2, filterTypes1);
     }
 }

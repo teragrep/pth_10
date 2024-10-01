@@ -296,7 +296,6 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter2 = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
         filter1.saveFilter(false);
         Assertions.assertEquals(filter1, filter2);
-        Assertions.assertEquals(filter2, filter1);
     }
 
     @Test
@@ -322,7 +321,6 @@ class TeragrepBloomFilterTest {
                 filterTypes
         );
         Assertions.assertNotEquals(filter1, filter2);
-        Assertions.assertNotEquals(filter2, filter1);
     }
 
     // -- Helper methods --

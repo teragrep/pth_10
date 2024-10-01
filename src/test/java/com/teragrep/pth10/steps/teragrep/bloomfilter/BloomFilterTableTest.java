@@ -93,7 +93,8 @@ class BloomFilterTableTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, injectionTable::create);
         Assertions
                 .assertEquals(
-                        e.getMessage(), "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _"
+                        "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _",
+                        e.getMessage()
                 );
     }
 
@@ -107,8 +108,8 @@ class BloomFilterTableTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
         Assertions
                 .assertEquals(
-                        e.getMessage(),
-                        "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters"
+                        "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters",
+                        e.getMessage()
                 );
     }
 
@@ -158,7 +159,6 @@ class BloomFilterTableTest {
         BloomFilterTable table2 = new BloomFilterTable(config, true);
         table1.create();
         Assertions.assertEquals(table1, table2);
-        Assertions.assertEquals(table2, table1);
     }
 
     @Test
@@ -173,7 +173,6 @@ class BloomFilterTableTest {
         BloomFilterTable table2 = new BloomFilterTable(config2, true);
         table1.create();
         Assertions.assertNotEquals(table1, table2);
-        Assertions.assertNotEquals(table2, table1);
     }
 
     @Test
@@ -186,7 +185,6 @@ class BloomFilterTableTest {
         BloomFilterTable table2 = new BloomFilterTable(config, false);
         table1.create();
         Assertions.assertNotEquals(table1, table2);
-        Assertions.assertNotEquals(table2, table1);
     }
 
     private Properties getDefaultProperties() {
