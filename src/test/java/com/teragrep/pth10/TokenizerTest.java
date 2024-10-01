@@ -77,7 +77,6 @@ public class TokenizerTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RexTransformationTest.class);
 
     private final String testFile = "src/test/resources/rexTransformationTest_data*.json"; // * to make the path into a directory path
-    private final String regexTestFile = "src/test/resources/bloomAggregationData*.json";
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
@@ -169,8 +168,10 @@ public class TokenizerTest {
 
         TokenizerStep step = new TokenizerStep(config, AbstractTokenizerStep.TokenizerFormat.STRING, "_raw", "result");
         SparkSession spark = streamingTestUtil.getCtx().getSparkSession();
-        Assertions
+        UnsupportedOperationException exception = Assertions
                 .assertThrows(UnsupportedOperationException.class, () -> step.get(spark.read().schema(testSchema).csv(spark.emptyDataset(Encoders.STRING()))));
+        String e = "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option";
+        Assertions.assertEquals(e, exception.getMessage());
     }
 
     @Test
@@ -192,14 +193,15 @@ public class TokenizerTest {
                 "bytetokens"
         );
         SparkSession spark = streamingTestUtil.getCtx().getSparkSession();
-        Dataset<Row> result = step.get(spark.read().schema(testSchema).json(regexTestFile));
+        Dataset<Row> result = step.get(spark.read().schema(testSchema).json(testFile));
         // first row value: 127.0.0.0
         List<Object> list = result.select("bytetokens").first().getList(0);
-        List<String> tokens = new ArrayList<>();
+        Set<String> tokens = new HashSet<>();
         for (Object o : list) {
             tokens.add(new String((byte[]) o, StandardCharsets.UTF_8));
         }
         Assertions.assertEquals(4, list.size());
+        Assertions.assertEquals(2, tokens.size());
         Assertions.assertTrue(tokens.contains("127"));
         Assertions.assertTrue(tokens.contains("0"));
         Assertions.assertTrue(tokens.stream().allMatch(s -> pattern.matcher(s).matches()));

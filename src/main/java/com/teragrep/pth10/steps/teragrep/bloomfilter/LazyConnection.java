@@ -126,4 +126,19 @@ public final class LazyConnection implements Serializable {
         }
         return databaseUrl;
     }
+
+    /**
+     * Connection parameter not considered in equals method because of lazy init
+     */
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object)
+            return true;
+        if (object == null)
+            return false;
+        if (object.getClass() != this.getClass())
+            return false;
+        final LazyConnection cast = (LazyConnection) object;
+        return this.config.equals(cast.config);
+    }
 }

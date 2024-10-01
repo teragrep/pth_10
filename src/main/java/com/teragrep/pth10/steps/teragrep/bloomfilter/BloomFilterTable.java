@@ -57,16 +57,22 @@ import java.util.regex.Pattern;
 public final class BloomFilterTable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterTable.class);
-    private final Config config;
     private final boolean ignoreConstraints;
+    private final FilterTypes filterTypes;
+    private final LazyConnection conn;
 
     public BloomFilterTable(Config config) {
-        this(config, false);
+        this(new FilterTypes(config), new LazyConnection(config), false);
     }
 
     // used in testing
     public BloomFilterTable(Config config, boolean ignoreConstraints) {
-        this.config = config;
+        this(new FilterTypes(config), new LazyConnection(config), ignoreConstraints);
+    }
+
+    public BloomFilterTable(FilterTypes filterTypes, LazyConnection conn, boolean ignoreConstraints) {
+        this.filterTypes = filterTypes;
+        this.conn = conn;
         this.ignoreConstraints = ignoreConstraints;
     }
 
@@ -74,9 +80,9 @@ public final class BloomFilterTable {
         if (ignoreConstraints && LOGGER.isDebugEnabled()) {
             LOGGER.debug("Ignore database constraints active this should be only used in testing");
         }
-        final String name = new FilterTypes(config).tableName();
+        final String name = filterTypes.tableName();
         final String sql = createTableSQL(name);
-        final Connection connection = new LazyConnection(config).get();
+        final Connection connection = conn.get();
         try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.execute();
             connection.commit();
@@ -124,6 +130,7 @@ public final class BloomFilterTable {
         if (object.getClass() != this.getClass())
             return false;
         final BloomFilterTable cast = (BloomFilterTable) object;
-        return config.equals(cast.config) && this.ignoreConstraints == cast.ignoreConstraints;
+        return this.filterTypes.equals(cast.filterTypes) && this.conn.equals(cast.conn)
+                && this.ignoreConstraints == cast.ignoreConstraints;
     }
 }

@@ -49,7 +49,7 @@ import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
-public class ConfiguredUDF implements TokenizerApplicable {
+public final class ConfiguredUDF implements TokenizerApplicable {
 
     private final Config config;
     private final TokenizerUDF tokenizerUDF;

@@ -108,7 +108,7 @@ public final class FilterTypes implements Serializable {
 
     public String pattern() {
         final String pattern;
-        String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
+        final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
         if (config.hasPath(BLOOM_PATTERN_CONFIG_ITEM)) {
             final String patternFromConfig = config.getString(BLOOM_PATTERN_CONFIG_ITEM);
             if (patternFromConfig == null || patternFromConfig.isEmpty()) {
@@ -124,7 +124,7 @@ public final class FilterTypes implements Serializable {
 
     public String tableName() {
         final String tableName;
-        String BLOOM_TABLE_NAME_ITEM = "dpl.pth_06.bloom.table.name";
+        final String BLOOM_TABLE_NAME_ITEM = "dpl.pth_06.bloom.table.name";
         if (config.hasPath(BLOOM_TABLE_NAME_ITEM)) {
             final String tableNameFromConfig = config.getString(BLOOM_TABLE_NAME_ITEM);
             if (tableNameFromConfig == null || tableNameFromConfig.isEmpty()) {
@@ -141,7 +141,7 @@ public final class FilterTypes implements Serializable {
 
     private String sizesJsonString() {
         final String jsonString;
-        String BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM = "dpl.pth_06.bloom.db.fields";
+        final String BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM = "dpl.pth_06.bloom.db.fields";
         if (config.hasPath(BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM)) {
             jsonString = config.getString(BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM);
             if (jsonString == null || jsonString.isEmpty()) {

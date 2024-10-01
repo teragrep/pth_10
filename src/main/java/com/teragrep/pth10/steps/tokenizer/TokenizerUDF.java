@@ -54,7 +54,7 @@ import org.apache.spark.sql.types.DataTypes;
 
 import static org.apache.spark.sql.types.DataTypes.StringType;
 
-public class TokenizerUDF implements TokenizerApplicable {
+public final class TokenizerUDF implements TokenizerApplicable {
 
     private final AbstractTokenizerStep.TokenizerFormat format;
     private final String inputCol;
