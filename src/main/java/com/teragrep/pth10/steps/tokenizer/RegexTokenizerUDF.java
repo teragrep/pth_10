@@ -54,7 +54,6 @@ import org.apache.spark.sql.types.DataTypes;
 
 public final class RegexTokenizerUDF implements TokenizerApplicable {
 
-    private final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
     private final Config config;
     private final AbstractTokenizerStep.TokenizerFormat format;
     private final String inputCol;
@@ -73,6 +72,7 @@ public final class RegexTokenizerUDF implements TokenizerApplicable {
     }
 
     public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
+        final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
         final String pattern = config.getString(BLOOM_PATTERN_CONFIG_ITEM).trim();
         final UserDefinedFunction regexUDF = functions
                 .udf(
@@ -83,10 +83,6 @@ public final class RegexTokenizerUDF implements TokenizerApplicable {
         if (this.format == AbstractTokenizerStep.TokenizerFormat.BYTES) {
             return dataset.withColumn(outputCol, regexUDF.apply(functions.col(inputCol), functions.lit(pattern)));
         }
-        else {
-            throw new UnsupportedOperationException(
-                    "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option"
-            );
-        }
+        throw new UnsupportedOperationException("TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option");
     }
 }

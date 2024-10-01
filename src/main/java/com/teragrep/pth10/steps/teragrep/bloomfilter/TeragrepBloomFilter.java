@@ -54,6 +54,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Map;
 import java.util.Objects;
 
 import org.slf4j.Logger;
@@ -88,8 +89,9 @@ public final class TeragrepBloomFilter {
         final long bitSize = filter.bitSize();
         final long selectedExpectedNumOfItems;
         final Double selectedFpp;
-        if (filterTypes.bitSizeMap().containsKey(bitSize)) {
-            final long expectedItems = filterTypes.bitSizeMap().get(bitSize);
+        final Map<Long, Long> bitSizeMap = filterTypes.bitSizeMap();
+        if (bitSizeMap.containsKey(bitSize)) {
+            final long expectedItems = bitSizeMap.get(bitSize);
             selectedExpectedNumOfItems = expectedItems;
             selectedFpp = filterTypes.sortedMap().get(expectedItems);
         }

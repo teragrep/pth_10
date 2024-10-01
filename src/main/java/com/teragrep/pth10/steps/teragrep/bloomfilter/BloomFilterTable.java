@@ -52,7 +52,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.regex.Pattern;
 
 public final class BloomFilterTable {
 
@@ -81,7 +80,13 @@ public final class BloomFilterTable {
             LOGGER.debug("Ignore database constraints active this should be only used in testing");
         }
         final String name = filterTypes.tableName();
-        final String sql = createTableSQL(name);
+        final CreateTableSQL table = new CreateTableSQL(name);
+        final String sql;
+        if (ignoreConstraints) {
+            sql = table.ignoreConstraintsSql();
+        } else {
+            sql = table.sql();
+        }
         final Connection connection = conn.get();
         try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.execute();
@@ -92,33 +97,6 @@ public final class BloomFilterTable {
         catch (SQLException e) {
             throw new RuntimeException("Error creating bloom filter table: " + e);
         }
-    }
-
-    private String createTableSQL(final String name) {
-        final Pattern pattern = Pattern.compile("^[A-Za-z0-9_]+$");
-        if (!pattern.matcher(name).find()) {
-            throw new RuntimeException("dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _");
-        }
-        if (name.length() > 100) {
-            throw new RuntimeException(
-                    "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters"
-            );
-        }
-
-        if (ignoreConstraints) {
-            return "CREATE TABLE IF NOT EXISTS `" + name + "`("
-                    + "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
-                    + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
-                    + "`filter` LONGBLOB NOT NULL);";
-        }
-        return "CREATE TABLE IF NOT EXISTS `" + name + "`("
-                + "`id`            BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
-                + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
-                + "`filter` LONGBLOB NOT NULL," + "CONSTRAINT `" + name
-                + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)" + "ON DELETE CASCADE,"
-                + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)"
-                + "ON DELETE CASCADE" + ");";
-
     }
 
     @Override

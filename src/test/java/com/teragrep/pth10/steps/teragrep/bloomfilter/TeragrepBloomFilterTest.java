@@ -153,11 +153,14 @@ class TeragrepBloomFilterTest {
             ResultSet rs = lazyConnection.get().prepareStatement(sql).executeQuery();
             int cols = rs.getMetaData().getColumnCount();
             BloomFilter resultFilter = emptyFilter;
+            int loops = 0;
             while (rs.next()) {
                 byte[] bytes = rs.getBytes(1);
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
                 resultFilter = BloomFilter.readFrom(bais);
+                loops++;
             }
+            Assertions.assertEquals(4, loops);
             Assertions.assertNotNull(resultFilter);
             Assertions.assertEquals(1, cols);
             Assertions.assertTrue(resultFilter.mightContain("one"));
