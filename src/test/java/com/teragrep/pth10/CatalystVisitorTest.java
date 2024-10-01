@@ -55,19 +55,15 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.*;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Row;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class CatalystVisitorTest {
@@ -78,18 +74,18 @@ public class CatalystVisitorTest {
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming/xmlWalkerTestDataStreaming*";
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -107,7 +103,7 @@ public class CatalystVisitorTest {
             String e = "(RLIKE(index, (?i)^cpu$) AND (RLIKE(sourcetype, (?i)^log:cpu:0) AND (NOT RLIKE(_raw, (?i)^.*\\Qsrc\\E.*))))";
 
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            assertEquals(e, result);
+            Assertions.assertEquals(e, result);
         });
     }
 
@@ -130,7 +126,7 @@ public class CatalystVisitorTest {
         LOGGER.debug(tree.toStringTree(parser));
         CatalystNode n = (CatalystNode) visitor.visit(tree);
         result = visitor.getLogicalPartAsColumn();
-        assertEquals(e, result.expr().sql());
+        Assertions.assertEquals(e, result.expr().sql());
     }
 
     @Test
@@ -154,10 +150,10 @@ public class CatalystVisitorTest {
                 LOGGER.info("Query=" + q);
                 LOGGER.info("Expected=" + e);
                 LOGGER.info("Result=" + result);
-                assertEquals(e, result);
+                Assertions.assertEquals(e, result);
             }
             catch (ParseException e) {
-                fail(e.getMessage());
+                Assertions.fail(e.getMessage());
             }
         });
     }
@@ -175,7 +171,7 @@ public class CatalystVisitorTest {
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
             String result = ctx.getSparkQuery();
-            assertEquals(e, result);
+            Assertions.assertEquals(e, result);
         });
     }
 
@@ -192,7 +188,7 @@ public class CatalystVisitorTest {
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
             String result = ctx.getSparkQuery();
-            assertEquals(e, result);
+            Assertions.assertEquals(e, result);
         });
     }
 
@@ -212,7 +208,7 @@ public class CatalystVisitorTest {
 
             String result = ctx.getSparkQuery();
             // Check logical part
-            assertEquals(e, result);
+            Assertions.assertEquals(e, result);
         });
     }
 
@@ -227,7 +223,7 @@ public class CatalystVisitorTest {
                 .performDPLTest("index = cinnamon _index_earliest=\"04/16/2020:10:25:40\"", this.testFile, res -> {
                     String e = "[_raw: string, _time: string ... 6 more fields]";
                     // check schema
-                    assertEquals(e, res.toString());
+                    Assertions.assertEquals(e, res.toString());
 
                     String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
                     // check column for archive query i.e. only logical part'
@@ -235,7 +231,7 @@ public class CatalystVisitorTest {
                     long indexEarliestEpoch = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
                     e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch
                             + ", yyyy-MM-dd HH:mm:ss)))";
-                    assertEquals(e, logicalPart);
+                    Assertions.assertEquals(e, logicalPart);
                 });
     }
 
@@ -251,16 +247,16 @@ public class CatalystVisitorTest {
         this.streamingTestUtil.performDPLTest("index=index_A \"(1)(enTIty)\"", testFile, res -> {
             String e = "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))";
             String resSchema = res.schema().toString();
-            assertEquals(e, resSchema);
+            Assertions.assertEquals(e, resSchema);
             // Check result count
             List<Row> lst = res.collectAsList();
             // check result count
-            assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lst.size());
 
             // get logical part
             String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
             e = "(RLIKE(index, (?i)^index_A$) AND RLIKE(_raw, (?i)^.*\\Q(1)(enTIty)\\E.*))";
-            assertEquals(e, logicalPart);
+            Assertions.assertEquals(e, logicalPart);
         });
     }
 
@@ -273,7 +269,7 @@ public class CatalystVisitorTest {
     void endToEnd6Test() {
         this.streamingTestUtil.performDPLTest("index = jla02logger ", this.testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertFalse(aggregates);
+            Assertions.assertFalse(aggregates);
         });
     }
 

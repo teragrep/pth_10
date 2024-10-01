@@ -45,21 +45,20 @@
  */
 package com.teragrep.pth10;
 
-import org.apache.spark.sql.*;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class chartTransformationTest {
@@ -69,18 +68,18 @@ public class chartTransformationTest {
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming/xmlWalkerTestDataStreaming*";
     StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -93,7 +92,8 @@ public class chartTransformationTest {
             String[] expectedColumns = new String[] {
                     "count"
             };
-            assertArrayEquals(expectedColumns, res.columns()); // check that the schema is correct
+            Assertions.assertArrayEquals
+(expectedColumns, res.columns()); // check that the schema is correct
 
             List<String> resultList = res
                     .select("count")
@@ -102,8 +102,10 @@ public class chartTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, resultList.size()); // only one row of data
-            assertEquals("5", resultList.get(0)); // the one row has the value 5
+            Assertions.assertEquals
+(1, resultList.size()); // only one row of data
+            Assertions.assertEquals
+("5", resultList.get(0)); // the one row has the value 5
         });
     }
 
@@ -118,7 +120,8 @@ public class chartTransformationTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
             String e = "[offset: bigint, count: bigint]"; // At least schema is correct
-            assertEquals(e, res.toString());
+            Assertions.assertEquals
+(e, res.toString());
 
             // 3 first rows are earlier than where _index_earliest is set to
             List<String> expectedValues = new ArrayList<>();
@@ -136,7 +139,8 @@ public class chartTransformationTest {
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
-            assertEquals(expectedValues, resultList);
+            Assertions.assertEquals
+(expectedValues, resultList);
         });
     }
 
@@ -151,7 +155,8 @@ public class chartTransformationTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
             String e = "[offset: bigint, count: bigint]"; // At least schema is correct
-            assertEquals(e, res.toString());
+            Assertions.assertEquals
+(e, res.toString());
 
             List<String> expectedValues = new ArrayList<>();
             // Only first 5 rows have index: index_A
@@ -169,7 +174,8 @@ public class chartTransformationTest {
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
-            assertEquals(expectedValues, resultList);
+            Assertions.assertEquals
+(expectedValues, resultList);
         });
     }
 
@@ -184,7 +190,8 @@ public class chartTransformationTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
             String e = "[count(_raw): bigint]"; // At least schema is correct
-            assertEquals(e, res.toString());
+            Assertions.assertEquals
+(e, res.toString());
 
             List<String> expectedValues = new ArrayList<>();
             expectedValues.add("5"); // only last 5 rows have index: index_B
@@ -199,7 +206,8 @@ public class chartTransformationTest {
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
-            assertEquals(expectedValues, resultList);
+            Assertions.assertEquals
+(expectedValues, resultList);
         });
     }
 
@@ -221,7 +229,8 @@ public class chartTransformationTest {
                     new StructField("max(offset)", DataTypes.StringType, true, new MetadataBuilder().build())
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals
+(expectedSchema, res.schema());
 
             // assert contents
             List<Row> count = res.select("count(_raw)").collectAsList();
@@ -236,13 +245,19 @@ public class chartTransformationTest {
             Row minr2 = min.get(1);
             Row maxr2 = max.get(1);
 
-            assertEquals("5", cr.getAs(0).toString());
-            assertEquals("1", minr.getAs(0).toString());
-            assertEquals("5", maxr.getAs(0).toString());
+            Assertions.assertEquals
+("5", cr.getAs(0).toString());
+            Assertions.assertEquals
+("1", minr.getAs(0).toString());
+            Assertions.assertEquals
+("5", maxr.getAs(0).toString());
 
-            assertEquals("5", cr2.getAs(0).toString());
-            assertEquals("6", minr2.getAs(0).toString());
-            assertEquals("10", maxr2.getAs(0).toString());
+            Assertions.assertEquals
+("5", cr2.getAs(0).toString());
+            Assertions.assertEquals
+("6", minr2.getAs(0).toString());
+            Assertions.assertEquals
+("10", maxr2.getAs(0).toString());
         });
     }
 
@@ -257,7 +272,7 @@ public class chartTransformationTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            assertTrue(aggregates);
+            Assertions.assertTrue(aggregates);
         });
     }
 
@@ -275,7 +290,8 @@ public class chartTransformationTest {
                     new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals
+(expectedSchema, res.schema());
 
             List<Row> time = res.select("_time").collectAsList();
             List<Row> offset = res.select("avg(offset)").collectAsList();
@@ -297,8 +313,10 @@ public class chartTransformationTest {
                     "1.0", "2.0", "3.0", "4.0", "5.0", "6.0", "7.0", "8.0", "9.0", "10.0"
             };
 
-            assertArrayEquals(expectedTime, time.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedTime, time.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 
@@ -316,7 +334,8 @@ public class chartTransformationTest {
                     new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals
+(expectedSchema, res.schema());
 
             List<Row> sourcetype = res.select("sourcetype").collectAsList();
             List<Row> offset = res.select("avg(offset)").collectAsList();
@@ -329,8 +348,10 @@ public class chartTransformationTest {
                     "1.5", "4.0", "7.0", "9.5"
             };
 
-            assertArrayEquals(expectedSourcetype, sourcetype.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedSourcetype, sourcetype.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 
@@ -348,7 +369,8 @@ public class chartTransformationTest {
                     new StructField("count(offset)", DataTypes.LongType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals
+(expectedSchema, res.schema());
 
             List<Row> offset = res.select("offset").collectAsList();
             List<Row> count = res.select("count(offset)").collectAsList();
@@ -361,8 +383,10 @@ public class chartTransformationTest {
                     "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"
             };
 
-            assertArrayEquals(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedOffset, offset.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 
@@ -380,7 +404,8 @@ public class chartTransformationTest {
                     new StructField("count(offset)", DataTypes.LongType, true, new MetadataBuilder().build()),
             });
 
-            assertEquals(expectedSchema, res.schema());
+            Assertions.assertEquals
+(expectedSchema, res.schema());
 
             List<Row> a = res.select("a").collectAsList();
             List<Row> count = res.select("count(offset)").collectAsList();
@@ -393,8 +418,10 @@ public class chartTransformationTest {
                     "1", "1", "1", "1", "1", "1", "1", "1", "1", "1"
             };
 
-            assertArrayEquals(expectedA, a.stream().map(r -> r.getAs(0).toString()).toArray());
-            assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedA, a.stream().map(r -> r.getAs(0).toString()).toArray());
+            Assertions.assertArrayEquals
+(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
 }

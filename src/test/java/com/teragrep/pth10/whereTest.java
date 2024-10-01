@@ -49,9 +49,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,8 +57,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class whereTest {
@@ -82,18 +78,18 @@ public class whereTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -117,8 +113,8 @@ public class whereTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(5, ds.count());
-            assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), resultList); // correct column contents
+            Assertions.assertEquals(5, ds.count());
+            Assertions.assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), resultList); // correct column contents
         });
     }
 
@@ -145,9 +141,9 @@ public class whereTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(6, ds.count());
-            assertEquals(Arrays.asList("1", "3", "5", "7", "9", "10"), offsetList); // correct column contents
-            assertEquals(
+            Assertions.assertEquals(6, ds.count());
+            Assertions.assertEquals(Arrays.asList("1", "3", "5", "7", "9", "10"), offsetList); // correct column contents
+            Assertions.assertEquals(
                     Arrays.asList("stream1", "stream1", "stream1", "stream1", "stream1", "stream2"), sourcetypeList
             );
         });
@@ -177,9 +173,9 @@ public class whereTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, ds.count());
-            assertEquals(Arrays.asList("2", "4"), offsetList); // correct column contents
-            assertEquals(Arrays.asList("stream2", "stream2"), sourcetypeList);
+            Assertions.assertEquals(2, ds.count());
+            Assertions.assertEquals(Arrays.asList("2", "4"), offsetList); // correct column contents
+            Assertions.assertEquals(Arrays.asList("stream2", "stream2"), sourcetypeList);
 
         });
     }
@@ -208,9 +204,9 @@ public class whereTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(3, ds.count());
-            assertEquals(Arrays.asList("1", "3", "9"), offsetList); // correct column contents
-            assertEquals(Arrays.asList("stream1", "stream1", "stream1"), sourcetypeList);
+            Assertions.assertEquals(3, ds.count());
+            Assertions.assertEquals(Arrays.asList("1", "3", "9"), offsetList); // correct column contents
+            Assertions.assertEquals(Arrays.asList("stream1", "stream1", "stream1"), sourcetypeList);
         });
     }
 
@@ -229,8 +225,8 @@ public class whereTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(5, ds.count());
-            assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
+            Assertions.assertEquals(5, ds.count());
+            Assertions.assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
         });
     }
 
@@ -249,8 +245,8 @@ public class whereTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(5, ds.count());
-            assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
+            Assertions.assertEquals(5, ds.count());
+            Assertions.assertEquals(Arrays.asList("stream2", "stream2", "stream2", "stream2", "stream2"), sourcetypeList);
         });
     }
 
@@ -269,8 +265,8 @@ public class whereTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, ds.count());
-            assertEquals(Arrays.asList("127.7.7.7"), sourceList);
+            Assertions.assertEquals(1, ds.count());
+            Assertions.assertEquals(Arrays.asList("127.7.7.7"), sourceList);
         });
     }
 
@@ -281,12 +277,12 @@ public class whereTest {
     )
     public void whereTestIntegerColumnLessThan() {
         streamingTestUtil.performDPLTest("index=index_A | where offset < 3", testFile, ds -> {
-            assertEquals(
+            Assertions.assertEquals(
                     "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
                     Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
             );
 
-            assertEquals(2, ds.collectAsList().size());
+            Assertions.assertEquals(2, ds.collectAsList().size());
         });
     }
 
@@ -301,11 +297,11 @@ public class whereTest {
                         "index=index_A " + "| chart avg(offset) as aoffset" + "| chart values(aoffset) as voffset"
                                 + "| chart sum(voffset) as soffset" + "| where soffset > 3",
                         testFile, ds -> {
-                            assertEquals(
+                            Assertions.assertEquals(
                                     "[soffset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
                             );
 
-                            assertEquals(1, ds.collectAsList().size());
+                            Assertions.assertEquals(1, ds.collectAsList().size());
                         }
                 );
     }

@@ -45,18 +45,15 @@
  */
 package com.teragrep.pth10;
 
-import org.apache.spark.sql.*;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class logicalOperationTest {
@@ -67,18 +64,18 @@ public class logicalOperationTest {
     String testFile = "src/test/resources/logicalOperationTestData*.json"; // * to make the path into a directory path
     private StreamingTestUtil streamingTestUtil;
 
-    @org.junit.jupiter.api.BeforeAll
+    @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
-    @org.junit.jupiter.api.BeforeEach
+    @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
     }
 
-    @org.junit.jupiter.api.AfterEach
+    @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
     }
@@ -99,8 +96,8 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, res.count()); // 1 row of data
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals(1, res.count()); // 1 row of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
         });
     }
 
@@ -120,8 +117,8 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, res.count());
-            assertEquals("\"raw 10\"", listOfRaw.get(0));
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 10\"", listOfRaw.get(0));
         });
     }
 
@@ -141,9 +138,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count()); // 2 row of data
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
-            assertEquals("\"raw 02\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count()); // 2 row of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
         });
     }
 
@@ -163,9 +160,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count()); // 2 row of data
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
-            assertEquals("\"raw 02\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count()); // 2 row of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
         });
     }
 
@@ -178,7 +175,7 @@ public class logicalOperationTest {
         String q = "index=xyz ab*";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            assertTrue(this.streamingTestUtil.getCtx().isWildcardSearchUsed());
+            Assertions.assertTrue(this.streamingTestUtil.getCtx().isWildcardSearchUsed());
         });
     }
 
@@ -191,7 +188,7 @@ public class logicalOperationTest {
         String q = "index=xyz ab";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            assertFalse(this.streamingTestUtil.getCtx().isWildcardSearchUsed());
+            Assertions.assertFalse(this.streamingTestUtil.getCtx().isWildcardSearchUsed());
         });
     }
 
@@ -211,14 +208,14 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(7, res.count()); // 7 row of data
-            assertEquals("index_A", listOfIndex.get(0));
-            assertEquals("index_A", listOfIndex.get(1));
-            assertEquals("index_A", listOfIndex.get(2));
-            assertEquals("index_B", listOfIndex.get(3));
-            assertEquals("index_B", listOfIndex.get(4));
-            assertEquals("index_B", listOfIndex.get(5));
-            assertEquals("index_B", listOfIndex.get(6));
+            Assertions.assertEquals(7, res.count()); // 7 row of data
+            Assertions.assertEquals("index_A", listOfIndex.get(0));
+            Assertions.assertEquals("index_A", listOfIndex.get(1));
+            Assertions.assertEquals("index_A", listOfIndex.get(2));
+            Assertions.assertEquals("index_B", listOfIndex.get(3));
+            Assertions.assertEquals("index_B", listOfIndex.get(4));
+            Assertions.assertEquals("index_B", listOfIndex.get(5));
+            Assertions.assertEquals("index_B", listOfIndex.get(6));
         });
     }
 
@@ -238,17 +235,17 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(10, res.count()); // 10 row of data
-            assertEquals("index_A", listOfIndex.get(0));
-            assertEquals("index_A", listOfIndex.get(1));
-            assertEquals("index_A", listOfIndex.get(2));
-            assertEquals("index_B", listOfIndex.get(3));
-            assertEquals("index_B", listOfIndex.get(4));
-            assertEquals("index_B", listOfIndex.get(5));
-            assertEquals("index_B", listOfIndex.get(6));
-            assertEquals("index_C", listOfIndex.get(7));
-            assertEquals("index_C", listOfIndex.get(8));
-            assertEquals("index_C", listOfIndex.get(9));
+            Assertions.assertEquals(10, res.count()); // 10 row of data
+            Assertions.assertEquals("index_A", listOfIndex.get(0));
+            Assertions.assertEquals("index_A", listOfIndex.get(1));
+            Assertions.assertEquals("index_A", listOfIndex.get(2));
+            Assertions.assertEquals("index_B", listOfIndex.get(3));
+            Assertions.assertEquals("index_B", listOfIndex.get(4));
+            Assertions.assertEquals("index_B", listOfIndex.get(5));
+            Assertions.assertEquals("index_B", listOfIndex.get(6));
+            Assertions.assertEquals("index_C", listOfIndex.get(7));
+            Assertions.assertEquals("index_C", listOfIndex.get(8));
+            Assertions.assertEquals("index_C", listOfIndex.get(9));
         });
     }
 
@@ -268,9 +265,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count()); // 2 rows of data
-            assertEquals("\"raw 04\"", listOfRaw.get(0));
-            assertEquals("\"raw 05\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count()); // 2 rows of data
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 05\"", listOfRaw.get(1));
         });
     }
 
@@ -291,11 +288,11 @@ public class logicalOperationTest {
                     .sorted()
                     .collect(Collectors.toList());
 
-            assertEquals(3, lst.size()); // check result count
+            Assertions.assertEquals(3, lst.size()); // check result count
             // Compare values
-            assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6  computer01.example.com", lst.get(1));
-            assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6666  computer01.example.com", lst.get(2));
-            assertEquals("uuid=*!<1848c85bFE2c4323955dd5469f18baf6<  computer01.example.com", lst.get(0));
+            Assertions.assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6  computer01.example.com", lst.get(1));
+            Assertions.assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6666  computer01.example.com", lst.get(2));
+            Assertions.assertEquals("uuid=*!<1848c85bFE2c4323955dd5469f18baf6<  computer01.example.com", lst.get(0));
         });
     }
 
@@ -312,10 +309,10 @@ public class logicalOperationTest {
             Dataset<Row> selected = res.select("_raw");
             List<Row> lst = selected.collectAsList();
 
-            assertEquals(2, lst.size()); // check result count
+            Assertions.assertEquals(2, lst.size()); // check result count
             // Compare values
-            assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(0).getString(0));
-            assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(1).getString(0));
+            Assertions.assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(0).getString(0));
+            Assertions.assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(1).getString(0));
         });
     }
 
@@ -335,8 +332,8 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, res.count());
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
         });
     }
 
@@ -356,9 +353,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count()); // 2 rows of data
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
-            assertEquals("\"raw 02\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count()); // 2 rows of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
         });
     }
 
@@ -377,8 +374,8 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, res.count());
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
         });
     }
 
@@ -397,8 +394,8 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, res.count());
-            assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
         });
     }
 
@@ -418,9 +415,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count());
-            assertEquals("\"raw 04\"", listOfRaw.get(0));
-            assertEquals("\"raw 05\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 05\"", listOfRaw.get(1));
         });
     }
 
@@ -439,12 +436,12 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(5, res.count());
-            assertEquals("B:X:0", listOfSourcetype.get(0));
-            assertEquals("B:X:0", listOfSourcetype.get(1));
-            assertEquals("B:Y:0", listOfSourcetype.get(2));
-            assertEquals("B:Y:0", listOfSourcetype.get(3));
-            assertEquals("C:X:0", listOfSourcetype.get(4));
+            Assertions.assertEquals(5, res.count());
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(0));
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(1));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(2));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(3));
+            Assertions.assertEquals("C:X:0", listOfSourcetype.get(4));
         });
 
     }
@@ -465,11 +462,11 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(4, res.count());
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
-            assertEquals("\"raw 06\"", listOfRaw.get(1));
-            assertEquals("\"raw 07\"", listOfRaw.get(2));
-            assertEquals("\"raw 08\"", listOfRaw.get(3));
+            Assertions.assertEquals(4, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 06\"", listOfRaw.get(1));
+            Assertions.assertEquals("\"raw 07\"", listOfRaw.get(2));
+            Assertions.assertEquals("\"raw 08\"", listOfRaw.get(3));
         });
     }
 
@@ -489,9 +486,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count());
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
-            assertEquals("\"raw 02\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
         });
     }
 
@@ -511,10 +508,10 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(3, res.count());
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
-            assertEquals("\"raw 02\"", listOfRaw.get(1));
-            assertEquals("\"raw 03\"", listOfRaw.get(2));
+            Assertions.assertEquals(3, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
+            Assertions.assertEquals("\"raw 03\"", listOfRaw.get(2));
         });
     }
 
@@ -534,9 +531,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count());
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
-            assertEquals("\"raw 02\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
         });
     }
 
@@ -556,9 +553,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count());
-            assertEquals("\"raw 04\"", listOfRaw.get(0));
-            assertEquals("\"raw 05\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 05\"", listOfRaw.get(1));
         });
     }
 
@@ -578,8 +575,8 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(1, res.count());
-            assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
         });
     }
 
@@ -600,9 +597,9 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(2, res.count());
-            assertEquals("\"raw 04\"", listOfRaw.get(0));
-            assertEquals("\"raw 07\"", listOfRaw.get(1));
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 07\"", listOfRaw.get(1));
         });
     }
 
@@ -622,11 +619,11 @@ public class logicalOperationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            assertEquals(4, res.count());
-            assertEquals("\"raw 04\"", listOfRaw.get(0));
-            assertEquals("\"raw 06\"", listOfRaw.get(1));
-            assertEquals("\"raw 07\"", listOfRaw.get(2));
-            assertEquals("\"raw 08\"", listOfRaw.get(3));
+            Assertions.assertEquals(4, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 06\"", listOfRaw.get(1));
+            Assertions.assertEquals("\"raw 07\"", listOfRaw.get(2));
+            Assertions.assertEquals("\"raw 08\"", listOfRaw.get(3));
         });
     }
 }
