@@ -55,116 +55,107 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Map;
-import java.util.SortedMap;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Class create a selected sized {@link BloomFilter} and run operations
- */
-public class TeragrepBloomFilter {
+public final class TeragrepBloomFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepBloomFilter.class);
 
     private final String partitionID;
-    private final byte[] bloomfilterBytes;
+    private final BloomFilter filter;
     private final Connection connection;
-    private final FilterSizes filterSizes;
-    private Long selectedExpectedNumOfItems;
-    private Double selectedFpp;
+    private final FilterTypes filterTypes;
 
-    public TeragrepBloomFilter(
-            String partition,
-            byte[] bloomfilterBytes,
-            Connection connection,
-            FilterSizes filterSizes
-    ) {
-        this.partitionID = partition;
-        this.bloomfilterBytes = bloomfilterBytes;
-        this.filterSizes = filterSizes;
-        this.connection = connection;
+    public TeragrepBloomFilter(String partition, byte[] bytes, Connection connection, FilterTypes filterTypes) {
+        this(partition, new ToBloomFilter(bytes), connection, filterTypes);
     }
 
-    private BloomFilter sizedFilter() {
-
-        SortedMap<Long, Double> filterSizesMap = filterSizes.asSortedMap();
-        Map<Long, Long> bitsizeToExpectedItemsMap = filterSizes.asBitsizeSortedMap();
-
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(bloomfilterBytes)) {
-            BloomFilter bf = BloomFilter.readFrom(bais);
-
-            long bitSize = bf.bitSize();
-            if (bitsizeToExpectedItemsMap.containsKey(bitSize)) {
-                long expectedItems = bitsizeToExpectedItemsMap.get(bitSize);
-                double fpp = filterSizesMap.get(expectedItems);
-                this.selectedExpectedNumOfItems = expectedItems;
-                this.selectedFpp = fpp;
-                return bf;
-            }
-            else {
-                throw new IllegalArgumentException("no such filterSize <[" + bitSize + "]>");
-            }
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public TeragrepBloomFilter(String partition, BloomFilter filter, Connection connection, FilterTypes filterTypes) {
+        this.partitionID = partition;
+        this.filter = filter;
+        this.filterTypes = filterTypes;
+        this.connection = connection;
     }
 
     /**
      * Write filter bytes to database
-     * 
-     * @param overwriteExisting Set if existing filter data will be overwritten
+     *
+     * @param overwrite Set if existing filter data will be overwritten
      */
-    public void saveFilter(Boolean overwriteExisting) {
-
-        final BloomFilter filter = sizedFilter();
-        final String sql = sqlString(overwriteExisting);
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
-            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+    public void saveFilter(final Boolean overwrite) {
+        final long bitSize = filter.bitSize();
+        final long selectedExpectedNumOfItems;
+        final Double selectedFpp;
+        final Map<Long, Long> bitSizeMap = filterTypes.bitSizeMap();
+        if (bitSizeMap.containsKey(bitSize)) {
+            final long expectedItems = bitSizeMap.get(bitSize);
+            selectedExpectedNumOfItems = expectedItems;
+            selectedFpp = filterTypes.sortedMap().get(expectedItems);
+        }
+        else {
+            throw new IllegalArgumentException("no such filterSize <[" + bitSize + "]>");
+        }
+        final String sql = sqlString(overwrite);
+        final String pattern = filterTypes.pattern();
+        LOGGER.debug("Save filter SQL: <{}>", sql);
+        try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+            try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                 LOGGER
-                        .info(
-                                "Saving filter[expected: <{}> , fpp: <{}>] to bloomdb.bloomfilter, overwrite existing data: <{}>",
-                                selectedExpectedNumOfItems, selectedFpp, overwriteExisting
+                        .debug(
+                                "Saving filter expected <[{}]>, fpp <[{}]>, pattern <[{}]>, overwrite existing data=<{}>",
+                                selectedExpectedNumOfItems, selectedFpp, pattern, overwrite
                         );
-
                 filter.writeTo(baos);
                 InputStream is = new ByteArrayInputStream(baos.toByteArray());
-
                 stmt.setInt(1, Integer.parseInt(partitionID)); // bloomfilter.partition_id
-                stmt.setInt(2, selectedExpectedNumOfItems.intValue()); // filtertype.expectedElements
+                stmt.setInt(2, (int) selectedExpectedNumOfItems); // filtertype.expectedElements
                 stmt.setDouble(3, selectedFpp); // filtertype.targetFpp
-                stmt.setBlob(4, is); // bloomfilter.filter
+                stmt.setString(4, pattern); // filtertype.pattern
+                stmt.setBlob(5, is); // bloomfilter.filter
                 stmt.executeUpdate();
                 stmt.clearParameters();
-
                 is.close();
                 connection.commit();
-
             }
             catch (IOException e) {
-                throw new RuntimeException("Error serializing data\n" + e);
+                throw new RuntimeException("Error serializing data: " + e);
             }
             catch (SQLException e) {
-                throw new RuntimeException("Error writing to database\n" + e);
+                throw new RuntimeException("Error writing to database: " + e);
             }
         }
         catch (SQLException e) {
-            throw new RuntimeException("Error generating a prepared statement\n" + e);
+            throw new RuntimeException("Error generating a prepared statement: " + e);
         }
     }
 
-    private static String sqlString(Boolean overwriteExisting) {
+    private String sqlString(final Boolean overwriteExisting) {
         final String sql;
+        final String name = filterTypes.tableName();
         if (overwriteExisting) {
-            sql = "REPLACE INTO `bloomfilter` (`partition_id`, `filter_type_id`, `filter`) "
-                    + "VALUES(?, (SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=?),?)";
+            sql = "REPLACE INTO `" + name + "` (`partition_id`, `filter_type_id`,`filter`) " + "VALUES(?,"
+                    + "(SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=? AND pattern=?)," + "?)";
         }
         else {
-            sql = "INSERT IGNORE INTO `bloomfilter` (`partition_id`, `filter_type_id`, `filter`) "
-                    + "VALUES(?, (SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=?),?)";
+            sql = "INSERT IGNORE INTO `" + name + "` (`partition_id`, `filter_type_id`,`filter`) " + "VALUES(?,"
+                    + "(SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=? AND pattern=?)," + "?)";
         }
         return sql;
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object)
+            return true;
+        if (object == null)
+            return false;
+        if (object.getClass() != this.getClass())
+            return false;
+        final TeragrepBloomFilter cast = (TeragrepBloomFilter) object;
+        return Objects.equals(this.partitionID, cast.partitionID) && this.connection.equals(cast.connection)
+                && this.filter.equals(cast.filter) && this.filterTypes.equals(cast.filterTypes);
     }
 }

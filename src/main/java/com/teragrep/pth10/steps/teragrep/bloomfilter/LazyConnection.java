@@ -52,11 +52,7 @@ import java.sql.SQLException;
 
 import com.typesafe.config.Config;
 
-import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_URL_CONFIG_ITEM;
-import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_USERNAME_CONFIG_ITEM;
-import static com.teragrep.pth10.steps.teragrep.TeragrepBloomStep.BLOOMDB_PASSWORD_CONFIG_ITEM;
-
-public class LazyConnection implements Serializable {
+public final class LazyConnection implements Serializable {
 
     private static Connection connection = null;
     private final Config config;
@@ -68,9 +64,9 @@ public class LazyConnection implements Serializable {
     public synchronized Connection get() {
         if (connection == null) {
             // lazy init
-            String connectionURL = connectionURL();
-            String username = connectionUsername();
-            String password = connectionPassword();
+            final String connectionURL = connectionURL();
+            final String username = connectionUsername();
+            final String password = connectionPassword();
 
             try {
                 connection = DriverManager.getConnection(connectionURL, username, password);
@@ -84,8 +80,8 @@ public class LazyConnection implements Serializable {
     }
 
     private String connectionUsername() {
-
-        String username;
+        final String username;
+        final String BLOOMDB_USERNAME_CONFIG_ITEM = "dpl.pth_10.bloom.db.username";
         if (config.hasPath(BLOOMDB_USERNAME_CONFIG_ITEM)) {
             username = config.getString(BLOOMDB_USERNAME_CONFIG_ITEM);
             if (username == null || username.isEmpty()) {
@@ -99,8 +95,8 @@ public class LazyConnection implements Serializable {
     }
 
     private String connectionPassword() {
-
-        String password;
+        final String password;
+        final String BLOOMDB_PASSWORD_CONFIG_ITEM = "dpl.pth_10.bloom.db.password";
         if (config.hasPath(BLOOMDB_PASSWORD_CONFIG_ITEM)) {
             password = config.getString(BLOOMDB_PASSWORD_CONFIG_ITEM);
             if (password == null) {
@@ -114,8 +110,8 @@ public class LazyConnection implements Serializable {
     }
 
     private String connectionURL() {
-
-        String databaseUrl;
+        final String databaseUrl;
+        final String BLOOMDB_URL_CONFIG_ITEM = "dpl.pth_06.bloom.db.url";
         if (config.hasPath(BLOOMDB_URL_CONFIG_ITEM)) {
             databaseUrl = config.getString(BLOOMDB_URL_CONFIG_ITEM);
             if (databaseUrl == null || databaseUrl.isEmpty()) {
@@ -126,5 +122,20 @@ public class LazyConnection implements Serializable {
             throw new RuntimeException("Missing configuration item: '" + BLOOMDB_URL_CONFIG_ITEM + "'.");
         }
         return databaseUrl;
+    }
+
+    /**
+     * Connection parameter not considered in equals method because of lazy init
+     */
+    @Override
+    public boolean equals(final Object object) {
+        if (this == object)
+            return true;
+        if (object == null)
+            return false;
+        if (object.getClass() != this.getClass())
+            return false;
+        final LazyConnection cast = (LazyConnection) object;
+        return this.config.equals(cast.config);
     }
 }

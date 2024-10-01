@@ -46,48 +46,55 @@
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
-import org.apache.spark.api.java.function.ForeachPartitionFunction;
-import org.apache.spark.sql.Row;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
-import java.util.Iterator;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
-public final class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
+public final class BloomFilterTable {
 
-    private final FilterTypes filterTypes;
-    private final LazyConnection lazyConnection;
-    private final boolean overwrite;
+    private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterTable.class);
+    private final TableSQL tableSQL;
+    private final LazyConnection conn;
 
-    public BloomFilterForeachPartitionFunction(Config config) {
-        this(new FilterTypes(config), new LazyConnection(config), false);
+    public BloomFilterTable(Config config) {
+        this(new TableSQL(new FilterTypes(config).tableName(), false), new LazyConnection(config));
     }
 
-    public BloomFilterForeachPartitionFunction(Config config, boolean overwrite) {
-        this(new FilterTypes(config), new LazyConnection(config), overwrite);
+    // used in testing
+    public BloomFilterTable(Config config, boolean ignoreConstraints) {
+        this(new TableSQL(new FilterTypes(config).tableName(), ignoreConstraints), new LazyConnection(config));
     }
 
-    public BloomFilterForeachPartitionFunction(
-            FilterTypes filterTypes,
-            LazyConnection lazyConnection,
-            boolean overwrite
-    ) {
-        this.filterTypes = filterTypes;
-        this.lazyConnection = lazyConnection;
-        this.overwrite = overwrite;
+    public BloomFilterTable(TableSQL tableSQL, LazyConnection conn) {
+        this.tableSQL = tableSQL;
+        this.conn = conn;
+    }
+
+    public void create() {
+        final String sql = tableSQL.createTableSQL();
+        final Connection connection = conn.get();
+        try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.execute();
+            connection.commit();
+            LOGGER.debug("Create table SQL <{}>", sql);
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("Error creating bloom filter table: " + e);
+        }
     }
 
     @Override
-    public void call(final Iterator<Row> iter) throws Exception {
-        final Connection conn = lazyConnection.get();
-        while (iter.hasNext()) {
-            final Row row = iter.next(); // Row[partitionID, filterBytes]
-            final String partition = row.getString(0);
-            final byte[] filterBytes = (byte[]) row.get(1);
-            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
-            tgFilter.saveFilter(overwrite);
-
-            conn.commit();
-
-        }
+    public boolean equals(final Object object) {
+        if (this == object)
+            return true;
+        if (object == null)
+            return false;
+        if (object.getClass() != this.getClass())
+            return false;
+        final BloomFilterTable cast = (BloomFilterTable) object;
+        return this.tableSQL.equals(cast.tableSQL) && this.conn.equals(cast.conn);
     }
 }

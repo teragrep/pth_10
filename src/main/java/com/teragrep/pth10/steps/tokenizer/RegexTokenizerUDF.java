@@ -43,64 +43,48 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.teragrep.bloomfilter;
+package com.teragrep.pth10.steps.tokenizer;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.apache.spark.util.sketch.BloomFilter;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
 
-import java.util.Map;
-import java.util.Properties;
+public final class RegexTokenizerUDF implements TokenizerApplicable {
 
-class FilterSizesTest {
+    private final Config config;
+    private final AbstractTokenizerStep.TokenizerFormat format;
+    private final String inputCol;
+    private final String outputCol;
 
-    @Test
-    public void filterSizeMapTest() {
-
-        Properties properties = new Properties();
-
-        properties
-                .put(
-                        "dpl.pth_06.bloom.db.fields",
-                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.01},"
-                                + "{expected: 3000, fpp: 0.01}" + "]"
-                );
-
-        Config config = ConfigFactory.parseProperties(properties);
-        FilterSizes sizeMap = new FilterSizes(config);
-
-        Map<Long, Double> resultMap = sizeMap.asSortedMap();
-
-        Assertions.assertEquals(0.01, resultMap.get(1000L));
-        Assertions.assertEquals(0.01, resultMap.get(2000L));
-        Assertions.assertEquals(0.01, resultMap.get(3000L));
-        Assertions.assertEquals(3, resultMap.size());
-
+    public RegexTokenizerUDF(
+            Config config,
+            AbstractTokenizerStep.TokenizerFormat format,
+            String inputCol,
+            String outputCol
+    ) {
+        this.config = config;
+        this.format = format;
+        this.inputCol = inputCol;
+        this.outputCol = outputCol;
     }
 
-    @Test
-    public void bitSizeMapTest() {
-
-        Properties properties = new Properties();
-
-        properties
-                .put(
-                        "dpl.pth_06.bloom.db.fields",
-                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.01},"
-                                + "{expected: 3000, fpp: 0.01}" + "]"
+    public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
+        final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
+        final String pattern = config.getString(BLOOM_PATTERN_CONFIG_ITEM).trim();
+        final UserDefinedFunction regexUDF = functions
+                .udf(
+                        new com.teragrep.functions.dpf_03.RegexTokenizerUDF(),
+                        DataTypes.createArrayType(DataTypes.BinaryType, false)
                 );
 
-        Config config = ConfigFactory.parseProperties(properties);
-        FilterSizes sizeMap = new FilterSizes(config);
-
-        Map<Long, Long> bitSizeMap = sizeMap.asBitsizeSortedMap();
-
-        Assertions.assertEquals(1000L, bitSizeMap.get(BloomFilter.create(1000, 0.01).bitSize()));
-        Assertions.assertEquals(2000L, bitSizeMap.get(BloomFilter.create(2000, 0.01).bitSize()));
-        Assertions.assertEquals(3000L, bitSizeMap.get(BloomFilter.create(3000, 0.01).bitSize()));
-        Assertions.assertEquals(3, bitSizeMap.size());
-
+        if (this.format == AbstractTokenizerStep.TokenizerFormat.BYTES) {
+            return dataset.withColumn(outputCol, regexUDF.apply(functions.col(inputCol), functions.lit(pattern)));
+        }
+        throw new UnsupportedOperationException(
+                "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option"
+        );
     }
 }

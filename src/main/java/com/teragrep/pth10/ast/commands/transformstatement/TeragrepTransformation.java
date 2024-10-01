@@ -543,7 +543,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             outputCol = new UnquotedText(new TextString(ctx.t_outputParameter().fieldType().getText())).read();
         }
 
-        return new StepNode(new TokenizerStep(tokenizerFormat, inputCol, outputCol));
+        return new StepNode(new TokenizerStep(zplnConfig, tokenizerFormat, inputCol, outputCol));
     }
 
     @Override

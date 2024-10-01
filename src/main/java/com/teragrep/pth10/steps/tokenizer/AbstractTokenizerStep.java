@@ -53,66 +53,10 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
         STRING, BYTES
     }
 
-    protected String inputCol = "_raw";
-    protected String outputCol = "tokens";
-
-    protected TokenizerFormat tokenizerFormat = TokenizerFormat.STRING;
+    protected ConfiguredUDF fromConfig;
 
     public AbstractTokenizerStep() {
         super();
     }
 
-    /**
-     * Sets the field for the tokenizer to run on
-     * 
-     * @param inputCol field name, defaults to '_raw'
-     */
-    public void setInputCol(String inputCol) {
-        this.inputCol = inputCol;
-    }
-
-    /**
-     * Set Tokenizer output column
-     * 
-     * @param outputCol output column
-     */
-    public void setOutputCol(String outputCol) {
-        this.outputCol = outputCol;
-    }
-
-    /**
-     * Set whether to return byte array or string
-     * 
-     * @param tokenizerFormat format enum; string or bytes
-     */
-    public void setTokenizerFormat(TokenizerFormat tokenizerFormat) {
-        this.tokenizerFormat = tokenizerFormat;
-    }
-
-    /**
-     * Gets the field set for the tokenizer
-     * 
-     * @return field name used in the tokenizer, default '_raw'
-     */
-    public String getInputCol() {
-        return inputCol;
-    }
-
-    /**
-     * Get tokenizer output column
-     * 
-     * @return output column
-     */
-    public String getOutputCol() {
-        return outputCol;
-    }
-
-    /**
-     * Get Tokenizer return type; bytes or string
-     * 
-     * @return bytes or string enum
-     */
-    public TokenizerFormat getTokenizerFormat() {
-        return tokenizerFormat;
-    }
 }

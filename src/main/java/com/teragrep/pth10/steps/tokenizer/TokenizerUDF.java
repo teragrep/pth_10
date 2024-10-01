@@ -43,51 +43,49 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.teragrep.bloomfilter;
+package com.teragrep.pth10.steps.tokenizer;
 
-import com.typesafe.config.Config;
-import org.apache.spark.api.java.function.ForeachPartitionFunction;
+import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
 
-import java.sql.Connection;
-import java.util.Iterator;
+import static org.apache.spark.sql.types.DataTypes.StringType;
 
-public final class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
+public final class TokenizerUDF implements TokenizerApplicable {
 
-    private final FilterTypes filterTypes;
-    private final LazyConnection lazyConnection;
-    private final boolean overwrite;
+    private final AbstractTokenizerStep.TokenizerFormat format;
+    private final String inputCol;
+    private final String outputCol;
 
-    public BloomFilterForeachPartitionFunction(Config config) {
-        this(new FilterTypes(config), new LazyConnection(config), false);
+    public TokenizerUDF(AbstractTokenizerStep.TokenizerFormat format, String inputCol, String outputCol) {
+        this.format = format;
+        this.inputCol = inputCol;
+        this.outputCol = outputCol;
     }
 
-    public BloomFilterForeachPartitionFunction(Config config, boolean overwrite) {
-        this(new FilterTypes(config), new LazyConnection(config), overwrite);
-    }
-
-    public BloomFilterForeachPartitionFunction(
-            FilterTypes filterTypes,
-            LazyConnection lazyConnection,
-            boolean overwrite
-    ) {
-        this.filterTypes = filterTypes;
-        this.lazyConnection = lazyConnection;
-        this.overwrite = overwrite;
-    }
-
-    @Override
-    public void call(final Iterator<Row> iter) throws Exception {
-        final Connection conn = lazyConnection.get();
-        while (iter.hasNext()) {
-            final Row row = iter.next(); // Row[partitionID, filterBytes]
-            final String partition = row.getString(0);
-            final byte[] filterBytes = (byte[]) row.get(1);
-            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(partition, filterBytes, conn, filterTypes);
-            tgFilter.saveFilter(overwrite);
-
-            conn.commit();
-
+    public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
+        final UserDefinedFunction tokenizerUDF = functions
+                .udf(
+                        new com.teragrep.functions.dpf_03.TokenizerUDF(),
+                        DataTypes.createArrayType(DataTypes.BinaryType, false)
+                );
+        final Column appliedColumn;
+        switch (format) {
+            case BYTES:
+                appliedColumn = tokenizerUDF.apply(functions.col(inputCol));
+                break;
+            case STRING:
+                final UserDefinedFunction byteArrayListAsStringListUDF = functions
+                        .udf(new ByteArrayListAsStringListUDF(), DataTypes.createArrayType(StringType));
+                appliedColumn = byteArrayListAsStringListUDF.apply(tokenizerUDF.apply(functions.col(inputCol)));
+                break;
+            default:
+                throw new IllegalStateException("Unexpected tokenizerFormat: " + format);
         }
+        return dataset.withColumn(outputCol, appliedColumn);
     }
 }
