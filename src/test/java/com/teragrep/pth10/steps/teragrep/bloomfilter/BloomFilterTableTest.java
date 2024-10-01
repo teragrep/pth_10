@@ -93,8 +93,7 @@ class BloomFilterTableTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, injectionTable::create);
         Assertions
                 .assertEquals(
-                        "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _",
-                        e.getMessage()
+                        "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _", e.getMessage()
                 );
     }
 
