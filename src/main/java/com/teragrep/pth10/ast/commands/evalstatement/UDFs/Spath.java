@@ -91,6 +91,16 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
         this.nullValue = nullValue;
     }
 
+    /**
+     * Returns result of spath as a map
+     * Keys are wrapped in backticks to escape dots, spark uses them for maps
+     * @param input json/xml input
+     * @param spathExpr spath/xpath expression
+     * @param nameOfInputCol name of input column
+     * @param nameOfOutputCol name of output column
+     * @return map of results
+     * @throws Exception
+     */
     @Override
     public Map<String, String> call(String input, String spathExpr, String nameOfInputCol, String nameOfOutputCol)
             throws Exception {
@@ -108,7 +118,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                     // put key:value to map - unescaping result in case was a nested json string
                     result
                             .put(
-                                    sub.getKey(),
+                                    "`"+sub.getKey()+"`",
                                     new UnquotedText(
                                             new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))
                                     ).read()
@@ -123,7 +133,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                 // put key:value to map - unescaping result in case was a nested json string
                 result
                         .put(
-                                spathExpr,
+                                "`"+spathExpr+"`",
                                 jsonSubElem != null ? new UnquotedText(
                                         new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))
                                 ).read() : nullValue.value()
@@ -162,7 +172,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                     LOGGER.debug("spath->xpath conversion: <[{}]>", spathAsXpath);
 
                     String rv = (String) xPath.compile(spathAsXpath).evaluate(doc, XPathConstants.STRING);
-                    result.put(spathExpr, rv.trim());
+                    result.put("`"+spathExpr+"`", rv.trim());
                 }
                 return result;
             }
@@ -170,11 +180,11 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                 LOGGER.warn("spath: The content couldn't be parsed as JSON or XML. Details: <{}>", e.getMessage());
                 // return pre-existing content if output is the same as input
                 if (nameOfInputCol.equals(nameOfOutputCol)) {
-                    result.put(spathExpr, input);
+                    result.put("`"+spathExpr+"`", input);
                 }
                 // otherwise output will be empty on error
                 else {
-                    result.put(spathExpr, nullValue.value());
+                    result.put("`"+spathExpr+"`", nullValue.value());
                 }
                 return result;
             }
@@ -277,12 +287,12 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
             }
 
             // if there are multiple columns of the same name, add value to existing column
-            if (map.containsKey(colName)) {
-                String existingValue = map.get(colName);
-                map.put(colName, existingValue.concat("\n").concat(rootNode.getTextContent()));
+            if (map.containsKey("`"+colName+"`")) {
+                String existingValue = map.get("`"+colName+"`");
+                map.put("`"+colName+"`", existingValue.concat("\n").concat(rootNode.getTextContent()));
             }
             else {
-                map.put(colName, rootNode.getTextContent());
+                map.put("`"+colName+"`", rootNode.getTextContent());
             }
         }
 
