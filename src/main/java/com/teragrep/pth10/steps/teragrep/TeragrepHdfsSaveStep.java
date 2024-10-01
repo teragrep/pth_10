@@ -254,7 +254,6 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
             DataStreamWriter<Row> hdfsSaveWriter;
             if (format == Format.AVRO) {
                 hdfsSaveWriter = convertedDataset
-                        .repartition(1)
                         .writeStream()
                         .format("avro")
                         .trigger(Trigger.ProcessingTime(0))
@@ -264,7 +263,6 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
             }
             else if (format == Format.CSV) {
                 hdfsSaveWriter = dataset
-                        .repartition(1)
                         .writeStream()
                         .format("csv")
                         .trigger(Trigger.ProcessingTime(0))
