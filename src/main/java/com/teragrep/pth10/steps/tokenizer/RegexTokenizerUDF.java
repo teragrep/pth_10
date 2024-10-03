@@ -46,11 +46,9 @@
 package com.teragrep.pth10.steps.tokenizer;
 
 import com.typesafe.config.Config;
+import org.apache.spark.ml.feature.RegexTokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.expressions.UserDefinedFunction;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.DataTypes;
 
 public final class RegexTokenizerUDF implements TokenizerApplicable {
 
@@ -74,17 +72,23 @@ public final class RegexTokenizerUDF implements TokenizerApplicable {
     public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
         final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
         final String pattern = config.getString(BLOOM_PATTERN_CONFIG_ITEM).trim();
-        final UserDefinedFunction regexUDF = functions
-                .udf(
-                        new com.teragrep.functions.dpf_03.RegexTokenizerUDF(),
-                        DataTypes.createArrayType(DataTypes.BinaryType, false)
-                );
 
-        if (this.format == AbstractTokenizerStep.TokenizerFormat.BYTES) {
-            return dataset.withColumn(outputCol, regexUDF.apply(functions.col(inputCol), functions.lit(pattern)));
+        final RegexTokenizer tokenizer = new RegexTokenizer()
+                .setInputCol(inputCol)
+                .setOutputCol(outputCol)
+                .setPattern(pattern)
+                .setGaps(false);
+
+        final Dataset<Row> appliedDataset = tokenizer.transform(dataset);
+        switch (format) {
+            case BYTES:
+                throw new IllegalStateException(
+                        "TokenizerFormat.BYTES is not supported with regex tokenizer, use TokenizerFormat.Bytes"
+                );
+            case STRING:
+                return appliedDataset;
+            default:
+                throw new IllegalStateException("Unrecognized format : " + format);
         }
-        throw new UnsupportedOperationException(
-                "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option"
-        );
     }
 }
