@@ -106,7 +106,8 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        Node n = evalStatement.visit(ctx.getChild(1));
+
+        Node n = evalStatement.visitEvalStatement(ctx.evalStatement());
         String sql = null;
         if (n instanceof ColumnNode) {
             Column whereCol = ((ColumnNode) n).getColumn();

@@ -155,6 +155,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                     rv = new ColumnNode(col.geq(r));
                     break;
                 }
+                case DPLLexer.EVAL_LANGUAGE_MODE_AND: {
+                    rv = new ColumnNode(col.and(r));
+                    break;
+                }
+                case DPLLexer.EVAL_LANGUAGE_MODE_OR: {
+                    rv = new ColumnNode(col.or(r));
+                    break;
+                }
+                default: {
+                    throw new IllegalArgumentException("Unknown operation: " + operation.getSymbol().getText());
+                }
             }
         }
         return (ColumnNode) rv;
@@ -242,8 +253,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                 op = new Token(Type.LE);
                 break;
             }
+            case DPLLexer.EVAL_LANGUAGE_MODE_AND: {
+                op = new Token(Type.AND);
+                break;
+            }
+            case DPLLexer.EVAL_LANGUAGE_MODE_OR: {
+                op = new Token(Type.OR);
+                break;
+            }
             default: {
-                LOGGER.error("Unknown operation: <{}>", operation.getSymbol().getType());
+                LOGGER.error("Unknown operation: <{}>", operation.getSymbol().getText());
+                throw new IllegalArgumentException("Unknown operation: " + operation.getSymbol().getText());
             }
         }
         return op;
