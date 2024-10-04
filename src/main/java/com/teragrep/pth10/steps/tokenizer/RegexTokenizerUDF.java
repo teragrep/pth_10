@@ -49,9 +49,11 @@ import com.typesafe.config.Config;
 import org.apache.spark.ml.feature.RegexTokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class RegexTokenizerUDF implements TokenizerApplicable {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegexTokenizerUDF.class);
     private final Config config;
     private final AbstractTokenizerStep.TokenizerFormat format;
     private final String inputCol;
@@ -72,7 +74,7 @@ public final class RegexTokenizerUDF implements TokenizerApplicable {
     public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
         final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
         final String pattern = config.getString(BLOOM_PATTERN_CONFIG_ITEM).trim();
-
+        LOGGER.info("Using RegexTokenizer with pattern <{}>", pattern);
         final RegexTokenizer tokenizer = new RegexTokenizer()
                 .setInputCol(inputCol)
                 .setOutputCol(outputCol)
