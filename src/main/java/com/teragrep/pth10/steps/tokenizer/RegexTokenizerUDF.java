@@ -83,7 +83,7 @@ public final class RegexTokenizerUDF implements TokenizerApplicable {
         switch (format) {
             case BYTES:
                 throw new IllegalStateException(
-                        "TokenizerFormat.BYTES is not supported with regex tokenizer, use TokenizerFormat.Bytes"
+                        "TokenizerFormat.BYTES is not supported with regex tokenizer, use TokenizerFormat.STRING"
                 );
             case STRING:
                 return appliedDataset;
