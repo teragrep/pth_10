@@ -469,9 +469,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                 mode = TeragrepBloomStep.BloomMode.ESTIMATE;
             }
 
-            if (ctx.t_bloomOptionParameter().t_inputParamater() != null) {
+            if (ctx.t_bloomOptionParameter().t_inputParameter() != null) {
                 inputCol = new UnquotedText(
-                        new TextString(ctx.t_bloomOptionParameter().t_inputParamater().fieldType().getText())
+                        new TextString(ctx.t_bloomOptionParameter().t_inputParameter().fieldType().getText())
                 ).read();
             }
             else {
@@ -516,6 +516,35 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitT_regexextractParameter(final DPLParser.T_regexextractParameterContext ctx) {
+        final String inputCol;
+        final String outputCol;
+        final String regex;
+
+        if (ctx.t_regexParameter() != null) {
+            regex = new UnquotedText(new TextString(ctx.t_regexParameter().stringType().getText())).read();
+            LOGGER.info("regexextract regex: <[{}]>", regex);
+        }
+        else {
+            // maybe default or empty regex?
+            throw new IllegalArgumentException("Missing regex parameter");
+        }
+        if (ctx.t_inputParameter() != null) {
+            inputCol = new UnquotedText(new TextString(ctx.t_inputParameter().fieldType().getText())).read();
+        }
+        else {
+            inputCol = "_raw";
+        }
+        if (ctx.t_outputParameter() != null) {
+            outputCol = new UnquotedText(new TextString(ctx.t_outputParameter().fieldType().getText())).read();
+        }
+        else {
+            outputCol = "tokens";
+        }
+        return new StepNode(new TeragrepRegexExtractionStep(regex, inputCol, outputCol));
+    }
+
+    @Override
     public Node visitT_tokenizerParameter(DPLParser.T_tokenizerParameterContext ctx) {
         // exec tokenizer
         String inputCol = "_raw";
@@ -536,14 +565,14 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                 );
             }
         }
-        if (ctx.t_inputParamater() != null) {
-            inputCol = new UnquotedText(new TextString(ctx.t_inputParamater().fieldType().getText())).read();
+        if (ctx.t_inputParameter() != null) {
+            inputCol = new UnquotedText(new TextString(ctx.t_inputParameter().fieldType().getText())).read();
         }
         if (ctx.t_outputParameter() != null) {
             outputCol = new UnquotedText(new TextString(ctx.t_outputParameter().fieldType().getText())).read();
         }
 
-        return new StepNode(new TokenizerStep(zplnConfig, tokenizerFormat, inputCol, outputCol));
+        return new StepNode(new TokenizerStep(tokenizerFormat, inputCol, outputCol));
     }
 
     @Override

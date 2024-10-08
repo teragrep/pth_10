@@ -45,11 +45,17 @@
  */
 package com.teragrep.pth10.steps.tokenizer;
 
-import com.typesafe.config.Config;
+import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.expressions.UserDefinedFunction;
+import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.apache.spark.sql.types.DataTypes.StringType;
 
 /**
  * Runs the dpf_03 TokenAggregator on given field - Returns a Row with type String[], if dpl.pth_06.bloom.pattern option
@@ -58,19 +64,15 @@ import org.slf4j.LoggerFactory;
 public final class TokenizerStep extends AbstractTokenizerStep {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenizerStep.class);
+    private final AbstractTokenizerStep.TokenizerFormat tokenizerFormat;
+    private final String inputCol;
+    private final String outputCol;
 
-    public TokenizerStep(
-            Config config,
-            AbstractTokenizerStep.TokenizerFormat tokenizerFormat,
-            String inputCol,
-            String outputCol
-    ) {
-        this(new ConfiguredUDF(config, tokenizerFormat, inputCol, outputCol));
-    }
-
-    public TokenizerStep(ConfiguredUDF fromConfig) {
+    public TokenizerStep(AbstractTokenizerStep.TokenizerFormat tokenizerFormat, String inputCol, String outputCol) {
         super();
-        this.fromConfig = fromConfig;
+        this.tokenizerFormat = tokenizerFormat;
+        this.inputCol = inputCol;
+        this.outputCol = outputCol;
     }
 
     @Override
@@ -78,6 +80,24 @@ public final class TokenizerStep extends AbstractTokenizerStep {
         if (dataset == null) {
             return null;
         }
-        return fromConfig.appliedDataset(dataset);
+        final UserDefinedFunction tokenizerUDF = functions
+                .udf(
+                        new com.teragrep.functions.dpf_03.TokenizerUDF(),
+                        DataTypes.createArrayType(DataTypes.BinaryType, false)
+                );
+        final Column appliedColumn;
+        switch (tokenizerFormat) {
+            case BYTES:
+                appliedColumn = tokenizerUDF.apply(functions.col(inputCol));
+                break;
+            case STRING:
+                final UserDefinedFunction byteArrayListAsStringListUDF = functions
+                        .udf(new ByteArrayListAsStringListUDF(), DataTypes.createArrayType(StringType));
+                appliedColumn = byteArrayListAsStringListUDF.apply(tokenizerUDF.apply(functions.col(inputCol)));
+                break;
+            default:
+                throw new IllegalStateException("Unexpected tokenizerFormat: " + tokenizerFormat);
+        }
+        return dataset.withColumn(outputCol, appliedColumn);
     }
 }

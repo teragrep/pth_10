@@ -51,15 +51,14 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.opentest4j.AssertionFailedError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -580,5 +579,182 @@ public class TeragrepTransformationTest {
                     .collect(Collectors.toList());
             Assertions.assertEquals(Arrays.asList("1", "2"), listOfResult);
         });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractTokensTest() {
+        // source: "127.4.4.4"
+        String regex = "\\d+";
+        Pattern pattern = Pattern.compile(regex);
+        List<String> expected = Arrays.asList("127", "4", "4","4");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex " + regex + " input source output strTokens",
+                        testFile, ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> pattern.matcher(s).matches()));
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractTokensTestWithoutQuotes() {
+        // source: "127.4.4.4"
+        List<String> expected = Arrays.asList("127", "4", "4","4");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex \\d+ input source output strTokens",
+                        testFile, ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractTokensTestWithDoubleQuotes() {
+        // source: "127.4.4.4"
+        List<String> expected = Arrays.asList("127", "4", "4","4");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex \"\\d+\" input source output strTokens",
+                        testFile, ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractTokensTestWithSingleQuotes() {
+        // source: "127.4.4.4"
+        List<String> expected = Arrays.asList("127", "4", "4","4");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex '\\d+' input source output strTokens",
+                        testFile, ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractDefaultInputTest() {
+        // default "_raw": "5"
+        String regex = "\\d+";
+        Pattern pattern = Pattern.compile(regex);
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex " + regex + " output strTokens", testFile,
+                        ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(1, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> pattern.matcher(s).matches()));
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("5")));
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractDefaultOutputTest() {
+        // source: "127.4.4.4"
+        String regex = "\\d+";
+        Pattern pattern = Pattern.compile(regex);
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex " + regex + " input source", testFile, ds -> {
+                            List<String> result = ds
+                                    .select("tokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> pattern.matcher(s).matches()));
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractionMissingRegexExceptionTest() {
+        AssertionFailedError exception = Assertions.assertThrows(AssertionFailedError.class, () -> {
+            streamingTestUtil
+                    .performDPLTest(
+                            "index=index_A | teragrep exec regexextract input source output strTokens", testFile,
+                            ds -> {
+                            }
+                    );
+        });
+        Assertions.assertTrue(exception.getMessage().contains("Missing regex parameter"));
     }
 }

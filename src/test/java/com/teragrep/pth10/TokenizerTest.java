@@ -45,14 +45,6 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.steps.tokenizer.AbstractTokenizerStep;
-import com.teragrep.pth10.steps.tokenizer.TokenizerStep;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -62,13 +54,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
-import java.util.regex.Pattern;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TokenizerTest {
@@ -151,56 +136,5 @@ public class TokenizerTest {
                             Assertions.assertEquals("bytetokens", ds.columns()[ds.columns().length - 1]);
                         }
                 );
-    }
-
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
-    public void testRegexTokenizerNotSupportedFormat() {
-        Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.pattern", "testRegex");
-        Config config = ConfigFactory.parseProperties(properties);
-
-        TokenizerStep step = new TokenizerStep(config, AbstractTokenizerStep.TokenizerFormat.STRING, "_raw", "result");
-        SparkSession spark = streamingTestUtil.getCtx().getSparkSession();
-        UnsupportedOperationException exception = Assertions
-                .assertThrows(UnsupportedOperationException.class, () -> step.get(spark.read().schema(testSchema).csv(spark.emptyDataset(Encoders.STRING()))));
-        String e = "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option";
-        Assertions.assertEquals(e, exception.getMessage());
-    }
-
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
-    public void testRegexTokenizerSelection() {
-        String regex = "^\\d+";
-        Pattern pattern = Pattern.compile(regex);
-        Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.pattern", regex);
-        Config config = ConfigFactory.parseProperties(properties);
-
-        TokenizerStep step = new TokenizerStep(
-                config,
-                AbstractTokenizerStep.TokenizerFormat.BYTES,
-                "source",
-                "bytetokens"
-        );
-        SparkSession spark = streamingTestUtil.getCtx().getSparkSession();
-        Dataset<Row> result = step.get(spark.read().schema(testSchema).json(testFile));
-        // first row value: 127.0.0.0
-        List<Object> list = result.select("bytetokens").first().getList(0);
-        Set<String> tokens = new HashSet<>();
-        for (Object o : list) {
-            tokens.add(new String((byte[]) o, StandardCharsets.UTF_8));
-        }
-        Assertions.assertEquals(4, list.size());
-        Assertions.assertEquals(2, tokens.size());
-        Assertions.assertTrue(tokens.contains("127"));
-        Assertions.assertTrue(tokens.contains("0"));
-        Assertions.assertTrue(tokens.stream().allMatch(s -> pattern.matcher(s).matches()));
     }
 }

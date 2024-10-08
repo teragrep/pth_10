@@ -43,48 +43,43 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.tokenizer;
+package com.teragrep.pth10.steps.teragrep;
 
-import com.typesafe.config.Config;
+import com.teragrep.pth10.steps.AbstractStep;
+import org.apache.spark.ml.feature.RegexTokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.expressions.UserDefinedFunction;
-import org.apache.spark.sql.functions;
-import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.streaming.StreamingQueryException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public final class RegexTokenizerUDF implements TokenizerApplicable {
+public final class TeragrepRegexExtractionStep extends AbstractStep {
 
-    private final Config config;
-    private final AbstractTokenizerStep.TokenizerFormat format;
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepRegexExtractionStep.class);
+
+    private final String regex;
     private final String inputCol;
     private final String outputCol;
 
-    public RegexTokenizerUDF(
-            Config config,
-            AbstractTokenizerStep.TokenizerFormat format,
-            String inputCol,
-            String outputCol
-    ) {
-        this.config = config;
-        this.format = format;
+    public TeragrepRegexExtractionStep(String regex, String inputCol, String outputCol) {
+        this.regex = regex;
         this.inputCol = inputCol;
         this.outputCol = outputCol;
     }
 
-    public Dataset<Row> appliedDataset(final Dataset<Row> dataset) {
-        final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
-        final String pattern = config.getString(BLOOM_PATTERN_CONFIG_ITEM).trim();
-        final UserDefinedFunction regexUDF = functions
-                .udf(
-                        new com.teragrep.functions.dpf_03.RegexTokenizerUDF(),
-                        DataTypes.createArrayType(DataTypes.BinaryType, false)
+    @Override
+    public Dataset<Row> get(final Dataset<Row> dataset) throws StreamingQueryException {
+        LOGGER
+                .info(
+                        "TeragrepRegexExtractionStep using regex pattern: <[{}]> from input col <[{}]> to output col <[{}]>",
+                        regex, inputCol, outputCol
                 );
+        final RegexTokenizer tokenizer = new RegexTokenizer()
+                .setInputCol(inputCol)
+                .setOutputCol(outputCol)
+                .setPattern(regex)
+                .setGaps(false);
 
-        if (this.format == AbstractTokenizerStep.TokenizerFormat.BYTES) {
-            return dataset.withColumn(outputCol, regexUDF.apply(functions.col(inputCol), functions.lit(pattern)));
-        }
-        throw new UnsupportedOperationException(
-                "TokenizerFormat.STRING is not supported with regex tokenizer, remove bloom.pattern option"
-        );
+        return tokenizer.transform(dataset);
     }
 }

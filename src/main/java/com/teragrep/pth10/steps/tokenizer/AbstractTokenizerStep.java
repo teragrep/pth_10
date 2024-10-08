@@ -53,8 +53,6 @@ public abstract class AbstractTokenizerStep extends AbstractStep {
         STRING, BYTES
     }
 
-    protected ConfiguredUDF fromConfig;
-
     public AbstractTokenizerStep() {
         super();
     }
