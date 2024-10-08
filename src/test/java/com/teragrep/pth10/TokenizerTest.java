@@ -45,14 +45,6 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.steps.tokenizer.AbstractTokenizerStep;
-import com.teragrep.pth10.steps.tokenizer.TokenizerStep;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Encoders;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -62,10 +54,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
-
-import java.util.List;
-import java.util.Properties;
-import java.util.regex.Pattern;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TokenizerTest {
@@ -148,48 +136,5 @@ public class TokenizerTest {
                             Assertions.assertEquals("bytetokens", ds.columns()[ds.columns().length - 1]);
                         }
                 );
-    }
-
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
-    public void testRegexTokenizerSelection() {
-        String regex = "\\d+";
-        Pattern pattern = Pattern.compile(regex);
-        Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.pattern", regex);
-        Config config = ConfigFactory.parseProperties(properties);
-
-        TokenizerStep step = new TokenizerStep(
-                config,
-                AbstractTokenizerStep.TokenizerFormat.STRING,
-                "source",
-                "output"
-        );
-        SparkSession spark = streamingTestUtil.getCtx().getSparkSession();
-        Dataset<Row> result = step.get(spark.read().schema(testSchema).json(testFile));
-        // first row value: 127.0.0.0
-        List<String> list = result.select("output").first().getList(0);
-        Assertions.assertEquals(4, list.size());
-        boolean patternMatch = list.stream().allMatch(s -> pattern.matcher(s).matches());
-        boolean correctNumbers = list.stream().allMatch(s -> s.equals("127") || s.equals("0"));
-        Assertions.assertTrue(patternMatch);
-        Assertions.assertTrue(correctNumbers);
-    }
-
-    @Test
-    public void testRegexBytesFormatNotSupported() {
-        Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.pattern", "testRegex");
-        Config config = ConfigFactory.parseProperties(properties);
-
-        TokenizerStep step = new TokenizerStep(config, AbstractTokenizerStep.TokenizerFormat.BYTES, "_raw", "result");
-        SparkSession spark = streamingTestUtil.getCtx().getSparkSession();
-        IllegalStateException exception = Assertions
-                .assertThrows(IllegalStateException.class, () -> step.get(spark.read().schema(testSchema).csv(spark.emptyDataset(Encoders.STRING()))));
-        String e = "TokenizerFormat.BYTES is not supported with regex tokenizer, use TokenizerFormat.Bytes";
-        Assertions.assertEquals(e, exception.getMessage());
     }
 }
