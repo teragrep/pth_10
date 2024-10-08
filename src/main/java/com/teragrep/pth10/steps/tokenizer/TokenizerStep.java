@@ -46,7 +46,6 @@
 package com.teragrep.pth10.steps.tokenizer;
 
 import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
-import com.typesafe.config.Config;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;

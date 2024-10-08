@@ -515,26 +515,30 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         return new StepNode(bloomStep);
     }
 
-    // TODO add @Override annotation with new pth-03 release
-    public Node visitT_regexExtractParameter(final DPLParser.T_regexextractParameterContext ctx) {
+    @Override
+    public Node visitT_regexextractParameter(final DPLParser.T_regexextractParameterContext ctx) {
         final String inputCol;
         final String outputCol;
         final String regex;
 
         if (ctx.t_regexParameter() != null) {
-            regex = new UnquotedText(new TextString(ctx.t_regexParameter().fieldType().getText())).read();
-        } else {
-            // maybe default regex or empty regex?
+            regex = new UnquotedText(new TextString(ctx.t_regexParameter().stringType().getText())).read();
+            LOGGER.info("regexextract regex: <[{}]>", regex);
+        }
+        else {
+            // maybe default or empty regex?
             throw new IllegalArgumentException("Missing regex parameter");
         }
         if (ctx.t_inputParameter() != null) {
             inputCol = new UnquotedText(new TextString(ctx.t_inputParameter().fieldType().getText())).read();
-        } else {
+        }
+        else {
             inputCol = "_raw";
         }
         if (ctx.t_outputParameter() != null) {
             outputCol = new UnquotedText(new TextString(ctx.t_outputParameter().fieldType().getText())).read();
-        } else {
+        }
+        else {
             outputCol = "tokens";
         }
         return new StepNode(new TeragrepRegexExtractionStep(regex, inputCol, outputCol));
