@@ -116,7 +116,7 @@ public class MultipleAggregationsTest {
                         }
                 );
     }
-    
+
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
@@ -180,7 +180,7 @@ public class MultipleAggregationsTest {
                         }
                 );
     }
-    
+
     @Test
     @Disabled(value = "Fails because c is parsed as count() command, not a column, pth-03 issue #80")
     @DisabledIfSystemProperty(

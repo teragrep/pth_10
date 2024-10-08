@@ -590,7 +590,7 @@ public class TeragrepTransformationTest {
         // source: "127.4.4.4"
         String regex = "\\d+";
         Pattern pattern = Pattern.compile(regex);
-        List<String> expected = Arrays.asList("127", "4", "4","4");
+        List<String> expected = Arrays.asList("127", "4", "4", "4");
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | teragrep exec regexextract regex " + regex + " input source output strTokens",
@@ -617,11 +617,11 @@ public class TeragrepTransformationTest {
     )
     public void tgRegexExtractTokensTestWithoutQuotes() {
         // source: "127.4.4.4"
-        List<String> expected = Arrays.asList("127", "4", "4","4");
+        List<String> expected = Arrays.asList("127", "4", "4", "4");
         streamingTestUtil
                 .performDPLTest(
-                        "index=index_A | teragrep exec regexextract regex \\d+ input source output strTokens",
-                        testFile, ds -> {
+                        "index=index_A | teragrep exec regexextract regex \\d+ input source output strTokens", testFile,
+                        ds -> {
                             List<String> result = ds
                                     .select("strTokens")
                                     .first()
@@ -643,7 +643,7 @@ public class TeragrepTransformationTest {
     )
     public void tgRegexExtractTokensTestWithDoubleQuotes() {
         // source: "127.4.4.4"
-        List<String> expected = Arrays.asList("127", "4", "4","4");
+        List<String> expected = Arrays.asList("127", "4", "4", "4");
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | teragrep exec regexextract regex \"\\d+\" input source output strTokens",
@@ -669,7 +669,7 @@ public class TeragrepTransformationTest {
     )
     public void tgRegexExtractTokensTestWithSingleQuotes() {
         // source: "127.4.4.4"
-        List<String> expected = Arrays.asList("127", "4", "4","4");
+        List<String> expected = Arrays.asList("127", "4", "4", "4");
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | teragrep exec regexextract regex '\\d+' input source output strTokens",
