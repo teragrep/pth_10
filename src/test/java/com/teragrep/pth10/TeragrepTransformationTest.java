@@ -615,7 +615,85 @@ public class TeragrepTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void tgRegexExctractDefaultInputTest() {
+    public void tgRegexExtractTokensTestWithoutQuotes() {
+        // source: "127.4.4.4"
+        List<String> expected = Arrays.asList("127", "4", "4","4");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex \\d+ input source output strTokens",
+                        testFile, ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractTokensTestWithDoubleQuotes() {
+        // source: "127.4.4.4"
+        List<String> expected = Arrays.asList("127", "4", "4","4");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex \"\\d+\" input source output strTokens",
+                        testFile, ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractTokensTestWithSingleQuotes() {
+        // source: "127.4.4.4"
+        List<String> expected = Arrays.asList("127", "4", "4","4");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex '\\d+' input source output strTokens",
+                        testFile, ds -> {
+                            List<String> result = ds
+                                    .select("strTokens")
+                                    .first()
+                                    .getList(0)
+                                    .stream()
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(4, result.size());
+                            Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractDefaultInputTest() {
         // default "_raw": "5"
         String regex = "\\d+";
         Pattern pattern = Pattern.compile(regex);
