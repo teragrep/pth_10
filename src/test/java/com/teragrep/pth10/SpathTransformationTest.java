@@ -46,6 +46,7 @@
 package com.teragrep.pth10;
 
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -104,12 +105,12 @@ public class SpathTransformationTest {
     // ----------------------------------------
 
     // * to make the path into a directory path
-    final String JSON_DATA_1 = "src/test/resources/spath/spathTransformationTest_json1*.json";
+    final String JSON_DATA_1 = "src/test/resources/spath/spathTransformationTest_json1*.jsonl";
 
-    final String JSON_DATA_NESTED = "src/test/resources/spath/spathTransformationTest_json_nested*.json";
-    final String XML_DATA_1 = "src/test/resources/spath/spathTransformationTest_xml1*.json";
-    final String XML_DATA_2 = "src/test/resources/spath/spathTransformationTest_xml2*.json";
-    final String INVALID_DATA = "src/test/resources/spath/spathTransformationTest_invalid*.json";
+    final String JSON_DATA_NESTED = "src/test/resources/spath/spathTransformationTest_json_nested*.jsonl";
+    final String XML_DATA_1 = "src/test/resources/spath/spathTransformationTest_xml1*.jsonl";
+    final String XML_DATA_2 = "src/test/resources/spath/spathTransformationTest_xml2*.jsonl";
+    final String INVALID_DATA = "src/test/resources/spath/spathTransformationTest_invalid*.jsonl";
 
     @Test
     @DisabledIfSystemProperty(
@@ -242,26 +243,26 @@ public class SpathTransformationTest {
         });
     }
 
-    @Disabled
     @Test
-    // output without path is invalid syntax
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void spathTestJsonNoPath() {
-        streamingTestUtil.performDPLTest("index=index_A | spath input=_raw output=OUT", JSON_DATA_1, ds -> {
+        streamingTestUtil.performDPLTest("index=index_A | spath input=_raw", JSON_DATA_1, ds -> {
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]", Arrays
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]", Arrays
                                     .toString(ds.columns()),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
-            String result = ds
-                    .select("OUT")
+            List<Row> result = ds
+                    .select("json", "lil")
                     .dropDuplicates()
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList())
-                    .get(0);
-            Assertions.assertEquals("debugo\nxml", result);
+                    .collectAsList();
+            Assertions.assertEquals(1, result.size());
+            Assertions.assertEquals("debugo",result.get(0).getAs("json"));
+            Assertions.assertEquals("xml", result.get(0).getAs("lil"));
         });
     }
 
@@ -400,18 +401,19 @@ public class SpathTransformationTest {
         });
     }
 
-    // FIXME: Seems like struck unescapes in eval, and the unescaped _raw is given to spath.
-    @Disabled
     @Test
-    //@DisabledIfSystemProperty(named="skipSparkTest", matches="true")
-    public void spathTestEvaledJsonData() {
+    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    public void testSpathEvaledJsonData() {
+        String query = "index=index_A | eval catworld = \"{\\\"kissa\\\" : \\\"fluff\\\"}\" | spath input=catworld output=cat path=kissa";
         streamingTestUtil
-                .performDPLTest(
-                        "| eval _raw = \"{\\\"kissa\\\" : \\\"fluff\\\"}\" | spath input=_raw output=otus path=kissa",
-                        "empty _raw", ds -> {
-                            // TODO Assertions
-                        }
-                );
+                .performDPLTest(query, JSON_DATA_1, ds -> {
+                    Dataset<Row> res = ds.select("cat").orderBy("offset").distinct();
+                    List<Row> catList = res.collectAsList();
+
+                    Assertions.assertEquals(1, catList.size());
+                    Assertions.assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, catworld, cat]", Arrays.toString(ds.columns()));
+                    Assertions.assertEquals("fluff", catList.get(0).getString(0));
+                });
     }
 
     @Test

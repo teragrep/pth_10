@@ -105,7 +105,7 @@ public class SearchTransformationTest {
     )
     public void searchTest_FieldComparison() {
         String query = "index=index_A | search sourcetype!=stream2";
-        String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/joinTransformationTest_data*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> listOfResult = ds
@@ -129,7 +129,7 @@ public class SearchTransformationTest {
     )
     public void searchTest_Boolean() {
         String query = "index=index_A | search sourcetype=stream1 AND (id = 1 OR id = 3)";
-        String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/joinTransformationTest_data*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> listOfResult = ds
@@ -153,7 +153,7 @@ public class SearchTransformationTest {
     )
     public void searchTest_TextSearchFromRaw() {
         String query = "index=index_A | search \"nothing\"";
-        String testFile = "src/test/resources/joinTransformationTest_data*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/joinTransformationTest_data*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> listOfResult = ds
@@ -178,7 +178,7 @@ public class SearchTransformationTest {
     )
     public void searchAfterSpath_ComparisonTest() {
         String query = "index=index_A | spath path= json | search json > 40";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> json = ds
@@ -202,7 +202,7 @@ public class SearchTransformationTest {
     )
     public void searchAfterSpath_ComparisonTest2() {
         String query = "index=index_A | spath path= json | search json <= 40";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> json = ds
@@ -226,7 +226,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonEqTest() {
         String query = "index=index_A | search sourcetype = stream1";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> sourcetype = ds
@@ -250,7 +250,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonEqWildcardTest() {
         String query = "index=index_A | search sourcetype = stream*";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> sourcetype = ds
@@ -278,7 +278,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonNeqTest() {
         String query = "index=index_A | search id != 10";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> id = ds
@@ -302,7 +302,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonGtTest() {
         String query = "index=index_A | search id > 9";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> id = ds
@@ -326,7 +326,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonGteTest() {
         String query = "index=index_A | search id >= 9";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> id = ds
@@ -350,7 +350,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonLtTest() {
         String query = "index=index_A | search id < 10";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> id = ds
@@ -374,7 +374,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonLteTest() {
         String query = "index=index_A | search id <= 10";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> id = ds
@@ -398,7 +398,7 @@ public class SearchTransformationTest {
     )
     public void searchComparisonMixedInputTest() {
         String query = "index=index_A | search \"source\" < 2";
-        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.json";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
             List<String> json = ds

@@ -63,7 +63,7 @@ public class ConvertTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertTransformationTest.class);
 
     // Use this file for dataset initialization
-    String testFile = "src/test/resources/convertTfData*.json"; // * to make the path into a directory path
+    String testFile = "src/test/resources/convertTfData*.jsonl"; // * to make the path into a directory path
 
     private StreamingTestUtil streamingTestUtil;
 

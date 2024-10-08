@@ -77,7 +77,7 @@ public class TimechartTest {
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         // Use this file for  dataset initialization
-        String testFile = "src/test/resources/timechartTestData.json";
+        String testFile = "src/test/resources/timechartTestData.jsonl";
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);

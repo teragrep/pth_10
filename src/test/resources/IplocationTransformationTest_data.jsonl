@@ -1,0 +1,5 @@
+{"_time": "2018-05-11 05:11:06", "id": 1, "_raw": "1", "index": "index_A", "sourcetype": "stream2", "host": "host", "source": "127.0.0.0", "partition": "0", "offset": 1, "otherIP": "192.168.1.1"}
+{"_time": "2018-07-27 10:16:18", "id": 2, "_raw": "2", "index": "index_A", "sourcetype": "stream1", "host": "host", "source": "127.1.1.1", "partition": "0", "offset": 2, "otherIP": "192.168.1.2"}
+{"_time": "2017-11-01 07:54:15", "id": 3, "_raw": "3", "index": "index_A", "sourcetype": "stream2", "host": "host", "source": "127.2.2.2", "partition": "0", "offset": 3, "otherIP": "192.168.1.3"}
+{"_time": "2012-03-18 03:19:28", "id": 4, "_raw": "4", "index": "index_A", "sourcetype": "stream1", "host": "host", "source": "127.3.3.3", "partition": "0", "offset": 4, "otherIP": "192.168.1.4"}
+{"_time": "2020-03-07 03:08:54", "id": 5, "_raw": "5", "index": "index_A", "sourcetype": "stream2", "host": "host", "source": "127.4.4.4", "partition": "0", "offset": 5, "otherIP": "192.168.1.5"}

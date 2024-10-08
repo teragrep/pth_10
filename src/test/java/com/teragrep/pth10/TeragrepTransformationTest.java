@@ -66,7 +66,7 @@ public class TeragrepTransformationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTransformationTest.class);
 
-    private final String testFile = "src/test/resources/IplocationTransformationTest_data*.json"; // * to make the path into a directory path
+    private final String testFile = "src/test/resources/IplocationTransformationTest_data*.jsonl"; // * to make the path into a directory path
     private String testResourcesPath;
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
