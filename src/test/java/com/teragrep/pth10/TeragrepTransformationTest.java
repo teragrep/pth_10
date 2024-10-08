@@ -57,10 +57,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -593,6 +590,7 @@ public class TeragrepTransformationTest {
         // source: "127.4.4.4"
         String regex = "\\d+";
         Pattern pattern = Pattern.compile(regex);
+        List<String> expected = Arrays.asList("127", "4", "4","4");
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | teragrep exec regexextract regex " + regex + " input source output strTokens",
@@ -607,6 +605,7 @@ public class TeragrepTransformationTest {
                             Assertions.assertEquals(4, result.size());
                             Assertions.assertTrue(result.stream().allMatch(s -> pattern.matcher(s).matches()));
                             Assertions.assertTrue(result.stream().allMatch(s -> s.equals("127") || s.equals("4")));
+                            Assertions.assertEquals(expected, result);
                         }
                 );
     }
