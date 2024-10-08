@@ -669,7 +669,7 @@ public class TeragrepTransformationTest {
             matches = "true"
     )
     public void tgRegexExtractionMissingRegexExceptionTest() {
-        Assertions.assertThrows(AssertionFailedError.class, () -> {
+        AssertionFailedError exception = Assertions.assertThrows(AssertionFailedError.class, () -> {
             streamingTestUtil
                     .performDPLTest(
                             "index=index_A | teragrep exec regexextract input source output strTokens", testFile,
@@ -677,5 +677,6 @@ public class TeragrepTransformationTest {
                             }
                     );
         });
+        Assertions.assertTrue(exception.getMessage().contains("Missing regex parameter"));
     }
 }
