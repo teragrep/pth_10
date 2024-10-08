@@ -45,8 +45,6 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DefaultTimeFormat;
-import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.*;
@@ -63,7 +61,7 @@ public class logicalOperationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(logicalOperationTest.class);
 
     // Use this file for  dataset initialization
-    String testFile = "src/test/resources/xmlWalkerTestData*.json"; // * to make the path into a directory path
+    String testFile = "src/test/resources/logicalOperationTestData*.jsonl"; // * to make the path into a directory path
     private StreamingTestUtil streamingTestUtil;
 
     @BeforeAll
@@ -82,39 +80,46 @@ public class logicalOperationTest {
         this.streamingTestUtil.tearDown();
     }
 
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseDPLTest() throws AnalysisException {
-        String q = "index=kafka_topic conn error eka OR toka kolmas";
-        String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%' AND _raw LIKE '%error%' AND _raw LIKE '%eka%' OR _raw LIKE '%toka%' AND _raw LIKE '%kolmas%'";
-        String result = utils.getQueryAnalysis(q);
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
-    }
-
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseDPLCatalystTest() {
-        String q = "index=kafka_topic *conn* *error* *eka* OR *toka* *kolmas*";
+    public void testUnquotedSearchString() {
+        String query = "index = index_A raw 01";
 
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String e = "(RLIKE(index, (?i)^kafka_topic$) AND (((RLIKE(_raw, (?i)^.*\\Qconn\\E.*) AND RLIKE(_raw, (?i)^.*\\Qerror\\E.*)) AND (RLIKE(_raw, (?i)^.*\\Qeka\\E.*) OR RLIKE(_raw, (?i)^.*\\Qtoka\\E.*))) AND RLIKE(_raw, (?i)^.*\\Qkolmas\\E.*)))";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, res.count()); // 1 row of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
         });
     }
 
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseOrTest() throws AnalysisException {
-        String q = "index=kafka_topic a1 OR a2";
-        String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%a1%' OR _raw LIKE '%a2%'";
-        String result = utils.getQueryAnalysis(q);
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testQuotedSearchString() {
+        String query = "index=index_C \"raw 10\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 10\"", listOfRaw.get(0));
+        });
     }
 
     @Test
@@ -122,14 +127,42 @@ public class logicalOperationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseOrCatalystTest() {
-        String q = "index=kafka_topic a1 OR a2";
+    public void testWildcardsWithOr() {
+        String query = "index=index_A (*raw* *01*) OR (*raw* *02*)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String e = "(RLIKE(index, (?i)^kafka_topic$) AND (RLIKE(_raw, (?i)^.*\\Qa1\\E.*) OR RLIKE(_raw, (?i)^.*\\Qa2\\E.*)))";
+            Assertions.assertEquals(2, res.count()); // 2 row of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
+        });
+    }
 
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSearchStringWithOr() {
+        String query = "index=index_A 01 OR 02";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(2, res.count()); // 2 row of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
         });
     }
 
@@ -164,24 +197,26 @@ public class logicalOperationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseIndexInCatalystTest() {
-        String q = "index IN ( index_A index_B )";
+    public void testMultipleIndexWithIn() {
+        String query = "index IN ( index_A index_B )";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfIndex = res
+                    .select("index")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String e = "(RLIKE(index, (?i)^index_a) OR RLIKE(index, (?i)^index_b))";
-
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
+            Assertions.assertEquals(7, res.count()); // 7 row of data
+            Assertions.assertEquals("index_A", listOfIndex.get(0));
+            Assertions.assertEquals("index_A", listOfIndex.get(1));
+            Assertions.assertEquals("index_A", listOfIndex.get(2));
+            Assertions.assertEquals("index_B", listOfIndex.get(3));
+            Assertions.assertEquals("index_B", listOfIndex.get(4));
+            Assertions.assertEquals("index_B", listOfIndex.get(5));
+            Assertions.assertEquals("index_B", listOfIndex.get(6));
         });
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseAndTest() throws AnalysisException {
-        String q = "index=kafka_topic a1 AND a2";
-        String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%a1%' AND _raw LIKE '%a2%'";
-        String result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
     }
 
     @Test
@@ -189,14 +224,50 @@ public class logicalOperationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseAndCatalystTest() {
-        String q = "index=kafka_topic a1 AND a2";
+    public void testMultipleIndexWithComma() {
+        String query = "index IN (index_A,index_B,index_C)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfIndex = res
+                    .select("index")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String e = "(RLIKE(index, (?i)^kafka_topic$) AND (RLIKE(_raw, (?i)^.*\\Qa1\\E.*) AND RLIKE(_raw, (?i)^.*\\Qa2\\E.*)))";
+            Assertions.assertEquals(10, res.count()); // 10 row of data
+            Assertions.assertEquals("index_A", listOfIndex.get(0));
+            Assertions.assertEquals("index_A", listOfIndex.get(1));
+            Assertions.assertEquals("index_A", listOfIndex.get(2));
+            Assertions.assertEquals("index_B", listOfIndex.get(3));
+            Assertions.assertEquals("index_B", listOfIndex.get(4));
+            Assertions.assertEquals("index_B", listOfIndex.get(5));
+            Assertions.assertEquals("index_B", listOfIndex.get(6));
+            Assertions.assertEquals("index_C", listOfIndex.get(7));
+            Assertions.assertEquals("index_C", listOfIndex.get(8));
+            Assertions.assertEquals("index_C", listOfIndex.get(9));
+        });
+    }
 
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSearchStringWithAnd() {
+        String query = "index=index_B raw AND sourcetype = B:Y:0";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(2, res.count()); // 2 rows of data
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 05\"", listOfRaw.get(1));
         });
     }
 
@@ -208,23 +279,16 @@ public class logicalOperationTest {
     public void parseRawUUIDCatalystTest() {
         String q = "index=abc sourcetype=\"cd:ef:gh:0\"  \"1848c85bfe2c4323955dd5469f18baf6\"";
         String testFile = "src/test/resources/uuidTestData*.json"; // * to make the path into a directory path
-
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e = "(RLIKE(index, (?i)^abc$) AND (RLIKE(sourcetype, (?i)^cd:ef:gh:0) AND RLIKE(_raw, (?i)^.*\\Q1848c85bfe2c4323955dd5469f18baf6\\E.*)))";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
-
-            // Get raw field and check results. Should be only 1 match
             Dataset<Row> selected = res.select("_raw");
-            //selected.show(false);
             List<String> lst = selected
                     .collectAsList()
                     .stream()
                     .map(r -> r.getString(0))
                     .sorted()
                     .collect(Collectors.toList());
-            // check result count
-            Assertions.assertEquals(3, lst.size());
+
+            Assertions.assertEquals(3, lst.size()); // check result count
             // Compare values
             Assertions.assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6  computer01.example.com", lst.get(1));
             Assertions.assertEquals("uuid=1848c85bfe2c4323955dd5469f18baf6666  computer01.example.com", lst.get(2));
@@ -242,230 +306,14 @@ public class logicalOperationTest {
         String testFile = "src/test/resources/latitudeTestData*.json"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e = "(RLIKE(index, (?i)^abc$) AND RLIKE(_raw, (?i)^.*\\Q\"latitude\": -89.875, \"longitude\": 24.125\\E.*))";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
-
-            // Get raw field and check results. Should be only 1 match
             Dataset<Row> selected = res.select("_raw");
-            //selected.show(false);
             List<Row> lst = selected.collectAsList();
-            // check result count
-            Assertions.assertEquals(2, lst.size());
+
+            Assertions.assertEquals(2, lst.size()); // check result count
             // Compare values
             Assertions.assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(0).getString(0));
             Assertions.assertEquals("\"latitude\": -89.875, \"longitude\": 24.125", lst.get(1).getString(0));
         });
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseAnd1Test() throws AnalysisException {
-        String q, e, result;
-        q = "index=kafka_topic a1 a2";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%a1%' AND _raw LIKE '%a2%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseMultipleParenthesisTest() throws AnalysisException {
-        String q = "index=kafka_topic conn ( ( error AND toka) OR kolmas )";
-        String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%' AND ((_raw LIKE '%error%' AND _raw LIKE '%toka%') OR _raw LIKE '%kolmas%')";
-        String result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseParenthesisWithOrTest() throws AnalysisException {
-        String q, e, result;
-        q = "index=kafka_topic conn AND ( ( error AND toka ) OR ( kolmas AND n4 ))";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND _raw LIKE '%conn%' AND ((_raw LIKE '%error%' AND _raw LIKE '%toka%') OR (_raw LIKE '%kolmas%' AND _raw LIKE '%n4%'))";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseSimpleParenthesisTest() throws AnalysisException {
-        String q, e, result;
-        q = "index=kafka_topic ( conn )";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"kafka_topic\" AND (_raw LIKE '%conn%')";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseHostTest() throws AnalysisException {
-        String q = "index = archive_memory host = \"localhost\" Deny";
-        String e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"archive_memory\" AND host LIKE \"localhost\" AND _raw LIKE '%Deny%'";
-        String result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseHost1Test() throws AnalysisException {
-        String q, e, result;
-        q = "index = archive_memory ( host = \"localhost\" OR host = \"test\" ) AND sourcetype = \"memory\" Deny";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"archive_memory\" AND (host LIKE \"localhost\" OR host LIKE \"test\") AND sourcetype LIKE \"memory\" AND _raw LIKE '%Deny%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseHost2Test() throws AnalysisException {
-        String q, e, result;
-        q = "index = archive_memory host = \"localhost\" host = \"test\" host = \"test1\" Deny";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"archive_memory\" AND host LIKE \"localhost\" AND host LIKE \"test\" AND host LIKE \"test1\" AND _raw LIKE '%Deny%'";
-        result = utils.getQueryAnalysis(q);
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseHost3Test() throws AnalysisException {
-        String q, e, result;
-        // missing AND in query
-        q = "index = archive_memory host = \"localhost\" host = \"test\" Deny";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"archive_memory\" AND host LIKE \"localhost\" AND host LIKE \"test\" AND _raw LIKE '%Deny%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseHost4Test() throws AnalysisException {
-        String q, e, result;
-        q = "index = archive_memory host = \"localhost\" host = \"test\" host = \"test1\" Deny";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"archive_memory\" AND host LIKE \"localhost\" AND host LIKE \"test\" AND host LIKE \"test1\" AND _raw LIKE '%Deny%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void parseHost5Test() throws AnalysisException {
-        String q, e, result;
-        // Same but missing AND in query		
-        q = "index = archive_memory host = \"one\" host = \"two\" host = \"tree\" number";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"archive_memory\" AND host LIKE \"one\" AND host LIKE \"two\" AND host LIKE \"tree\" AND _raw LIKE '%number%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void streamListWithoutQuotesTest() throws AnalysisException {
-        String q, e, result;
-        q = "index = memory-test latest=\"05/10/2022:09:11:40\" host= sc-99-99-14-25 sourcetype= log:f17:0 Latitude";
-        long latestEpoch = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"memory-test\" AND _time <= from_unixtime("
-                + latestEpoch
-                + ") AND host LIKE \"sc-99-99-14-25\" AND sourcetype LIKE \"log:f17:0\" AND _raw LIKE '%Latitude%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void streamListWithoutQuotes1Test() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index = MEMORY-test latest=\"05/10/2022:09:11:40\" host= SC-99-99-14-20 sourcetype= LOG:F17:0 Latitude";
-        long latestEpoch2 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"memory-test\" AND _time <= from_unixtime("
-                + latestEpoch2
-                + ") AND host LIKE \"sc-99-99-14-20\" AND sourcetype LIKE \"log:f17:0\" AND _raw LIKE '%Latitude%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void logicalNotTest() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index=f17 sourcetype=log:f17:0 _index_earliest=\"12/31/1970:10:15:30\" _index_latest=\"12/31/2022:10:15:30\" NOT rainfall_rate";
-        long earliestEpoch = new DefaultTimeFormat().getEpoch("12/31/1970:10:15:30");
-        long latestEpoch = new DefaultTimeFormat().getEpoch("12/31/2022:10:15:30");
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND sourcetype LIKE \"log:f17:0\" AND _time >= from_unixtime("
-                + earliestEpoch + ") AND _time <= from_unixtime(" + latestEpoch
-                + ") AND NOT _raw LIKE '%rainfall_rate%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void logicalNot1Test() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index=cpu sourcetype=log:cpu:0 NOT src";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"cpu\" AND sourcetype LIKE \"log:cpu:0\" AND NOT _raw LIKE '%src%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void logicalQuotedCompoundTest() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index=f17 \"ei yhdys sana\"";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND _raw LIKE '%ei yhdys sana%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void logicalUnQuotedCompoundTest() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index=f17 ei yhdys sana";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND _raw LIKE '%ei%' AND _raw LIKE '%yhdys%' AND _raw LIKE '%sana%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void logicalUnQuotedCompound2Test() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index=f17 ei AND yhdys sana";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND _raw LIKE '%ei%' AND _raw LIKE '%yhdys%' AND _raw LIKE '%sana%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void logicalQuotedIntTest() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index=f17 \"1.2\"";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND _raw LIKE '%1.2%'";
-        result = utils.getQueryAnalysis(q);
-        Assertions.assertEquals(e, result);
-    }
-
-    @Disabled
-    @Test // disabled on 2022-05-16 TODO Convert to dataframe test
-    public void logicalUnQuotedIntTest() throws AnalysisException {
-        String q, e, result;
-        // Test to_lower() for inex,host,sourcetyype
-        q = "index=f17 1.2";
-        e = "SELECT * FROM `temporaryDPLView` WHERE index LIKE \"f17\" AND _raw LIKE '%1.2%'";
-        result = utils.getQueryAnalysis(q);
-        utils.printDebug(e, result);
-        Assertions.assertEquals(e, result);
     }
 
     @Test
@@ -473,14 +321,309 @@ public class logicalOperationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseLikeWithParenthesisCatalystTest() {
-        String q = "index=access_log earliest=\"01/21/2022:10:00:00\" latest=\"01/21/2022:11:59:59\" \"*(3)www(7)example(3)com(0)*\" OR \"*(4)mail(7)example(3)com(0)*\"";
+    public void testSearchWithParenthesis() {
+        String query = "index=index_A (raw 01)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSearchWithMultipleParenthesis() {
+        String query = "index=index_A raw ((raw AND 01) OR 02)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(2, res.count()); // 2 rows of data
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithHost() {
+        String query = "index = index_A host = computer01.example.com";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithHostInQuotes() {
+        String query = "index = index_B host = \"computer*\" 04";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithMultipleHostsAndSourcetype() {
+        String query = "index = index_B (host = computer04.example.com OR host = computer05.example.com OR host = computer06.example.com) AND sourcetype = B:Y:0";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 05\"", listOfRaw.get(1));
+        });
+    }
+
+    @Test
+    @Disabled(
+            value = "search does not allow having sourcetype in this format: sourcetype IN (sourcetyp1, sourcetype2), pth-10 issue #282"
+    )
+    public void testWithMultipleSourcetypes() {
+        String query = "\"index=index_* sourcetype IN (B:X:0, B:Y:0, C:X:0)\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfSourcetype = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(5, res.count());
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(0));
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(1));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(2));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(3));
+            Assertions.assertEquals("C:X:0", listOfSourcetype.get(4));
+        });
+
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWildcardWithIndexHostSourcetype() {
+        String query = "index = index_* host=computer* sourcetype = *X* ";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(4, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 06\"", listOfRaw.get(1));
+            Assertions.assertEquals("\"raw 07\"", listOfRaw.get(2));
+            Assertions.assertEquals("\"raw 08\"", listOfRaw.get(3));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithLatest() {
+        String query = "index = index_A latest=\"2003-03-03T03:03:03.030+03:00\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithLatestEarliest() {
+        String query = "index = index_A earliest=\"2001-01-01T00:00:00.000+03:00\" latest=\"2004-04-04T00:00:00.000+03:00\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(3, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
+            Assertions.assertEquals("\"raw 03\"", listOfRaw.get(2));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithIndexEarliestLatest() {
+        String query = "index=index_A _index_earliest=\"2001-01-01T00:00:00.000+03:00\" _index_latest=\"2003-03-03T03:03:03.030+03:00\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(1));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithNOT() {
+        String query = "index=index_B sourcetype=B:* NOT sourcetype=B:X:0";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 05\"", listOfRaw.get(1));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testQuotedIntSearch() {
+        String query = "index=index_A \"01\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, res.count());
+            Assertions.assertEquals("\"raw 01\"", listOfRaw.get(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithParenthesisAndWildcard() {
+        String q = "index=index_B source=\"\\(*:computer04.*(com)*\\)\" OR source=\"\\(*7.*(com)*\\)\"";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e = "(RLIKE(index, (?i)^access_log$) AND (((_time >= from_unixtime(1642752000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1642759199, yyyy-MM-dd HH:mm:ss))) AND (RLIKE(_raw, (?i)^.*\\Q(3)www(7)example(3)com(0)\\E.*) OR RLIKE(_raw, (?i)^.*\\Q(4)mail(7)example(3)com(0)\\E.*))))";
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
+            Assertions.assertEquals(2, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 07\"", listOfRaw.get(1));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testMultipleIndexSourcetypeWithOr() {
+        String query = "(index=index_* sourcetype=B:*:0 raw 04) OR (index=index_* sourcetype!=*Y* NOT \"raw 01\" NOT \"raw 03\") earliest=\"2001-01-01T00:00:00.000+03:00\" latest=\"2011-11-11T00:00:00.000+03:00\"";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .orderBy("offset")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(4, res.count());
+            Assertions.assertEquals("\"raw 04\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 06\"", listOfRaw.get(1));
+            Assertions.assertEquals("\"raw 07\"", listOfRaw.get(2));
+            Assertions.assertEquals("\"raw 08\"", listOfRaw.get(3));
         });
     }
 }

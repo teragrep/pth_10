@@ -668,7 +668,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -690,7 +690,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -712,7 +712,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -743,7 +743,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -775,7 +775,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -797,7 +797,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -820,7 +820,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -840,7 +840,7 @@ public class EarliestLatestTest {
     }
 
     @Test
-    @Disabled(value = "Should be changed to a dataframe test")
+    @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
