@@ -273,7 +273,7 @@ public class StreamingTestUtil {
             StructType schema;
             if (this.schema == null) {
                 // notice that the schema from a JSON-file might be in an unexpected order
-                schema = spark.read().json(testDirectory).schema();
+                schema = spark.read().option("mode", "FAILFAST").json(testDirectory).schema();
             }
             else {
                 // schema was given in constructor
@@ -281,7 +281,7 @@ public class StreamingTestUtil {
             }
 
             // initialize test dataset
-            Dataset<Row> df = spark.readStream().schema(schema).json(testDirectory);
+            Dataset<Row> df = spark.readStream().option("mode", "FAILFAST").schema(schema).json(testDirectory);
             // apply data customizations
             df = dataCustomizations.apply(df);
             this.ctx.setDs(df);
