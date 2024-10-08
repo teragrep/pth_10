@@ -256,12 +256,9 @@ public class SpathTransformationTest {
                                     .toString(ds.columns()),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
-            List<Row> result = ds
-                    .select("json", "lil")
-                    .dropDuplicates()
-                    .collectAsList();
+            List<Row> result = ds.select("json", "lil").dropDuplicates().collectAsList();
             Assertions.assertEquals(1, result.size());
-            Assertions.assertEquals("debugo",result.get(0).getAs("json"));
+            Assertions.assertEquals("debugo", result.get(0).getAs("json"));
             Assertions.assertEquals("xml", result.get(0).getAs("lil"));
         });
     }
@@ -402,18 +399,24 @@ public class SpathTransformationTest {
     }
 
     @Test
-    @DisabledIfSystemProperty(named="skipSparkTest", matches="true")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void testSpathEvaledJsonData() {
         String query = "index=index_A | eval catworld = \"{\\\"kissa\\\" : \\\"fluff\\\"}\" | spath input=catworld output=cat path=kissa";
-        streamingTestUtil
-                .performDPLTest(query, JSON_DATA_1, ds -> {
-                    Dataset<Row> res = ds.select("cat").orderBy("offset").distinct();
-                    List<Row> catList = res.collectAsList();
+        streamingTestUtil.performDPLTest(query, JSON_DATA_1, ds -> {
+            Dataset<Row> res = ds.select("cat").orderBy("offset").distinct();
+            List<Row> catList = res.collectAsList();
 
-                    Assertions.assertEquals(1, catList.size());
-                    Assertions.assertEquals("[_time, id, _raw, index, sourcetype, host, source, partition, offset, catworld, cat]", Arrays.toString(ds.columns()));
-                    Assertions.assertEquals("fluff", catList.get(0).getString(0));
-                });
+            Assertions.assertEquals(1, catList.size());
+            Assertions
+                    .assertEquals(
+                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, catworld, cat]",
+                            Arrays.toString(ds.columns())
+                    );
+            Assertions.assertEquals("fluff", catList.get(0).getString(0));
+        });
     }
 
     @Test
