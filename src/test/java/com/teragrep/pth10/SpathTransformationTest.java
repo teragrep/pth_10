@@ -105,12 +105,12 @@ public class SpathTransformationTest {
     // ----------------------------------------
 
     // * to make the path into a directory path
-    final String JSON_DATA_1 = "src/test/resources/spath/spathTransformationTest_json1*.json";
+    final String JSON_DATA_1 = "src/test/resources/spath/spathTransformationTest_json1*.jsonl";
 
-    final String JSON_DATA_NESTED = "src/test/resources/spath/spathTransformationTest_json_nested*.json";
-    final String XML_DATA_1 = "src/test/resources/spath/spathTransformationTest_xml1*.json";
-    final String XML_DATA_2 = "src/test/resources/spath/spathTransformationTest_xml2*.json";
-    final String INVALID_DATA = "src/test/resources/spath/spathTransformationTest_invalid*.json";
+    final String JSON_DATA_NESTED = "src/test/resources/spath/spathTransformationTest_json_nested*.jsonl";
+    final String XML_DATA_1 = "src/test/resources/spath/spathTransformationTest_xml1*.jsonl";
+    final String XML_DATA_2 = "src/test/resources/spath/spathTransformationTest_xml2*.jsonl";
+    final String INVALID_DATA = "src/test/resources/spath/spathTransformationTest_invalid*.jsonl";
 
     @Test
     @DisabledIfSystemProperty(

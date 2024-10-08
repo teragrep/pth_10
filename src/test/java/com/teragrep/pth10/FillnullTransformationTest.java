@@ -61,7 +61,7 @@ public class FillnullTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(FillnullTransformationTest.class);
 
     // data has 3 empty strings ("") and 1 literal null in _raw column
-    private final String testFile = "src/test/resources/fillnull/fillnull0*.json"; // * to make the path into a directory path
+    private final String testFile = "src/test/resources/fillnull/fillnull0*.jsonl"; // * to make the path into a directory path
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),

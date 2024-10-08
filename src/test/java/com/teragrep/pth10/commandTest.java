@@ -64,7 +64,7 @@ public class commandTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(commandTest.class);
 
     // Use this file for  dataset initialization
-    String testFile = "src/test/resources/subsearchData*.json"; // * to make the path into a directory path
+    String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 
     private StreamingTestUtil streamingTestUtil;
 

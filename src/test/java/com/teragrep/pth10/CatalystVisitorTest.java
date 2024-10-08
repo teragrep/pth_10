@@ -242,7 +242,7 @@ public class CatalystVisitorTest {
     )
     void endToEnd2Test() {
         // Use this file as the test data
-        String testFile = "src/test/resources/subsearchData*.json";
+        String testFile = "src/test/resources/subsearchData*.jsonl";
 
         this.streamingTestUtil.performDPLTest("index=index_A \"(1)(enTIty)\"", testFile, res -> {
             String e = "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))";

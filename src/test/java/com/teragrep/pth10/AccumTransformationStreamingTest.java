@@ -63,8 +63,8 @@ public class AccumTransformationStreamingTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccumTransformationStreamingTest.class);
 
-    private final String numberDataTestFile = "src/test/resources/numberData_0*.json"; // * to make the path into a directory path
-    private final String numberDataWithMixedStringsTestFile = "src/test/resources/numberData_withMixedStrings*.json";
+    private final String numberDataTestFile = "src/test/resources/numberData_0*.jsonl"; // * to make the path into a directory path
+    private final String numberDataWithMixedStringsTestFile = "src/test/resources/numberData_withMixedStrings*.jsonl";
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),

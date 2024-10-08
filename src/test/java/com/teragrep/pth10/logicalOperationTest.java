@@ -278,7 +278,7 @@ public class logicalOperationTest {
     )
     public void parseRawUUIDCatalystTest() {
         String q = "index=abc sourcetype=\"cd:ef:gh:0\"  \"1848c85bfe2c4323955dd5469f18baf6\"";
-        String testFile = "src/test/resources/uuidTestData*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/uuidTestData*.jsonl"; // * to make the path into a directory path
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             Dataset<Row> selected = res.select("_raw");
             List<String> lst = selected
@@ -303,7 +303,7 @@ public class logicalOperationTest {
     )
     public void parseWithQuotesInsideQuotesCatalystTest() {
         String q = "index=abc \"\\\"latitude\\\": -89.875, \\\"longitude\\\": 24.125\"";
-        String testFile = "src/test/resources/latitudeTestData*.json"; // * to make the path into a directory path
+        String testFile = "src/test/resources/latitudeTestData*.jsonl"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
             Dataset<Row> selected = res.select("_raw");

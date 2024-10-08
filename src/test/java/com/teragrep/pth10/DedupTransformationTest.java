@@ -67,7 +67,7 @@ public class DedupTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupTransformationTest.class);
 
     // Use this file for  dataset initialization
-    private String testFile = "src/test/resources/dedup_test_data*.json"; // * to make the path into a directory path
+    private String testFile = "src/test/resources/dedup_test_data*.jsonl"; // * to make the path into a directory path
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -102,7 +102,7 @@ public class DedupTransformationTest {
                     Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
             );
             List<String> actualColumns = Arrays.asList(res.columns());
-            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
             Assertions
                     .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
@@ -129,7 +129,7 @@ public class DedupTransformationTest {
                     Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
             );
             List<String> actualColumns = Arrays.asList(res.columns());
-            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
             Assertions
                     .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
@@ -155,7 +155,7 @@ public class DedupTransformationTest {
                     Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
             );
             List<String> actualColumns = Arrays.asList(res.columns());
-            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
             Assertions
                     .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
@@ -178,7 +178,7 @@ public class DedupTransformationTest {
                     Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
             );
             List<String> actualColumns = Arrays.asList(res.columns());
-            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
             Assertions
                     .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
@@ -206,7 +206,7 @@ public class DedupTransformationTest {
                     Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
             );
             List<String> actualColumns = Arrays.asList(res.columns());
-            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
             Assertions
                     .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 
@@ -231,7 +231,7 @@ public class DedupTransformationTest {
                     Arrays.asList("_time", "id", "_raw", "index", "sourcetype", "host", "source", "partition", "offset")
             );
             List<String> actualColumns = Arrays.asList(res.columns());
-            // Columns should be the same. Order can be different because of .json file readStream might shuffle them
+            // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
             Assertions
                     .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
 

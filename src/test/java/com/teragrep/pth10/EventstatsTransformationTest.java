@@ -67,7 +67,7 @@ import java.util.stream.Collectors;
 public class EventstatsTransformationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EventstatsTransformationTest.class);
-    private final String testFile = "src/test/resources/eventstatsTransformationTest_data*.json"; // * to make the path into a directory path
+    private final String testFile = "src/test/resources/eventstatsTransformationTest_data*.jsonl"; // * to make the path into a directory path
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),

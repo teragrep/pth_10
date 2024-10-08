@@ -102,9 +102,9 @@ public class XmlkvTransformationTest {
     // ----------------------------------------
 
     // * to make the path into a directory path
-    final String XML_DATA_1 = "src/test/resources/xmlkv/xmlkv_0*.json";
-    final String XML_DATA_2 = "src/test/resources/xmlkv/xmlkv_1*.json";
-    final String INVALID_DATA = "src/test/resources/xmlkv/xmlkv_inv*.json";
+    final String XML_DATA_1 = "src/test/resources/xmlkv/xmlkv_0*.jsonl";
+    final String XML_DATA_2 = "src/test/resources/xmlkv/xmlkv_1*.jsonl";
+    final String INVALID_DATA = "src/test/resources/xmlkv/xmlkv_inv*.jsonl";
 
     @Test
     @DisabledIfSystemProperty(
