@@ -47,10 +47,7 @@ package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
 import com.teragrep.pth10.steps.AbstractStep;
-import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterForeachPartitionFunction;
-import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterTable;
-import com.teragrep.pth10.steps.teragrep.bloomfilter.FilterTypes;
-import com.teragrep.pth10.steps.teragrep.bloomfilter.LazyConnection;
+import com.teragrep.pth10.steps.teragrep.bloomfilter.*;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -61,8 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Map;
-import java.util.SortedMap;
+import java.util.*;
 
 /**
  * teragrep exec bloom
@@ -162,32 +158,35 @@ public final class TeragrepBloomStep extends AbstractStep {
     }
 
     public Dataset<Row> aggregate(Dataset<Row> dataset) {
-
-        FilterTypes filterTypes = new FilterTypes(this.zeppelinConfig);
-
-        BloomFilterAggregator agg = new BloomFilterAggregator(inputCol, estimateCol, filterTypes.sortedMap());
-
+        final FilterTypes filterTypes = new FilterTypes(this.zeppelinConfig);
+        final SortedMap<Long, Double> map = new TreeMap<>();
+        final List<FilterField> fieldList = filterTypes.fieldList();
+        for (final FilterField field : fieldList) {
+            map.put(field.expected(), field.fpp());
+        }
+        final BloomFilterAggregator agg = new BloomFilterAggregator(inputCol, estimateCol, map);
         return dataset.groupBy("partition").agg(agg.toColumn().as("bloomfilter"));
-
     }
 
     private void writeFilterTypes(final Config config) {
         final FilterTypes filterTypes = new FilterTypes(config);
         final Connection connection = new LazyConnection(config).get();
-        final SortedMap<Long, Double> filterSizeMap = filterTypes.sortedMap();
+        final List<FilterField> fieldList = filterTypes.fieldList();
         final String pattern = filterTypes.pattern();
-        for (final Map.Entry<Long, Double> entry : filterSizeMap.entrySet()) {
+        for (final FilterField field : fieldList) {
+            final int expectedInt = field.expectedIntValue();
+            final double fpp = field.fpp();
             if (LOGGER.isInfoEnabled()) {
                 LOGGER
                         .info(
-                                "Writing filtertype (expected <[{}]>, fpp: <[{}]>, pattern: <[{}]>)", entry.getKey(),
-                                entry.getValue(), pattern
+                                "Writing filtertype (expected <[{}]>, fpp: <[{}]>, pattern: <[{}]>)", expectedInt, fpp,
+                                pattern
                         );
             }
             final String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`, `pattern`) VALUES (?, ?, ?)";
             try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
-                stmt.setDouble(2, entry.getValue()); // filtertype.targetFpp
+                stmt.setInt(1, expectedInt); // filtertype.expectedElements
+                stmt.setDouble(2, fpp); // filtertype.targetFpp
                 stmt.setString(3, pattern); // filtertype.pattern
                 stmt.executeUpdate();
                 stmt.clearParameters();
@@ -198,7 +197,7 @@ public final class TeragrepBloomStep extends AbstractStep {
                     LOGGER
                             .error(
                                     "Error writing filter[expected: <{}>, fpp: <{}>, pattern: <{}>] into database",
-                                    entry.getKey(), entry.getValue(), pattern
+                                    expectedInt, fpp, pattern
                             );
                 }
                 throw new RuntimeException(e);

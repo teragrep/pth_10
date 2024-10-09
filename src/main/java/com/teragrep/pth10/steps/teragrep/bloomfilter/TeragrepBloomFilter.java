@@ -54,8 +54,10 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,9 +93,17 @@ public final class TeragrepBloomFilter {
         final Double selectedFpp;
         final Map<Long, Long> bitSizeMap = filterTypes.bitSizeMap();
         if (bitSizeMap.containsKey(bitSize)) {
-            final long expectedItems = bitSizeMap.get(bitSize);
-            selectedExpectedNumOfItems = expectedItems;
-            selectedFpp = filterTypes.sortedMap().get(expectedItems);
+            selectedExpectedNumOfItems = bitSizeMap.get(bitSize);
+            List<Double> fppList = filterTypes
+                    .fieldList()
+                    .stream()
+                    .filter(f -> f.expected().equals(selectedExpectedNumOfItems))
+                    .map(FilterField::fpp)
+                    .collect(Collectors.toList());
+            if (fppList.size() != 1) {
+                throw new RuntimeException("Could not find fpp value for bit size: <[" + bitSize + "]>");
+            }
+            selectedFpp = fppList.get(0);
         }
         else {
             throw new IllegalArgumentException("no such filterSize <[" + bitSize + "]>");

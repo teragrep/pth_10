@@ -66,7 +66,7 @@ class TeragrepBloomFilterTest {
     private LazyConnection lazyConnection;
     private FilterTypes filterTypes;
     private final BloomFilter emptyFilter = BloomFilter.create(100, 0.01);
-    private SortedMap<Long, Double> sizeMap;
+    private List<FilterField> filterFields;
     private final String tableName = "bloomfilter_test";
 
     @BeforeAll
@@ -96,7 +96,7 @@ class TeragrepBloomFilterTest {
             Class.forName("org.h2.Driver");
         });
         filterTypes = new FilterTypes(config);
-        sizeMap = filterTypes.sortedMap();
+        filterFields = filterTypes.fieldList();
         String createFilterType = "CREATE TABLE `filtertype` ("
                 + "`id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,"
                 + "`expectedElements` bigint(20) NOT NULL," + "`targetFpp`        DOUBLE UNSIGNED NOT NULL,"
@@ -112,12 +112,12 @@ class TeragrepBloomFilterTest {
             conn.prepareStatement(createTable).execute();
         });
         int loops = 0;
-        for (Map.Entry<Long, Double> entry : sizeMap.entrySet()) {
+        for (FilterField field : filterFields) {
             loops++;
             Assertions.assertDoesNotThrow(() -> {
                 PreparedStatement stmt = conn.prepareStatement(insertSql);
-                stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
-                stmt.setDouble(2, entry.getValue()); // filtertype.targetFpp
+                stmt.setInt(1, field.expectedIntValue()); // filtertype.expectedElements
+                stmt.setDouble(2, field.fpp()); // filtertype.targetFpp
                 stmt.setString(3, pattern);
                 stmt.executeUpdate();
                 stmt.clearParameters();
@@ -140,14 +140,14 @@ class TeragrepBloomFilterTest {
     @Test
     void testSavingToDatabase() {
         List<String> tokens = new ArrayList<>(Collections.singletonList("one"));
-        Row row = generatedRow(sizeMap, tokens);
+        Row row = generatedRow(filterFields, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
                 .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
         TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
         filter.saveFilter(false);
-        Map.Entry<Long, Double> entry = sizeMap.entrySet().iterator().next();
+        FilterField first = filterFields.get(0);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
             ResultSet rs = lazyConnection.get().prepareStatement(sql).executeQuery();
@@ -165,7 +165,7 @@ class TeragrepBloomFilterTest {
             Assertions.assertEquals(1, cols);
             Assertions.assertTrue(resultFilter.mightContain("one"));
             Assertions.assertFalse(resultFilter.mightContain("neo"));
-            Assertions.assertTrue(resultFilter.expectedFpp() <= entry.getValue());
+            Assertions.assertTrue(resultFilter.expectedFpp() <= first.expected());
             rs.close();
         });
     }
@@ -173,7 +173,7 @@ class TeragrepBloomFilterTest {
     @Test
     void testSavingToDatabaseWithOverwrite() {
         List<String> tokens = new ArrayList<>(Collections.singletonList("one"));
-        Row row = generatedRow(sizeMap, tokens);
+        Row row = generatedRow(filterFields, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
@@ -199,7 +199,7 @@ class TeragrepBloomFilterTest {
         });
         // Create second filter that will overwrite first one
         List<String> secondTokens = new ArrayList<>(Collections.singletonList("neo"));
-        Row secondRow = generatedRow(sizeMap, secondTokens);
+        Row secondRow = generatedRow(filterFields, secondTokens);
         String secondPartition = secondRow.getString(0);
         byte[] secondFilterBytes = (byte[]) secondRow.get(1);
         BloomFilter rawFilter2 = Assertions
@@ -238,7 +238,7 @@ class TeragrepBloomFilterTest {
         for (int i = 1; i < 1500; i++) {
             tokens.add("token:" + i);
         }
-        Row row = generatedRow(sizeMap, tokens);
+        Row row = generatedRow(filterFields, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
@@ -246,13 +246,16 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
         filter.saveFilter(false);
         long size = Long.MAX_VALUE;
-        for (long key : sizeMap.keySet()) {
-            if (size > key && key >= tokens.size()) {
-                size = key;
+        FilterField current = null;
+        for (FilterField field : filterFields) {
+            long expected = field.expected();
+            if (size > expected && expected >= tokens.size()) {
+                size = expected;
+                current = field;
             }
         }
-        Double fpp = sizeMap.get(size);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
+        FilterField finalCurrent = current;
         Assertions.assertDoesNotThrow(() -> {
             ResultSet rs = lazyConnection.get().prepareStatement(sql).executeQuery();
             int cols = rs.getMetaData().getColumnCount();
@@ -269,7 +272,8 @@ class TeragrepBloomFilterTest {
             Assertions.assertEquals(1, cols);
             Assertions.assertTrue(resultFilter.mightContain("one"));
             Assertions.assertFalse(resultFilter.mightContain("neo"));
-            Assertions.assertTrue(resultFilter.expectedFpp() <= fpp);
+            Assertions.assertNotNull(finalCurrent);
+            Assertions.assertTrue(resultFilter.expectedFpp() <= finalCurrent.fpp());
             rs.close();
         });
     }
@@ -290,7 +294,7 @@ class TeragrepBloomFilterTest {
     @Test
     public void testEquals() {
         List<String> tokens = new ArrayList<>(Collections.singletonList("one"));
-        Row row = generatedRow(sizeMap, tokens);
+        Row row = generatedRow(filterFields, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
@@ -305,8 +309,8 @@ class TeragrepBloomFilterTest {
     public void testNotEqualsTokens() {
         List<String> tokens1 = new ArrayList<>(Collections.singletonList("one"));
         List<String> tokens2 = new ArrayList<>(Collections.singletonList("two"));
-        Row row1 = generatedRow(sizeMap, tokens1);
-        Row row2 = generatedRow(sizeMap, tokens2);
+        Row row1 = generatedRow(filterFields, tokens1);
+        Row row2 = generatedRow(filterFields, tokens2);
         BloomFilter rawFilter1 = Assertions
                 .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream((byte[]) row1.get(1))));
         BloomFilter rawFilter2 = Assertions
@@ -328,14 +332,15 @@ class TeragrepBloomFilterTest {
 
     // -- Helper methods --
 
-    private Row generatedRow(SortedMap<Long, Double> filterMap, List<String> tokens) {
-        long size = filterMap.lastKey();
-        for (long key : filterMap.keySet()) {
-            if (key < size && key >= tokens.size()) {
-                size = key;
+    private Row generatedRow(List<FilterField> fieldList, List<String> tokens) {
+        FilterField current = fieldList.get(fieldList.size() - 1);
+        for (FilterField field : fieldList) {
+            Long expected = field.expected();
+            if (expected < current.expected() && expected >= tokens.size()) {
+                current = field;
             }
         }
-        BloomFilter bf = BloomFilter.create(size, filterMap.get(size));
+        BloomFilter bf = BloomFilter.create(current.expectedIntValue(), current.fpp());
         tokens.forEach(bf::put);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         Assertions.assertDoesNotThrow(() -> {

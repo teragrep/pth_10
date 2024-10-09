@@ -46,9 +46,7 @@
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
-import org.apache.spark.util.sketch.BloomFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sparkproject.guava.reflect.TypeToken;
@@ -73,35 +71,28 @@ public final class FilterTypes implements Serializable {
      *
      * @return SortedMap of filter configuration
      */
-    public SortedMap<Long, Double> sortedMap() {
-        final SortedMap<Long, Double> sizesMapFromJson = new TreeMap<>();
-        final Gson gson = new Gson();
-        final List<JsonObject> jsonArray = gson.fromJson(sizesJsonString(), new TypeToken<List<JsonObject>>() {
-        }.getType());
-        for (final JsonObject object : jsonArray) {
-            if (object.has("expected") && object.has("fpp")) {
-                final Long expectedNumOfItems = Long.parseLong(object.get("expected").toString());
-                final Double fpp = Double.parseDouble(object.get("fpp").toString());
-                if (sizesMapFromJson.containsKey(expectedNumOfItems)) {
-                    LOGGER.error("Duplicate value of expected number of items value: <[{}]>", expectedNumOfItems);
-                    throw new RuntimeException("Duplicate entry expected num of items");
-                }
-                sizesMapFromJson.put(expectedNumOfItems, fpp);
-            }
-            else {
-                throw new RuntimeException("JSON did not have expected values of 'expected' or 'fpp'");
-            }
+    public List<FilterField> fieldList() {
+        final List<FilterField> fieldList;
+        try {
+            final Gson gson = new Gson();
+            fieldList = gson.fromJson(sizesJsonString(), new TypeToken<List<FilterField>>() {
+            }.getType());
         }
-        return sizesMapFromJson;
+        catch (Exception e) {
+            throw new RuntimeException(
+                    "Error reading 'dpl.pth_06.bloom.db.fields' option to JSON, check that option is formated as JSON array and that there are no duplicate values: "
+                            + e.getMessage()
+            );
+        }
+        return fieldList;
     }
 
     public Map<Long, Long> bitSizeMap() {
-        final Map<Long, Double> filterSizes = sortedMap();
+        final List<FilterField> fieldList = fieldList();
         final Map<Long, Long> bitsizeToExpectedItemsMap = new HashMap<>();
         // Calculate bitSizes
-        for (final Map.Entry<Long, Double> entry : filterSizes.entrySet()) {
-            final BloomFilter bf = BloomFilter.create(entry.getKey(), entry.getValue());
-            bitsizeToExpectedItemsMap.put(bf.bitSize(), entry.getKey());
+        for (final FilterField field : fieldList) {
+            bitsizeToExpectedItemsMap.put(field.bitSize(), field.expected());
         }
         return bitsizeToExpectedItemsMap;
     }

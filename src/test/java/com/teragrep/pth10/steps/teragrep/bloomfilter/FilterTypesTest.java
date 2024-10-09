@@ -51,6 +51,7 @@ import org.apache.spark.util.sketch.BloomFilter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -59,7 +60,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class FilterTypesTest {
 
     @Test
-    public void testSortedMapMethod() {
+    public void testFieldListMethod() {
         Properties properties = new Properties();
         properties
                 .put(
@@ -69,12 +70,43 @@ class FilterTypesTest {
                 );
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
-        Map<Long, Double> resultMap = filterTypes.sortedMap();
-        assertEquals(0.01, resultMap.get(1000L));
-        assertEquals(0.01, resultMap.get(2000L));
-        assertEquals(0.01, resultMap.get(3000L));
-        assertEquals(3, resultMap.size());
+        List<FilterField> fieldList = filterTypes.fieldList();
+        assertEquals(0.01, fieldList.get(0).fpp());
+        assertEquals(0.01, fieldList.get(1).fpp());
+        assertEquals(0.01, fieldList.get(2).fpp());
+        assertEquals(3, fieldList.size());
+    }
 
+    @Test
+    public void testMalformattedFieldsOption() {
+        Properties properties = new Properties();
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.01},"
+                                + "{expected: 3000, fpp: 0.01}"
+                );
+        Config config = ConfigFactory.parseProperties(properties);
+        FilterTypes filterTypes = new FilterTypes(config);
+        RuntimeException exception = assertThrows(RuntimeException.class, filterTypes::fieldList);
+        String expectedError = "Error reading 'dpl.pth_06.bloom.db.fields' option to JSON, check that option is formated as JSON array and that there are no duplicate values: ";
+        Assertions.assertTrue(exception.getMessage().contains(expectedError));
+    }
+
+    @Test
+    public void testDuplicateValues() {
+        Properties properties = new Properties();
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 1000, fpp: 0.01},"
+                                + "{expected: 3000, fpp: 0.01}"
+                );
+        Config config = ConfigFactory.parseProperties(properties);
+        FilterTypes filterTypes = new FilterTypes(config);
+        RuntimeException exception = assertThrows(RuntimeException.class, filterTypes::fieldList);
+        String expectedError = "Error reading 'dpl.pth_06.bloom.db.fields' option to JSON, check that option is formated as JSON array and that there are no duplicate values: ";
+        Assertions.assertTrue(exception.getMessage().contains(expectedError));
     }
 
     @Test
@@ -131,7 +163,7 @@ class FilterTypesTest {
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes1 = new FilterTypes(config);
         FilterTypes filterTypes2 = new FilterTypes(config);
-        filterTypes1.sortedMap();
+        filterTypes1.fieldList();
         filterTypes1.pattern();
         filterTypes1.tableName();
         filterTypes1.bitSizeMap();
