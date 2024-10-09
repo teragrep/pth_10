@@ -71,6 +71,9 @@ class FilterTypesTest {
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         List<FilterField> fieldList = filterTypes.fieldList();
+        assertEquals(1000, fieldList.get(0).expected());
+        assertEquals(2000, fieldList.get(1).expected());
+        assertEquals(3000, fieldList.get(2).expected());
         assertEquals(0.01, fieldList.get(0).fpp());
         assertEquals(0.01, fieldList.get(1).fpp());
         assertEquals(0.01, fieldList.get(2).fpp());
