@@ -108,13 +108,13 @@ class FilterTypesTest {
     }
 
     @Test
-    public void testTableBloomDBNameMethod() {
+    public void testTableTableNameMethod() {
         String name = "test Table ";
         Properties properties = new Properties();
         properties.put("dpl.pth_06.bloom.table.name", name);
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
-        assertEquals("testTable", filterTypes.bloomDBName());
+        assertEquals("testTable", filterTypes.tableName());
     }
 
     @Test
@@ -133,7 +133,7 @@ class FilterTypesTest {
         FilterTypes filterTypes2 = new FilterTypes(config);
         filterTypes1.sortedMap();
         filterTypes1.pattern();
-        filterTypes1.bloomDBName();
+        filterTypes1.tableName();
         filterTypes1.bitSizeMap();
         assertEquals(filterTypes1, filterTypes2);
     }

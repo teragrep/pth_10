@@ -134,7 +134,7 @@ public final class TeragrepBloomFilter {
 
     private String sqlString(final Boolean overwriteExisting) {
         final String sql;
-        final String name = filterTypes.bloomDBName();
+        final String name = filterTypes.tableName();
         if (overwriteExisting) {
             sql = "REPLACE INTO `" + name + "` (`partition_id`, `filter_type_id`,`filter`) " + "VALUES(?,"
                     + "(SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=? AND pattern=?)," + "?)";

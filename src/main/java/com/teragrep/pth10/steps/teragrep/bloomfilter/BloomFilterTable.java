@@ -68,7 +68,7 @@ public final class BloomFilterTable {
     }
 
     public BloomFilterTable(FilterTypes filterTypes, LazyConnection lazyConnection, boolean ignoreConstraints) {
-        this(new TableSQL(filterTypes.bloomDBName(), filterTypes.journalDBName(), ignoreConstraints), lazyConnection);
+        this(new TableSQL(filterTypes.tableName(), filterTypes.journalDBName(), ignoreConstraints), lazyConnection);
     }
 
     public BloomFilterTable(TableSQL tableSQL, LazyConnection conn) {
