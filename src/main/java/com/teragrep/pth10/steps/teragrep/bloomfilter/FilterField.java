@@ -49,7 +49,7 @@ import org.apache.spark.util.sketch.BloomFilter;
 
 import java.util.Objects;
 
-public class FilterField {
+public final class FilterField {
 
     private final Long expected;
     private final Double fpp;

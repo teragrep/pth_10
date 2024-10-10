@@ -46,6 +46,8 @@
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,7 +55,6 @@ import org.sparkproject.guava.reflect.TypeToken;
 
 import java.io.Serializable;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public final class FilterTypes implements Serializable {
 
@@ -79,7 +80,7 @@ public final class FilterTypes implements Serializable {
             fieldList = gson.fromJson(sizesJsonString(), new TypeToken<List<FilterField>>() {
             }.getType());
         }
-        catch (Exception e) {
+        catch (JsonIOException | JsonSyntaxException e) {
             throw new RuntimeException(
                     "Error reading 'dpl.pth_06.bloom.db.fields' option to JSON, check that option is formated as JSON array and that there are no duplicate values: "
                             + e.getMessage()
@@ -94,7 +95,6 @@ public final class FilterTypes implements Serializable {
 
     public Map<Long, Long> bitSizeMap() {
         final List<FilterField> fieldList = fieldList();
-        System.out.println(fieldList);
         final Map<Long, Long> bitsizeToExpectedItemsMap = new HashMap<>();
         // Calculate bitSizes
         for (final FilterField field : fieldList) {

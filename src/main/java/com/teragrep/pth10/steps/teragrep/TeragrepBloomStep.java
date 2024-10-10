@@ -76,6 +76,8 @@ public final class TeragrepBloomStep extends AbstractStep {
     private final String inputCol;
     private final String outputCol;
     private final String estimateCol;
+    private final FilterTypes filterTypes;
+    private final LazyConnection connection;
 
     public TeragrepBloomStep(
             Config zeppelinConfig,
@@ -84,11 +86,33 @@ public final class TeragrepBloomStep extends AbstractStep {
             String outputCol,
             String estimateCol
     ) {
+        this(
+                zeppelinConfig,
+                mode,
+                inputCol,
+                outputCol,
+                estimateCol,
+                new FilterTypes(zeppelinConfig),
+                new LazyConnection(zeppelinConfig)
+        );
+    }
+
+    public TeragrepBloomStep(
+            Config zeppelinConfig,
+            BloomMode mode,
+            String inputCol,
+            String outputCol,
+            String estimateCol,
+            FilterTypes filterTypes,
+            LazyConnection connection
+    ) {
         this.zeppelinConfig = zeppelinConfig;
         this.mode = mode;
         this.inputCol = inputCol;
         this.outputCol = outputCol;
         this.estimateCol = estimateCol;
+        this.connection = connection;
+        this.filterTypes = filterTypes;
 
         if (mode == BloomMode.ESTIMATE || mode == BloomMode.AGGREGATE) {
             // estimate is run as an aggregation
@@ -158,7 +182,6 @@ public final class TeragrepBloomStep extends AbstractStep {
     }
 
     public Dataset<Row> aggregate(Dataset<Row> dataset) {
-        final FilterTypes filterTypes = new FilterTypes(this.zeppelinConfig);
         final SortedMap<Long, Double> map = new TreeMap<>();
         final List<FilterField> fieldList = filterTypes.fieldList();
         for (final FilterField field : fieldList) {
@@ -169,10 +192,9 @@ public final class TeragrepBloomStep extends AbstractStep {
     }
 
     private void writeFilterTypes(final Config config) {
-        final FilterTypes filterTypes = new FilterTypes(config);
-        final Connection connection = new LazyConnection(config).get();
         final List<FilterField> fieldList = filterTypes.fieldList();
         final String pattern = filterTypes.pattern();
+        final Connection conn = connection.get();
         for (final FilterField field : fieldList) {
             final int expectedInt = field.expectedIntValue();
             final double fpp = field.fpp();
@@ -184,13 +206,13 @@ public final class TeragrepBloomStep extends AbstractStep {
                         );
             }
             final String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`, `pattern`) VALUES (?, ?, ?)";
-            try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+            try (final PreparedStatement stmt = conn.prepareStatement(sql)) {
                 stmt.setInt(1, expectedInt); // filtertype.expectedElements
                 stmt.setDouble(2, fpp); // filtertype.targetFpp
                 stmt.setString(3, pattern); // filtertype.pattern
                 stmt.executeUpdate();
                 stmt.clearParameters();
-                connection.commit();
+                conn.commit();
             }
             catch (SQLException e) {
                 if (LOGGER.isErrorEnabled()) {
