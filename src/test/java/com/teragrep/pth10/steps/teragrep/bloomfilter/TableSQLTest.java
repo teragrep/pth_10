@@ -81,10 +81,10 @@ class TableSQLTest {
     @Test
     public void testCreateTableSQLInvalidJournalDBOptionIgnoreConstraints() {
         String name = "test_table";
+        // not validated when ignoreConstraint set to true
+        String ignoredInput = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
         TableSQL table = new TableSQL(
-                name,
-                "String e = \"CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL,CONSTRAINT `test_table_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)ON DELETE CASCADE,CONSTRAINT `test_table_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)ON DELETE CASCADE);\";\n"
-                        + "        Assertions.assertEquals(e, table.createTableSQL());",
+                name, ignoredInput,
                 true
         );
         String e = "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL);";
