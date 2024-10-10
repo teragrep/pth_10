@@ -103,13 +103,13 @@ class FilterTypesTest {
                 .put(
                         "dpl.pth_06.bloom.db.fields",
                         "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 1000, fpp: 0.01},"
-                                + "{expected: 3000, fpp: 0.01}"
+                                + "{expected: 3000, fpp: 0.01}]"
                 );
         Config config = ConfigFactory.parseProperties(properties);
         FilterTypes filterTypes = new FilterTypes(config);
         RuntimeException exception = assertThrows(RuntimeException.class, filterTypes::fieldList);
-        String expectedError = "Error reading 'dpl.pth_06.bloom.db.fields' option to JSON, check that option is formated as JSON array and that there are no duplicate values: ";
-        Assertions.assertTrue(exception.getMessage().contains(expectedError));
+        String expectedError = "Found duplicate values in 'dpl.pth_06.bloom.db.fields'";
+        Assertions.assertEquals(expectedError, exception.getMessage());
     }
 
     @Test

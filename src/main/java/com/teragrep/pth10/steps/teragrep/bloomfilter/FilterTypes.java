@@ -53,6 +53,7 @@ import org.sparkproject.guava.reflect.TypeToken;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public final class FilterTypes implements Serializable {
 
@@ -84,11 +85,16 @@ public final class FilterTypes implements Serializable {
                             + e.getMessage()
             );
         }
+        final boolean hasDuplicates = new HashSet<>(fieldList).size() != fieldList.size();
+        if (hasDuplicates) {
+            throw new RuntimeException("Found duplicate values in 'dpl.pth_06.bloom.db.fields'");
+        }
         return fieldList;
     }
 
     public Map<Long, Long> bitSizeMap() {
         final List<FilterField> fieldList = fieldList();
+        System.out.println(fieldList);
         final Map<Long, Long> bitsizeToExpectedItemsMap = new HashMap<>();
         // Calculate bitSizes
         for (final FilterField field : fieldList) {
