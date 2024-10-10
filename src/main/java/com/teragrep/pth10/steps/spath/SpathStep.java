@@ -86,7 +86,7 @@ public final class SpathStep extends AbstractSpathStep {
 
         // Not in auto-extraction mode: can just return the first and only value from the map
         if (!autoExtractionMode) {
-            return dataset.withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem("`"+path+"`"));
+            return dataset.withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new SpathEscapedKey(path).escaped()));
         }
 
         //
@@ -110,7 +110,7 @@ public final class SpathStep extends AbstractSpathStep {
         for (String key : keys) {
             withAppliedUdfDs = withAppliedUdfDs
                     .withColumn(
-                            key.substring(1, key.length()-1), functions
+                            new SpathUnescapedKey(key).unescaped(), functions
                                     .when(
                                             /* if key.value == null */
                                             functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
