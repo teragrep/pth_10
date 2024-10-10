@@ -93,7 +93,8 @@ class BloomFilterTableTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, injectionTable::create);
         Assertions
                 .assertEquals(
-                        "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _", e.getMessage()
+                        "malformed SQL input <[test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')]>, only use alphabets, numbers and _",
+                        e.getMessage()
                 );
     }
 
@@ -107,7 +108,7 @@ class BloomFilterTableTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
         Assertions
                 .assertEquals(
-                        "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters",
+                        "SQL input <[testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati]> was too long, allowed maximum length is 100 characters",
                         e.getMessage()
                 );
     }
