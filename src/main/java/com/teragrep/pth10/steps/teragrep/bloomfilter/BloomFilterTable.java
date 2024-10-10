@@ -60,12 +60,15 @@ public final class BloomFilterTable {
     private final LazyConnection conn;
 
     public BloomFilterTable(Config config) {
-        this(new TableSQL(new FilterTypes(config).tableName(), false), new LazyConnection(config));
+        this(new FilterTypes(config), new LazyConnection(config), false);
     }
 
-    // used in testing
     public BloomFilterTable(Config config, boolean ignoreConstraints) {
-        this(new TableSQL(new FilterTypes(config).tableName(), ignoreConstraints), new LazyConnection(config));
+        this(new FilterTypes(config), new LazyConnection(config), ignoreConstraints);
+    }
+
+    public BloomFilterTable(FilterTypes filterTypes, LazyConnection lazyConnection, boolean ignoreConstraints) {
+        this(new TableSQL(filterTypes.tableName(), filterTypes.journalDBName(), ignoreConstraints), lazyConnection);
     }
 
     public BloomFilterTable(TableSQL tableSQL, LazyConnection conn) {

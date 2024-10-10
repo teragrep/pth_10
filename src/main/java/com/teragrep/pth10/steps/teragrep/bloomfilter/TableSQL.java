@@ -50,38 +50,50 @@ import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
-public class TableSQL {
+public final class TableSQL {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TableSQL.class);
     private final String name;
+    private final String journalDBName;
     private final boolean ignoreConstraints;
 
-    private void nameIsValid() {
+    private void validSQLName(final String sql) {
         if (ignoreConstraints && LOGGER.isDebugEnabled()) {
             LOGGER.debug("Ignore database constraints active this should be only used in testing");
         }
         final Pattern pattern = Pattern.compile("^[A-Za-z0-9_]+$");
-        if (!pattern.matcher(name).find()) {
-            throw new RuntimeException("dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _");
+        if (!pattern.matcher(sql).find()) {
+            throw new RuntimeException("malformed SQL input <[" + sql + "]>, only use alphabets, numbers and _");
         }
-        if (name.length() > 100) {
+        if (sql.length() > 100) {
             throw new RuntimeException(
-                    "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters"
+                    "SQL input <[" + sql + "]> was too long, allowed maximum length is 100 characters"
             );
         }
     }
 
+    // used in testing
     public TableSQL(String name) {
-        this(name, false);
+        this(name, "journaldb");
     }
 
+    // used in testing
     public TableSQL(String name, boolean ignoreConstraints) {
+        this(name, "journaldb", ignoreConstraints);
+    }
+
+    public TableSQL(String name, String journalDBName) {
+        this(name, journalDBName, false);
+    }
+
+    public TableSQL(String name, String journalDBName, boolean ignoreConstraints) {
         this.name = name;
+        this.journalDBName = journalDBName;
         this.ignoreConstraints = ignoreConstraints;
     }
 
     public String createTableSQL() {
-        nameIsValid();
+        validSQLName(name);
         final String sql;
         if (ignoreConstraints) {
             sql = "CREATE TABLE IF NOT EXISTS `" + name + "`("
@@ -90,13 +102,14 @@ public class TableSQL {
                     + "`filter` LONGBLOB NOT NULL);";
         }
         else {
+            validSQLName(journalDBName);
             sql = "CREATE TABLE IF NOT EXISTS `" + name + "`("
                     + "`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
                     + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
                     + "`filter` LONGBLOB NOT NULL," + "CONSTRAINT `" + name
                     + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)" + "ON DELETE CASCADE,"
-                    + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)"
-                    + "ON DELETE CASCADE" + ");";
+                    + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES " + journalDBName
+                    + ".logfile (id)" + "ON DELETE CASCADE" + ");";
         }
         return sql;
     }
