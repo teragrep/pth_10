@@ -50,10 +50,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.regex.Pattern;
 
-public class TableSQL {
+public final class TableSQL {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TableSQL.class);
     private final String name;
+    private final String journalDBName;
     private final boolean ignoreConstraints;
 
     private void nameIsValid() {
@@ -71,12 +72,23 @@ public class TableSQL {
         }
     }
 
+    // used in testing
     public TableSQL(String name) {
-        this(name, false);
+        this(name, "journaldb");
     }
 
+    // used in testing
     public TableSQL(String name, boolean ignoreConstraints) {
+        this(name, "journaldb", ignoreConstraints);
+    }
+
+    public TableSQL(String name, String journalDBName) {
+        this(name, journalDBName, false);
+    }
+
+    public TableSQL(String name, String journalDBName, boolean ignoreConstraints) {
         this.name = name;
+        this.journalDBName = journalDBName;
         this.ignoreConstraints = ignoreConstraints;
     }
 
@@ -95,7 +107,7 @@ public class TableSQL {
                     + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
                     + "`filter` LONGBLOB NOT NULL," + "CONSTRAINT `" + name
                     + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)" + "ON DELETE CASCADE,"
-                    + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)"
+                    + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES " + journalDBName + ".logfile (id)"
                     + "ON DELETE CASCADE" + ");";
         }
         return sql;

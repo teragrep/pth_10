@@ -122,7 +122,7 @@ public final class FilterTypes implements Serializable {
         return pattern;
     }
 
-    public String tableName() {
+    public String bloomDBName() {
         final String tableName;
         final String BLOOM_TABLE_NAME_ITEM = "dpl.pth_06.bloom.table.name";
         if (config.hasPath(BLOOM_TABLE_NAME_ITEM)) {
@@ -137,6 +137,22 @@ public final class FilterTypes implements Serializable {
         }
 
         return tableName;
+    }
+
+    public String journalDBName() {
+        final String journalDBName;
+        final String JOURNALDB_TABLE_NAME_ITEM = "dpl.pth_06.archive.db.journaldb.name";
+        if (config.hasPath(JOURNALDB_TABLE_NAME_ITEM)) {
+            final String tableNameFromConfig = config.getString(JOURNALDB_TABLE_NAME_ITEM);
+            if (tableNameFromConfig == null || tableNameFromConfig.isEmpty()) {
+                throw new RuntimeException("Journaldb name was not configured.");
+            }
+            journalDBName = tableNameFromConfig;
+        }
+        else {
+            throw new RuntimeException("Missing configuration item: '" + JOURNALDB_TABLE_NAME_ITEM + "'.");
+        }
+        return journalDBName;
     }
 
     private String sizesJsonString() {
