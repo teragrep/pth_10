@@ -107,8 +107,8 @@ public final class TableSQL {
                     + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
                     + "`filter` LONGBLOB NOT NULL," + "CONSTRAINT `" + name
                     + "_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)" + "ON DELETE CASCADE,"
-                    + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES " + journalDBName + ".logfile (id)"
-                    + "ON DELETE CASCADE" + ");";
+                    + "CONSTRAINT `" + name + "_ibfk_2` FOREIGN KEY (partition_id) REFERENCES " + journalDBName
+                    + ".logfile (id)" + "ON DELETE CASCADE" + ");";
         }
         return sql;
     }
