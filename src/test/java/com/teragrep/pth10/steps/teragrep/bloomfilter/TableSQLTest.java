@@ -67,6 +67,28 @@ class TableSQLTest {
     }
 
     @Test
+    public void testCreateTableSQLInvalidJournalDBOption() {
+        String name = "test_table";
+        TableSQL table = new TableSQL(name, "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')");
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
+        Assertions
+                .assertEquals(
+                        "malformed SQL input <[test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')]>, only use alphabets, numbers and _",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    public void testCreateTableSQLInvalidJournalDBOptionIgnoreConstraints() {
+        String name = "test_table";
+        // not validated when ignoreConstraint set to true
+        String ignoredInput = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
+        TableSQL table = new TableSQL(name, ignoredInput, true);
+        String e = "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL);";
+        Assertions.assertEquals(e, table.createTableSQL());
+    }
+
+    @Test
     public void testIgnoreConstraintsCreateTableSQL() {
         String name = "test_table";
         TableSQL table = new TableSQL(name, true);
@@ -81,7 +103,8 @@ class TableSQLTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
-                        "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _", e.getMessage()
+                        "malformed SQL input <[test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')]>, only use alphabets, numbers and _",
+                        e.getMessage()
                 );
     }
 
@@ -92,7 +115,8 @@ class TableSQLTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
-                        "dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _", e.getMessage()
+                        "malformed SQL input <[test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')]>, only use alphabets, numbers and _",
+                        e.getMessage()
                 );
     }
 
@@ -103,7 +127,7 @@ class TableSQLTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
-                        "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters",
+                        "SQL input <[testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati]> was too long, allowed maximum length is 100 characters",
                         e.getMessage()
                 );
     }
@@ -115,7 +139,7 @@ class TableSQLTest {
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::createTableSQL);
         Assertions
                 .assertEquals(
-                        "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters",
+                        "SQL input <[testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati]> was too long, allowed maximum length is 100 characters",
                         e.getMessage()
                 );
     }
