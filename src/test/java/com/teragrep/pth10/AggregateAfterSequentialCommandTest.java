@@ -135,20 +135,23 @@ public class AggregateAfterSequentialCommandTest {
                         "index=index_A | spath | teragrep exec hdfs save /tmp/pth_10/aggregateAfterHdfsLoadTest overwrite=true",
                         testFile, ds -> {
                             Assertions.assertEquals(new StructType(new StructField[] {
-                                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
                                     new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
                                     new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
                                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
-                                    new StructField("wind_speed", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("latitude", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("rainfall_rate", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("atmosphere_cloud_liquid_water_content", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("atmosphere_water_vapor_content", DataTypes.StringType, true, new MetadataBuilder().build())
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("wind_speed", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("latitude", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("rainfall_rate", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("atmosphere_cloud_liquid_water_content", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("atmosphere_water_vapor_content", DataTypes.StringType, true, new MetadataBuilder().build())
                             }), ds.schema());
                         }
                 );

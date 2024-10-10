@@ -86,7 +86,8 @@ public final class SpathStep extends AbstractSpathStep {
 
         // Not in auto-extraction mode: can just return the first and only value from the map
         if (!autoExtractionMode) {
-            return dataset.withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new SpathEscapedKey(path).escaped()));
+            return dataset
+                    .withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new SpathEscapedKey(path).escaped()));
         }
 
         //
@@ -109,16 +110,14 @@ public final class SpathStep extends AbstractSpathStep {
         // use substring to remove backticks that were added to escape dots in key name
         for (String key : keys) {
             withAppliedUdfDs = withAppliedUdfDs
-                    .withColumn(
-                            new SpathUnescapedKey(key).unescaped(), functions
-                                    .when(
-                                            /* if key.value == null */
-                                            functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
-                                            /* then return empty string */
-                                            functions.lit("")
-                                    )
-                                    /* otherwise return key.value */
-                                    .otherwise(withAppliedUdfDs.col(outputColumn).getItem(key))
+                    .withColumn(new SpathUnescapedKey(key).unescaped(), functions.when(
+                            /* if key.value == null */
+                            functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
+                            /* then return empty string */
+                            functions.lit("")
+                    )
+                            /* otherwise return key.value */
+                            .otherwise(withAppliedUdfDs.col(outputColumn).getItem(key))
                     );
         }
 

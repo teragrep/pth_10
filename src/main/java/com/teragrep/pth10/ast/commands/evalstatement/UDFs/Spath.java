@@ -93,11 +93,11 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
     }
 
     /**
-     * Returns result of spath as a map
-     * Keys are wrapped in backticks to escape dots, spark uses them for maps
-     * @param input json/xml input
-     * @param spathExpr spath/xpath expression
-     * @param nameOfInputCol name of input column
+     * Returns result of spath as a map Keys are wrapped in backticks to escape dots, spark uses them for maps
+     * 
+     * @param input           json/xml input
+     * @param spathExpr       spath/xpath expression
+     * @param nameOfInputCol  name of input column
      * @param nameOfOutputCol name of output column
      * @return map of results
      * @throws Exception
@@ -118,12 +118,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                 for (Map.Entry<String, JsonElement> sub : jsonElem.getAsJsonObject().entrySet()) {
                     // put key:value to map - unescaping result in case was a nested json string
                     result
-                            .put(
-                                    new SpathEscapedKey(sub.getKey()).escaped(),
-                                    new UnquotedText(
-                                            new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))
-                                    ).read()
-                            );
+                            .put(new SpathEscapedKey(sub.getKey()).escaped(), new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))).read());
                 }
             }
             // Manual extraction via spath expression (JSON)
@@ -133,12 +128,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                 );
                 // put key:value to map - unescaping result in case was a nested json string
                 result
-                        .put(
-                                new SpathEscapedKey(spathExpr).escaped(),
-                                jsonSubElem != null ? new UnquotedText(
-                                        new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))
-                                ).read() : nullValue.value()
-                        );
+                        .put(new SpathEscapedKey(spathExpr).escaped(), jsonSubElem != null ? new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))).read() : nullValue.value());
             }
             return result;
         }

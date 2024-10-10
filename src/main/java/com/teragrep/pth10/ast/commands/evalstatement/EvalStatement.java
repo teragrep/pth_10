@@ -2861,7 +2861,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         Column res = functions.callUDF("SpathUDF", input, spathExpr, functions.lit(""), functions.lit(""));
         // wrap expression in backticks to escape dots
-        rv = new ColumnNode(res.getItem("`"+spathExpr+"`"));
+        rv = new ColumnNode(res.getItem("`" + spathExpr + "`"));
 
         return rv;
     }
