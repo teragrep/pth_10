@@ -191,6 +191,7 @@ class BloomFilterTableTest {
         properties.put("dpl.pth_10.bloom.db.username", username);
         properties.put("dpl.pth_10.bloom.db.password", password);
         properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
+        properties.put("dpl.pth_06.archive.db.journaldb.name", "journaldb");
         return properties;
     }
 }

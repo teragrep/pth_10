@@ -59,6 +59,14 @@ class TableSQLTest {
     }
 
     @Test
+    public void testCreateTableSQLJournalDBOption() {
+        String name = "test_table";
+        TableSQL table = new TableSQL(name, "customName");
+        String e = "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL,CONSTRAINT `test_table_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)ON DELETE CASCADE,CONSTRAINT `test_table_ibfk_2` FOREIGN KEY (partition_id) REFERENCES customName.logfile (id)ON DELETE CASCADE);";
+        Assertions.assertEquals(e, table.createTableSQL());
+    }
+
+    @Test
     public void testIgnoreConstraintsCreateTableSQL() {
         String name = "test_table";
         TableSQL table = new TableSQL(name, true);
