@@ -57,17 +57,17 @@ public final class TableSQL {
     private final String journalDBName;
     private final boolean ignoreConstraints;
 
-    private void nameIsValid() {
+    private void validSQLName(final String sql) {
         if (ignoreConstraints && LOGGER.isDebugEnabled()) {
             LOGGER.debug("Ignore database constraints active this should be only used in testing");
         }
         final Pattern pattern = Pattern.compile("^[A-Za-z0-9_]+$");
-        if (!pattern.matcher(name).find()) {
-            throw new RuntimeException("dpl.pth_06.bloom.table.name malformed name, only use alphabets, numbers and _");
+        if (!pattern.matcher(sql).find()) {
+            throw new RuntimeException("malformed SQL input <[" + sql + "]>, only use alphabets, numbers and _");
         }
-        if (name.length() > 100) {
+        if (sql.length() > 100) {
             throw new RuntimeException(
-                    "dpl.pth_06.bloom.table.name was too long, allowed maximum length is 100 characters"
+                    "SQL input <[" + sql + "]> was too long, allowed maximum length is 100 characters"
             );
         }
     }
@@ -93,7 +93,7 @@ public final class TableSQL {
     }
 
     public String createTableSQL() {
-        nameIsValid();
+        validSQLName(name);
         final String sql;
         if (ignoreConstraints) {
             sql = "CREATE TABLE IF NOT EXISTS `" + name + "`("
@@ -102,6 +102,7 @@ public final class TableSQL {
                     + "`filter` LONGBLOB NOT NULL);";
         }
         else {
+            validSQLName(journalDBName);
             sql = "CREATE TABLE IF NOT EXISTS `" + name + "`("
                     + "`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,"
                     + "`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE," + "`filter_type_id` BIGINT UNSIGNED NOT NULL,"
