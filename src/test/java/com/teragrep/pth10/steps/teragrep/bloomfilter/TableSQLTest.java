@@ -83,10 +83,7 @@ class TableSQLTest {
         String name = "test_table";
         // not validated when ignoreConstraint set to true
         String ignoredInput = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
-        TableSQL table = new TableSQL(
-                name, ignoredInput,
-                true
-        );
+        TableSQL table = new TableSQL(name, ignoredInput, true);
         String e = "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL);";
         Assertions.assertEquals(e, table.createTableSQL());
     }
