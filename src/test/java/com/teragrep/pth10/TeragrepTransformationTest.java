@@ -757,4 +757,38 @@ public class TeragrepTransformationTest {
         });
         Assertions.assertTrue(exception.getMessage().contains("Missing regex parameter"));
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgHdfsSaveAfterBloomEstimateTestUsingRegexExtract() {
+        final String id = UUID.randomUUID().toString();
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep exec regexextract regex \\d+ | teragrep exec bloom estimate | teragrep exec hdfs save overwrite=true /tmp/pth_10_hdfs/regexextract/"
+                                + id,
+                        testFile, ds -> {
+                            List<String> listOfResult = ds
+                                    .select("estimate(tokens)")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
+                        }
+                );
+        this.streamingTestUtil.setUp();
+        streamingTestUtil
+                .performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/regexextract/" + id, testFile, ds -> {
+                    List<String> listOfResult = ds
+                            .select("estimate(tokens)")
+                            .collectAsList()
+                            .stream()
+                            .map(r -> r.getAs(0).toString())
+                            .collect(Collectors.toList());
+                    Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
+                });
+    }
 }
