@@ -149,9 +149,6 @@ public class whereTest {
     }
 
     @Test
-    @Disabled(
-            value = "where command does not work as expected with boolean expressions (especially when combined with > or <), pth-10 issue #277"
-    )
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -180,9 +177,6 @@ public class whereTest {
     }
 
     @Test
-    @Disabled(
-            value = "where command does not work as expected with boolean expressions (especially when combined with > or <), pth-10 issue #277"
-    )
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
