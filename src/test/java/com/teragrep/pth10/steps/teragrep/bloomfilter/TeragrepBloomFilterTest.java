@@ -76,7 +76,7 @@ class TeragrepBloomFilterTest {
         properties.put("dpl.pth_10.bloom.db.username", username);
         String password = "";
         properties.put("dpl.pth_10.bloom.db.password", password);
-        String connectionUrl = "jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+        String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
         properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
         properties
                 .put(
