@@ -153,7 +153,8 @@ public final class TeragrepBloomStep extends AbstractStep {
      * @return Dataset unmodified
      */
     private Dataset<Row> createBloomFilter(Dataset<Row> dataset) {
-        writeFilterTypes(this.zeppelinConfig);
+        createFilterTypeTable();
+        writeFilterTypes();
         final BloomFilterTable table = new BloomFilterTable(zeppelinConfig);
         table.create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(this.zeppelinConfig));
@@ -167,7 +168,8 @@ public final class TeragrepBloomStep extends AbstractStep {
      * @return Dataset unmodified
      */
     private Dataset<Row> updateBloomFilter(Dataset<Row> dataset) {
-        writeFilterTypes(this.zeppelinConfig);
+        createFilterTypeTable();
+        writeFilterTypes();
         final BloomFilterTable table = new BloomFilterTable(zeppelinConfig);
         table.create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(this.zeppelinConfig, true));
@@ -191,7 +193,7 @@ public final class TeragrepBloomStep extends AbstractStep {
         return dataset.groupBy("partition").agg(agg.toColumn().as("bloomfilter"));
     }
 
-    private void writeFilterTypes(final Config config) {
+    private void writeFilterTypes() {
         final List<FilterField> fieldList = filterTypes.fieldList();
         final String pattern = filterTypes.pattern();
         final Connection conn = connection.get();
@@ -224,6 +226,23 @@ public final class TeragrepBloomStep extends AbstractStep {
                 }
                 throw new RuntimeException(e);
             }
+        }
+    }
+
+    private void createFilterTypeTable() {
+        // from pth-06/database/bloomdb
+        final String sql = "CREATE TABLE IF NOT EXISTS `filtertype` ("
+                + "    `id`               bigint(20) UNSIGNED   NOT NULL AUTO_INCREMENT PRIMARY KEY,"
+                + "    `expectedElements` bigint(20) UNSIGNED   NOT NULL,"
+                + "    `targetFpp`        DOUBLE(2, 2) UNSIGNED NOT NULL,"
+                + "    `pattern`          VARCHAR(2048)         NOT NULL,"
+                + "    UNIQUE KEY (`expectedElements`, `targetFpp`, `pattern`)" + ") ENGINE = InnoDB"
+                + "  DEFAULT CHARSET = utf8mb4" + "  COLLATE = utf8mb4_unicode_ci;";
+        try (final PreparedStatement statement = connection.get().prepareStatement(sql)) {
+            statement.execute();
+        }
+        catch (SQLException e) {
+            throw new RuntimeException("Error creating `filtertype` table: " + e.getMessage());
         }
     }
 }
