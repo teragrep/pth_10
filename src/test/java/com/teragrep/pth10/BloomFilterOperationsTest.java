@@ -80,9 +80,6 @@ public class BloomFilterOperationsTest {
             new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
             new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
     });
-    final String username = "sa";
-    final String password = "";
-    final String connectionUrl = "jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -90,21 +87,11 @@ public class BloomFilterOperationsTest {
     void setEnv() {
         streamingTestUtil = new StreamingTestUtil(this.testSchema);
         streamingTestUtil.setEnv();
-        /*
-        Class.forName ("org.h2.Driver");
-        this.conn = DriverManager.getConnection("jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE", "sa", "");
-        org.h2.tools.RunScript.execute(conn, new FileReader("src/test/resources/bloomdb/bloomdb.sql"));
-         */
     }
 
     @BeforeEach
     void setUp() {
         streamingTestUtil.setUp();
-        /*
-        conn.prepareStatement("TRUNCATE TABLE filter_expected_100000_fpp_001").execute();
-        conn.prepareStatement("TRUNCATE TABLE filter_expected_1000000_fpp_003").execute();
-        conn.prepareStatement("TRUNCATE TABLE filter_expected_2500000_fpp_005").execute();
-         */
     }
 
     @AfterEach
@@ -278,10 +265,6 @@ public class BloomFilterOperationsTest {
     private Properties getDefaultProperties() {
         final Properties properties = new Properties();
         properties.put("dpl.pth_06.bloom.db.fields", "[ {expected: 100, fpp: 0.01}]");
-        properties.put("dpl.pth_10.bloom.db.username", username);
-        properties.put("dpl.pth_10.bloom.db.password", password);
-        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
-        properties.put("dpl.pth_06.archive.db.journaldb.name", "journaldb");
         return properties;
     }
 }

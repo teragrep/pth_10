@@ -67,23 +67,20 @@ public final class InputColumnToBinaryList {
 
     public Dataset<Row> dataset() {
         final Dataset<Row> binaryDataset;
-        if (!(inputField.dataType() instanceof ArrayType)) {
-            throw new RuntimeException("Aggregator input column was not an array <[" + inputField + "]>");
-        }
-        final ArrayType arrayType = (ArrayType) inputField.dataType();
-        final DataType elementType = arrayType.elementType();
+        final boolean isStringArray = inputField.dataType().sameType(DataTypes.createArrayType(DataTypes.StringType));
+        final boolean isBinaryArray = inputField.dataType().sameType(DataTypes.createArrayType(DataTypes.BinaryType));
         // if already binary type return dataset
-        if (elementType == DataTypes.BinaryType) {
+        if (isBinaryArray) {
             binaryDataset = dataset;
         }
         // convert to list of string to list of bytes if strings
-        else if (elementType == DataTypes.StringType) {
+        else if (isStringArray) {
             binaryDataset = stringType.dataset();
         }
         else { // add other types if needed
             throw new RuntimeException(
-                    "Unrecognized array element type: <" + elementType
-                            + "> supported types are 'BinaryType', 'StringType'"
+                    "Input column <" + inputField.name() + "> has unsupported column type <" + inputField.dataType()
+                            + ">, supported types are ArrayType<BinaryType>, ArrayType<StringType>"
             );
         }
         return binaryDataset;
