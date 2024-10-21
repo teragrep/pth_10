@@ -95,71 +95,6 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         this.catCtx = catCtx;
     }
 
-    /**
-     * Main visitor function for evalStatement
-     * 
-     * @param ctx main parse tree
-     * @return node
-     */
-    public Node visitEvalStatement(DPLParser.EvalStatementContext ctx) {
-        Node rv;
-        LOGGER.info("visitEvalStatement incoming: <{}>", ctx.getText());
-
-        rv = evalStatementEmitCatalyst(ctx);
-        return rv;
-    }
-
-    private Node evalStatementEmitCatalyst(DPLParser.EvalStatementContext ctx) {
-        Node rv = null;
-        Node left = visit(ctx.getChild(0));
-        //if(LOGGER.isDebugEnabled())
-        if (ctx.getChildCount() == 1) {
-            // leaf
-            rv = left;
-        }
-        else if (ctx.getChildCount() == 2) {
-            throw new RuntimeException("Unbalanced evalStatement operation:" + ctx.getText());
-        }
-        else if (ctx.getChildCount() == 3) {
-            // logical operation xxx AND/OR/XOR xxx
-            TerminalNode operation = (TerminalNode) ctx.getChild(1);
-            Token op = getOperation((TerminalNode) ctx.getChild(1));
-            LOGGER.debug("--X visitEvalStatement(catalyst) operation:<{}>", operation.getText().toUpperCase());
-            LOGGER.debug("--X visitEvalStatement(catalyst) op:<{}>", op.getType().toString());
-            Node right = visit(ctx.getChild(2));
-
-            Column col = ((ColumnNode) left).getColumn();
-            Column r = ((ColumnNode) right).getColumn();
-            switch (operation.getSymbol().getType()) {
-                case DPLLexer.EVAL_LANGUAGE_MODE_EQ: {
-                    rv = new ColumnNode(col.equalTo(r));
-                    break;
-                }
-                case DPLLexer.EVAL_LANGUAGE_MODE_NEQ: {
-                    rv = new ColumnNode(col.notEqual(r));
-                    break;
-                }
-                case DPLLexer.EVAL_LANGUAGE_MODE_LT: {
-                    rv = new ColumnNode(col.lt(r));
-                    break;
-                }
-                case DPLLexer.EVAL_LANGUAGE_MODE_LTE: {
-                    rv = new ColumnNode(col.leq(r));
-                    break;
-                }
-                case DPLLexer.EVAL_LANGUAGE_MODE_GT: {
-                    rv = new ColumnNode(col.gt(r));
-                    break;
-                }
-                case DPLLexer.EVAL_LANGUAGE_MODE_GTE: {
-                    rv = new ColumnNode(col.geq(r));
-                    break;
-                }
-            }
-        }
-        return (ColumnNode) rv;
-    }
-
     public Node visitL_evalStatement_subEvalStatement(DPLParser.L_evalStatement_subEvalStatementContext ctx) {
         LOGGER.info("VisitSubEvalStatements: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getChild(0).getText());
         // Consume parenthesis and return actual evalStatement
@@ -210,46 +145,6 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     /**
-     * Converts a {@link TerminalNode} containing an operation into a {@link Token}
-     * 
-     * @param operation TerminalNode of an operation
-     * @return Token
-     */
-    private Token getOperation(TerminalNode operation) {
-        Token op = null;
-        switch (operation.getSymbol().getType()) {
-            case DPLLexer.EVAL_LANGUAGE_MODE_EQ: {
-                op = new Token(Type.EQUALS);
-                break;
-            }
-            case DPLLexer.EVAL_LANGUAGE_MODE_NEQ: {
-                op = new Token(Type.NOT_EQUALS);
-                break;
-            }
-            case DPLLexer.EVAL_LANGUAGE_MODE_GT: {
-                op = new Token(Type.GT);
-                break;
-            }
-            case DPLLexer.EVAL_LANGUAGE_MODE_GTE: {
-                op = new Token(Type.GE);
-                break;
-            }
-            case DPLLexer.EVAL_LANGUAGE_MODE_LT: {
-                op = new Token(Type.LT);
-                break;
-            }
-            case DPLLexer.EVAL_LANGUAGE_MODE_LTE: {
-                op = new Token(Type.LE);
-                break;
-            }
-            default: {
-                LOGGER.error("Unknown operation: <{}>", operation.getSymbol().getType());
-            }
-        }
-        return op;
-    }
-
-    /**
      * Generates a column based on a source, value and operation
      * 
      * @param source    Left hand side
@@ -279,55 +174,30 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     private Node evalLogicStatementEmitCatalyst(DPLParser.L_evalStatement_evalLogicStatementContext ctx) {
-        Node rv = null;
-        Column lCol = null;
-        Column rCol = null;
+        final Column col;
         LOGGER
                 .debug(
                         "VisitEvalLogicStatement(Catalyst) incoming: children=<{}> text=<{}>", ctx.getChildCount(),
                         ctx.getText()
                 );
-        Node l = visit(ctx.getChild(0));
-        LOGGER.debug("VisitEvalLogicStatement(Catalyst) left: class=<{}>", l.getClass().getName());
-        if (ctx.getChildCount() == 1) {
-            // leaf
-            rv = l;
-        }
-        else if (ctx.getChildCount() == 2) {
-            // Should not come here at all
-            Node r = visit(ctx.getChild(1));
-            rv = r;
-        }
-        else if (ctx.getChildCount() == 3) {
-            // logical operation xxx AND/OR/XOR xxx
-            TerminalNode op = (TerminalNode) ctx.getChild(1);
-            Token oper = null;
 
-            LOGGER.debug("Operation=<{}> Symbol=<{}> Text=<{}>", op, op.getSymbol(), op.getSymbol().getText());
-            if (op.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_AND) {
-                oper = new Token(Type.AND);
-            }
-            if (op.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_OR) {
-                oper = new Token(Type.OR);
-            }
-            Node r = visit(ctx.getChild(2));
-            LOGGER.debug("visitEvalLogicStatement(Catalyst) right=<{}>", r.getClass().getName());
+        final List<DPLParser.EvalStatementContext> evalStatements = ctx.evalStatement();
 
-            if (l instanceof ColumnNode && r instanceof ColumnNode) {
-                Column col = null;
-                Column lcol = ((ColumnNode) l).getColumn();
-                Column rcol = ((ColumnNode) r).getColumn();
-                if (op.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_AND) {
-                    col = rcol.and(rcol);
-                }
-                if (op.getSymbol().getType() == DPLLexer.EVAL_LANGUAGE_MODE_OR) {
-                    col = lcol.or(rcol);
-                }
-                LOGGER.debug("visitEvalLogicStatement(Catalyst) with oper=<{}>", col.expr().sql());
-                rv = new ColumnNode(col);
-            }
+        ColumnNode leftSide = (ColumnNode) visit(evalStatements.get(0));
+        ColumnNode rightSide = (ColumnNode) visit(evalStatements.get(1));
+
+        if (ctx.EVAL_LANGUAGE_MODE_OR() != null) {
+            col = leftSide.getColumn().or(rightSide.getColumn());
         }
-        LOGGER.debug(" EvalLogicStatement(Catalyst) generated=<{}> class=<{}>", rv.toString(), rv.getClass().getName());
+        else if (ctx.EVAL_LANGUAGE_MODE_AND() != null) {
+            col = leftSide.getColumn().and(rightSide.getColumn());
+        } else {
+            throw new IllegalArgumentException("Unexpected operation in logic statement: " + ctx.getText());
+        }
+
+
+        final ColumnNode rv = new ColumnNode(col);
+        LOGGER.debug(" EvalLogicStatement(Catalyst) generated=<{}> class=<{}>", rv, rv.getClass().getName());
         return rv;
     }
 
@@ -357,8 +227,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_eval_evalParameter(DPLParser.T_eval_evalParameterContext ctx) {
-        Node n = visit(ctx.getChild(2));
-        Node field = visit(ctx.getChild(0));
+        Node n = visit(ctx.evalStatement());
+        Node field = visit(ctx.fieldType());
 
         // Step initialization
         this.evalStep = new EvalStep();
