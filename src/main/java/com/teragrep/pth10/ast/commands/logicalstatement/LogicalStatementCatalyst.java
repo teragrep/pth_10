@@ -424,23 +424,17 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitSearchQualifier(DPLParser.SearchQualifierContext ctx) {
-        // LOGGER.info("visitSearchQualifier: ");
         Column sQualifier = null;
-        String value = null;
+        String value;
 
         TerminalNode left = (TerminalNode) ctx.getChild(0);
         TerminalNode operation = (TerminalNode) ctx.getChild(1);
 
-        List<String> listOfIndices = new ArrayList<>();
-
         // Default clause used in WHERE-part
-        String columnName = null;
+        final String columnName;
         // HOST and SOURCETYPE qualifier stored as additional list and used for Kafka content filtering
         if (left.getSymbol().getType() == DPLLexer.INDEX_IN) {
             value = "";
-            ctx.indexStringType().forEach(str -> {
-                listOfIndices.add(new UnquotedText(new TextString(str.getText().toLowerCase())).read());
-            });
             columnName = "index";
         }
         else if (left.getSymbol().getType() == DPLLexer.HOST) {
@@ -467,8 +461,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
         }
         else if (left.getSymbol().getType() == DPLLexer.INDEX_IN) {
-            for (String index : listOfIndices) {
-                String rlikeStatement = glob2rlike(index);
+            for (DPLParser.IndexStringTypeContext indexCtx : ctx.indexStringType()) {
+                final String rlikeStatement = glob2rlike(new UnquotedText(new TextString(indexCtx.getText().toLowerCase())).read());
                 if (sQualifier == null) {
                     sQualifier = col.rlike(rlikeStatement);
                 }
@@ -476,6 +470,17 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                     sQualifier = sQualifier.or(col.rlike(rlikeStatement));
                 }
 
+            }
+        }
+        else if (left.getSymbol().getType() == DPLLexer.SOURCETYPE && operation.getSymbol().getType() == DPLLexer.IN) {
+            for (DPLParser.StringTypeContext stringType : ctx.stringType()) {
+                final String sourceType = new UnquotedText(new TextString(stringType.getText())).read();
+                final String rlikeStatement = glob2rlike(sourceType);
+                if (sQualifier == null) {
+                    sQualifier = col.rlike(rlikeStatement);
+                } else {
+                    sQualifier = sQualifier.or(col.rlike(rlikeStatement));
+                }
             }
         }
         else {

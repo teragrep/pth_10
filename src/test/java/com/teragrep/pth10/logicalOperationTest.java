@@ -422,14 +422,11 @@ public class logicalOperationTest {
     }
 
     @Test
-    @Disabled(
-            value = "search does not allow having sourcetype in this format: sourcetype IN (sourcetyp1, sourcetype2), pth-10 issue #282"
-    )
     public void testWithMultipleSourcetypes() {
-        String query = "\"index=index_* sourcetype IN (B:X:0, B:Y:0, C:X:0)\"";
+        String query = "index=index_* sourcetype IN (B:X:0, B:Y:0, C:X:0)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             List<String> listOfSourcetype = res
-                    .select("_raw")
+                    .select("sourcetype")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
@@ -437,10 +434,10 @@ public class logicalOperationTest {
                     .collect(Collectors.toList());
 
             Assertions.assertEquals(5, res.count());
-            Assertions.assertEquals("B:X:0", listOfSourcetype.get(0));
-            Assertions.assertEquals("B:X:0", listOfSourcetype.get(1));
-            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(2));
-            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(3));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(0));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(1));
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(2));
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(3));
             Assertions.assertEquals("C:X:0", listOfSourcetype.get(4));
         });
 
