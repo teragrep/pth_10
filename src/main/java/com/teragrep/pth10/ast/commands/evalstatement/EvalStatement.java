@@ -183,10 +183,6 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         final List<DPLParser.EvalStatementContext> evalStatements = ctx.evalStatement();
 
-        if (evalStatements.size() != 2) {
-            throw new IllegalStateException("Unexpected amount of evalStatements in logic statement, expected <2>, was <" + evalStatements.size() + ">");
-        }
-
         ColumnNode leftSide = (ColumnNode) visit(evalStatements.get(0));
         ColumnNode rightSide = (ColumnNode) visit(evalStatements.get(1));
 
