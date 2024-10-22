@@ -79,7 +79,7 @@ public final class BinaryListColumn {
 
     public Dataset<Row> dataset() {
         final Dataset<Row> binaryDataset;
-        DataType datatype = dataset.schema().apply(inputCol).dataType();
+        final DataType datatype = dataset.schema().apply(inputCol).dataType();
         final boolean isStringArray = datatype.sameType(DataTypes.createArrayType(DataTypes.StringType));
         final boolean isBinaryArray = datatype.sameType(DataTypes.createArrayType(DataTypes.BinaryType));
         // if already binary type return dataset
