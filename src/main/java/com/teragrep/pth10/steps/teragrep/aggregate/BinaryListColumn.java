@@ -47,39 +47,52 @@ package com.teragrep.pth10.steps.teragrep.aggregate;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.*;
+import scala.collection.mutable.WrappedArray;
 
-public final class InputColumnToBinaryList {
+import java.nio.charset.StandardCharsets;
+
+public final class BinaryListColumn {
 
     private final Dataset<Row> dataset;
-    private final StructField inputField;
-    private final StringListToBinaryList stringType;
+    private final String inputCol;
 
-    public InputColumnToBinaryList(Dataset<Row> dataset, String inputCol) {
-        this(dataset, dataset.schema().apply(inputCol), new StringListToBinaryList(dataset, inputCol));
+    private Dataset<Row> toBinaryList() {
+        // use scala WrappedArray to avoid casting errors with Java in spark
+        final UDF1<WrappedArray<String>, WrappedArray<byte[]>> udf = stringList -> {
+            final byte[][] bytesArray = new byte[stringList.length()][];
+            for (int i = 0; i < stringList.length(); i++) {
+                bytesArray[i] = stringList.apply(i).getBytes(StandardCharsets.UTF_8);
+            }
+            return WrappedArray.make(bytesArray);
+        };
+        return dataset
+                .withColumn(inputCol, functions.udf(udf, DataTypes.createArrayType(DataTypes.BinaryType)).apply(dataset.col(inputCol)));
     }
 
-    public InputColumnToBinaryList(Dataset<Row> dataset, StructField inputField, StringListToBinaryList stringType) {
+    public BinaryListColumn(Dataset<Row> dataset, String inputCol) {
         this.dataset = dataset;
-        this.inputField = inputField;
-        this.stringType = stringType;
+        this.inputCol = inputCol;
     }
 
     public Dataset<Row> dataset() {
         final Dataset<Row> binaryDataset;
-        final boolean isStringArray = inputField.dataType().sameType(DataTypes.createArrayType(DataTypes.StringType));
-        final boolean isBinaryArray = inputField.dataType().sameType(DataTypes.createArrayType(DataTypes.BinaryType));
+        DataType datatype = dataset.schema().apply(inputCol).dataType();
+        final boolean isStringArray = datatype.sameType(DataTypes.createArrayType(DataTypes.StringType));
+        final boolean isBinaryArray = datatype.sameType(DataTypes.createArrayType(DataTypes.BinaryType));
         // if already binary type return dataset
         if (isBinaryArray) {
             binaryDataset = dataset;
         }
         // convert to list of string to list of bytes if strings
         else if (isStringArray) {
-            binaryDataset = stringType.dataset();
+            binaryDataset = toBinaryList();
         }
         else { // add other types if needed
             throw new RuntimeException(
-                    "Input column <" + inputField.name() + "> has unsupported column type <" + inputField.dataType()
+                    "Input column <" + inputCol + "> has unsupported column type <" + datatype
                             + ">, supported types are ArrayType<BinaryType>, ArrayType<StringType>"
             );
         }
