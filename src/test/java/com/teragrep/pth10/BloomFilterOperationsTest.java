@@ -135,6 +135,8 @@ public class BloomFilterOperationsTest {
     )
     public void testAggregateWithTokenizerFormatBytes() {
         final String id = UUID.randomUUID().toString();
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "[ {expected: 100, fpp: 0.01}]");
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z "
@@ -160,7 +162,7 @@ public class BloomFilterOperationsTest {
                                 + "| join type=inner max=0 partition [| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorEstimate/"
                                 + id,
                         aggregateFile, ds -> {
-                            Config config = ConfigFactory.parseProperties(getDefaultProperties());
+                            Config config = ConfigFactory.parseProperties(properties);
                             TeragrepBloomStep step = new TeragrepBloomStep(
                                     config,
                                     TeragrepBloomStep.BloomMode.AGGREGATE,
@@ -196,6 +198,8 @@ public class BloomFilterOperationsTest {
             matches = "true"
     )
     public void testAggregateUsingRegexExtract() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "[ {expected: 100, fpp: 0.01}]");
         final String id = UUID.randomUUID().toString();
         final String regex = "\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}";
         streamingTestUtil
@@ -223,7 +227,7 @@ public class BloomFilterOperationsTest {
                                 + "| join type=inner max=0 partition [| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorEstimate/"
                                 + id,
                         aggregateFile, ds -> {
-                            Config config = ConfigFactory.parseProperties(getDefaultProperties());
+                            Config config = ConfigFactory.parseProperties(properties);
                             TeragrepBloomStep step = new TeragrepBloomStep(
                                     config,
                                     TeragrepBloomStep.BloomMode.AGGREGATE,
@@ -260,11 +264,5 @@ public class BloomFilterOperationsTest {
                             Assertions.assertTrue(filter2.mightContain("962e5f8c-fffe-4ea6-a164-b39e0ce4ceb4"));
                         }
                 );
-    }
-
-    private Properties getDefaultProperties() {
-        final Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.db.fields", "[ {expected: 100, fpp: 0.01}]");
-        return properties;
     }
 }
