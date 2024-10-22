@@ -86,7 +86,8 @@ public final class SpathStep extends AbstractSpathStep {
 
         // Not in auto-extraction mode: can just return the first and only value from the map
         if (!autoExtractionMode) {
-            return dataset.withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(path));
+            return dataset
+                    .withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new SpathEscapedKey(path).escaped()));
         }
 
         //
@@ -106,18 +107,17 @@ public final class SpathStep extends AbstractSpathStep {
         // Each key is a new column with the cell contents being the value for that key
 
         // Check for nulls; return an empty string if null, otherwise value for given key
+        // use substring to remove backticks that were added to escape dots in key name
         for (String key : keys) {
             withAppliedUdfDs = withAppliedUdfDs
-                    .withColumn(
-                            key, functions
-                                    .when(
-                                            /* if key.value == null */
-                                            functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
-                                            /* then return empty string */
-                                            functions.lit("")
-                                    )
-                                    /* otherwise return key.value */
-                                    .otherwise(withAppliedUdfDs.col(outputColumn).getItem(key))
+                    .withColumn(new SpathUnescapedKey(key).unescaped(), functions.when(
+                            /* if key.value == null */
+                            functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
+                            /* then return empty string */
+                            functions.lit("")
+                    )
+                            /* otherwise return key.value */
+                            .otherwise(withAppliedUdfDs.col(outputColumn).getItem(key))
                     );
         }
 
