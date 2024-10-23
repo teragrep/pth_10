@@ -107,26 +107,18 @@ public class CatalystVisitorTest {
         });
     }
 
-    @Disabled
     @Test
-    void columnFromStringTest() {
-        String q, e;
-        Column result;
-        // Add time ranges
-        q = "<OR><AND><AND><index value=\"strawberry\" operation=\"NOT_EQUALS\"/><sourcetype value=\"example:strawberry:strawberry\" operation=\"EQUALS\"/></AND><host value=\"loadbalancer.example.com\" operation=\"EQUALS\"/></AND><AND><AND><AND><AND><index value=\"*\" operation=\"EQUALS\"/><host value=\"firewall.example.com\" operation=\"EQUALS\"/></AND><earliest value=\"1611657303\" operation=\"GE\"/></AND><latest value=\"1619437701\" operation=\"LE\"/></AND><indexstring value=\"Denied\" /></AND></OR>";
-        e = "((((NOT (`index` = 'strawberry')) AND (`sourcetype` = 'example:strawberry:strawberry')) AND (`host` = 'loadbalancer.example.com')) OR ((((`index` = '*') AND (`host` = 'firewall.example.com')) AND (`_time` >= DATE '2021-01-26')) AND (`_time` <= DATE '2021-04-26')))";
-        DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
-
-        ctx.setEarliest("-1Y");
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-        CharStream inputStream = CharStreams.fromString(q);
-        DPLLexer lexer = new DPLLexer(inputStream);
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        ParseTree tree = parser.root();
-        LOGGER.debug(tree.toStringTree(parser));
-        CatalystNode n = (CatalystNode) visitor.visit(tree);
-        result = visitor.getLogicalPartAsColumn();
-        Assertions.assertEquals(e, result.expr().sql());
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void searchQueryWithOrTest() {
+        final String query = "(index!=strawberry sourcetype=example:strawberry:strawberry host=loadbalancer.example.com) OR (index=* host=firewall.example.com earliest=2021-01-26T00:00:00z latest=2021-04-26T00:00:00z \"Denied\")";
+        final String expected = "(((NOT RLIKE(index, (?i)^strawberry$)) AND (RLIKE(sourcetype, (?i)^example:strawberry:strawberry) AND RLIKE(host, (?i)^loadbalancer.example.com))) OR (RLIKE(index, (?i)^.*$) AND (((RLIKE(host, (?i)^firewall.example.com) AND (_time >= from_unixtime(1611612000, yyyy-MM-dd HH:mm:ss))) AND (_time < from_unixtime(1619384400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QDenied\\E.*))))";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
+            Assertions.assertEquals(expected, ctx.getSparkQuery());
+        });
     }
 
     @Test
