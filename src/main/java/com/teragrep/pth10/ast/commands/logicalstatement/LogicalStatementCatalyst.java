@@ -424,7 +424,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitSearchQualifier(DPLParser.SearchQualifierContext ctx) {
-        Column sQualifier = null;
+        Column sQualifier;
         String value;
 
         TerminalNode left = (TerminalNode) ctx.getChild(0);
@@ -461,27 +461,20 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
         }
         else if (left.getSymbol().getType() == DPLLexer.INDEX_IN) {
-            for (DPLParser.IndexStringTypeContext indexCtx : ctx.indexStringType()) {
-                final String rlikeStatement = glob2rlike(new UnquotedText(new TextString(indexCtx.getText().toLowerCase())).read());
-                if (sQualifier == null) {
-                    sQualifier = col.rlike(rlikeStatement);
-                }
-                else {
-                    sQualifier = sQualifier.or(col.rlike(rlikeStatement));
-                }
+            OrColumn orColumn = new OrColumn(
+                    ctx.indexStringType().stream().map(st ->
+                            col.rlike(glob2rlike(new UnquotedText(new TextString(st.getText().toLowerCase())).read()))).collect(Collectors.toList())
+            );
 
-            }
+            sQualifier = orColumn.column();
         }
         else if (left.getSymbol().getType() == DPLLexer.SOURCETYPE && operation.getSymbol().getType() == DPLLexer.IN) {
-            for (DPLParser.StringTypeContext stringType : ctx.stringType()) {
-                final String sourceType = new UnquotedText(new TextString(stringType.getText())).read();
-                final String rlikeStatement = glob2rlike(sourceType);
-                if (sQualifier == null) {
-                    sQualifier = col.rlike(rlikeStatement);
-                } else {
-                    sQualifier = sQualifier.or(col.rlike(rlikeStatement));
-                }
-            }
+            OrColumn orColumn = new OrColumn(
+                    ctx.stringType().stream().map(st ->
+                            col.rlike(glob2rlike(new UnquotedText(new TextString(st.getText().toLowerCase())).read()))).collect(Collectors.toList())
+            );
+
+            sQualifier = orColumn.column();
         }
         else {
             String rlikeStatement = glob2rlike(value);
