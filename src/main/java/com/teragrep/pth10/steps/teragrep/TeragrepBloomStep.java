@@ -47,7 +47,7 @@ package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
 import com.teragrep.pth10.steps.AbstractStep;
-import com.teragrep.pth10.steps.teragrep.aggregate.BinaryListColumn;
+import com.teragrep.pth10.steps.teragrep.aggregate.ColumnBinaryListingDataset;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterForeachPartitionFunction;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterTable;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.FilterTypes;
@@ -163,7 +163,7 @@ public final class TeragrepBloomStep extends AbstractStep {
     }
 
     public Dataset<Row> aggregate(final Dataset<Row> dataset) {
-        final BinaryListColumn inputColumnToBytes = new BinaryListColumn(dataset, inputCol);
+        final ColumnBinaryListingDataset inputColumnToBytes = new ColumnBinaryListingDataset(dataset, inputCol);
         final BloomFilterAggregator agg = new BloomFilterAggregator(
                 inputCol,
                 estimateCol,

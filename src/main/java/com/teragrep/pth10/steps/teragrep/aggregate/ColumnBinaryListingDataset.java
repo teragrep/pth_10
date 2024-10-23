@@ -54,7 +54,7 @@ import scala.collection.mutable.WrappedArray;
 
 import java.nio.charset.StandardCharsets;
 
-public final class BinaryListColumn {
+public final class ColumnBinaryListingDataset {
 
     private final Dataset<Row> dataset;
     private final String inputCol;
@@ -72,7 +72,7 @@ public final class BinaryListColumn {
                 .withColumn(inputCol, functions.udf(udf, DataTypes.createArrayType(DataTypes.BinaryType)).apply(dataset.col(inputCol)));
     }
 
-    public BinaryListColumn(Dataset<Row> dataset, String inputCol) {
+    public ColumnBinaryListingDataset(Dataset<Row> dataset, String inputCol) {
         this.dataset = dataset;
         this.inputCol = inputCol;
     }
@@ -93,7 +93,7 @@ public final class BinaryListColumn {
         else { // add other types if needed
             throw new RuntimeException(
                     "Input column <" + inputCol + "> has unsupported column type <" + datatype
-                            + ">, supported types are ArrayType<BinaryType>, ArrayType<StringType>"
+                            + ">, supported types are ArrayType(BinaryType), ArrayType(StringType)"
             );
         }
         return binaryDataset;
