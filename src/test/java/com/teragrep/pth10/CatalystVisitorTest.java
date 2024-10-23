@@ -46,16 +46,7 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
 import com.teragrep.pth10.ast.DPLTimeFormat;
-import com.teragrep.pth10.ast.bo.CatalystNode;
-import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.antlr.DPLParser;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
