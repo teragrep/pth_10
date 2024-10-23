@@ -1,0 +1,2 @@
+{"_time": "2022-09-06 09:00:00.000", "id": 1, "_raw": "userid=bc113100-b859-4041-b272-88b849f6d6db", "index": "index_A", "sourcetype": "stream1", "host": "host", "source": "127.0.0.0", "partition": "1", "offset": 1}
+{"_time": "2022-09-06 09:00:00.000", "id": 2, "_raw": "userid=bc113100-b859-4041-b272-88b849f6d6db used uuid=962e5f8c-fffe-4ea6-a164-b39e0ce4ceb4", "index": "index_A", "sourcetype": "stream1", "host": "host", "source": "127.0.0.0", "partition": "2", "offset": 1}

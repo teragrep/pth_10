@@ -45,17 +45,21 @@
  */
 package com.teragrep.pth10;
 
+import com.teragrep.pth10.steps.teragrep.TeragrepBloomStep;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.util.sketch.BloomFilter;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -63,6 +67,7 @@ public class BloomFilterOperationsTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BloomFilterOperationsTest.class);
     private final String testFile = "src/test/resources/xmlWalkerTestDataStreaming/bloomTeragrepStep_data*.jsonl";
+    private final String aggregateFile = "src/test/resources/xmlWalkerTestDataStreaming/bloomTeragrepStep_aggregation_data*.jsonl";
 
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
@@ -82,21 +87,11 @@ public class BloomFilterOperationsTest {
     void setEnv() {
         streamingTestUtil = new StreamingTestUtil(this.testSchema);
         streamingTestUtil.setEnv();
-        /*
-        Class.forName ("org.h2.Driver");
-        this.conn = DriverManager.getConnection("jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE", "sa", "");
-        org.h2.tools.RunScript.execute(conn, new FileReader("src/test/resources/bloomdb/bloomdb.sql"));
-         */
     }
 
     @BeforeEach
     void setUp() {
         streamingTestUtil.setUp();
-        /*
-        conn.prepareStatement("TRUNCATE TABLE filter_expected_100000_fpp_001").execute();
-        conn.prepareStatement("TRUNCATE TABLE filter_expected_1000000_fpp_003").execute();
-        conn.prepareStatement("TRUNCATE TABLE filter_expected_2500000_fpp_005").execute();
-         */
     }
 
     @AfterEach
@@ -129,6 +124,144 @@ public class BloomFilterOperationsTest {
 
                             Assertions.assertEquals(results.get(0), 1);
                             Assertions.assertTrue(results.get(1) > 1);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testAggregateWithTokenizerFormatBytes() {
+        final String id = UUID.randomUUID().toString();
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "[ {expected: 100, fpp: 0.01}]");
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z "
+                                + "| teragrep exec tokenizer format bytes "
+                                + "| teragrep exec hdfs save overwrite=true /tmp/pth_10_hdfs/aggregatorTokenBytes/"
+                                + id,
+                        aggregateFile, ds -> {
+                        }
+                );
+        this.streamingTestUtil.setUp();
+        streamingTestUtil
+                .performDPLTest(
+                        "| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorTokenBytes/" + id + " "
+                                + "| teragrep exec bloom estimate "
+                                + "| teragrep exec hdfs save overwrite=true /tmp/pth_10_hdfs/aggregatorEstimate/" + id,
+                        aggregateFile, ds -> {
+                        }
+                );
+        this.streamingTestUtil.setUp();
+        streamingTestUtil
+                .performDPLTest(
+                        "| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorTokenBytes/" + id
+                                + "| join type=inner max=0 partition [| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorEstimate/"
+                                + id,
+                        aggregateFile, ds -> {
+                            Config config = ConfigFactory.parseProperties(properties);
+                            TeragrepBloomStep step = new TeragrepBloomStep(
+                                    config,
+                                    TeragrepBloomStep.BloomMode.AGGREGATE,
+                                    "tokens",
+                                    "bloomfilter",
+                                    "R_estimate(tokens)"
+                            );
+                            ds = step.aggregate(ds);
+                            List<byte[]> listOfResult = ds
+                                    .select("bloomfilter")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> (byte[]) r.get(0))
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(2, listOfResult.size());
+                            BloomFilter filter1 = Assertions
+                                    .assertDoesNotThrow(
+                                            () -> BloomFilter.readFrom(new ByteArrayInputStream(listOfResult.get(0)))
+                                    );
+                            // should find all tokens
+                            Assertions.assertTrue(filter1.mightContain("bc113100-b859-4041-b272-88b849f6d6db"));
+                            Assertions.assertTrue(filter1.mightContain("userid"));
+                            Assertions.assertTrue(filter1.mightContain("userid="));
+                            Assertions.assertTrue(filter1.mightContain("userid=bc113100-b859-4041-b272-88b849f6d6db"));
+
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testAggregateUsingRegexExtract() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "[ {expected: 100, fpp: 0.01}]");
+        final String id = UUID.randomUUID().toString();
+        final String regex = "\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}";
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z "
+                                + "| teragrep exec regexextract regex " + regex
+                                + "| teragrep exec hdfs save overwrite=true /tmp/pth_10_hdfs/aggregatorTokenBytes/"
+                                + id,
+                        aggregateFile, ds -> {
+                        }
+                );
+        this.streamingTestUtil.setUp();
+        streamingTestUtil
+                .performDPLTest(
+                        "| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorTokenBytes/" + id + " "
+                                + "| teragrep exec bloom estimate "
+                                + "| teragrep exec hdfs save overwrite=true /tmp/pth_10_hdfs/aggregatorEstimate/" + id,
+                        aggregateFile, ds -> {
+                        }
+                );
+        this.streamingTestUtil.setUp();
+        streamingTestUtil
+                .performDPLTest(
+                        "| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorTokenBytes/" + id
+                                + "| join type=inner max=0 partition [| teragrep exec hdfs load /tmp/pth_10_hdfs/aggregatorEstimate/"
+                                + id,
+                        aggregateFile, ds -> {
+                            Config config = ConfigFactory.parseProperties(properties);
+                            TeragrepBloomStep step = new TeragrepBloomStep(
+                                    config,
+                                    TeragrepBloomStep.BloomMode.AGGREGATE,
+                                    "tokens",
+                                    "bloomfilter",
+                                    "R_estimate(tokens)"
+                            );
+                            ds = step.aggregate(ds);
+                            List<byte[]> listOfResult = ds
+                                    .select("bloomfilter")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> (byte[]) r.get(0))
+                                    .collect(Collectors.toList());
+                            Assertions.assertEquals(2, listOfResult.size());
+                            BloomFilter filter1 = Assertions
+                                    .assertDoesNotThrow(
+                                            () -> BloomFilter.readFrom(new ByteArrayInputStream(listOfResult.get(0)))
+                                    );
+                            BloomFilter filter2 = Assertions
+                                    .assertDoesNotThrow(
+                                            () -> BloomFilter.readFrom(new ByteArrayInputStream(listOfResult.get(1)))
+                                    );
+                            // should only find regex match tokens
+                            Assertions.assertTrue(filter1.mightContain("bc113100-b859-4041-b272-88b849f6d6db"));
+                            Assertions.assertFalse(filter1.mightContain("962e5f8c-fffe-4ea6-a164-b39e0ce4ceb4"));
+                            Assertions.assertFalse(filter1.mightContain("userid"));
+                            Assertions.assertFalse(filter1.mightContain("userid="));
+                            Assertions.assertFalse(filter1.mightContain("uuid"));
+                            Assertions.assertFalse(filter1.mightContain("uuid="));
+                            Assertions.assertFalse(filter1.mightContain("uuid=962e5f8c-fffe-4ea6-a164-b39e0ce4ceb4"));
+                            // check that filter 2 found both UUIDs
+                            Assertions.assertTrue(filter2.mightContain("bc113100-b859-4041-b272-88b849f6d6db"));
+                            Assertions.assertTrue(filter2.mightContain("962e5f8c-fffe-4ea6-a164-b39e0ce4ceb4"));
                         }
                 );
     }

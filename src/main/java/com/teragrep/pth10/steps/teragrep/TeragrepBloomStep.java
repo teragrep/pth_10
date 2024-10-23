@@ -47,6 +47,7 @@ package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
 import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.pth10.steps.teragrep.aggregate.ColumnBinaryListingDataset;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterForeachPartitionFunction;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterTable;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.FilterTypes;
@@ -161,14 +162,17 @@ public final class TeragrepBloomStep extends AbstractStep {
                 .agg(functions.approxCountDistinct("token").as(outputCol));
     }
 
-    public Dataset<Row> aggregate(Dataset<Row> dataset) {
-
-        FilterTypes filterTypes = new FilterTypes(this.zeppelinConfig);
-
-        BloomFilterAggregator agg = new BloomFilterAggregator(inputCol, estimateCol, filterTypes.sortedMap());
-
-        return dataset.groupBy("partition").agg(agg.toColumn().as("bloomfilter"));
-
+    public Dataset<Row> aggregate(final Dataset<Row> dataset) {
+        final ColumnBinaryListingDataset colBinaryListingDataset = new ColumnBinaryListingDataset(dataset, inputCol);
+        final BloomFilterAggregator bloomFilterAggregator = new BloomFilterAggregator(
+                inputCol,
+                estimateCol,
+                new FilterTypes(this.zeppelinConfig).sortedMap()
+        );
+        return colBinaryListingDataset
+                .dataset()
+                .groupBy("partition")
+                .agg(bloomFilterAggregator.toColumn().as("bloomfilter"));
     }
 
     private void writeFilterTypes(final Config config) {
