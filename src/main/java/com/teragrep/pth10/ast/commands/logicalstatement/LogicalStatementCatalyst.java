@@ -462,16 +462,20 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         }
         else if (left.getSymbol().getType() == DPLLexer.INDEX_IN) {
             OrColumn orColumn = new OrColumn(
-                    ctx.indexStringType().stream().map(st ->
-                            col.rlike(glob2rlike(new UnquotedText(new TextString(st.getText().toLowerCase())).read()))).collect(Collectors.toList())
+                    ctx
+                            .indexStringType()
+                            .stream()
+                            .map(st -> col.rlike(glob2rlike(new UnquotedText(new TextString(st.getText().toLowerCase())).read()))).collect(Collectors.toList())
             );
 
             sQualifier = orColumn.column();
         }
         else if (left.getSymbol().getType() == DPLLexer.SOURCETYPE && operation.getSymbol().getType() == DPLLexer.IN) {
             OrColumn orColumn = new OrColumn(
-                    ctx.stringType().stream().map(st ->
-                            col.rlike(glob2rlike(new UnquotedText(new TextString(st.getText().toLowerCase())).read()))).collect(Collectors.toList())
+                    ctx
+                            .stringType()
+                            .stream()
+                            .map(st -> col.rlike(glob2rlike(new UnquotedText(new TextString(st.getText().toLowerCase())).read()))).collect(Collectors.toList())
             );
 
             sQualifier = orColumn.column();
