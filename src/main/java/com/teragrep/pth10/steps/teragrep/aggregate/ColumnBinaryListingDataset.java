@@ -59,6 +59,11 @@ public final class ColumnBinaryListingDataset {
     private final Dataset<Row> dataset;
     private final String inputCol;
 
+    public ColumnBinaryListingDataset(Dataset<Row> dataset, String inputCol) {
+        this.dataset = dataset;
+        this.inputCol = inputCol;
+    }
+
     private Dataset<Row> toBinaryList() {
         // use scala WrappedArray to avoid casting errors with Java in spark
         final UDF1<WrappedArray<String>, WrappedArray<byte[]>> udf = stringList -> {
@@ -70,11 +75,6 @@ public final class ColumnBinaryListingDataset {
         };
         return dataset
                 .withColumn(inputCol, functions.udf(udf, DataTypes.createArrayType(DataTypes.BinaryType)).apply(dataset.col(inputCol)));
-    }
-
-    public ColumnBinaryListingDataset(Dataset<Row> dataset, String inputCol) {
-        this.dataset = dataset;
-        this.inputCol = inputCol;
     }
 
     public Dataset<Row> dataset() {

@@ -163,13 +163,16 @@ public final class TeragrepBloomStep extends AbstractStep {
     }
 
     public Dataset<Row> aggregate(final Dataset<Row> dataset) {
-        final ColumnBinaryListingDataset inputColumnToBytes = new ColumnBinaryListingDataset(dataset, inputCol);
-        final BloomFilterAggregator agg = new BloomFilterAggregator(
+        final ColumnBinaryListingDataset colBinaryListingDataset = new ColumnBinaryListingDataset(dataset, inputCol);
+        final BloomFilterAggregator bloomFilterAggregator = new BloomFilterAggregator(
                 inputCol,
                 estimateCol,
                 new FilterTypes(this.zeppelinConfig).sortedMap()
         );
-        return inputColumnToBytes.dataset().groupBy("partition").agg(agg.toColumn().as("bloomfilter"));
+        return colBinaryListingDataset
+                .dataset()
+                .groupBy("partition")
+                .agg(bloomFilterAggregator.toColumn().as("bloomfilter"));
     }
 
     private void writeFilterTypes(final Config config) {
