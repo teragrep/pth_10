@@ -135,7 +135,7 @@ public class SendemailTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void sendemail_test_1() {
+    public void testBasicSendemail() {
         // Perform DPL query with streaming data
         streamingTestUtil
                 .performDPLTest(
@@ -174,7 +174,7 @@ public class SendemailTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void sendemail_test_2() {
+    public void testSendemailAfterMultipleEval() {
         // Perform DPL query with streaming data
         streamingTestUtil
                 .performDPLTest(
@@ -208,7 +208,7 @@ public class SendemailTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void sendemail_test_3() {
+    public void testSendemailAfterMultipleChart() {
         // Perform DPL query with streaming data
         streamingTestUtil
                 .performDPLTest(
@@ -241,7 +241,7 @@ public class SendemailTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void sendemail_test_4() {
+    public void testSendemailWithResults() {
         // Perform DPL query with streaming data
         streamingTestUtil
                 .performDPLTest(
@@ -279,7 +279,7 @@ public class SendemailTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void sendemail_test_5() {
+    public void testSendemailWithStatsWhere() {
         // Perform DPL query with streaming data
         streamingTestUtil
                 .performDPLTest(
@@ -311,7 +311,7 @@ public class SendemailTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void sendemailTestEmptyResultset() {
+    public void testSendemailEmptyResultset() {
         // Perform DPL query with streaming data
         streamingTestUtil.performDPLTest("index=index_A" + "|chart count(_raw) as craw" + "|where craw < 0 " + // filter out all
                 "|sendemail to=\"1@example.com\" server=localhost:2525", testFile, ds -> {

@@ -111,7 +111,7 @@ public class XmlkvTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void xmlkvTest0() {
+    public void testXmlkvWithNestedXml() {
         streamingTestUtil.performDPLTest("index=index_A | xmlkv _raw", XML_DATA_2, ds -> {
             Assertions
                     .assertEquals(
@@ -136,7 +136,7 @@ public class XmlkvTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void xmlkvTest1() {
+    public void testXmlkvWithSimpleXml() {
         streamingTestUtil.performDPLTest("index=index_A | xmlkv _raw", XML_DATA_1, ds -> {
             Assertions
                     .assertEquals(
@@ -162,7 +162,7 @@ public class XmlkvTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void xmlkvTest2() {
+    public void testXmlkvInvalidDataSchema() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | xmlkv _raw", INVALID_DATA, ds -> {

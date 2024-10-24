@@ -102,7 +102,7 @@ public class RangemapTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rangemapTest0() {
+    public void testRangemap() {
         streamingTestUtil.performDPLTest("index=* | rangemap field=_raw", testFile, ds -> {
             List<Row> result = ds.select("range").distinct().collectAsList();
             Assertions.assertEquals(1, result.size());
@@ -115,7 +115,7 @@ public class RangemapTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rangemapTest1() {
+    public void testRangemapDefault() {
         streamingTestUtil.performDPLTest("index=* | rangemap field=_raw default=xyz", testFile, ds -> {
             List<Row> result = ds.select("range").distinct().collectAsList();
             Assertions.assertEquals(1, result.size());
@@ -128,7 +128,7 @@ public class RangemapTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rangemapTest2() {
+    public void testRangemapAttributeName() {
         streamingTestUtil
                 .performDPLTest("index=* | rangemap field=_raw lo=0-5 med=6-34 hi=35-48 vlo=-20--10", testFile, ds -> {
                     List<Row> result = ds.select("_raw", "range").collectAsList();
@@ -162,7 +162,7 @@ public class RangemapTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rangemapTest3() {
+    public void testRangemapNoFieldParameter() {
         IllegalArgumentException iae = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, "index=* | rangemap", testFile, ds -> {
                 });
@@ -174,7 +174,7 @@ public class RangemapTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rangemapTest4() {
+    public void testRangemapWithUnmatchedRange() {
         streamingTestUtil
                 .performDPLTest(
                         "| makeresults | eval _raw = \"string\" | rangemap field=_raw r0=0-10 r1=11-20", testFile,
@@ -192,7 +192,7 @@ public class RangemapTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rangemapMultiValueTest() {
+    public void testrangemapMultiValue() {
         streamingTestUtil
                 .performDPLTest(
                         "index=* | eval a = mvappend(\"1\",\"3\",\"3\",\"a\") |rangemap field=a lo=1-2 hi=3-4",

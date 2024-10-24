@@ -171,7 +171,7 @@ public class logicalOperationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void wildcardBloomCheckTest() {
+    public void testWildcardBloomCheckWithWildcard() {
         String q = "index=xyz ab*";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -184,7 +184,7 @@ public class logicalOperationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void wildcardBloomCheckTest2() {
+    public void testWildcardBloomCheckWithNoWildcard() {
         String q = "index=xyz ab";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {

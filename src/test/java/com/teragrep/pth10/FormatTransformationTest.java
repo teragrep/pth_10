@@ -99,7 +99,7 @@ public class FormatTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void formatTransformationTest0() {
+    void testFormatTransformation() {
         String q = "index=index_A | format ";
 
         streamingTestUtil
@@ -152,12 +152,13 @@ public class FormatTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void formatTransformationTest1() {
+    void testFormatWithMultiValue() {
         String q = "index=index_A | eval a=mvappend(\"1\", \"2\") | format maxresults=1 ";
 
         streamingTestUtil
                 .performDPLTest(
                         q, testFile, res -> {
+                            res.show(false);
                             // Check if result contains the column that was created for format result
                             Assertions.assertTrue(Arrays.toString(res.columns()).contains("search"));
 
@@ -186,7 +187,7 @@ public class FormatTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void formatTransformationTest2() {
+    void testFormatTransformationWithSearchStrings() {
         String q = "index=index_A | format maxresults=2 \"ROWPRE\" \"COLPRE\" \"COLSEP\" \"COLSUF\"\"ROWSEP\" \"ROWSUF\" ";
 
         streamingTestUtil

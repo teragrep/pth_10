@@ -108,7 +108,7 @@ public class TimechartStreamingTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void timechartStreamingTest_1() {
+    public void testTimechartBinSizeForMonthSpan() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A earliest=2020-01-01T00:00:00z latest=2021-01-01T00:00:00z | timechart span=1mon count(_raw) as craw by sourcetype",
@@ -129,7 +129,7 @@ public class TimechartStreamingTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void timechartStreamingTest_1b() {
+    public void testTimechartBinSizeForMinuteSpan() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A earliest=2020-12-12T00:00:00z latest=2020-12-12T00:30:00z | timechart span=1min count(_raw) as craw by sourcetype",
@@ -150,7 +150,7 @@ public class TimechartStreamingTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void timechartStreamingTest_2() {
+    public void testTimechartSpanWithSplitBY() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | timechart span=1min count(_raw) as craw by sourcetype", testFile, ds -> {
@@ -167,6 +167,7 @@ public class TimechartStreamingTest {
                                     .map(r -> r.getAs(0).toString())
                                     .filter(str -> !str.equals("0"))
                                     .collect(Collectors.toList());
+                            System.out.println(listOfSourcetype);
 
                             Assertions
                                     .assertTrue(listOfSourcetype.contains("stream1") && listOfSourcetype.contains("stream2"));
@@ -180,7 +181,7 @@ public class TimechartStreamingTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void timechartStreamingTest_3() {
+    public void testTimechartSplitBy() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count by host", testFile, ds -> {
             Assertions
                     .assertEquals("[_time, host, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
@@ -203,7 +204,7 @@ public class TimechartStreamingTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void timechartStreamingTest_4() {
+    public void testTimechartBasicCount() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count", testFile, ds -> {
             Assertions
                     .assertEquals("[_time, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");

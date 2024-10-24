@@ -104,7 +104,7 @@ public class RegexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void regexTest1() {
+    public void testRegexFieldNotEqual() {
         streamingTestUtil.performDPLTest("index=index_A | regex _raw != \"data data\"", testFile, ds -> {
             Assertions.assertEquals(0, ds.collectAsList().size());
         });
@@ -115,7 +115,7 @@ public class RegexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void regexTest2() {
+    public void testRegexFieldEqual() {
         streamingTestUtil.performDPLTest("index=index_A | regex _raw = \"data data\"", testFile, ds -> {
             int size = ds.collectAsList().size();
             Assertions.assertTrue(size > 1);
@@ -127,7 +127,7 @@ public class RegexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void regexTest3() {
+    public void testRegexWithString() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"data data\"", testFile, ds -> {
             int size = ds.collectAsList().size();
             Assertions.assertTrue(size > 1);
@@ -139,7 +139,7 @@ public class RegexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void regexTest4() {
+    public void testRegexMatchedPattern() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][a|B]\\s.{4}$\"", testFile, ds -> {
             int size = ds.collectAsList().size();
             Assertions.assertTrue(size > 1);
@@ -151,7 +151,7 @@ public class RegexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void regexTest5() {
+    public void testRegexUnmatchedPattern() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][c|B]\\s.{4}$\"", testFile, ds -> {
             Assertions.assertEquals(0, ds.collectAsList().size());
         });

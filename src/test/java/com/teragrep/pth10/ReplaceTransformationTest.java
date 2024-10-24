@@ -107,7 +107,7 @@ public class ReplaceTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // Standard replace, without wildcards in WITH-clause
-    public void replace_test_1() {
+    public void testReplaceWithoutWildcardsInWith() {
         streamingTestUtil
                 .performDPLTest("index=index_A | replace \"?$.data*\" WITH \"SomethingNew\" IN _raw", testFile, ds -> {
                     List<String> listOfRawCol = ds
@@ -121,13 +121,13 @@ public class ReplaceTransformationTest {
                     Assertions.assertEquals("SomethingNew", listOfRawCol.get(0));
                 });
     }
-
+//"?$.data^){"
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     ) // One trailing wildcard in WITH-clause
-    public void replace_test_2() {
+    public void testReplaceWildcardAsTrailingInWith() {
         streamingTestUtil
                 .performDPLTest("index=index_A | replace \"?$.data*\" WITH \"SomethingNew*\" IN _raw", testFile, ds -> {
                     List<String> listOfRawCol = ds
@@ -147,7 +147,7 @@ public class ReplaceTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // One wildcard in WITH-clause as a prefix
-    public void replace_test_3() {
+    public void testReplaceWildcardAsPrefixInWith() {
         streamingTestUtil
                 .performDPLTest("index=index_A | replace \"*data^){\" WITH \"SomethingNew*\" IN _raw", testFile, ds -> {
                     List<String> listOfRawCol = ds
@@ -167,7 +167,7 @@ public class ReplaceTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // Two wildcards, both as a prefix and trailing in WITH-clause
-    public void replace_test_4() {
+    public void TestReplaceWildcardsAsBothPrefixTrailingInWith() {
         streamingTestUtil
                 .performDPLTest("index=index_A | replace \"*data*\" WITH \"*SomethingNew*\" IN _raw", testFile, ds -> {
                     List<String> listOfRawCol = ds
@@ -187,7 +187,7 @@ public class ReplaceTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // Two x WITH y constructs
-    public void replaceTwoValuesTest() {
+    public void testReplaceTwoValues() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | replace host WITH lost, index_A WITH index_B IN host, index", testFile, ds -> {

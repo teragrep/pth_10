@@ -103,7 +103,7 @@ public class SubsearchStreamingTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void subsearchStreamingTest1() {
+    public void testSubsearchStreaming() {
         streamingTestUtil.performDPLTest("index=index_A [ search sourcetype=A:X:0 | fields offset ] ", testFile, ds -> {
             List<String> expectedValues = Arrays.asList("raw 01", "raw 02");
             List<String> listOfResult = ds
@@ -128,7 +128,7 @@ public class SubsearchStreamingTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void subsearchStreamingTest2() {
+    public void testSubsearchStreamingWithoutMainSearch() {
         streamingTestUtil.performDPLTest("[ search sourcetype=A:X:0 | fields offset ] ", testFile, ds -> {
             List<String> expectedValues = Collections.emptyList();
             List<String> listOfResult = ds

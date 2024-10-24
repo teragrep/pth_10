@@ -90,7 +90,7 @@ public class fieldTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void parseFieldsTransformCatTest() {
+    void testFieldsTransformKeepOne() {
         String q = "index=index_B | fields _time";
         this.streamingTestUtil.performDPLTest(q, this.testFile, ds -> {
             List<String> expectedValues = new ArrayList<>();
@@ -122,7 +122,7 @@ public class fieldTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void parseFieldsTransformCat2Test() {
+    void testFieldsTransformKeepMultiple() {
         String q = "index=index_B | fields _time host";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             Assertions.assertEquals(5, res.count());
@@ -135,7 +135,7 @@ public class fieldTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void parseFieldsTransformCatDropTest() {
+    void testFieldsTransformDropOne() {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host", this.testFile, res -> {
             // check that we drop only host-column
             String schema = res.schema().toString();
@@ -153,7 +153,7 @@ public class fieldTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void parseFieldsTransformCatDropSeveralTest() {
+    void testFieldsTransformDropSeveral() {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host index partition", this.testFile, res -> {
             String schema = res.schema().toString();
             Assertions.assertEquals(5, res.count());
@@ -170,7 +170,7 @@ public class fieldTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void fieldsWithPlusTest() {
+    void testFieldsWithPlus() {
         String query = "index = index_B | fields + offset";
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
             Assertions.assertEquals(5, ds.count());
@@ -184,7 +184,7 @@ public class fieldTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void fieldsWithMultiplePlusTest() {
+    void testFieldsWithPlusMultiple() {
         String query = "index = index_B | fields + offset, source, host";
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
             Assertions.assertEquals(5, ds.count());
@@ -199,7 +199,7 @@ public class fieldTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void fieldsWithWildcardTest() {
+    void testFieldsWithWildcard() {
         String query = "index = index_B | fields - _*"; // remove internal fields
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
             Assertions.assertEquals(5, ds.count());

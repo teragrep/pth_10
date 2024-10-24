@@ -88,7 +88,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert1_ctime() {
+    void testConvertCtimeAs() {
         // "%m/%d/%Y %H:%M:%S";
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset) AS new", testFile, ds -> {
             Assertions
@@ -117,7 +117,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert2_ctime() {
+    void testConvertCtime() {
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset)", testFile, ds -> {
             Assertions
                     .assertEquals(
@@ -149,7 +149,7 @@ public class ConvertTransformationTest {
             named = "runSparkTest",
             matches = "true"
     )
-    void convert3_mktime() {
+    void testConvertMktime() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | convert timeformat=\"%Y-%m-%d'T'%H:%M:%S.%f%z\" mktime(_time) as epochTime",
@@ -186,7 +186,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert3_mktime2() { // Use the system default timezone when timezone is not specified
+    void testConvertMktimeWithDefaultTimezone() { // Use the system default timezone when timezone is not specified
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | eval a=\"2001-01-01T01:01:01.010\" | convert timeformat=\"%Y-%m-%d'T'%H:%M:%S.%f\" mktime(a) as epochTime",
@@ -220,7 +220,7 @@ public class ConvertTransformationTest {
             named = "runSparkTest",
             matches = "true"
     )
-    void convert4_dur2sec() {
+    void testConvertDur2sec() {
         streamingTestUtil.performDPLTest("index=index_A | convert dur2sec(dur) as dur_sec", testFile, ds -> {
             Assertions
                     .assertEquals(
@@ -251,7 +251,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert5_memk() {
+    void testConvertMemk() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat offset \"m\" offsetM | strcat offset \"k\" offsetK | strcat offset \"g\" offsetG | convert memk(offsetM) as memk_M memk(offsetK) as memk_K memk(offsetG) as memk_G memk(offset) as memk_def",
@@ -317,7 +317,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert6_mstime() {
+    void testConvertMstime() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"\" \"47.\" \"329\" mst | strcat \"32:\" \"47.\" \"329\" mst2 | convert mstime(mst) as res mstime(mst2) as res2",
@@ -356,7 +356,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert7_rmcomma() {
+    void testConvertRmcomma() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"\" \"47,\" \"329\" mst | strcat \"32,\" \"47,\" \"329\" mst2 | convert rmcomma(mst) as res rmcomma(mst2) as res2",
@@ -395,7 +395,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit() {
+    void testConvertRmunit() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"abc\" as mst | convert rmunit(mst) as res", testFile, ds -> {
@@ -425,7 +425,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit2() {
+    void testConvertRmunitWithFloat() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"329.45\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
@@ -638,7 +638,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert9_auto() {
+    void testConvertAuto() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"\" with_results |strcat \"329\" \"aa\" no_results | convert auto(with_results) | convert auto(no_results)",
@@ -678,7 +678,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert10_num() {
+    void testConvertNum() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"\" with_results |strcat \"329\" \"aa\" no_results | convert num(with_results) | convert num(no_results)",
@@ -718,7 +718,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert11_none() {
+    void testConvertNone() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | convert dur2sec(\"dur|offset\") AS dur_sec none(offset)", testFile, ds -> {
