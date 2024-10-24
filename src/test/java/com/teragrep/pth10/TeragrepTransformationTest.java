@@ -791,4 +791,32 @@ public class TeragrepTransformationTest {
                     Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
                 });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgForEachBatchWithStatsTest() {
+        streamingTestUtil.performDPLTest("index=index_A | teragrep exec foreachbatch | stats count", testFile, ds -> {
+            List<String> listOfResult = ds
+                    .select("count")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgForEachBatchTest() {
+        streamingTestUtil.performDPLTest("index=index_A | teragrep exec foreachbatch", testFile, ds -> {
+            Assertions.assertEquals(5, ds.count());
+        });
+    }
 }
