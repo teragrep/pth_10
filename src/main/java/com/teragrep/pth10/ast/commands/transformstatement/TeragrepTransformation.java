@@ -607,4 +607,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         String path = new UnquotedText(new TextString(ctx.stringType().getText())).read();
         return new StringNode(new Token(Token.Type.STRING, path));
     }
+
+    @Override
+    public Node visitT_forEachBatchParameter(DPLParser.T_forEachBatchParameterContext ctx) {
+        return new StepNode();
+    }
 }
