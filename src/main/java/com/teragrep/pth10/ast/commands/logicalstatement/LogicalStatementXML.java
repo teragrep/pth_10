@@ -381,13 +381,10 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitSearchQualifier(DPLParser.SearchQualifierContext ctx) {
-        // LOGGER.info("visitSearchQualifier: ");
         Token comparisonToken;
-        Element el = null;
-        String value = null;
-        List<String> listOfIndices = new ArrayList<>();
+        String field;
+        final List<String> values = new ArrayList<>();
 
-        String qualifier;
         TerminalNode left = (TerminalNode) ctx.getChild(0);
         TerminalNode operation = (TerminalNode) ctx.getChild(1);
 
@@ -400,52 +397,56 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         }
 
         // Default clause used in WHERE-part
-        qualifier = left.getText() + " " + operation.getSymbol().getText() + " ";
+        final String qualifier = left.getText() + " " + operation.getSymbol().getText() + " ";
 
         // HOST and SOURCETYPE qualifier stored as additional list and used for Kafka content filtering
         if (left.getSymbol().getType() == DPLLexer.INDEX_IN) {
-            value = "";
             ctx.indexStringType().forEach(str -> {
-                listOfIndices.add(new UnquotedText(new TextString(str.getText().toLowerCase())).read());
+                values.add(new UnquotedText(new TextString(str.getText().toLowerCase())).read());
             });
             comparisonToken = new Token(Type.EQUALS); // INDEX IN is equals
-            el = doc.createElement("index");
+            field = "index";
         }
         else if (left.getSymbol().getType() == DPLLexer.HOST) {
-            value = new UnquotedText(new TextString(ctx.getChild(2).getText().toLowerCase())).read();
-            el = doc.createElement("host");
+            values.add(new UnquotedText(new TextString(ctx.getChild(2).getText().toLowerCase())).read());
+            field = "host";
+        }
+        else if (left.getSymbol().getType() == DPLLexer.SOURCETYPE && operation.getSymbol().getType() == DPLLexer.IN) {
+            ctx.stringType().forEach(str -> {
+                values.add(new UnquotedText(new TextString(str.getText().toLowerCase())).read());
+            });
+            comparisonToken = new Token(Type.EQUALS); // SOURCETYPE IN is equals
+            field = "sourcetype";
         }
         else if (left.getSymbol().getType() == DPLLexer.SOURCETYPE) {
-            value = new UnquotedText(new TextString(ctx.getChild(2).getText().toLowerCase())).read();
-            el = doc.createElement("sourcetype");
-            LOGGER.debug("qualifier=<{}> sourcetype=<{}>", qualifier, value);
+            values.add(new UnquotedText(new TextString(ctx.getChild(2).getText().toLowerCase())).read());
+            field = "sourcetype";
+            LOGGER.debug("qualifier=<{}> sourcetype=<{}>", qualifier, values.get(0));
         }
         else {
             // other column=value qualifier
-            value = new UnquotedText(new TextString(ctx.getChild(2).getText().toLowerCase())).read();
-            el = doc.createElement(ctx.getChild(0).getText().toLowerCase());
+            values.add(new UnquotedText(new TextString(ctx.getChild(2).getText().toLowerCase())).read());
+            field = ctx.getChild(0).getText().toLowerCase();
             LOGGER
                     .debug("custom qualifier: field=<{}> = value=<{}>", ctx.getChild(0).getText(), ctx.getChild(2).getText());
         }
 
-        if (listOfIndices.isEmpty()) {
+        Element el;
+        if (values.size() < 2) {
+            el = doc.createElement(field);
             el.setAttribute("operation", comparisonToken.toString());
-            el.setAttribute("value", value);
+            el.setAttribute("value", values.get(0));
         }
         else {
             // build xml string for index IN ( 1 2 )
             el = doc.createElement("OR");
 
-            for (int i = 0; i < listOfIndices.size(); i++) {
-                Element indexElem = doc.createElement("index");
+            for (int i = 0; i < values.size(); i++) {
+                Element indexElem = doc.createElement(field);
                 indexElem.setAttribute("operation", comparisonToken.toString());
-                indexElem.setAttribute("value", listOfIndices.get(i));
+                indexElem.setAttribute("value", values.get(i));
 
-                if (listOfIndices.size() == 1) {
-                    el = indexElem;
-                    break;
-                }
-                else if (i < 2) {
+                if (i < 2) {
                     el.appendChild(indexElem);
                 }
                 else {
@@ -458,8 +459,7 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        Node rv = new ElementNode(el);
-        return rv;
+        return new ElementNode(el);
     }
 
     /**
