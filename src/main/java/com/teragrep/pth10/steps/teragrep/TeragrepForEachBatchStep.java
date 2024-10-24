@@ -50,7 +50,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 
-public class TeragrepForEachBatchStep extends AbstractStep {
+public final class TeragrepForEachBatchStep extends AbstractStep {
 
     public TeragrepForEachBatchStep() {
         this.properties.add(CommandProperty.SEQUENTIAL_ONLY); // Switch to sequential mode
