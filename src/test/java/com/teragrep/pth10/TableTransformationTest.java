@@ -106,7 +106,7 @@ public class TableTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void table_test_1() {
+    public void testTableWithWildcard() {
         streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table _time*", testFile, ds -> {
             Assertions
                     .assertEquals("[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
@@ -118,7 +118,7 @@ public class TableTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void table_test_2() {
+    public void testTableMultipleFieldsWithComma() {
         streamingTestUtil.performDPLTest("index=index_A | table index, offset", testFile, ds -> {
             Assertions
                     .assertEquals("[index, offset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
@@ -130,7 +130,7 @@ public class TableTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void table_test_3() {
+    public void testTableMultipleFieldsWithSpace() {
         streamingTestUtil.performDPLTest("index=index_A | table _time offset index", testFile, ds -> {
             Assertions
                     .assertEquals("[_time, offset, index]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
@@ -143,7 +143,7 @@ public class TableTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void table_test_4_issue283() {
+    public void testTableWithSpecialCharactersFieldName() {
         streamingTestUtil.performDPLTest("index=index_A | table \"?????\"", testFile, ds -> {
             Assertions
                     .assertEquals("[]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
@@ -155,7 +155,7 @@ public class TableTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void table_test_5() {
+    public void testTableWithMultipleWildcards() {
         streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table *ime*", testFile, ds -> {
             Assertions
                     .assertEquals("[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");

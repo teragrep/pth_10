@@ -106,7 +106,7 @@ public class RenameTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rename_test_1() {
+    public void testRenameMultipleFields() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rename _raw AS DATA , offset AS number, sourcetype AS typeOfSource, INVALID_FIELD AS fieldOfInvalid",

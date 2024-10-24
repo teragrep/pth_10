@@ -95,7 +95,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void fromStringNot2Test() {
+    void searchQueryWithNotTest() {
         String q = "index = \"cpu\" AND sourcetype = \"log:cpu:0\" NOT src";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -134,7 +134,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void columnFromStringDateTest() {
+    void searchQueryWithTimestampTest() {
         // Add time ranges
         String q = "((( index =\"cpu\" AND host = \"sc-99-99-14-25\" ) AND sourcetype = \"log:cpu:0\" ) AND ( earliest= \"01/01/1970:02:00:00\"  AND latest= \"01/01/2030:00:00:00\" ))";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -163,7 +163,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void columnFromStringAndTest() {
+    void searchQueryWithAndTest() {
         //LOGGER.info("------ AND ---------");
         String q = "index =\"strawberry\" AND sourcetype =\"example:strawberry:strawberry\"";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -180,7 +180,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void columnFromStringOrTest() {
+    void SearchQueryWithOrTest() {
         //LOGGER.info("------ OR ---------");
         String q = "index != \"strawberry\" OR sourcetype =\"example:strawberry:strawberry\"";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -197,7 +197,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void fromStringFullTest() {
+    void searchQueryWithAggrTest() {
         String q = "index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
@@ -218,7 +218,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEndTest() {
+    void searchQueryWithIndexEarliestTest() {
         this.streamingTestUtil
                 .performDPLTest("index = cinnamon _index_earliest=\"04/16/2020:10:25:40\"", this.testFile, res -> {
                     String e = "[_raw: string, _time: string ... 6 more fields]";
@@ -240,7 +240,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEnd2Test() {
+    void searchQueryWithStringTest() {
         // Use this file as the test data
         String testFile = "src/test/resources/subsearchData*.jsonl";
 
@@ -266,7 +266,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEnd6Test() {
+    void AggregatesUsedTest() {
         this.streamingTestUtil.performDPLTest("index = jla02logger ", this.testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
             Assertions.assertFalse(aggregates);
@@ -279,7 +279,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void searchQualifierMissingRightSide_Issue179_Test() {
+    void searchQualifierMissingRightSideTest() {
         // assert user-friendly exception
         RuntimeException thrown = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, "index = ", this.testFile, res -> {
