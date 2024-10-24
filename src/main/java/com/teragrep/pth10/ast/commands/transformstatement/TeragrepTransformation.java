@@ -610,6 +610,6 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_forEachBatchParameter(DPLParser.T_forEachBatchParameterContext ctx) {
-        return new StepNode();
+        return new StepNode(new TeragrepForEachBatchStep());
     }
 }
