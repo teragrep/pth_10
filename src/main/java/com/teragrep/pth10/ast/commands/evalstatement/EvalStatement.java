@@ -49,7 +49,6 @@ import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.*;
-import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.evalstatement.UDFs.*;
 import com.teragrep.pth10.steps.eval.EvalStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
@@ -191,10 +190,10 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         }
         else if (ctx.EVAL_LANGUAGE_MODE_AND() != null) {
             col = leftSide.getColumn().and(rightSide.getColumn());
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Unexpected operation in logic statement: " + ctx.getText());
         }
-
 
         final ColumnNode rv = new ColumnNode(col);
         LOGGER.debug(" EvalLogicStatement(Catalyst) generated=<{}> class=<{}>", rv, rv.getClass().getName());
