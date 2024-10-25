@@ -115,9 +115,6 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
      * @return CatalystNode
      */
     private Node teragrepTransformationEmitCatalyst(DPLParser.TeragrepTransformationContext ctx) {
-
-        LOGGER.info("TeragrepTransformation Emit Catalyst");
-
         // get zeppelin config
         zplnConfig = catCtx.getConfig();
         if (zplnConfig != null) {
@@ -167,6 +164,23 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         else {
             throw new IllegalArgumentException("Unsupported teragrep command: " + ctx.getText());
         }
+    }
+
+    @Override
+    public Node visitT_setParameter(DPLParser.T_setParameterContext ctx) {
+        // set config <key> <value>
+        if (ctx.t_setConfigParameter() != null) {
+            return visit(ctx.t_setConfigParameter());
+        } else {
+            throw new IllegalArgumentException("Unsupported teragrep command: " + ctx.getText());
+        }
+    }
+
+    @Override
+    public Node visitT_setConfigParameter(DPLParser.T_setConfigParameterContext ctx) {
+        final String key = new UnquotedText(new TextString(ctx.t_configKeyParameter().stringType().getText())).read();
+        final String value = new UnquotedText(new TextString(ctx.t_configValueParameter().stringType().getText())).read();
+        return new StepNode(new TeragrepSetConfigStep(catCtx, key, value));
     }
 
     @Override

@@ -45,6 +45,9 @@
  */
 package com.teragrep.pth10;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -818,5 +821,41 @@ public class TeragrepTransformationTest {
         streamingTestUtil.performDPLTest("index=index_A | teragrep exec foreachbatch", testFile, ds -> {
             Assertions.assertEquals(5, ds.count());
         });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgSetConfigStringTest() {
+        Config fakeConfig = ConfigFactory.defaultApplication().withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef("oldValue"));
+        streamingTestUtil.getCtx().setConfig(fakeConfig);
+        Assertions.assertEquals("oldValue", streamingTestUtil.getCtx().getConfig().getString("dpl.pth_00.dummy.value"));
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep set config dpl.pth_00.dummy.value newValue",
+                        testFile, ds -> {
+                            Assertions.assertEquals("newValue", streamingTestUtil.getCtx().getConfig().getString("dpl.pth_00.dummy.value"));
+                           }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgSetConfigLongTest() {
+        Config fakeConfig = ConfigFactory.defaultApplication().withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345));
+        streamingTestUtil.getCtx().setConfig(fakeConfig);
+        Assertions.assertEquals(12345L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A | teragrep set config dpl.pth_00.dummy.value 99999",
+                        testFile, ds -> {
+                            Assertions.assertEquals(99999L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
+                        }
+                );
     }
 }
