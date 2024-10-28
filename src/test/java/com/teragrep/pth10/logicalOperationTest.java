@@ -422,14 +422,15 @@ public class logicalOperationTest {
     }
 
     @Test
-    @Disabled(
-            value = "search does not allow having sourcetype in this format: sourcetype IN (sourcetyp1, sourcetype2), pth-10 issue #282"
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
     )
     public void testWithMultipleSourcetypes() {
-        String query = "\"index=index_* sourcetype IN (B:X:0, B:Y:0, C:X:0)\"";
+        String query = "index=index_* sourcetype IN (B:X:0, B:Y:0, C:X:0)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             List<String> listOfSourcetype = res
-                    .select("_raw")
+                    .select("sourcetype")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
@@ -437,11 +438,55 @@ public class logicalOperationTest {
                     .collect(Collectors.toList());
 
             Assertions.assertEquals(5, res.count());
-            Assertions.assertEquals("B:X:0", listOfSourcetype.get(0));
-            Assertions.assertEquals("B:X:0", listOfSourcetype.get(1));
-            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(2));
-            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(3));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(0));
+            Assertions.assertEquals("B:Y:0", listOfSourcetype.get(1));
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(2));
+            Assertions.assertEquals("B:X:0", listOfSourcetype.get(3));
             Assertions.assertEquals("C:X:0", listOfSourcetype.get(4));
+        });
+
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithMultipleSourcetypesArchiveAndSparkQuery() {
+        String query = "index=index_* sourcetype IN (B:X:0, B:Y:0, C:X:0)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            Assertions
+                    .assertEquals(
+                            "(RLIKE(index, (?i)^index_.*$) AND ((RLIKE(sourcetype, (?i)^b:x:0) OR RLIKE(sourcetype, (?i)^b:y:0)) OR RLIKE(sourcetype, (?i)^c:x:0)))",
+                            streamingTestUtil.getCtx().getSparkQuery()
+                    );
+            Assertions
+                    .assertEquals(
+                            "<AND><index operation=\"EQUALS\" value=\"index_*\"/><OR><OR><sourcetype operation=\"EQUALS\" value=\"b:x:0\"/><sourcetype operation=\"EQUALS\" value=\"b:y:0\"/></OR><sourcetype operation=\"EQUALS\" value=\"c:x:0\"/></OR></AND>",
+                            streamingTestUtil.getCtx().getArchiveQuery()
+                    );
+        });
+
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testWithOneInSourcetypeArchiveAndSparkQuery() {
+        String query = "index=index_* sourcetype IN (B:X:0)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            Assertions
+                    .assertEquals(
+                            "(RLIKE(index, (?i)^index_.*$) AND RLIKE(sourcetype, (?i)^b:x:0))",
+                            streamingTestUtil.getCtx().getSparkQuery()
+                    );
+            Assertions
+                    .assertEquals(
+                            "<AND><index operation=\"EQUALS\" value=\"index_*\"/><sourcetype operation=\"EQUALS\" value=\"b:x:0\"/></AND>",
+                            streamingTestUtil.getCtx().getArchiveQuery()
+                    );
         });
 
     }
