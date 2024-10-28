@@ -455,8 +455,16 @@ public class logicalOperationTest {
     public void testWithMultipleSourcetypesArchiveAndSparkQuery() {
         String query = "index=index_* sourcetype IN (B:X:0, B:Y:0, C:X:0)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            Assertions.assertEquals("(RLIKE(index, (?i)^index_.*$) AND ((RLIKE(sourcetype, (?i)^b:x:0) OR RLIKE(sourcetype, (?i)^b:y:0)) OR RLIKE(sourcetype, (?i)^c:x:0)))", streamingTestUtil.getCtx().getSparkQuery());
-            Assertions.assertEquals("<AND><index operation=\"EQUALS\" value=\"index_*\"/><OR><OR><sourcetype operation=\"EQUALS\" value=\"b:x:0\"/><sourcetype operation=\"EQUALS\" value=\"b:y:0\"/></OR><sourcetype operation=\"EQUALS\" value=\"c:x:0\"/></OR></AND>", streamingTestUtil.getCtx().getArchiveQuery());
+            Assertions
+                    .assertEquals(
+                            "(RLIKE(index, (?i)^index_.*$) AND ((RLIKE(sourcetype, (?i)^b:x:0) OR RLIKE(sourcetype, (?i)^b:y:0)) OR RLIKE(sourcetype, (?i)^c:x:0)))",
+                            streamingTestUtil.getCtx().getSparkQuery()
+                    );
+            Assertions
+                    .assertEquals(
+                            "<AND><index operation=\"EQUALS\" value=\"index_*\"/><OR><OR><sourcetype operation=\"EQUALS\" value=\"b:x:0\"/><sourcetype operation=\"EQUALS\" value=\"b:y:0\"/></OR><sourcetype operation=\"EQUALS\" value=\"c:x:0\"/></OR></AND>",
+                            streamingTestUtil.getCtx().getArchiveQuery()
+                    );
         });
 
     }
@@ -469,8 +477,16 @@ public class logicalOperationTest {
     public void testWithOneInSourcetypeArchiveAndSparkQuery() {
         String query = "index=index_* sourcetype IN (B:X:0)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            Assertions.assertEquals("(RLIKE(index, (?i)^index_.*$) AND RLIKE(sourcetype, (?i)^b:x:0))", streamingTestUtil.getCtx().getSparkQuery());
-            Assertions.assertEquals("<AND><index operation=\"EQUALS\" value=\"index_*\"/><sourcetype operation=\"EQUALS\" value=\"b:x:0\"/></AND>", streamingTestUtil.getCtx().getArchiveQuery());
+            Assertions
+                    .assertEquals(
+                            "(RLIKE(index, (?i)^index_.*$) AND RLIKE(sourcetype, (?i)^b:x:0))",
+                            streamingTestUtil.getCtx().getSparkQuery()
+                    );
+            Assertions
+                    .assertEquals(
+                            "<AND><index operation=\"EQUALS\" value=\"index_*\"/><sourcetype operation=\"EQUALS\" value=\"b:x:0\"/></AND>",
+                            streamingTestUtil.getCtx().getArchiveQuery()
+                    );
         });
 
     }
