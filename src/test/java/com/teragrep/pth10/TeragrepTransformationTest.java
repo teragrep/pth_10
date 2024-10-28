@@ -858,4 +858,24 @@ public class TeragrepTransformationTest {
                         }
                 );
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgSetConfigMismatchedTypesTest() {
+        Config fakeConfig = ConfigFactory.defaultApplication().withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345));
+        streamingTestUtil.getCtx().setConfig(fakeConfig);
+        Assertions.assertEquals(12345L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
+        Throwable t = streamingTestUtil
+                .performThrowingDPLTest(NumberFormatException.class,
+                        "index=index_A | teragrep set config dpl.pth_00.dummy.value stringValue",
+                        testFile, ds -> {
+                        }
+                );
+
+        Assertions.assertEquals("For input string: \"stringValue\"", t.getMessage());
+    }
+
 }
