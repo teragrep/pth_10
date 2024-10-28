@@ -829,16 +829,19 @@ public class TeragrepTransformationTest {
             matches = "true"
     )
     public void tgSetConfigStringTest() {
-        Config fakeConfig = ConfigFactory.defaultApplication().withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef("oldValue"));
+        Config fakeConfig = ConfigFactory
+                .defaultApplication()
+                .withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef("oldValue"));
         streamingTestUtil.getCtx().setConfig(fakeConfig);
         Assertions.assertEquals("oldValue", streamingTestUtil.getCtx().getConfig().getString("dpl.pth_00.dummy.value"));
         streamingTestUtil
-                .performDPLTest(
-                        "index=index_A | teragrep set config dpl.pth_00.dummy.value newValue",
-                        testFile, ds -> {
-                            Assertions.assertEquals("newValue", streamingTestUtil.getCtx().getConfig().getString("dpl.pth_00.dummy.value"));
-                           }
-                );
+                .performDPLTest("index=index_A | teragrep set config dpl.pth_00.dummy.value newValue", testFile, ds -> {
+                    Assertions
+                            .assertEquals(
+                                    "newValue",
+                                    streamingTestUtil.getCtx().getConfig().getString("dpl.pth_00.dummy.value")
+                            );
+                });
     }
 
     @Test
@@ -847,16 +850,18 @@ public class TeragrepTransformationTest {
             matches = "true"
     )
     public void tgSetConfigLongTest() {
-        Config fakeConfig = ConfigFactory.defaultApplication().withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345));
+        Config fakeConfig = ConfigFactory
+                .defaultApplication()
+                .withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345));
         streamingTestUtil.getCtx().setConfig(fakeConfig);
         Assertions.assertEquals(12345L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
         streamingTestUtil
-                .performDPLTest(
-                        "index=index_A | teragrep set config dpl.pth_00.dummy.value 99999",
-                        testFile, ds -> {
-                            Assertions.assertEquals(99999L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
-                        }
-                );
+                .performDPLTest("index=index_A | teragrep set config dpl.pth_00.dummy.value 99999", testFile, ds -> {
+                    Assertions
+                            .assertEquals(
+                                    99999L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value")
+                            );
+                });
     }
 
     @Test
@@ -865,13 +870,15 @@ public class TeragrepTransformationTest {
             matches = "true"
     )
     public void tgSetConfigMismatchedTypesTest() {
-        Config fakeConfig = ConfigFactory.defaultApplication().withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345));
+        Config fakeConfig = ConfigFactory
+                .defaultApplication()
+                .withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345));
         streamingTestUtil.getCtx().setConfig(fakeConfig);
         Assertions.assertEquals(12345L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
         Throwable t = streamingTestUtil
-                .performThrowingDPLTest(NumberFormatException.class,
-                        "index=index_A | teragrep set config dpl.pth_00.dummy.value stringValue",
-                        testFile, ds -> {
+                .performThrowingDPLTest(
+                        NumberFormatException.class,
+                        "index=index_A | teragrep set config dpl.pth_00.dummy.value stringValue", testFile, ds -> {
                         }
                 );
 

@@ -171,7 +171,8 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         // set config <key> <value>
         if (ctx.t_setConfigParameter() != null) {
             return visit(ctx.t_setConfigParameter());
-        } else {
+        }
+        else {
             throw new IllegalArgumentException("Unsupported teragrep command: " + ctx.getText());
         }
     }
@@ -179,7 +180,8 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_setConfigParameter(DPLParser.T_setConfigParameterContext ctx) {
         final String key = new UnquotedText(new TextString(ctx.t_configKeyParameter().stringType().getText())).read();
-        final String value = new UnquotedText(new TextString(ctx.t_configValueParameter().stringType().getText())).read();
+        final String value = new UnquotedText(new TextString(ctx.t_configValueParameter().stringType().getText()))
+                .read();
         return new StepNode(new TeragrepSetConfigStep(catCtx, key, value));
     }
 
