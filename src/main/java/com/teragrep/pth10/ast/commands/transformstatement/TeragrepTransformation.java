@@ -161,6 +161,9 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         else if (ctx.t_getArchiveSummaryParameter() != null) {
             return visit(ctx.t_getArchiveSummaryParameter());
         }
+        else if (ctx.COMMAND_TERAGREP_MODE_CONFIG() != null) {
+            return new StepNode(new TeragrepGetConfigStep(catCtx));
+        }
         else {
             throw new IllegalArgumentException("Unsupported teragrep command: " + ctx.getText());
         }

@@ -885,4 +885,26 @@ public class TeragrepTransformationTest {
         Assertions.assertEquals("For input string: \"stringValue\"", t.getMessage());
     }
 
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgGetConfigTest() {
+        Config fakeConfig = ConfigFactory
+                .defaultApplication()
+                .withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345))
+                .withValue("dpl.pth_00.another.dummy.value", ConfigValueFactory.fromAnyRef("string_here"));
+        streamingTestUtil.getCtx().setConfig(fakeConfig);
+
+        streamingTestUtil
+                .performDPLTest("index=index_A | teragrep get config", testFile, ds -> {
+                    ds.show(false);
+                    List<String> configs = ds.select("_raw").collectAsList().stream().map(r->r.getAs(0).toString()).collect(Collectors.toList());
+                    Assertions.assertEquals(2, configs.size());
+                    Assertions.assertTrue(configs.contains("dpl.pth_00.another.dummy.value = string_here"));
+                    Assertions.assertTrue(configs.contains("dpl.pth_00.dummy.value = 12345"));
+                });
+    }
+
 }
