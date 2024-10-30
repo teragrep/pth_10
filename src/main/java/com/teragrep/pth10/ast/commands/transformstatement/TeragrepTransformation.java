@@ -55,8 +55,8 @@ import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst
 import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementXML;
 import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.teragrep.*;
-import com.teragrep.pth10.steps.tokenizer.AbstractTokenizerStep;
-import com.teragrep.pth10.steps.tokenizer.TokenizerStep;
+import com.teragrep.pth10.steps.teragrep.tokenizer.AbstractTokenizerStep;
+import com.teragrep.pth10.steps.teragrep.tokenizer.TokenizerStep;
 import com.typesafe.config.Config;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;

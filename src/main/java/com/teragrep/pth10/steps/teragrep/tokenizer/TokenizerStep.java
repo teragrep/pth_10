@@ -43,7 +43,7 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.tokenizer;
+package com.teragrep.pth10.steps.teragrep.tokenizer;
 
 import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
 import org.apache.spark.sql.Column;

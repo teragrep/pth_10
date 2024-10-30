@@ -43,12 +43,18 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.tokenizer;
+package com.teragrep.pth10.steps.teragrep.tokenizer;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import com.teragrep.pth10.steps.AbstractStep;
 
-public interface TokenizerApplicable {
+public abstract class AbstractTokenizerStep extends AbstractStep {
 
-    Dataset<Row> appliedDataset(Dataset<Row> dataset);
+    public enum TokenizerFormat {
+        STRING, BYTES
+    }
+
+    public AbstractTokenizerStep() {
+        super();
+    }
+
 }
