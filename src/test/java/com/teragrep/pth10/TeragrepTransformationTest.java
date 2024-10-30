@@ -898,7 +898,6 @@ public class TeragrepTransformationTest {
         streamingTestUtil.getCtx().setConfig(fakeConfig);
 
         streamingTestUtil.performDPLTest("index=index_A | teragrep get config", testFile, ds -> {
-            ds.show(false);
             List<String> configs = ds
                     .select("_raw")
                     .collectAsList()

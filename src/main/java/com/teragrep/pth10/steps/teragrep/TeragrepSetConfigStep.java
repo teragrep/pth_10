@@ -57,7 +57,7 @@ import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TeragrepSetConfigStep extends AbstractStep {
+public final class TeragrepSetConfigStep extends AbstractStep {
 
     private final Logger LOGGER = LoggerFactory.getLogger(TeragrepSetConfigStep.class);
     private final DPLParserCatalystContext catCtx;

@@ -57,7 +57,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class TeragrepGetConfigStep extends AbstractStep {
+public final class TeragrepGetConfigStep extends AbstractStep {
 
     private final DPLParserCatalystContext catCtx;
 
@@ -78,7 +78,7 @@ public class TeragrepGetConfigStep extends AbstractStep {
             dataset = datasource.constructStream(configs, "teragrep get config");
         }
         catch (InterruptedException | UnknownHostException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unable to construct 'teragrep get config' dataset", e);
         }
 
         return dataset;

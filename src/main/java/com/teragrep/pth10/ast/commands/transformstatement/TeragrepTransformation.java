@@ -171,13 +171,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_setParameter(DPLParser.T_setParameterContext ctx) {
-        // set config <key> <value>
-        if (ctx.t_setConfigParameter() != null) {
-            return visit(ctx.t_setConfigParameter());
-        }
-        else {
-            throw new IllegalArgumentException("Unsupported teragrep command: " + ctx.getText());
-        }
+        return visitChildren(ctx);
     }
 
     @Override
