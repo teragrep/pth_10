@@ -43,32 +43,34 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.teragrep.tokenizer;
+package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.functions.dpf_03.ByteArrayListAsStringListUDF;
+import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static org.apache.spark.sql.types.DataTypes.StringType;
 
 /**
- * Runs the dpf_03 TokenAggregator on given field - Returns a Row with type String[], if dpl.pth_06.bloom.pattern option
- * is present uses regex filtering for resulting tokens
+ * Runs the dpf_03 TokenAggregator on a given field and returns a Row with type String[], if dpl.pth_06.bloom.pattern
+ * option is present uses regex filtering for resulting tokens
  */
-public final class TokenizerStep extends AbstractTokenizerStep {
+public final class TeragrepTokenizerStep extends AbstractStep {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenizerStep.class);
     private final AbstractTokenizerStep.TokenizerFormat tokenizerFormat;
     private final String inputCol;
     private final String outputCol;
 
-    public TokenizerStep(AbstractTokenizerStep.TokenizerFormat tokenizerFormat, String inputCol, String outputCol) {
+    public TeragrepTokenizerStep(
+            AbstractTokenizerStep.TokenizerFormat tokenizerFormat,
+            String inputCol,
+            String outputCol
+    ) {
         super();
         this.tokenizerFormat = tokenizerFormat;
         this.inputCol = inputCol;
