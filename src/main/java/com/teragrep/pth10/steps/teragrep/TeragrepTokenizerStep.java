@@ -60,7 +60,7 @@ import static org.apache.spark.sql.types.DataTypes.StringType;
  * Runs the dpf_03 TokenAggregator on a given field and returns a Row with type String[], if dpl.pth_06.bloom.pattern
  * option is present uses regex filtering for resulting tokens
  */
-public final class TeragrepTokenizerStep extends AbstractStep {
+public final class TeragrepTokenizerStep extends AbstractTokenizerStep {
 
     private final AbstractTokenizerStep.TokenizerFormat tokenizerFormat;
     private final String inputCol;
