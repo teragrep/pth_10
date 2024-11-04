@@ -55,8 +55,8 @@ import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst
 import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementXML;
 import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.teragrep.*;
-import com.teragrep.pth10.steps.tokenizer.AbstractTokenizerStep;
-import com.teragrep.pth10.steps.tokenizer.TokenizerStep;
+import com.teragrep.pth10.steps.teragrep.AbstractTokenizerStep;
+import com.teragrep.pth10.steps.teragrep.TeragrepTokenizerStep;
 import com.typesafe.config.Config;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
@@ -572,7 +572,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             outputCol = new UnquotedText(new TextString(ctx.t_outputParameter().fieldType().getText())).read();
         }
 
-        return new StepNode(new TokenizerStep(tokenizerFormat, inputCol, outputCol));
+        return new StepNode(new TeragrepTokenizerStep(tokenizerFormat, inputCol, outputCol));
     }
 
     @Override

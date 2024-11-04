@@ -43,7 +43,7 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.tokenizer;
+package com.teragrep.pth10.steps.teragrep;
 
 import com.teragrep.pth10.steps.AbstractStep;
 
