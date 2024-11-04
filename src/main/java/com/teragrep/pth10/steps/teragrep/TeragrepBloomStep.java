@@ -157,7 +157,7 @@ public final class TeragrepBloomStep extends AbstractStep {
 
     private Dataset<Row> estimateSize(Dataset<Row> dataset) {
         return dataset
-                .select(functions.col("partition"), functions.explode(functions.col(inputCol)).as("token"))
+                .select(functions.col("partition"), functions.explode_outer(functions.col(inputCol)).as("token"))
                 .groupBy("partition")
                 .agg(functions.approxCountDistinct("token").as(outputCol));
     }
