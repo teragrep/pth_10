@@ -133,9 +133,10 @@ public class BloomFilterOperationsTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testEstimateOnEmptyTokenizerColumn() {
+    public void testEstimateOnEmptyArray() {
         streamingTestUtil
                 .performDPLTest(
+                        // index_Empty _raw = "" so tokenizer step will produce an empty array
                         "index=index_Empty earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z | teragrep exec tokenizer | teragrep exec bloom estimate",
                         testFile, ds -> {
                             Assertions
@@ -147,8 +148,9 @@ public class BloomFilterOperationsTest {
                                     .map(r -> Integer.parseInt(r.get(0).toString()))
                                     .collect(Collectors.toList());
 
+                            // assert that a row is produced and not an empty dataframe
                             Assertions.assertEquals(1, results.size());
-                            // estimate = 0
+                            // assert that estimate is 0 and not empty or null
                             Assertions.assertEquals(0, results.get(0));
                         }
                 );
