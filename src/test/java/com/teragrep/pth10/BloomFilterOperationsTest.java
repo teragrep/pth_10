@@ -133,6 +133,34 @@ public class BloomFilterOperationsTest {
             named = "skipSparkTest",
             matches = "true"
     )
+    public void testEstimateOnEmptyArray() {
+        streamingTestUtil
+                .performDPLTest(
+                        // index_Empty _raw = "" so tokenizer step will produce an empty array
+                        "index=index_Empty earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z | teragrep exec tokenizer | teragrep exec bloom estimate",
+                        testFile, ds -> {
+                            Assertions
+                                    .assertEquals("[partition, estimate(tokens)]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                            List<Integer> results = ds
+                                    .select("estimate(tokens)")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> Integer.parseInt(r.get(0).toString()))
+                                    .collect(Collectors.toList());
+
+                            // assert that a row is produced and not an empty dataframe
+                            Assertions.assertEquals(1, results.size());
+                            // assert that estimate is 0 and not empty or null
+                            Assertions.assertEquals(0, results.get(0));
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void testAggregateWithTokenizerFormatBytes() {
         final String id = UUID.randomUUID().toString();
         final Properties properties = new Properties();
