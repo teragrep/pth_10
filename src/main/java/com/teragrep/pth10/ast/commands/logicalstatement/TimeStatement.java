@@ -199,7 +199,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         String value = ctx.getChild(1).getText();
 
         
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol(), doc);
+        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();
@@ -224,7 +224,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
 
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol(), doc);
+        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();

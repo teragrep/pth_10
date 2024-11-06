@@ -7,6 +7,7 @@ import com.teragrep.pth10.ast.UnquotedText;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.util.Objects;
 
 public final class EpochTimestamp {
     private final String value;
@@ -53,4 +54,16 @@ public final class EpochTimestamp {
         return timevalue;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        EpochTimestamp that = (EpochTimestamp) o;
+        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value, timeformat);
+    }
 }
