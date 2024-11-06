@@ -87,7 +87,7 @@ public final class SpathStep extends AbstractSpathStep {
         // Not in auto-extraction mode: can just return the first and only value from the map
         if (!autoExtractionMode) {
             return dataset
-                    .withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new SpathEscapedKey(path).escaped()));
+                    .withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new SpathKey(path).escaped().toString()));
         }
 
         //
@@ -110,7 +110,7 @@ public final class SpathStep extends AbstractSpathStep {
         // use substring to remove backticks that were added to escape dots in key name
         for (String key : keys) {
             withAppliedUdfDs = withAppliedUdfDs
-                    .withColumn(new SpathUnescapedKey(key).unescaped(), functions.when(
+                    .withColumn(new SpathEscapedKey(key).unescaped().toString(), functions.when(
                             /* if key.value == null */
                             functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
                             /* then return empty string */

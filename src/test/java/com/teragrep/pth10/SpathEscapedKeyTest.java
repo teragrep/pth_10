@@ -46,46 +46,53 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.steps.spath.SpathEscapedKey;
+import com.teragrep.pth10.steps.spath.SpathKey;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class SpathEscapedKeyTest {
 
     @Test
-    void testEscaped() {
-        final String source = "hello.world";
-        final String expected = "`hello.world`";
-        SpathEscapedKey key = new SpathEscapedKey(source);
-        Assertions.assertEquals(expected, key.escaped());
+    public void testUnscapedKey() {
+        final String spathKey = "`hello.world`";
+        final SpathKey expected = new SpathKey("hello.world");
+        SpathEscapedKey key = new SpathEscapedKey(spathKey);
+        Assertions.assertEquals(expected, key.unescaped());
     }
 
     @Test
-    void testMalformed() {
-        final String source = "`hello.world";
+    public void testEmptyStringFail() {
+        final String spathKey = "";
         IllegalArgumentException exception = Assertions
-                .assertThrows(IllegalArgumentException.class, () -> new SpathEscapedKey(source).escaped());
-        Assertions.assertEquals("SpathKey is malformed: " + source, exception.getMessage());
-    }
-
-    @Test
-    void testAlreadyEscaped() {
-        final String source = "`hello.world`";
-        IllegalArgumentException exception = Assertions
-                .assertThrows(IllegalArgumentException.class, () -> new SpathEscapedKey(source).escaped());
-        Assertions.assertEquals("SpathKey is already escaped: " + source, exception.getMessage());
-    }
-
-    @Test
-    void testEmptyStringFail() {
-        final String source = "";
-        IllegalArgumentException exception = Assertions
-                .assertThrows(IllegalArgumentException.class, () -> new SpathEscapedKey(source).escaped());
+                .assertThrows(IllegalArgumentException.class, () -> new SpathEscapedKey(spathKey).unescaped());
         Assertions.assertEquals("SpathKey cannot be null or empty!", exception.getMessage());
     }
 
     @Test
+    public void testKeyWithNoBackticks() {
+        final String spathKey = "hello.world";
+        IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, () -> new SpathEscapedKey(spathKey).unescaped());
+        Assertions
+                .assertEquals(
+                        "SpathKey must be wrapped in backticks, but it was not!" + spathKey, exception.getMessage()
+                );
+    }
+
+    @Test
+    public void testKeyWithOneBacktick() {
+        final String spathKey = "hello.world`";
+        IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, () -> new SpathEscapedKey(spathKey).unescaped());
+        Assertions
+                .assertEquals(
+                        "SpathKey must be wrapped in backticks, but it was not!" + spathKey, exception.getMessage()
+                );
+    }
+
+    @Test
     void testEquality() {
-        final String source = "hello.world";
+        final String source = "`hello.world`";
         final SpathEscapedKey key = new SpathEscapedKey(source);
         final SpathEscapedKey key2 = new SpathEscapedKey(source);
         Assertions.assertEquals(key, key2);
@@ -93,11 +100,10 @@ public class SpathEscapedKeyTest {
 
     @Test
     void testNonEquality() {
-        final String source = "hello.world";
-        final String source2 = "hello2.world";
+        final String source = "`hello.world`";
+        final String source2 = "`hello2.world`";
         final SpathEscapedKey key = new SpathEscapedKey(source);
         final SpathEscapedKey key2 = new SpathEscapedKey(source2);
         Assertions.assertNotEquals(key, key2);
     }
-
 }

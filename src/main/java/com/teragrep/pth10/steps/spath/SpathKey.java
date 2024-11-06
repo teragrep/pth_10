@@ -48,18 +48,18 @@ package com.teragrep.pth10.steps.spath;
 import java.io.Serializable;
 import java.util.Objects;
 
-public final class SpathUnescapedKey implements Serializable {
+public final class SpathKey implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String key;
 
-    public SpathUnescapedKey(final String key) {
+    public SpathKey(final String key) {
         this.key = key;
     }
 
-    public String unescaped() {
+    public SpathEscapedKey escaped() {
         validate();
-        return key.substring(1, key.length() - 1);
+        return new SpathEscapedKey(String.format("`%s`", key));
     }
 
     private void validate() {
@@ -67,8 +67,15 @@ public final class SpathUnescapedKey implements Serializable {
             throw new IllegalArgumentException("SpathKey cannot be null or empty!");
         }
 
-        if (!key.startsWith("`") || !key.endsWith("`")) {
-            throw new IllegalArgumentException("SpathKey must be wrapped in backticks, but it was not!" + key);
+        final boolean beginningBackTick = key.startsWith("`");
+        final boolean endingBackTick = key.endsWith("`");
+
+        if (beginningBackTick && endingBackTick) {
+            throw new IllegalArgumentException("SpathKey is already escaped: " + key);
+        }
+
+        if (beginningBackTick || endingBackTick) {
+            throw new IllegalArgumentException("SpathKey is malformed: " + key);
         }
     }
 
@@ -78,12 +85,17 @@ public final class SpathUnescapedKey implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        final SpathUnescapedKey that = (SpathUnescapedKey) o;
+        final SpathKey that = (SpathKey) o;
         return key.equals(that.key);
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(key);
+    }
+
+    @Override
+    public String toString() {
+        return key;
     }
 }

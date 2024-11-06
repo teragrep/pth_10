@@ -53,6 +53,7 @@ import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.evalstatement.UDFs.*;
 import com.teragrep.pth10.steps.eval.EvalStep;
 import com.teragrep.pth10.steps.spath.SpathEscapedKey;
+import com.teragrep.pth10.steps.spath.SpathKey;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
@@ -2862,7 +2863,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         Column res = functions.callUDF("SpathUDF", input, spathExpr, functions.lit(""), functions.lit(""));
         // wrap expression in backticks to escape dots
-        rv = new ColumnNode(res.getItem(new SpathEscapedKey(spathExpr.toString()).escaped()));
+        rv = new ColumnNode(res.getItem(new SpathKey(spathExpr.toString()).escaped().toString()));
 
         return rv;
     }

@@ -57,9 +57,9 @@ public final class SpathEscapedKey implements Serializable {
         this.key = key;
     }
 
-    public String escaped() {
+    public SpathKey unescaped() {
         validate();
-        return String.format("`%s`", key);
+        return new SpathKey(key.substring(1, key.length() - 1));
     }
 
     private void validate() {
@@ -67,15 +67,8 @@ public final class SpathEscapedKey implements Serializable {
             throw new IllegalArgumentException("SpathKey cannot be null or empty!");
         }
 
-        final boolean beginningBackTick = key.startsWith("`");
-        final boolean endingBackTick = key.endsWith("`");
-
-        if (beginningBackTick && endingBackTick) {
-            throw new IllegalArgumentException("SpathKey is already escaped: " + key);
-        }
-
-        if (beginningBackTick || endingBackTick) {
-            throw new IllegalArgumentException("SpathKey is malformed: " + key);
+        if (!key.startsWith("`") || !key.endsWith("`")) {
+            throw new IllegalArgumentException("SpathKey must be wrapped in backticks, but it was not!" + key);
         }
     }
 
@@ -92,5 +85,10 @@ public final class SpathEscapedKey implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hashCode(key);
+    }
+
+    @Override
+    public String toString() {
+        return key;
     }
 }
