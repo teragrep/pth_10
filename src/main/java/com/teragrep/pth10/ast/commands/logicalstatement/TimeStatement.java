@@ -49,23 +49,13 @@ import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.EmitMode;
-import com.teragrep.pth10.ast.time.EpochTimestamp;
-import com.teragrep.pth10.ast.time.RelativeTimeParser;
-import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import com.teragrep.pth10.ast.time.TimeQualifier;
-import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
-import org.apache.spark.sql.Column;
-import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-
-import java.sql.Timestamp;
-import java.text.ParseException;
 
 /**
  * <p>
@@ -198,14 +188,15 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
 
-        
         TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();
-        } else if (tq.isEndTime()) {
+        }
+        else if (tq.isEndTime()) {
             endTime = tq.epoch();
-        } else {
+        }
+        else {
             throw new UnsupportedOperationException("Unexpected token: " + node.getSymbol().getText());
         }
 
@@ -228,9 +219,11 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();
-        } else if (tq.isEndTime()) {
+        }
+        else if (tq.isEndTime()) {
             endTime = tq.epoch();
-        } else {
+        }
+        else {
             throw new UnsupportedOperationException("Unexpected token: " + node.getSymbol().getText());
         }
 

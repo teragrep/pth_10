@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>;.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -82,7 +82,8 @@ public class EpochTimestampTest {
     public void testInvalidValue() {
         final String value = "xyz";
         final String timeformat = "%Y-%d-%m";
-        RuntimeException e = Assertions.assertThrows(RuntimeException.class, () -> new EpochTimestamp(value, timeformat).epoch());
+        RuntimeException e = Assertions
+                .assertThrows(RuntimeException.class, () -> new EpochTimestamp(value, timeformat).epoch());
         Assertions.assertEquals("TimeQualifier conversion error: <" + value + "> can't be parsed.", e.getMessage());
     }
 
@@ -91,7 +92,7 @@ public class EpochTimestampTest {
         final String value = "2024-10-31T10:10:10z";
         final String timeformat = "%Y-%d-%m";
 
-        Assertions.assertEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value, timeformat) );
+        Assertions.assertEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value, timeformat));
     }
 
     @Test
@@ -100,7 +101,7 @@ public class EpochTimestampTest {
         final String value2 = "2024-10-30T10:10:10z";
         final String timeformat = "%Y-%d-%m";
 
-        Assertions.assertNotEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value2, timeformat) );
+        Assertions.assertNotEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value2, timeformat));
     }
 
 }

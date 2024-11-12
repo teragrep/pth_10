@@ -13,7 +13,7 @@
  * GNU Affero General Public License for more details.
  *
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>;.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  *
  * Additional permission under GNU Affero General Public License version 3
@@ -46,7 +46,6 @@
 package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.Token;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
 import org.w3c.dom.Document;
@@ -55,6 +54,7 @@ import org.w3c.dom.Element;
 import java.util.Objects;
 
 public final class TimeQualifier {
+
     private final int token;
     private final String value;
     private final String timeformat;
@@ -91,7 +91,7 @@ public final class TimeQualifier {
             }
             case DPLLexer.LATEST:
             case DPLLexer.INDEX_LATEST:
-            case DPLLexer.ENDTIMEU:{
+            case DPLLexer.ENDTIMEU: {
                 col = col.lt(functions.from_unixtime(functions.lit(epoch())));
                 break;
             }
@@ -152,10 +152,13 @@ public final class TimeQualifier {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         TimeQualifier that = (TimeQualifier) o;
-        return Objects.equals(token, that.token) && Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat) && Objects.equals(doc, that.doc);
+        return Objects.equals(token, that.token) && Objects.equals(value, that.value)
+                && Objects.equals(timeformat, that.timeformat) && Objects.equals(doc, that.doc);
     }
 
     @Override
