@@ -43,33 +43,38 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.spath;
+package com.teragrep.pth10.ast;
 
-import java.io.Serializable;
 import java.util.Objects;
 
-public final class SpathEscapedKey implements Serializable {
+public class QuotedText implements Text {
 
-    private static final long serialVersionUID = 1L;
-    private final String key;
+    private final Text origin;
+    private final String quoteCharacter;
 
-    public SpathEscapedKey(final String key) {
-        this.key = key;
+    public QuotedText(final Text origin, final String quoteCharacter) {
+        this.origin = origin;
+        this.quoteCharacter = quoteCharacter;
     }
 
-    public SpathKey unescaped() {
+    @Override
+    public String read() {
         validate();
-        return new SpathKey(key.substring(1, key.length() - 1));
+        return quotes(origin.read());
     }
 
     private void validate() {
-        if (key == null || key.isEmpty()) {
-            throw new IllegalArgumentException("SpathKey cannot be null or empty!");
+        if (quoteCharacter.length() != 1) {
+            throw new IllegalArgumentException("Quote character should be a single character");
+        }
+    }
+
+    private String quotes(final String s) {
+        if (s.startsWith(quoteCharacter) && s.endsWith(quoteCharacter)) {
+            return s;
         }
 
-        if (!key.startsWith("`") || !key.endsWith("`")) {
-            throw new IllegalArgumentException("SpathKey must be wrapped in backticks, but it was not!" + key);
-        }
+        return quoteCharacter.concat(s).concat(quoteCharacter);
     }
 
     @Override
@@ -78,17 +83,12 @@ public final class SpathEscapedKey implements Serializable {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        final SpathEscapedKey that = (SpathEscapedKey) o;
-        return key.equals(that.key);
+        QuotedText that = (QuotedText) o;
+        return Objects.equals(origin, that.origin) && Objects.equals(quoteCharacter, that.quoteCharacter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(key);
-    }
-
-    @Override
-    public String toString() {
-        return key;
+        return Objects.hash(origin, quoteCharacter);
     }
 }

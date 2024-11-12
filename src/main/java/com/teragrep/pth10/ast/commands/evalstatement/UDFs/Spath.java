@@ -47,10 +47,9 @@ package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
 
 import com.google.gson.*;
 import com.teragrep.pth10.ast.NullValue;
+import com.teragrep.pth10.ast.QuotedText;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
-import com.teragrep.pth10.steps.spath.SpathEscapedKey;
-import com.teragrep.pth10.steps.spath.SpathKey;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.spark.sql.api.java.UDF4;
 import org.slf4j.Logger;
@@ -119,7 +118,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                 for (Map.Entry<String, JsonElement> sub : jsonElem.getAsJsonObject().entrySet()) {
                     // put key:value to map - unescaping result in case was a nested json string
                     result
-                            .put(new SpathKey(sub.getKey()).escaped().toString(), new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))).read());
+                            .put(new QuotedText(new TextString(sub.getKey()), "`").read(), new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(sub.getValue().toString()))).read());
                 }
             }
             // Manual extraction via spath expression (JSON)
@@ -129,7 +128,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                 );
                 // put key:value to map - unescaping result in case was a nested json string
                 result
-                        .put(new SpathKey(spathExpr).escaped().toString(), jsonSubElem != null ? new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))).read() : nullValue.value());
+                        .put(new QuotedText(new TextString(spathExpr), "`").read(), jsonSubElem != null ? new UnquotedText(new TextString(StringEscapeUtils.unescapeJson(jsonSubElem.toString()))).read() : nullValue.value());
             }
             return result;
         }
@@ -164,7 +163,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                     LOGGER.debug("spath->xpath conversion: <[{}]>", spathAsXpath);
 
                     String rv = (String) xPath.compile(spathAsXpath).evaluate(doc, XPathConstants.STRING);
-                    result.put(new SpathKey(spathExpr).escaped().toString(), rv.trim());
+                    result.put(new QuotedText(new TextString(spathExpr), "`").read(), rv.trim());
                 }
                 return result;
             }
@@ -172,11 +171,11 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
                 LOGGER.warn("spath: The content couldn't be parsed as JSON or XML. Details: <{}>", e.getMessage());
                 // return pre-existing content if output is the same as input
                 if (nameOfInputCol.equals(nameOfOutputCol)) {
-                    result.put(new SpathKey(spathExpr).escaped().toString(), input);
+                    result.put(new QuotedText(new TextString(spathExpr), "`").read(), input);
                 }
                 // otherwise output will be empty on error
                 else {
-                    result.put(new SpathKey(spathExpr).escaped().toString(), nullValue.value());
+                    result.put(new QuotedText(new TextString(spathExpr), "`").read(), nullValue.value());
                 }
                 return result;
             }
@@ -279,13 +278,13 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
             }
 
             // if there are multiple columns of the same name, add value to existing column
-            final SpathKey key = new SpathKey(colName);
-            if (map.containsKey(key.escaped().toString())) {
-                String existingValue = map.get(key.escaped().toString());
-                map.put(key.escaped().toString(), existingValue.concat("\n").concat(rootNode.getTextContent()));
+            final String quotedColName = new QuotedText(new TextString(colName), "`").read();
+            if (map.containsKey(quotedColName)) {
+                map
+                        .computeIfPresent(quotedColName, (k, existingValue) -> existingValue.concat("\n").concat(rootNode.getTextContent()));
             }
             else {
-                map.put(key.escaped().toString(), rootNode.getTextContent());
+                map.put(quotedColName, rootNode.getTextContent());
             }
         }
 

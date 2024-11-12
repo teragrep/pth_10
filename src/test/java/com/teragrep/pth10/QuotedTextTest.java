@@ -43,59 +43,68 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.spath;
+package com.teragrep.pth10;
 
-import java.io.Serializable;
-import java.util.Objects;
+import com.teragrep.pth10.ast.QuotedText;
+import com.teragrep.pth10.ast.TextString;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public final class SpathKey implements Serializable {
+public class QuotedTextTest {
 
-    private static final long serialVersionUID = 1L;
-    private final String key;
+    // test with single quotes
+    @Test
+    public void quoteSingleQuotesTest() {
+        String original = "foo";
+        String expected = "'foo'";
 
-    public SpathKey(final String key) {
-        this.key = key;
+        String actual = new QuotedText(new TextString(original), "'").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    public SpathEscapedKey escaped() {
-        validate();
-        return new SpathEscapedKey(String.format("`%s`", key));
+    // test with empty quotes
+    @Test
+    public void quoteEmptyQuotesTest() {
+        String original = "";
+        String expected = "''";
+
+        String actual = new QuotedText(new TextString(original), "'").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    private void validate() {
-        if (key == null || key.isEmpty()) {
-            throw new IllegalArgumentException("SpathKey cannot be null or empty!");
-        }
+    // test with backtick quotes
+    @Test
+    public void quoteBacktickQuotesTest() {
+        String original = "foo";
+        String expected = "`foo`";
 
-        final boolean beginningBackTick = key.startsWith("`");
-        final boolean endingBackTick = key.endsWith("`");
-
-        if (beginningBackTick && endingBackTick) {
-            throw new IllegalArgumentException("SpathKey is already escaped: " + key);
-        }
-
-        if (beginningBackTick || endingBackTick) {
-            throw new IllegalArgumentException("SpathKey is malformed: " + key);
-        }
+        String actual = new QuotedText(new TextString(original), "`").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        final SpathKey that = (SpathKey) o;
-        return key.equals(that.key);
+    // test with double quotes
+    @Test
+    public void quoteDoubleQuotesTest() {
+        String original = "foo";
+        String expected = "\"foo\"";
+
+        String actual = new QuotedText(new TextString(original), "\"").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(key);
+    @Test
+    public void testEquals() {
+        QuotedText ut1 = new QuotedText(new TextString("foo"), "'");
+        QuotedText ut2 = new QuotedText(new TextString("foo"), "'");
+        Assertions.assertEquals(ut1, ut2);
     }
 
-    @Override
-    public String toString() {
-        return key;
+    @Test
+    public void testNotEquals() {
+        QuotedText ut1 = new QuotedText(new TextString("foo"), "`");
+        QuotedText ut2 = new QuotedText(new TextString("foo'"), "`");
+        Assertions.assertNotEquals(ut1, ut2);
+
     }
+
 }

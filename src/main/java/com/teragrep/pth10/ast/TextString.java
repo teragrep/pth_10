@@ -45,6 +45,8 @@
  */
 package com.teragrep.pth10.ast;
 
+import java.util.Objects;
+
 /**
  * Basic text from String
  */
@@ -69,4 +71,20 @@ public final class TextString implements Text {
     public String read() {
         return text;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        TextString that = (TextString) o;
+        return Objects.equals(text, that.text);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(text);
+    }
+
 }

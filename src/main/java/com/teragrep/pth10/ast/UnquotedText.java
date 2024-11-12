@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth10.ast;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -53,7 +54,7 @@ import java.util.regex.Pattern;
  */
 public class UnquotedText implements Text {
 
-    private Text origin;
+    private final Text origin;
 
     public UnquotedText(Text origin) {
         this.origin = origin;
@@ -69,21 +70,42 @@ public class UnquotedText implements Text {
      * 
      * @return string with stripped quotes
      */
-    private String stripQuotes(String quoted) {
-        Matcher m = Pattern.compile("^\"(.*)\"$").matcher(quoted);
-        Matcher m1 = Pattern.compile("^'(.*)'$").matcher(quoted);
+    private String stripQuotes(final String quoted) {
+        final Matcher m = Pattern.compile("^(\"(?<dq>.*)\")$|^('(?<sq>.*)')$|^(`(?<bt>.*)`)$").matcher(quoted);
 
-        String strUnquoted = quoted;
-        // check "-quotes
-        if (m.find()) {
-            strUnquoted = m.group(1);
+        // If no matches, return original string as-is
+        if (!m.find()) {
+            return quoted;
         }
-        else {
-            // check '-quotes
-            if (m1.find()) {
-                strUnquoted = m1.group(1);
-            }
+
+        // Check if matching group exists, and return if so
+        if (m.start("dq") != -1) {
+            return m.group("dq");
         }
-        return strUnquoted;
+
+        if (m.start("sq") != -1) {
+            return m.group("sq");
+        }
+
+        if (m.start("bt") != -1) {
+            return m.group("bt");
+        }
+
+        throw new IllegalStateException("Pattern matched text, but without a matching group");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        UnquotedText that = (UnquotedText) o;
+        return Objects.equals(origin, that.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(origin);
     }
 }

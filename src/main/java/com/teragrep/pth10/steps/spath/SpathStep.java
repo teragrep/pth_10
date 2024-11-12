@@ -46,6 +46,7 @@
 package com.teragrep.pth10.steps.spath;
 
 import com.teragrep.pth10.ast.MapTypeColumn;
+import com.teragrep.pth10.ast.QuotedText;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.commands.evalstatement.UDFs.Spath;
@@ -87,7 +88,7 @@ public final class SpathStep extends AbstractSpathStep {
         // Not in auto-extraction mode: can just return the first and only value from the map
         if (!autoExtractionMode) {
             return dataset
-                    .withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new SpathKey(path).escaped().toString()));
+                    .withColumn(new UnquotedText(new TextString(outputColumn)).read(), spathExpr.getItem(new QuotedText(new TextString(path), "`").read()));
         }
 
         //
@@ -110,7 +111,7 @@ public final class SpathStep extends AbstractSpathStep {
         // use substring to remove backticks that were added to escape dots in key name
         for (String key : keys) {
             withAppliedUdfDs = withAppliedUdfDs
-                    .withColumn(new SpathEscapedKey(key).unescaped().toString(), functions.when(
+                    .withColumn(new UnquotedText(new TextString(key)).read(), functions.when(
                             /* if key.value == null */
                             functions.isnull(withAppliedUdfDs.col(outputColumn).getItem(key)),
                             /* then return empty string */
