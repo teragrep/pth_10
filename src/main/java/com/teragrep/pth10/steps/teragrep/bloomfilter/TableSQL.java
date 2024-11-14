@@ -48,29 +48,16 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 public final class TableSQL {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TableSQL.class);
+    private final Pattern validPattern;
     private final String name;
     private final String journalDBName;
     private final boolean ignoreConstraints;
-
-    private void validSQLName(final String sql) {
-        if (ignoreConstraints && LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Ignore database constraints active this should be only used in testing");
-        }
-        final Pattern pattern = Pattern.compile("^[A-Za-z0-9_]+$");
-        if (!pattern.matcher(sql).find()) {
-            throw new RuntimeException("malformed SQL input <[" + sql + "]>, only use alphabets, numbers and _");
-        }
-        if (sql.length() > 100) {
-            throw new RuntimeException(
-                    "SQL input <[" + sql + "]> was too long, allowed maximum length is 100 characters"
-            );
-        }
-    }
 
     // used in testing
     public TableSQL(String name) {
@@ -90,6 +77,21 @@ public final class TableSQL {
         this.name = name;
         this.journalDBName = journalDBName;
         this.ignoreConstraints = ignoreConstraints;
+        this.validPattern = Pattern.compile("^[A-Za-z0-9_]+$");
+    }
+
+    private void validSQLName(final String sql) {
+        if (ignoreConstraints && LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Ignore database constraints active this should be only used in testing");
+        }
+        if (!validPattern.matcher(sql).find()) {
+            throw new RuntimeException("malformed SQL input <[" + sql + "]>, only use alphabets, numbers and _");
+        }
+        if (sql.length() > 100) {
+            throw new RuntimeException(
+                    "SQL input <[" + sql + "]> was too long, allowed maximum length is 100 characters"
+            );
+        }
     }
 
     public String createTableSQL() {
@@ -115,14 +117,16 @@ public final class TableSQL {
     }
 
     @Override
-    public boolean equals(final Object object) {
-        if (this == object)
-            return true;
-        if (object == null)
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
             return false;
-        if (object.getClass() != this.getClass())
-            return false;
-        final TableSQL cast = (TableSQL) object;
-        return this.name.equals(cast.name) && this.ignoreConstraints == cast.ignoreConstraints;
+        final TableSQL cast = (TableSQL) o;
+        return ignoreConstraints == cast.ignoreConstraints && Objects.equals(validPattern, cast.validPattern)
+                && Objects.equals(name, cast.name) && Objects.equals(journalDBName, cast.journalDBName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(validPattern, name, journalDBName, ignoreConstraints);
     }
 }

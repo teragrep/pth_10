@@ -60,7 +60,7 @@ class BloomFilterTableTest {
 
     final String username = "sa";
     final String password = "";
-    final String connectionUrl = "jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
 
     @BeforeAll
     void setEnv() {
@@ -89,7 +89,7 @@ class BloomFilterTableTest {
         String injection = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
         properties.put("dpl.pth_06.bloom.table.name", injection);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable injectionTable = new BloomFilterTable(config, true);
+        BloomFilterTable injectionTable = new BloomFilterTable(config, injection, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, injectionTable::create);
         Assertions
                 .assertEquals(
@@ -104,7 +104,7 @@ class BloomFilterTableTest {
         String tooLongName = "testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati";
         properties.put("dpl.pth_06.bloom.table.name", tooLongName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table = new BloomFilterTable(config, true);
+        BloomFilterTable table = new BloomFilterTable(config, tooLongName, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
         Assertions
                 .assertEquals(
@@ -119,7 +119,7 @@ class BloomFilterTableTest {
         String tableName = "test_table";
         properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table = new BloomFilterTable(config, true);
+        BloomFilterTable table = new BloomFilterTable(config, tableName, true);
         table.create();
         String sql = "SHOW COLUMNS FROM " + tableName + ";";
         Assertions.assertDoesNotThrow(() -> {
@@ -153,16 +153,16 @@ class BloomFilterTableTest {
     void testEquals() {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table1 = new BloomFilterTable(config, true);
-        BloomFilterTable table2 = new BloomFilterTable(config, true);
+        BloomFilterTable table1 = new BloomFilterTable(config, tableName, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, tableName, true);
         table1.create();
         Assertions.assertEquals(table1, table2);
     }
 
     @Test
     void testNotEqualsName() {
+        String tableName = "test_table";
         Properties properties1 = getDefaultProperties();
         Properties properties2 = getDefaultProperties();
         properties1.put("dpl.pth_06.bloom.table.name", "test_table");

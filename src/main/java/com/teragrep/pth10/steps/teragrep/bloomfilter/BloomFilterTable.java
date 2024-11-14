@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.Objects;
 
 public final class BloomFilterTable {
 
@@ -60,15 +61,26 @@ public final class BloomFilterTable {
     private final LazyConnection conn;
 
     public BloomFilterTable(Config config) {
-        this(new FilterTypes(config), new LazyConnection(config), false);
+        this(config, "default_table_name", new LazyConnection(config), false);
     }
 
     public BloomFilterTable(Config config, boolean ignoreConstraints) {
-        this(new FilterTypes(config), new LazyConnection(config), ignoreConstraints);
+        this(config, "default_table_name", new LazyConnection(config), ignoreConstraints);
     }
 
-    public BloomFilterTable(FilterTypes filterTypes, LazyConnection lazyConnection, boolean ignoreConstraints) {
-        this(new TableSQL(filterTypes.tableName(), filterTypes.journalDBName(), ignoreConstraints), lazyConnection);
+    public BloomFilterTable(Config config, String tableName) {
+        this(config, tableName, new LazyConnection(config), false);
+    }
+
+    public BloomFilterTable(Config config, String tableName, boolean ignoreConstraints) {
+        this(config, tableName, new LazyConnection(config), ignoreConstraints);
+    }
+
+    public BloomFilterTable(Config config, String tableName, LazyConnection lazyConnection, boolean ignoreConstraints) {
+        this(
+                new TableSQL(tableName, new JournalDBNameFromConfig(config).journalDBName(), ignoreConstraints),
+                lazyConnection
+        );
     }
 
     public BloomFilterTable(TableSQL tableSQL, LazyConnection conn) {
@@ -90,14 +102,15 @@ public final class BloomFilterTable {
     }
 
     @Override
-    public boolean equals(final Object object) {
-        if (this == object)
-            return true;
-        if (object == null)
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
             return false;
-        if (object.getClass() != this.getClass())
-            return false;
-        final BloomFilterTable cast = (BloomFilterTable) object;
-        return this.tableSQL.equals(cast.tableSQL) && this.conn.equals(cast.conn);
+        final BloomFilterTable cast = (BloomFilterTable) o;
+        return Objects.equals(tableSQL, cast.tableSQL) && Objects.equals(conn, cast.conn);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(tableSQL, conn);
     }
 }

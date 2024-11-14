@@ -49,6 +49,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.util.Objects;
 
 import com.typesafe.config.Config;
 
@@ -128,14 +129,15 @@ public final class LazyConnection implements Serializable {
      * Connection parameter not considered in equals method because of lazy init
      */
     @Override
-    public boolean equals(final Object object) {
-        if (this == object)
-            return true;
-        if (object == null)
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
             return false;
-        if (object.getClass() != this.getClass())
-            return false;
-        final LazyConnection cast = (LazyConnection) object;
-        return this.config.equals(cast.config);
+        final LazyConnection cast = (LazyConnection) o;
+        return Objects.equals(config, cast.config);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(config);
     }
 }

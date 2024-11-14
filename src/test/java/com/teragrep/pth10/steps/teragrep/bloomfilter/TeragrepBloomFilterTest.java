@@ -76,7 +76,7 @@ class TeragrepBloomFilterTest {
         properties.put("dpl.pth_10.bloom.db.username", username);
         String password = "";
         properties.put("dpl.pth_10.bloom.db.password", password);
-        String connectionUrl = "jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+        String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
         properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
         properties
                 .put(
@@ -145,7 +145,14 @@ class TeragrepBloomFilterTest {
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
                 .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
-        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(
+                partition,
+                rawFilter,
+                lazyConnection.get(),
+                filterTypes,
+                tableName,
+                pattern
+        );
         filter.saveFilter(false);
         Map.Entry<Long, Double> entry = sizeMap.entrySet().iterator().next();
         String sql = "SELECT `filter` FROM `" + tableName + "`";
@@ -178,7 +185,14 @@ class TeragrepBloomFilterTest {
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
                 .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
-        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(
+                partition,
+                rawFilter,
+                lazyConnection.get(),
+                filterTypes,
+                tableName,
+                pattern
+        );
         filter.saveFilter(true);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
@@ -208,7 +222,9 @@ class TeragrepBloomFilterTest {
                 secondPartition,
                 rawFilter2,
                 lazyConnection.get(),
-                filterTypes
+                filterTypes,
+                tableName,
+                pattern
         );
         secondFilter.saveFilter(true);
         String secondSql = "SELECT `filter` FROM `" + tableName + "`";
@@ -243,7 +259,14 @@ class TeragrepBloomFilterTest {
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
                 .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
-        TeragrepBloomFilter filter = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
+        TeragrepBloomFilter filter = new TeragrepBloomFilter(
+                partition,
+                rawFilter,
+                lazyConnection.get(),
+                filterTypes,
+                tableName,
+                pattern
+        );
         filter.saveFilter(false);
         long size = Long.MAX_VALUE;
         for (long key : sizeMap.keySet()) {
@@ -295,8 +318,22 @@ class TeragrepBloomFilterTest {
         byte[] filterBytes = (byte[]) row.get(1);
         BloomFilter rawFilter = Assertions
                 .assertDoesNotThrow(() -> BloomFilter.readFrom(new ByteArrayInputStream(filterBytes)));
-        TeragrepBloomFilter filter1 = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
-        TeragrepBloomFilter filter2 = new TeragrepBloomFilter(partition, rawFilter, lazyConnection.get(), filterTypes);
+        TeragrepBloomFilter filter1 = new TeragrepBloomFilter(
+                partition,
+                rawFilter,
+                lazyConnection.get(),
+                filterTypes,
+                tableName,
+                pattern
+        );
+        TeragrepBloomFilter filter2 = new TeragrepBloomFilter(
+                partition,
+                rawFilter,
+                lazyConnection.get(),
+                filterTypes,
+                tableName,
+                pattern
+        );
         filter1.saveFilter(false);
         Assertions.assertEquals(filter1, filter2);
     }
@@ -315,13 +352,17 @@ class TeragrepBloomFilterTest {
                 row1.getString(0),
                 rawFilter1,
                 lazyConnection.get(),
-                filterTypes
+                filterTypes,
+                tableName,
+                pattern
         );
         TeragrepBloomFilter filter2 = new TeragrepBloomFilter(
                 row2.getString(0),
                 rawFilter2,
                 lazyConnection.get(),
-                filterTypes
+                filterTypes,
+                tableName,
+                pattern
         );
         Assertions.assertNotEquals(filter1, filter2);
     }

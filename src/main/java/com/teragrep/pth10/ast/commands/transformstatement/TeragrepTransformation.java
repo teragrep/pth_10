@@ -468,6 +468,8 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         String inputCol = null;
         String outputCol = null;
         String estimateCol = null;
+        String tableName = null;
+        String regex = null;
         if (ctx.t_bloomOptionParameter() != null) {
             if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_CREATE() != null) {
                 // bloom create
@@ -480,6 +482,24 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             else if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_ESTIMATE() != null) {
                 // bloom estimate
                 mode = TeragrepBloomStep.BloomMode.ESTIMATE;
+            }
+
+            if (ctx.t_bloomOptionParameter().t_tableParameter() != null) {
+                tableName = new UnquotedText(
+                        new TextString(ctx.t_bloomOptionParameter().t_tableParameter().fieldType().getText())
+                ).read();
+            }
+            else {
+                throw new IllegalArgumentException("Missing table parameter");
+            }
+
+            if (ctx.t_bloomOptionParameter().t_regexParameter() != null) {
+                regex = new UnquotedText(
+                        new TextString(ctx.t_bloomOptionParameter().t_regexParameter().stringType().getText())
+                ).read();
+            }
+            else {
+                throw new IllegalArgumentException("Missing regex parameter");
             }
 
             if (ctx.t_bloomOptionParameter().t_inputParameter() != null) {
@@ -510,13 +530,23 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        TeragrepBloomStep bloomStep = new TeragrepBloomStep(this.zplnConfig, mode, inputCol, outputCol, estimateCol);
+        TeragrepBloomStep bloomStep = new TeragrepBloomStep(
+                this.zplnConfig,
+                mode,
+                tableName,
+                regex,
+                inputCol,
+                outputCol,
+                estimateCol
+        );
 
         if (mode == TeragrepBloomStep.BloomMode.CREATE || mode == TeragrepBloomStep.BloomMode.UPDATE) {
             // create aggregate step to run before bloom create and bloom update
             TeragrepBloomStep aggregateStep = new TeragrepBloomStep(
                     this.zplnConfig,
                     TeragrepBloomStep.BloomMode.AGGREGATE,
+                    tableName,
+                    regex,
                     inputCol,
                     outputCol,
                     estimateCol

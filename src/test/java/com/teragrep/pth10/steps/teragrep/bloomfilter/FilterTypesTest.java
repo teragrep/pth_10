@@ -98,26 +98,6 @@ class FilterTypesTest {
     }
 
     @Test
-    public void testPatternMethod() {
-        String pattern = "test Regex ";
-        Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.pattern", pattern);
-        Config config = ConfigFactory.parseProperties(properties);
-        FilterTypes filterTypes = new FilterTypes(config);
-        assertEquals("test Regex", filterTypes.pattern());
-    }
-
-    @Test
-    public void testTableTableNameMethod() {
-        String name = "test Table ";
-        Properties properties = new Properties();
-        properties.put("dpl.pth_06.bloom.table.name", name);
-        Config config = ConfigFactory.parseProperties(properties);
-        FilterTypes filterTypes = new FilterTypes(config);
-        assertEquals("testTable", filterTypes.tableName());
-    }
-
-    @Test
     public void testEquals() {
         Properties properties = new Properties();
         properties.put("dpl.pth_06.bloom.table.name", "test");
@@ -132,9 +112,7 @@ class FilterTypesTest {
         FilterTypes filterTypes1 = new FilterTypes(config);
         FilterTypes filterTypes2 = new FilterTypes(config);
         filterTypes1.sortedMap();
-        filterTypes1.pattern();
-        filterTypes1.tableName();
-        filterTypes1.bitSizeMap();
+
         assertEquals(filterTypes1, filterTypes2);
     }
 

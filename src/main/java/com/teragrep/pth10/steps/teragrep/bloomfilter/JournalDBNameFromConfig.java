@@ -46,59 +46,43 @@
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
-import org.apache.spark.api.java.function.ForeachPartitionFunction;
-import org.apache.spark.sql.Row;
 
-import java.sql.Connection;
-import java.util.Iterator;
+import java.util.Objects;
 
-public final class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
+public class JournalDBNameFromConfig {
 
-    private final FilterTypes filterTypes;
-    private final LazyConnection lazyConnection;
-    private final boolean overwrite;
-    private final String tableName;
-    private final String regex;
+    private final Config config;
 
-    public BloomFilterForeachPartitionFunction(Config config, String tableName, String regex) {
-        this(new FilterTypes(config), new LazyConnection(config), tableName, regex, false);
+    public JournalDBNameFromConfig(Config config) {
+        this.config = config;
     }
 
-    public BloomFilterForeachPartitionFunction(Config config, String tableName, String regex, boolean overwrite) {
-        this(new FilterTypes(config), new LazyConnection(config), tableName, regex, overwrite);
-    }
-
-    public BloomFilterForeachPartitionFunction(
-            FilterTypes filterTypes,
-            LazyConnection lazyConnection,
-            String tableName,
-            String regex,
-            boolean overwrite
-    ) {
-        this.filterTypes = filterTypes;
-        this.lazyConnection = lazyConnection;
-        this.tableName = tableName;
-        this.regex = regex;
-        this.overwrite = overwrite;
+    public String journalDBName() {
+        final String journalDBName;
+        final String JOURNALDB_TABLE_NAME_ITEM = "dpl.pth_06.archive.db.journaldb.name";
+        if (config.hasPath(JOURNALDB_TABLE_NAME_ITEM)) {
+            final String journalDBNameFromConfig = config.getString(JOURNALDB_TABLE_NAME_ITEM);
+            if (journalDBNameFromConfig == null || journalDBNameFromConfig.isEmpty()) {
+                throw new RuntimeException("Journaldb name was not configured.");
+            }
+            journalDBName = journalDBNameFromConfig;
+        }
+        else {
+            throw new RuntimeException("Missing configuration item: '" + JOURNALDB_TABLE_NAME_ITEM + "'.");
+        }
+        return journalDBName;
     }
 
     @Override
-    public void call(final Iterator<Row> iter) throws Exception {
-        final Connection conn = lazyConnection.get();
-        while (iter.hasNext()) {
-            final Row row = iter.next(); // Row[partitionID, filterBytes]
-            final String partition = row.getString(0);
-            final byte[] filterBytes = (byte[]) row.get(1);
-            final TeragrepBloomFilter tgFilter = new TeragrepBloomFilter(
-                    partition,
-                    filterBytes,
-                    conn,
-                    filterTypes,
-                    tableName,
-                    regex
-            );
-            tgFilter.saveFilter(overwrite);
-            conn.commit();
-        }
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
+            return false;
+        final JournalDBNameFromConfig cast = (JournalDBNameFromConfig) o;
+        return Objects.equals(config, cast.config);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(config);
     }
 }

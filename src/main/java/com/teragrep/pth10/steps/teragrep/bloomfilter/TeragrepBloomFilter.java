@@ -68,16 +68,34 @@ public final class TeragrepBloomFilter {
     private final BloomFilter filter;
     private final Connection connection;
     private final FilterTypes filterTypes;
+    private final String tableName;
+    private final String regex;
 
-    public TeragrepBloomFilter(String partition, byte[] bytes, Connection connection, FilterTypes filterTypes) {
-        this(partition, new ToBloomFilter(bytes), connection, filterTypes);
+    public TeragrepBloomFilter(
+            String partition,
+            byte[] bytes,
+            Connection connection,
+            FilterTypes filterTypes,
+            String tableName,
+            String regex
+    ) {
+        this(partition, new ToBloomFilter(bytes), connection, filterTypes, tableName, regex);
     }
 
-    public TeragrepBloomFilter(String partition, BloomFilter filter, Connection connection, FilterTypes filterTypes) {
+    public TeragrepBloomFilter(
+            String partition,
+            BloomFilter filter,
+            Connection connection,
+            FilterTypes filterTypes,
+            String tableName,
+            String regex
+    ) {
         this.partitionID = partition;
         this.filter = filter;
         this.filterTypes = filterTypes;
         this.connection = connection;
+        this.tableName = tableName;
+        this.regex = regex;
     }
 
     /**
@@ -99,21 +117,20 @@ public final class TeragrepBloomFilter {
             throw new IllegalArgumentException("no such filterSize <[" + bitSize + "]>");
         }
         final String sql = sqlString(overwrite);
-        final String pattern = filterTypes.pattern();
         LOGGER.debug("Save filter SQL: <{}>", sql);
         try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
             try (final ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                 LOGGER
                         .debug(
                                 "Saving filter expected <[{}]>, fpp <[{}]>, pattern <[{}]>, overwrite existing data=<{}>",
-                                selectedExpectedNumOfItems, selectedFpp, pattern, overwrite
+                                selectedExpectedNumOfItems, selectedFpp, regex, overwrite
                         );
                 filter.writeTo(baos);
                 InputStream is = new ByteArrayInputStream(baos.toByteArray());
                 stmt.setInt(1, Integer.parseInt(partitionID)); // bloomfilter.partition_id
                 stmt.setInt(2, (int) selectedExpectedNumOfItems); // filtertype.expectedElements
                 stmt.setDouble(3, selectedFpp); // filtertype.targetFpp
-                stmt.setString(4, pattern); // filtertype.pattern
+                stmt.setString(4, regex); // filtertype.pattern
                 stmt.setBlob(5, is); // bloomfilter.filter
                 stmt.executeUpdate();
                 stmt.clearParameters();
@@ -134,28 +151,29 @@ public final class TeragrepBloomFilter {
 
     private String sqlString(final Boolean overwriteExisting) {
         final String sql;
-        final String name = filterTypes.tableName();
         if (overwriteExisting) {
-            sql = "REPLACE INTO `" + name + "` (`partition_id`, `filter_type_id`,`filter`) " + "VALUES(?,"
+            sql = "REPLACE INTO `" + tableName + "` (`partition_id`, `filter_type_id`,`filter`) " + "VALUES(?,"
                     + "(SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=? AND pattern=?)," + "?)";
         }
         else {
-            sql = "INSERT IGNORE INTO `" + name + "` (`partition_id`, `filter_type_id`,`filter`) " + "VALUES(?,"
+            sql = "INSERT IGNORE INTO `" + tableName + "` (`partition_id`, `filter_type_id`,`filter`) " + "VALUES(?,"
                     + "(SELECT `id` FROM `filtertype` WHERE expectedElements=? AND targetFpp=? AND pattern=?)," + "?)";
         }
         return sql;
     }
 
     @Override
-    public boolean equals(final Object object) {
-        if (this == object)
-            return true;
-        if (object == null)
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
             return false;
-        if (object.getClass() != this.getClass())
-            return false;
-        final TeragrepBloomFilter cast = (TeragrepBloomFilter) object;
-        return Objects.equals(this.partitionID, cast.partitionID) && this.connection.equals(cast.connection)
-                && this.filter.equals(cast.filter) && this.filterTypes.equals(cast.filterTypes);
+        final TeragrepBloomFilter cast = (TeragrepBloomFilter) o;
+        return Objects.equals(partitionID, cast.partitionID) && Objects.equals(filter, cast.filter) && Objects
+                .equals(connection, cast.connection) && Objects.equals(filterTypes, cast.filterTypes)
+                && Objects.equals(tableName, cast.tableName) && Objects.equals(regex, cast.regex);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(partitionID, filter, connection, filterTypes, tableName, regex);
     }
 }
