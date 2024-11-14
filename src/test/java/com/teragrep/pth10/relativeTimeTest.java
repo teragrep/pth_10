@@ -185,8 +185,7 @@ public class relativeTimeTest {
         });
     }
 
-    @Disabled(value = "starttimeu is not implemented")
-    @Test // disabled on 2022-05-16 TODO implement
+    @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -201,8 +200,7 @@ public class relativeTimeTest {
         });
     }
 
-    @Disabled(value = "endtimeu is not implemented")
-    @Test // disabled on 2022-05-16 TODO implement
+    @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -211,7 +209,7 @@ public class relativeTimeTest {
         String q = "index=cinnamon endtimeu=1587032680";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String regex = "^.*_time <= from_unixtime\\(1587032680.*$";
+            String regex = "^.*_time < from_unixtime\\(1587032680.*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
         });
