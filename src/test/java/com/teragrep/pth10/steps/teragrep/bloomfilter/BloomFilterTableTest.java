@@ -151,26 +151,23 @@ class BloomFilterTableTest {
 
     @Test
     void testEquals() {
+        String tableName1 = "test_table";
         Properties properties = getDefaultProperties();
-        String tableName = "test_table";
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table1 = new BloomFilterTable(config, tableName, true);
-        BloomFilterTable table2 = new BloomFilterTable(config, tableName, true);
+        BloomFilterTable table1 = new BloomFilterTable(config, tableName1, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, tableName1, true);
         table1.create();
         Assertions.assertEquals(table1, table2);
     }
 
     @Test
     void testNotEqualsName() {
-        String tableName = "test_table";
-        Properties properties1 = getDefaultProperties();
-        Properties properties2 = getDefaultProperties();
-        properties1.put("dpl.pth_06.bloom.table.name", "test_table");
-        properties2.put("dpl.pth_06.bloom.table.name", "table_test");
-        Config config1 = ConfigFactory.parseProperties(properties1);
-        Config config2 = ConfigFactory.parseProperties(properties2);
-        BloomFilterTable table1 = new BloomFilterTable(config1, true);
-        BloomFilterTable table2 = new BloomFilterTable(config2, true);
+        String tableName1 = "test_table";
+        String tableName2 = "table_test";
+        Properties properties = getDefaultProperties();
+        Config config = ConfigFactory.parseProperties(properties);
+        BloomFilterTable table1 = new BloomFilterTable(config, tableName1, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, tableName2, true);
         table1.create();
         Assertions.assertNotEquals(table1, table2);
     }

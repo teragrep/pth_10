@@ -181,5 +181,4 @@ public final class TeragrepBloomStep extends AbstractStep {
                 .groupBy("partition")
                 .agg(bloomFilterAggregator.toColumn().as("bloomfilter"));
     }
-
 }

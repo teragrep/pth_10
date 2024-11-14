@@ -121,8 +121,11 @@ public final class TableSQL {
         if (o == null || getClass() != o.getClass())
             return false;
         final TableSQL cast = (TableSQL) o;
-        return ignoreConstraints == cast.ignoreConstraints && Objects.equals(validPattern, cast.validPattern)
-                && Objects.equals(name, cast.name) && Objects.equals(journalDBName, cast.journalDBName);
+        // custom equals check for Pattern
+        boolean arePatternsEqual = validPattern.pattern().equals(cast.validPattern.pattern())
+                && validPattern.flags() == cast.validPattern.flags();
+        return ignoreConstraints == cast.ignoreConstraints && arePatternsEqual && Objects.equals(name, cast.name)
+                && Objects.equals(journalDBName, cast.journalDBName);
     }
 
     @Override
