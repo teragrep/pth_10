@@ -191,11 +191,10 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
 
         if (tq.isStartTime()) {
-            startTime = tq.epoch();
+            startTime = tq.epoch() - (3 * 60 * 60 * 1000);
         }
         else if (tq.isEndTime()) {
-            // TODO: this is a hack to remove 3 hours from earliest value for archive
-            endTime = tq.epoch() - (3 * 60 * 60 * 1000);
+            endTime = tq.epoch();
         }
         else {
             throw new UnsupportedOperationException("Unexpected token: " + node.getSymbol().getText());
