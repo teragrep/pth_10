@@ -45,7 +45,9 @@
  */
 package com.teragrep.pth10;
 
+import com.teragrep.pth10.ast.time.DecreasedEpochValue;
 import com.teragrep.pth10.ast.time.TimeQualifier;
+import com.teragrep.pth10.ast.time.TimeQualifierInterface;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
@@ -221,6 +223,24 @@ public class TimeQualifierTest {
         el.setAttribute("value", Long.toString(1730325600L));
 
         Assertions.assertEquals(expected, tq.column());
+        Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
+    }
+
+    @Test
+    public void testDecreaseDecorator() {
+        long decreaseAmount = 1000L;
+        final String value = "2024-31-10";
+        final String timeformat = "%Y-%d-%m";
+        final int earliestType = DPLLexer.EARLIEST;
+        final Document doc = Assertions
+                .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
+        TimeQualifierInterface tq = new DecreasedEpochValue(
+                new TimeQualifier(value, timeformat, earliestType, doc),
+                decreaseAmount
+        );
+        Element el = doc.createElement("earliest");
+        el.setAttribute("operation", "GE");
+        el.setAttribute("value", Long.toString(1730325600L - decreaseAmount));
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
 

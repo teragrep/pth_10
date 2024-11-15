@@ -49,6 +49,8 @@ import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.EmitMode;
+import com.teragrep.pth10.ast.time.DecreasedEpochValue;
+import com.teragrep.pth10.ast.time.TimeQualifierInterface;
 import com.teragrep.pth10.ast.time.TimeQualifier;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
@@ -188,20 +190,27 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
 
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
-
-        if (tq.isStartTime()) {
-            // TODO: this is a hack to decrease 3 horus from query start time to work with database timezone
-            startTime = tq.epoch() - (3 * 60 * 60 * 1000);
+        final TimeQualifierInterface timeQualifierInterface = new TimeQualifier(
+                value,
+                catCtx.getTimeFormatString(),
+                node.getSymbol().getType(),
+                doc
+        );
+        final ElementNode returnValue;
+        if (timeQualifierInterface.isStartTime()) {
+            long decreaseValue = 3 * 60 * 60 * 1000;
+            startTime = timeQualifierInterface.epoch() - decreaseValue;
+            returnValue = new ElementNode(new DecreasedEpochValue(timeQualifierInterface, decreaseValue).xmlElement());
         }
-        else if (tq.isEndTime()) {
-            endTime = tq.epoch();
+        else if (timeQualifierInterface.isEndTime()) {
+            endTime = timeQualifierInterface.epoch();
+            returnValue = new ElementNode(timeQualifierInterface.xmlElement());
         }
         else {
             throw new UnsupportedOperationException("Unexpected token: " + node.getSymbol().getText());
         }
 
-        return new ElementNode(tq.xmlElement());
+        return returnValue;
     }
 
     /**
