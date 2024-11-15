@@ -191,6 +191,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
 
         if (tq.isStartTime()) {
+            // TODO: this is a hack to decrease 3 horus from query start time to work with database timezone
             startTime = tq.epoch() - (3 * 60 * 60 * 1000);
         }
         else if (tq.isEndTime()) {
