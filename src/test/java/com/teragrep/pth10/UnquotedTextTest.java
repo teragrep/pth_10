@@ -62,6 +62,26 @@ public class UnquotedTextTest {
         Assertions.assertEquals(expected, actual);
     }
 
+    // test with single quotes
+    @Test
+    public void unquoteSingleQuotesProvidedInConstructorTest() {
+        String original = "'foo'";
+        String expected = "foo";
+
+        String actual = new UnquotedText(new TextString(original), "'").read();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    // test with single quotes
+    @Test
+    public void unquoteDifferentQuotesProvidedInConstructorTest() {
+        String original = "'foo'";
+        String expected = "'foo'";
+
+        String actual = new UnquotedText(new TextString(original), "`", "\"").read();
+        Assertions.assertEquals(expected, actual);
+    }
+
     // test with empty quotes
     @Test
     public void unquoteEmptyQuotesTest() {

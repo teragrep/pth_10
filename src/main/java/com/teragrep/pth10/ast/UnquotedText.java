@@ -46,8 +46,6 @@
 package com.teragrep.pth10.ast;
 
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Decorator for unquoting text.
@@ -55,14 +53,29 @@ import java.util.regex.Pattern;
 public class UnquotedText implements Text {
 
     private final Text origin;
+    private final String[] quoteCharacters;
 
     public UnquotedText(Text origin) {
+        this(origin, new String[] {
+                "\"", "'", "`"
+        });
+    }
+
+    public UnquotedText(Text origin, String ... quoteCharacters) {
         this.origin = origin;
+        this.quoteCharacters = quoteCharacters;
     }
 
     @Override
     public String read() {
+        validate();
         return stripQuotes(this.origin.read());
+    }
+
+    private void validate() {
+        if (quoteCharacters.length <= 0) {
+            throw new IllegalArgumentException("Quote character(s) must be provided!");
+        }
     }
 
     /**
@@ -71,27 +84,18 @@ public class UnquotedText implements Text {
      * @return string with stripped quotes
      */
     private String stripQuotes(final String quoted) {
-        final Matcher m = Pattern.compile("^(\"(?<dq>.*)\")$|^('(?<sq>.*)')$|^(`(?<bt>.*)`)$").matcher(quoted);
+        String rv = quoted;
 
-        // If no matches, return original string as-is
-        if (!m.find()) {
-            return quoted;
+        // Removes outer quotes
+        for (int i = 0; i < quoteCharacters.length; i++) {
+            final String quoteCharacter = quoteCharacters[i];
+            if (rv.startsWith(quoteCharacter) && rv.endsWith(quoteCharacter)) {
+                rv = rv.substring(quoteCharacter.length(), rv.length() - quoteCharacter.length());
+                break;
+            }
         }
 
-        // Check if matching group exists, and return if so
-        if (m.start("dq") != -1) {
-            return m.group("dq");
-        }
-
-        if (m.start("sq") != -1) {
-            return m.group("sq");
-        }
-
-        if (m.start("bt") != -1) {
-            return m.group("bt");
-        }
-
-        throw new IllegalStateException("Pattern matched text, but without a matching group");
+        return rv;
     }
 
     @Override
