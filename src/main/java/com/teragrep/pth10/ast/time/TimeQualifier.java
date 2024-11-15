@@ -53,7 +53,7 @@ import org.w3c.dom.Element;
 
 import java.util.Objects;
 
-public final class TimeQualifier {
+public final class TimeQualifier implements TimeQualifierInterface {
 
     private final int token;
     private final String value;
