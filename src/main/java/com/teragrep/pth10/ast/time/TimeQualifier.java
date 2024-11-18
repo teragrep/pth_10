@@ -45,128 +45,20 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.functions;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.Objects;
+public interface TimeQualifier {
 
-public final class TimeQualifier implements TimeQualifierInterface {
+    Element xmlElement();
 
-    private final int token;
-    private final String value;
-    private final String timeformat;
-    private final Document doc;
+    boolean isStartTime();
 
-    public TimeQualifier(final String value, final String timeformat, final int type, final Document doc) {
-        this.token = type;
-        this.value = value;
-        this.timeformat = timeformat;
-        this.doc = doc;
-    }
+    boolean isEndTime();
 
-    public long epoch() {
-        if (isUnixEpoch()) {
-            try {
-                return Long.parseLong(value);
-            }
-            catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Invalid unix epoch: <[" + value + "]>", e);
-            }
-        }
+    long epoch();
 
-        if (isEndTime()) {
-            return new RoundedUpTimestamp(new InstantTimestamp(value, timeformat)).instant().getEpochSecond();
-        }
-        return new InstantTimestamp(value, timeformat).instant().getEpochSecond();
-    }
+    Column column();
 
-    public Column column() {
-        Column col = new Column("`_time`");
-
-        switch (token) {
-            case DPLLexer.EARLIEST:
-            case DPLLexer.INDEX_EARLIEST:
-            case DPLLexer.STARTTIMEU: {
-                col = col.geq(functions.from_unixtime(functions.lit(epoch())));
-                break;
-            }
-            case DPLLexer.LATEST:
-            case DPLLexer.INDEX_LATEST:
-            case DPLLexer.ENDTIMEU: {
-                col = col.lt(functions.from_unixtime(functions.lit(epoch())));
-                break;
-            }
-            default: {
-                throw new RuntimeException("TimeQualifier <" + token + "> not implemented yet.");
-            }
-        }
-
-        return col;
-    }
-
-    public Element xmlElement() {
-        // Handle date calculations
-        Element el;
-        switch (token) {
-            case DPLLexer.EARLIEST:
-            case DPLLexer.STARTTIMEU: {
-                el = doc.createElement("earliest");
-                el.setAttribute("operation", "GE");
-                break;
-            }
-            case DPLLexer.INDEX_EARLIEST: {
-                el = doc.createElement("index_earliest");
-                el.setAttribute("operation", "GE");
-                break;
-            }
-            case DPLLexer.LATEST:
-            case DPLLexer.ENDTIMEU: {
-                el = doc.createElement("latest");
-                el.setAttribute("operation", "LE");
-                break;
-            }
-            case DPLLexer.INDEX_LATEST: {
-                el = doc.createElement("index_latest");
-                el.setAttribute("operation", "LE");
-                break;
-            }
-            default: {
-                throw new RuntimeException("TimeQualifier <" + token + "> not implemented yet.");
-            }
-        }
-
-        el.setAttribute("value", Long.toString(epoch()));
-        return el;
-    }
-
-    public boolean isStartTime() {
-        return token == DPLLexer.EARLIEST || token == DPLLexer.INDEX_EARLIEST || token == DPLLexer.STARTTIMEU;
-    }
-
-    public boolean isEndTime() {
-        return token == DPLLexer.LATEST || token == DPLLexer.INDEX_LATEST || token == DPLLexer.ENDTIMEU;
-    }
-
-    public boolean isUnixEpoch() {
-        return token == DPLLexer.STARTTIMEU || token == DPLLexer.ENDTIMEU;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        TimeQualifier that = (TimeQualifier) o;
-        return Objects.equals(token, that.token) && Objects.equals(value, that.value)
-                && Objects.equals(timeformat, that.timeformat) && Objects.equals(doc, that.doc);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(token, value, timeformat, doc);
-    }
+    boolean isUnixEpoch();
 }
