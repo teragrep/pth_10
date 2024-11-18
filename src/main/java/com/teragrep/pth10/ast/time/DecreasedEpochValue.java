@@ -45,25 +45,30 @@
  */
 package com.teragrep.pth10.ast.time;
 
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.functions;
 import org.w3c.dom.Element;
 
+import java.util.Objects;
+
 /** Decreases the amount from qualifier epoch value */
-public class DecreasedEpochValue implements TimeQualifierInterface {
+public final class DecreasedEpochValue implements TimeQualifier {
 
-    TimeQualifierInterface origin;
-    long decreaseEpochValue;
+    private final TimeQualifier origin;
+    private final long decreaseAmount;
 
-    public DecreasedEpochValue(TimeQualifierInterface origin, long decreaseEpochValue) {
+    public DecreasedEpochValue(final TimeQualifier origin, final long decreaseAmount) {
         this.origin = origin;
-        this.decreaseEpochValue = decreaseEpochValue;
+        this.decreaseAmount = decreaseAmount;
     }
 
     @Override
     public Element xmlElement() {
-        final Element el = origin.xmlElement();
-        final long newValue = Long.parseLong(el.getAttribute("value")) - decreaseEpochValue;
-        el.setAttribute("value", Long.toString(newValue));
-        return el;
+        final long decreasedValue = origin.epoch() - decreaseAmount;
+        final Element element = origin.xmlElement();
+        // set decreased value
+        element.setAttribute("value", Long.toString(decreasedValue));
+        return element;
     }
 
     @Override
@@ -78,6 +83,40 @@ public class DecreasedEpochValue implements TimeQualifierInterface {
 
     @Override
     public long epoch() {
-        return origin.epoch() - decreaseEpochValue;
+        return origin.epoch() - decreaseAmount;
+    }
+
+    @Override
+    public Column column() {
+        final Column timeColumn = new Column("`_time`");
+        final Column retrunColumn;
+        if (origin.isStartTime()) {
+            retrunColumn = timeColumn.geq(functions.from_unixtime(functions.lit(epoch())));
+        }
+        else if (origin.isEndTime()) {
+            retrunColumn = timeColumn.lt(functions.from_unixtime(functions.lit(epoch())));
+        }
+        else {
+            retrunColumn = origin.column();
+        }
+        return retrunColumn;
+    }
+
+    @Override
+    public boolean isUnixEpoch() {
+        return origin.isUnixEpoch();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
+            return false;
+        final DecreasedEpochValue cast = (DecreasedEpochValue) o;
+        return decreaseAmount == cast.decreaseAmount && Objects.equals(origin, cast.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, decreaseAmount);
     }
 }
