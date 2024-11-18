@@ -138,7 +138,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         else {
             LOGGER
                     .error(
-                            "Zeppelin config was not provided to the Teragrep command: host and port will be set as default, {}",
+                            "External configuration values were not provided to the Teragrep command: host and port will be set as default, {}",
                             "and no destination will be enforced."
                     );
         }
