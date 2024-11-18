@@ -89,17 +89,17 @@ public final class DecreasedEpochValue implements TimeQualifier {
     @Override
     public Column column() {
         final Column timeColumn = new Column("`_time`");
-        final Column retrunColumn;
+        final Column rv;
         if (origin.isStartTime()) {
-            retrunColumn = timeColumn.geq(functions.from_unixtime(functions.lit(epoch())));
+            rv = timeColumn.geq(functions.from_unixtime(functions.lit(epoch())));
         }
         else if (origin.isEndTime()) {
-            retrunColumn = timeColumn.lt(functions.from_unixtime(functions.lit(epoch())));
+            rv = timeColumn.lt(functions.from_unixtime(functions.lit(epoch())));
         }
         else {
-            retrunColumn = origin.column();
+            rv = origin.column();
         }
-        return retrunColumn;
+        return rv;
     }
 
     @Override
