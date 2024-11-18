@@ -50,8 +50,8 @@ import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.EmitMode;
 import com.teragrep.pth10.ast.time.DecreasedEpochValue;
-import com.teragrep.pth10.ast.time.TimeQualifierInterface;
 import com.teragrep.pth10.ast.time.TimeQualifier;
+import com.teragrep.pth10.ast.time.TimeQualifierImpl;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
@@ -190,21 +190,22 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
 
-        final TimeQualifierInterface timeQualifierInterface = new TimeQualifier(
+        final TimeQualifier timeQualifier = new TimeQualifierImpl(
                 value,
                 catCtx.getTimeFormatString(),
                 node.getSymbol().getType(),
                 doc
         );
         final ElementNode returnValue;
-        if (timeQualifierInterface.isStartTime()) {
-            long decreaseValue = 3 * 60 * 60 * 1000;
-            startTime = timeQualifierInterface.epoch() - decreaseValue;
-            returnValue = new ElementNode(new DecreasedEpochValue(timeQualifierInterface, decreaseValue).xmlElement());
+        if (timeQualifier.isStartTime()) {
+            final long decreaseValue = 3 * 60 * 60 * 1000; // decrease 3 hours from earliest
+            final TimeQualifier decreasedQualifier = new DecreasedEpochValue(timeQualifier, decreaseValue);
+            startTime = decreasedQualifier.epoch();
+            returnValue = new ElementNode(decreasedQualifier.xmlElement());
         }
-        else if (timeQualifierInterface.isEndTime()) {
-            endTime = timeQualifierInterface.epoch();
-            returnValue = new ElementNode(timeQualifierInterface.xmlElement());
+        else if (timeQualifier.isEndTime()) {
+            endTime = timeQualifier.epoch();
+            returnValue = new ElementNode(timeQualifier.xmlElement());
         }
         else {
             throw new UnsupportedOperationException("Unexpected token: " + node.getSymbol().getText());
@@ -225,7 +226,12 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
 
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
+        TimeQualifierImpl tq = new TimeQualifierImpl(
+                value,
+                catCtx.getTimeFormatString(),
+                node.getSymbol().getType(),
+                doc
+        );
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();
