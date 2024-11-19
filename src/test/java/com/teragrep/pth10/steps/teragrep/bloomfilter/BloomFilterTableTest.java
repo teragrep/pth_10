@@ -87,7 +87,6 @@ class BloomFilterTableTest {
     void testInvalidInputCharacters() {
         Properties properties = getDefaultProperties();
         String injection = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
-        properties.put("dpl.pth_06.bloom.table.name", injection);
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable injectionTable = new BloomFilterTable(config, injection, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, injectionTable::create);
@@ -102,7 +101,6 @@ class BloomFilterTableTest {
     void testInputOverMaxLimit() {
         Properties properties = getDefaultProperties();
         String tooLongName = "testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati";
-        properties.put("dpl.pth_06.bloom.table.name", tooLongName);
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable table = new BloomFilterTable(config, tooLongName, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
@@ -117,7 +115,6 @@ class BloomFilterTableTest {
     void testCreateToDatabase() {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable table = new BloomFilterTable(config, tableName, true);
         table.create();
@@ -140,13 +137,13 @@ class BloomFilterTableTest {
     }
 
     @Test
-    void testCreateToDatabaseFailure() {
+    void testCreateExceptionOnConstraintFailure() {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table = new BloomFilterTable(config);
-        Assertions.assertThrows(RuntimeException.class, table::create);
+        BloomFilterTable table = new BloomFilterTable(config, tableName);
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
+        Assertions.assertTrue(e.getMessage().contains("Schema \"journaldb\" not found"));
     }
 
     @Test
@@ -176,7 +173,6 @@ class BloomFilterTableTest {
     void testNotEqualsIgnoreConstraints() {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable table1 = new BloomFilterTable(config, true);
         BloomFilterTable table2 = new BloomFilterTable(config, false);

@@ -150,9 +150,17 @@ class FilterTypesTest {
     @Test
     public void testNotEquals() {
         Properties properties1 = new Properties();
-        properties1.put("dpl.pth_06.bloom.table.name", "test");
         Properties properties2 = new Properties();
-        properties2.put("dpl.pth_06.bloom.table.name", "not_test");
+        properties1
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[{expected: 10000, fpp: 0.01}, {expected: 20000, fpp: 0.03}, {expected: 30000, fpp: 0.05}]"
+                );
+        properties2
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[{expected: 20000, fpp: 0.01}, {expected: 20000, fpp: 0.03}, {expected: 30000, fpp: 0.05}]"
+                );
         Config config1 = ConfigFactory.parseProperties(properties1);
         Config config2 = ConfigFactory.parseProperties(properties2);
         FilterTypes filterTypes1 = new FilterTypes(config1);
