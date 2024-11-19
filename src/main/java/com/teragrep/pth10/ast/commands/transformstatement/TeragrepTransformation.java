@@ -53,6 +53,13 @@ import com.teragrep.pth10.ast.bo.StringNode;
 import com.teragrep.pth10.ast.bo.Token;
 import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst;
 import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementXML;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.ModeFromBloomContext;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.EstimateColumnFromBloomContext;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.InputColumnFromBloomContext;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.OutputColumnFromBloomContext;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.RegexValueFromBloomContext;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.TableNameFromBloomContext;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.ContextValue;
 import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.teragrep.*;
 import com.teragrep.pth10.steps.teragrep.AbstractTokenizerStep;
@@ -463,99 +470,50 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
     // exec bloom (create|update|estimate)
     @Override
-    public Node visitT_bloomModeParameter(DPLParser.T_bloomModeParameterContext ctx) {
-        TeragrepBloomStep.BloomMode mode = TeragrepBloomStep.BloomMode.DEFAULT;
-        String inputCol = null;
-        String outputCol = null;
-        String estimateCol = null;
-        String tableName = null;
-        String regex = null;
-        if (ctx.t_bloomOptionParameter() != null) {
-            if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_CREATE() != null) {
-                // bloom create
-                mode = TeragrepBloomStep.BloomMode.CREATE;
-            }
-            else if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_UPDATE() != null) {
-                // bloom update
-                mode = TeragrepBloomStep.BloomMode.UPDATE;
-            }
-            else if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_ESTIMATE() != null) {
-                // bloom estimate
-                mode = TeragrepBloomStep.BloomMode.ESTIMATE;
-            }
+    public Node visitT_bloomModeParameter(final DPLParser.T_bloomModeParameterContext ctx) {
+        // values from context
+        final ContextValue<TeragrepBloomStep.BloomMode> mode = new ModeFromBloomContext(ctx);
+        final ContextValue<String> inputCol = new InputColumnFromBloomContext(ctx);
+        final ContextValue<String> outputCol = new OutputColumnFromBloomContext(ctx, inputCol.value());
+        final ContextValue<String> estimateCol = new EstimateColumnFromBloomContext(ctx, inputCol.value());
+        final ContextValue<String> tableName = new TableNameFromBloomContext(ctx);
+        final ContextValue<String> regex = new RegexValueFromBloomContext(ctx);
 
-            if (ctx.t_bloomOptionParameter().t_tableParameter() != null) {
-                tableName = new UnquotedText(
-                        new TextString(ctx.t_bloomOptionParameter().t_tableParameter().fieldType().getText())
-                ).read();
-            }
-            else {
-                throw new IllegalArgumentException("Missing table parameter");
-            }
-
-            if (ctx.t_bloomOptionParameter().t_regexParameter() != null) {
-                regex = new UnquotedText(
-                        new TextString(ctx.t_bloomOptionParameter().t_regexParameter().stringType().getText())
-                ).read();
-            }
-            else {
-                throw new IllegalArgumentException("Missing regex parameter");
-            }
-
-            if (ctx.t_bloomOptionParameter().t_inputParameter() != null) {
-                inputCol = new UnquotedText(
-                        new TextString(ctx.t_bloomOptionParameter().t_inputParameter().fieldType().getText())
-                ).read();
-            }
-            else {
-                inputCol = "tokens";
-            }
-
-            if (ctx.t_bloomOptionParameter().t_outputParameter() != null) {
-                outputCol = new UnquotedText(
-                        new TextString(ctx.t_bloomOptionParameter().t_outputParameter().fieldType().getText())
-                ).read();
-            }
-            else {
-                outputCol = String.format("estimate(%s)", inputCol);
-            }
-
-            if (ctx.t_bloomOptionParameter().t_estimatesParameter() != null) {
-                estimateCol = new UnquotedText(
-                        new TextString(ctx.t_bloomOptionParameter().t_estimatesParameter().fieldType().getText())
-                ).read();
-            }
-            else {
-                estimateCol = String.format("estimate(%s)", inputCol);
-            }
-        }
-
-        TeragrepBloomStep bloomStep = new TeragrepBloomStep(
-                this.zplnConfig,
-                mode,
-                tableName,
-                regex,
-                inputCol,
-                outputCol,
-                estimateCol
-        );
-
-        if (mode == TeragrepBloomStep.BloomMode.CREATE || mode == TeragrepBloomStep.BloomMode.UPDATE) {
-            // create aggregate step to run before bloom create and bloom update
-            TeragrepBloomStep aggregateStep = new TeragrepBloomStep(
-                    this.zplnConfig,
+        final Node rv;
+        if (mode.value() == TeragrepBloomStep.BloomMode.CREATE || mode.value() == TeragrepBloomStep.BloomMode.UPDATE) {
+            // create an aggregate step to run before bloom create and bloom update
+            final TeragrepBloomStep aggregateStep = new TeragrepBloomStep(
+                    zplnConfig,
                     TeragrepBloomStep.BloomMode.AGGREGATE,
-                    tableName,
-                    regex,
-                    inputCol,
-                    outputCol,
-                    estimateCol
+                    tableName.value(),
+                    regex.value(),
+                    inputCol.value(),
+                    outputCol.value(),
+                    estimateCol.value()
             );
-
-            return new StepListNode(Arrays.asList(aggregateStep, bloomStep));
+            // Create a step with table and regex parameters needed (create|update)
+            final TeragrepBloomStep bloomStepWithRegexAndTable = new TeragrepBloomStep(
+                    zplnConfig,
+                    mode.value(),
+                    tableName.value(),
+                    regex.value(),
+                    inputCol.value(),
+                    outputCol.value(),
+                    estimateCol.value()
+            );
+            rv = new StepListNode(Arrays.asList(aggregateStep, bloomStepWithRegexAndTable));
         }
-
-        return new StepNode(bloomStep);
+        else {
+            final TeragrepBloomStep bloomStep = new TeragrepBloomStep(
+                    this.zplnConfig,
+                    mode.value(),
+                    inputCol.value(),
+                    outputCol.value(),
+                    estimateCol.value()
+            );
+            rv = new StepNode(bloomStep);
+        }
+        return rv;
     }
 
     @Override
