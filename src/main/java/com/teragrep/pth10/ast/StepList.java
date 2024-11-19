@@ -237,6 +237,12 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
                 }
             }
 
+            if (step.hasProperty(AbstractStep.CommandProperty.NO_PRECEDING_AGGREGATE)) {
+                if (aggregateCount > 0) {
+                    throw new RuntimeException("Step '" + step + "' cannot be used after aggregations!");
+                }
+            }
+
             if (step.hasProperty(AbstractStep.CommandProperty.SEQUENTIAL_ONLY)) {
                 LOGGER.info("[Analyze] Sequential only command: <{}>", step);
                 // set the breakpoint just once

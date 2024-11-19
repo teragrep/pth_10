@@ -66,6 +66,7 @@ public class TeragrepSyslogStep extends AbstractStep {
     public TeragrepSyslogStep(String relpHost, int relpPort) {
         this.relpHost = relpHost;
         this.relpPort = relpPort;
+        this.properties.add(CommandProperty.NO_PRECEDING_AGGREGATE);
     }
 
     @Override
