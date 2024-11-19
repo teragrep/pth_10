@@ -88,6 +88,7 @@ class FilterTypesTest {
         });
 
     }
+
     @Test
     public void testSortedMapMethod() {
         Config config = ConfigFactory.parseProperties(defaultProperties());
@@ -123,7 +124,7 @@ class FilterTypesTest {
             int loops = 0;
             List<Long> expectedSizeList = new ArrayList<>();
             List<Double> fppList = new ArrayList<>();
-            while(result.next()) {
+            while (result.next()) {
                 expectedSizeList.add(result.getLong(2));
                 fppList.add(result.getDouble(3));
                 Assertions.assertEquals(regex, result.getString(4));
@@ -138,7 +139,8 @@ class FilterTypesTest {
     }
 
     @Test
-    public void testEquals() {;
+    public void testEquals() {
+        ;
         Config config = ConfigFactory.parseProperties(defaultProperties());
         FilterTypes filterTypes1 = new FilterTypes(config);
         FilterTypes filterTypes2 = new FilterTypes(config);
