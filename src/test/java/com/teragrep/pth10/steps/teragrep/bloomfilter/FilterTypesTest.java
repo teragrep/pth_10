@@ -49,13 +49,10 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.spark.util.sketch.BloomFilter;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,7 +116,7 @@ class FilterTypesTest {
     public void testWriteFilterTypesToDatabase() {
         String regex = "test_regex";
         Config config = ConfigFactory.parseProperties(defaultProperties());
-        Assertions.assertDoesNotThrow(() -> new FilterTypes(config).saveFilterTypesToDatabase(regex));
+        Assertions.assertDoesNotThrow(() -> new FilterTypes(config).saveToDatabase(regex));
 
         Assertions.assertDoesNotThrow(() -> {
             ResultSet result = conn.prepareStatement("SELECT * FROM filtertype").executeQuery();

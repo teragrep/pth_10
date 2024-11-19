@@ -143,7 +143,7 @@ public final class TeragrepBloomStep extends AbstractStep {
      * @return Dataset unmodified
      */
     private Dataset<Row> createBloomFilter(Dataset<Row> dataset) {
-        new FilterTypes(zeppelinConfig).saveFilterTypesToDatabase(regex);
+        new FilterTypes(zeppelinConfig).saveToDatabase(regex);
         new BloomFilterTable(zeppelinConfig, tableName).create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex));
         return dataset;
@@ -156,7 +156,7 @@ public final class TeragrepBloomStep extends AbstractStep {
      * @return Dataset unmodified
      */
     private Dataset<Row> updateBloomFilter(Dataset<Row> dataset) {
-        new FilterTypes(zeppelinConfig).saveFilterTypesToDatabase(regex);
+        new FilterTypes(zeppelinConfig).saveToDatabase(regex);
         new BloomFilterTable(zeppelinConfig, tableName).create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex, true));
         return dataset;

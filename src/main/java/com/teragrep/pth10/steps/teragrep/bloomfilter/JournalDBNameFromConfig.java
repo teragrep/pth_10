@@ -49,7 +49,7 @@ import com.typesafe.config.Config;
 
 import java.util.Objects;
 
-public class JournalDBNameFromConfig {
+public final class JournalDBNameFromConfig {
 
     private final Config config;
 

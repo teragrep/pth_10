@@ -125,7 +125,7 @@ public final class FilterTypes implements Serializable {
     }
 
     /** Save filter types with a given regex pattern */
-    public void saveFilterTypesToDatabase(String regex) {
+    public void saveToDatabase(String regex) {
         final Connection connection = new LazyConnection(config).get();
         final SortedMap<Long, Double> filterSizeMap = sortedMap();
         for (final Map.Entry<Long, Double> entry : filterSizeMap.entrySet()) {

@@ -84,8 +84,6 @@ class TeragrepBloomFilterTest {
                         "[" + "{expected: 10000, fpp: 0.01}," + "{expected: 20000, fpp: 0.03},"
                                 + "{expected: 30000, fpp: 0.05}" + "]"
                 );
-        properties.put("dpl.pth_06.bloom.pattern", pattern);
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
         lazyConnection = new LazyConnection(config);
         Connection conn = lazyConnection.get();
