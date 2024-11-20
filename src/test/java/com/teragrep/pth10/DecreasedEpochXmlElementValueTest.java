@@ -45,12 +45,11 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.time.DecreasedEpochValue;
+import com.teragrep.pth10.ast.time.DecreasedEpochXmlElementValue;
 import com.teragrep.pth10.ast.time.TimeQualifier;
 import com.teragrep.pth10.ast.time.TimeQualifierImpl;
 import com.teragrep.pth_03.antlr.DPLLexer;
-import org.apache.spark.sql.Column;
-import org.apache.spark.sql.functions;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
@@ -58,7 +57,7 @@ import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
-public class DecreasedEpochValueTest {
+public class DecreasedEpochXmlElementValueTest {
 
     @Test
     public void testDecreasedEpochValueDecorator() {
@@ -68,7 +67,7 @@ public class DecreasedEpochValueTest {
         final int earliestType = DPLLexer.EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        final TimeQualifier timeQualifier = new DecreasedEpochValue(
+        final TimeQualifier timeQualifier = new DecreasedEpochXmlElementValue(
                 new TimeQualifierImpl(value, timeformat, earliestType, doc),
                 decreaseAmount
         );
@@ -78,24 +77,8 @@ public class DecreasedEpochValueTest {
         expectedElement.setAttribute("value", Long.toString(expectedEpoch));
         Assertions.assertTrue(timeQualifier.isStartTime());
         Assertions.assertEquals(expectedElement.toString(), timeQualifier.xmlElement().toString());
-        Assertions.assertEquals(expectedEpoch, timeQualifier.epoch());
-    }
-
-    @Test
-    public void testColOverride() {
-        final long decreaseAmount = 1000L;
-        final String value = "2024-31-10";
-        final long valueAsEpoch = 1730325600L - decreaseAmount;
-        final String timeformat = "%Y-%d-%m";
-        final int earliestType = DPLLexer.EARLIEST;
-        final Document doc = Assertions
-                .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-
-        TimeQualifierImpl origin = new TimeQualifierImpl(value, timeformat, earliestType, doc);
-        final TimeQualifier decreased = new DecreasedEpochValue(origin, decreaseAmount);
-        Column expectedCol = new Column("`_time`").geq(functions.from_unixtime(functions.lit(valueAsEpoch)));
-        Assertions.assertEquals(expectedCol, decreased.column());
-        Assertions.assertNotEquals(expectedCol, origin.column());
+        // epoch() value should remain unchanged
+        Assertions.assertEquals(expectedEpoch + decreaseAmount, timeQualifier.epoch());
     }
 
     @Test
@@ -108,8 +91,8 @@ public class DecreasedEpochValueTest {
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
 
         TimeQualifierImpl origin = new TimeQualifierImpl(value, timeformat, earliestType, doc);
-        final TimeQualifier decreased1 = new DecreasedEpochValue(origin, decreaseAmount);
-        final TimeQualifier decreased2 = new DecreasedEpochValue(origin, decreaseAmount);
+        final TimeQualifier decreased1 = new DecreasedEpochXmlElementValue(origin, decreaseAmount);
+        final TimeQualifier decreased2 = new DecreasedEpochXmlElementValue(origin, decreaseAmount);
 
         Assertions.assertEquals(decreased1, decreased2);
     }
@@ -124,8 +107,8 @@ public class DecreasedEpochValueTest {
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
 
         TimeQualifierImpl origin = new TimeQualifierImpl(value, timeformat, earliestType, doc);
-        final TimeQualifier decreased1 = new DecreasedEpochValue(origin, decreaseAmount);
-        final TimeQualifier decreased2 = new DecreasedEpochValue(origin, decreaseAmount - 1000);
+        final TimeQualifier decreased1 = new DecreasedEpochXmlElementValue(origin, decreaseAmount);
+        final TimeQualifier decreased2 = new DecreasedEpochXmlElementValue(origin, decreaseAmount - 1000);
 
         Assertions.assertNotEquals(decreased1, decreased2);
     }
@@ -140,10 +123,19 @@ public class DecreasedEpochValueTest {
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
 
         TimeQualifierImpl origin = new TimeQualifierImpl(value, timeformat, earliestType, doc);
-        final TimeQualifier decreased1 = new DecreasedEpochValue(origin, decreaseAmount);
-        final TimeQualifier decreased2 = new DecreasedEpochValue(origin, decreaseAmount);
-        final TimeQualifier decreasedNotEq = new DecreasedEpochValue(origin, decreaseAmount - 1000);
+        final TimeQualifier decreased1 = new DecreasedEpochXmlElementValue(origin, decreaseAmount);
+        final TimeQualifier decreased2 = new DecreasedEpochXmlElementValue(origin, decreaseAmount);
+        final TimeQualifier decreasedNotEq = new DecreasedEpochXmlElementValue(origin, decreaseAmount - 1000);
         Assertions.assertEquals(decreased1.hashCode(), decreased2.hashCode());
         Assertions.assertNotEquals(decreased1.hashCode(), decreasedNotEq.hashCode());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(DecreasedEpochXmlElementValue.class)
+                .withNonnullFields("origin")
+                .withNonnullFields("decreaseAmount")
+                .verify();
     }
 }
