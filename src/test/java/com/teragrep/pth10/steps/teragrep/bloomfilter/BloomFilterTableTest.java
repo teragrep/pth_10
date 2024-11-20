@@ -56,7 +56,7 @@ import java.util.List;
 import java.util.Properties;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BloomFilterTableTest {
+public class BloomFilterTableTest {
 
     final String username = "sa";
     final String password = "";
@@ -84,7 +84,7 @@ class BloomFilterTableTest {
     }
 
     @Test
-    void testInvalidInputCharacters() {
+    public void testInvalidInputCharacters() {
         Properties properties = getDefaultProperties();
         String injection = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
         Config config = ConfigFactory.parseProperties(properties);
@@ -143,7 +143,9 @@ class BloomFilterTableTest {
         Config config = ConfigFactory.parseProperties(properties);
         BloomFilterTable table = new BloomFilterTable(config, tableName);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
-        Assertions.assertTrue(e.getMessage().contains("Schema \"journaldb\" not found"));
+        String expectedMessage = "Error creating bloom filter table: org.h2.jdbc.JdbcSQLSyntaxErrorException: Schema \"journaldb\" not found; SQL statement:\n" +
+                "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL,CONSTRAINT `test_table_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)ON DELETE CASCADE,CONSTRAINT `test_table_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)ON DELETE CASCADE); [90079-224]";
+        Assertions.assertEquals(expectedMessage, e.getMessage());
     }
 
     @Test
@@ -174,8 +176,8 @@ class BloomFilterTableTest {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table1 = new BloomFilterTable(config, true);
-        BloomFilterTable table2 = new BloomFilterTable(config, false);
+        BloomFilterTable table1 = new BloomFilterTable(config, tableName, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, tableName, false);
         table1.create();
         Assertions.assertNotEquals(table1, table2);
     }

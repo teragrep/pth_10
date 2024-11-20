@@ -74,10 +74,14 @@ public final class TableSQL {
     }
 
     public TableSQL(String name, String journalDBName, boolean ignoreConstraints) {
+        this(name, journalDBName, ignoreConstraints, Pattern.compile("^[A-Za-z0-9_]+$"));
+    }
+
+    public TableSQL(String name, String journalDBName, boolean ignoreConstraints, Pattern validPattern) {
         this.name = name;
         this.journalDBName = journalDBName;
         this.ignoreConstraints = ignoreConstraints;
-        this.validPattern = Pattern.compile("^[A-Za-z0-9_]+$");
+        this.validPattern = validPattern;
     }
 
     private void validSQLName(final String sql) {

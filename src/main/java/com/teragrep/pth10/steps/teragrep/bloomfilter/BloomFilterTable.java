@@ -60,14 +60,6 @@ public final class BloomFilterTable {
     private final TableSQL tableSQL;
     private final LazyConnection conn;
 
-    public BloomFilterTable(Config config) {
-        this(config, "default_table_name", new LazyConnection(config), false);
-    }
-
-    public BloomFilterTable(Config config, boolean ignoreConstraints) {
-        this(config, "default_table_name", new LazyConnection(config), ignoreConstraints);
-    }
-
     public BloomFilterTable(Config config, String tableName) {
         this(config, tableName, new LazyConnection(config), false);
     }
