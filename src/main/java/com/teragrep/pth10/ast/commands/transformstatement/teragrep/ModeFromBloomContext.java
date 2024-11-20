@@ -45,29 +45,27 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.teragrep;
 
+import com.teragrep.pth10.ast.ContextValue;
 import com.teragrep.pth10.steps.teragrep.TeragrepBloomStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 
 public final class ModeFromBloomContext implements ContextValue<TeragrepBloomStep.BloomMode> {
 
-    private final DPLParser.T_bloomModeParameterContext ctx;
+    private final DPLParser.T_bloomOptionParameterContext ctx;
 
-    public ModeFromBloomContext(final DPLParser.T_bloomModeParameterContext ctx) {
+    public ModeFromBloomContext(final DPLParser.T_bloomOptionParameterContext ctx) {
         this.ctx = ctx;
     }
 
     public TeragrepBloomStep.BloomMode value() {
-        if (ctx.t_bloomOptionParameter() == null) {
-            throw new IllegalArgumentException("Bloom option parameter was null");
-        }
         final TeragrepBloomStep.BloomMode mode;
-        if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_CREATE() != null) {
+        if (ctx.COMMAND_TERAGREP_MODE_CREATE() != null) {
             mode = TeragrepBloomStep.BloomMode.CREATE;
         }
-        else if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_UPDATE() != null) {
+        else if (ctx.COMMAND_TERAGREP_MODE_UPDATE() != null) {
             mode = TeragrepBloomStep.BloomMode.UPDATE;
         }
-        else if (ctx.t_bloomOptionParameter().COMMAND_TERAGREP_MODE_ESTIMATE() != null) {
+        else if (ctx.COMMAND_TERAGREP_MODE_ESTIMATE() != null) {
             mode = TeragrepBloomStep.BloomMode.ESTIMATE;
         }
         else {

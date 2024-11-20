@@ -43,8 +43,9 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.transformstatement.teragrep;
+package com.teragrep.pth10.ast;
 
+/** Interface to get value from Parser context */
 public interface ContextValue<T> {
 
     T value();

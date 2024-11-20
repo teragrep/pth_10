@@ -59,7 +59,7 @@ import com.teragrep.pth10.ast.commands.transformstatement.teragrep.InputColumnFr
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.OutputColumnFromBloomContext;
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.RegexValueFromBloomContext;
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.TableNameFromBloomContext;
-import com.teragrep.pth10.ast.commands.transformstatement.teragrep.ContextValue;
+import com.teragrep.pth10.ast.ContextValue;
 import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.teragrep.*;
 import com.teragrep.pth10.steps.teragrep.AbstractTokenizerStep;
@@ -471,6 +471,14 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
     // exec bloom (create|update|estimate)
     @Override
     public Node visitT_bloomModeParameter(final DPLParser.T_bloomModeParameterContext ctx) {
+        if (ctx.t_bloomOptionParameter() == null) {
+            throw new IllegalArgumentException("Bloom option parameter in '| teragrep exec bloom' was null");
+        }
+        return visit(ctx.t_bloomOptionParameter());
+    }
+
+    @Override
+    public Node visitT_bloomOptionParameter(final DPLParser.T_bloomOptionParameterContext ctx) {
         // values from context
         final ContextValue<TeragrepBloomStep.BloomMode> mode = new ModeFromBloomContext(ctx);
         final ContextValue<String> inputCol = new InputColumnFromBloomContext(ctx);
@@ -502,8 +510,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                     estimateCol.value()
             );
             rv = new StepListNode(Arrays.asList(aggregateStep, bloomStepWithRegexAndTable));
-        }
-        else {
+        } else {
             final TeragrepBloomStep bloomStep = new TeragrepBloomStep(
                     this.zplnConfig,
                     mode.value(),
@@ -513,7 +520,8 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             );
             rv = new StepNode(bloomStep);
         }
-        return rv;
+
+        return  rv;
     }
 
     @Override

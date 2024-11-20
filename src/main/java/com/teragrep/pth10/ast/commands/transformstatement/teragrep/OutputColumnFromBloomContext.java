@@ -45,28 +45,26 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.teragrep;
 
+import com.teragrep.pth10.ast.ContextValue;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth_03.antlr.DPLParser;
 
 public final class OutputColumnFromBloomContext implements ContextValue<String> {
 
-    private final DPLParser.T_bloomModeParameterContext ctx;
+    private final DPLParser.T_bloomOptionParameterContext ctx;
     private final String inputCol;
 
-    public OutputColumnFromBloomContext(final DPLParser.T_bloomModeParameterContext ctx, final String inputCol) {
+    public OutputColumnFromBloomContext(final DPLParser.T_bloomOptionParameterContext ctx, final String inputCol) {
         this.ctx = ctx;
         this.inputCol = inputCol;
     }
 
     public String value() {
-        if (ctx.t_bloomOptionParameter() == null) {
-            throw new IllegalArgumentException("Bloom option parameter was null");
-        }
         final String outputCol;
-        if (ctx.t_bloomOptionParameter().t_outputParameter() != null) {
+        if (ctx.t_outputParameter() != null) {
             outputCol = new UnquotedText(
-                    new TextString(ctx.t_bloomOptionParameter().t_outputParameter().fieldType().getText())
+                    new TextString(ctx.t_outputParameter().fieldType().getText())
             ).read();
         }
         else {

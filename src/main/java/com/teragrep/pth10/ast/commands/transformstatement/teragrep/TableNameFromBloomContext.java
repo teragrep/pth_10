@@ -45,30 +45,28 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.teragrep;
 
+import com.teragrep.pth10.ast.ContextValue;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth_03.antlr.DPLParser;
 
 public final class TableNameFromBloomContext implements ContextValue<String> {
 
-    private final DPLParser.T_bloomModeParameterContext ctx;
+    private final DPLParser.T_bloomOptionParameterContext ctx;
 
-    public TableNameFromBloomContext(final DPLParser.T_bloomModeParameterContext ctx) {
+    public TableNameFromBloomContext(final DPLParser.T_bloomOptionParameterContext ctx) {
         this.ctx = ctx;
     }
 
     public String value() {
-        if (ctx.t_bloomOptionParameter() == null) {
-            throw new IllegalArgumentException("Bloom option parameter was null");
-        }
         final String tableName;
-        if (ctx.t_bloomOptionParameter().t_tableParameter() != null) {
+        if (ctx.t_tableParameter() != null) {
             tableName = new UnquotedText(
-                    new TextString(ctx.t_bloomOptionParameter().t_tableParameter().fieldType().getText())
+                    new TextString(ctx.t_tableParameter().fieldType().getText())
             ).read();
         }
         else {
-            throw new IllegalArgumentException("Missing table parameter");
+            throw new IllegalArgumentException("Missing table parameter in '| teragrep exec bloom'.");
         }
         return tableName;
     }

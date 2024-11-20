@@ -45,30 +45,28 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.teragrep;
 
+import com.teragrep.pth10.ast.ContextValue;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth_03.antlr.DPLParser;
 
 public final class RegexValueFromBloomContext implements ContextValue<String> {
 
-    private final DPLParser.T_bloomModeParameterContext ctx;
+    private final DPLParser.T_bloomOptionParameterContext ctx;
 
-    public RegexValueFromBloomContext(final DPLParser.T_bloomModeParameterContext ctx) {
+    public RegexValueFromBloomContext(final DPLParser.T_bloomOptionParameterContext ctx) {
         this.ctx = ctx;
     }
 
     public String value() {
-        if (ctx.t_bloomOptionParameter() == null) {
-            throw new IllegalArgumentException("Bloom option parameter was null");
-        }
         final String regex;
-        if (ctx.t_bloomOptionParameter().t_regexParameter() != null) {
+        if (ctx.t_regexParameter() != null) {
             regex = new UnquotedText(
-                    new TextString(ctx.t_bloomOptionParameter().t_regexParameter().stringType().getText())
+                    new TextString(ctx.t_regexParameter().stringType().getText())
             ).read();
         }
         else {
-            throw new IllegalArgumentException("Missing regex parameter");
+            throw new IllegalArgumentException("Missing regex parameter in '| teragrep exec bloom'.");
         }
         return regex;
     }
