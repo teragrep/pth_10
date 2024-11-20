@@ -49,7 +49,7 @@ import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.EmitMode;
-import com.teragrep.pth10.ast.time.DecreasedEpochValue;
+import com.teragrep.pth10.ast.time.DecreasedEpochXmlElementValue;
 import com.teragrep.pth10.ast.time.TimeQualifier;
 import com.teragrep.pth10.ast.time.TimeQualifierImpl;
 import com.teragrep.pth_03.antlr.DPLParser;
@@ -199,7 +199,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         final ElementNode returnValue;
         if (timeQualifier.isStartTime()) {
             final long decreaseValue = 3 * 60 * 60 * 1000; // decrease 3 hours from earliest
-            final TimeQualifier decreasedQualifier = new DecreasedEpochValue(timeQualifier, decreaseValue);
+            final TimeQualifier decreasedQualifier = new DecreasedEpochXmlElementValue(timeQualifier, decreaseValue);
             startTime = decreasedQualifier.epoch();
             returnValue = new ElementNode(decreasedQualifier.xmlElement());
         }

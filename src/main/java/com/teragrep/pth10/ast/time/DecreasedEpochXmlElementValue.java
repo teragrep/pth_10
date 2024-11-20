@@ -46,18 +46,20 @@
 package com.teragrep.pth10.ast.time;
 
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.functions;
 import org.w3c.dom.Element;
 
 import java.util.Objects;
 
-/** Decreases the amount from qualifier epoch value */
-public final class DecreasedEpochValue implements TimeQualifier {
+/**
+ * Decreases set amount from xmlElement() Element value tag that contains an epoch value. Used as a temporary workaround
+ * for pth_06 database schema.
+ */
+public final class DecreasedEpochXmlElementValue implements TimeQualifier {
 
     private final TimeQualifier origin;
     private final long decreaseAmount;
 
-    public DecreasedEpochValue(final TimeQualifier origin, final long decreaseAmount) {
+    public DecreasedEpochXmlElementValue(final TimeQualifier origin, final long decreaseAmount) {
         this.origin = origin;
         this.decreaseAmount = decreaseAmount;
     }
@@ -83,23 +85,12 @@ public final class DecreasedEpochValue implements TimeQualifier {
 
     @Override
     public long epoch() {
-        return origin.epoch() - decreaseAmount;
+        return origin.epoch();
     }
 
     @Override
     public Column column() {
-        final Column timeColumn = new Column("`_time`");
-        final Column rv;
-        if (origin.isStartTime()) {
-            rv = timeColumn.geq(functions.from_unixtime(functions.lit(epoch())));
-        }
-        else if (origin.isEndTime()) {
-            rv = timeColumn.lt(functions.from_unixtime(functions.lit(epoch())));
-        }
-        else {
-            rv = origin.column();
-        }
-        return rv;
+        return origin.column();
     }
 
     @Override
@@ -111,7 +102,7 @@ public final class DecreasedEpochValue implements TimeQualifier {
     public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass())
             return false;
-        final DecreasedEpochValue cast = (DecreasedEpochValue) o;
+        final DecreasedEpochXmlElementValue cast = (DecreasedEpochXmlElementValue) o;
         return decreaseAmount == cast.decreaseAmount && Objects.equals(origin, cast.origin);
     }
 
