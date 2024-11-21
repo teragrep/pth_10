@@ -45,6 +45,10 @@
  */
 package com.teragrep.pth10;
 
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.DPLTimeFormat;
 import org.apache.spark.sql.Row;
@@ -204,15 +208,26 @@ public class CatalystVisitorTest {
     void searchQueryWithIndexEarliestTest() {
         this.streamingTestUtil
                 .performDPLTest("index = cinnamon _index_earliest=\"04/16/2020:10:25:40\"", this.testFile, res -> {
-                    String e = "[_raw: string, _time: string ... 6 more fields]";
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    });
+
+                    String resSchema = res.schema().toString();
                     // check schema
-                    Assertions.assertEquals(e, res.toString());
+                    Assertions.assertEquals(expectedSchema.toString(), resSchema);
 
                     String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
                     // check column for archive query i.e. only logical part'
                     DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
                     long indexEarliestEpoch = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
-                    e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch
+                    String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch
                             + ", yyyy-MM-dd HH:mm:ss)))";
                     Assertions.assertEquals(e, logicalPart);
                 });
@@ -228,9 +243,21 @@ public class CatalystVisitorTest {
         String testFile = "src/test/resources/subsearchData*.jsonl";
 
         this.streamingTestUtil.performDPLTest("index=index_A \"(1)(enTIty)\"", testFile, res -> {
-            String e = "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))";
+
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+            });
+
             String resSchema = res.schema().toString();
-            Assertions.assertEquals(e, resSchema);
+            Assertions.assertEquals(expectedSchema.toString(), resSchema);
             // Check result count
             List<Row> lst = res.collectAsList();
             // check result count
@@ -238,7 +265,7 @@ public class CatalystVisitorTest {
 
             // get logical part
             String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
-            e = "(RLIKE(index, (?i)^index_A$) AND RLIKE(_raw, (?i)^.*\\Q(1)(enTIty)\\E.*))";
+            String e = "(RLIKE(index, (?i)^index_A$) AND RLIKE(_raw, (?i)^.*\\Q(1)(enTIty)\\E.*))";
             Assertions.assertEquals(e, logicalPart);
         });
     }
