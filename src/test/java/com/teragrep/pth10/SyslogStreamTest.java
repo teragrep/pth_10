@@ -217,6 +217,10 @@ public class SyslogStreamTest {
                 );
 
         Assertions.assertNotNull(rte);
-        Assertions.assertTrue(rte.getMessage().contains("cannot be used after aggregations!"));
+        Assertions
+                .assertEquals(
+                        rte.getMessage(),
+                        "Step 'TeragrepSyslogStep{relpHost=127.1.0.1, relpPort=9998}' cannot be used after aggregations!"
+                );
     }
 }
