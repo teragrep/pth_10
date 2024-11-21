@@ -341,6 +341,6 @@ class TeragrepBloomFilterTest {
         Assertions.assertDoesNotThrow(() -> {
             bf.writeTo(baos);
         });
-        return RowFactory.create("1", baos.toByteArray());
+        return RowFactory.create("9999999999", baos.toByteArray());
     }
 }
