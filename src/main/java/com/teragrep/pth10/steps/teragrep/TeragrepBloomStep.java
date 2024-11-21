@@ -190,7 +190,7 @@ public final class TeragrepBloomStep extends AbstractStep {
             }
             final String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`, `pattern`) VALUES (?, ?, ?)";
             try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
-                stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
+                stmt.setLong(1, entry.getKey()); // filtertype.expectedElements
                 stmt.setDouble(2, entry.getValue()); // filtertype.targetFpp
                 stmt.setString(3, pattern); // filtertype.pattern
                 stmt.executeUpdate();
