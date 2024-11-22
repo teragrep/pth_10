@@ -80,7 +80,7 @@ public class DefaultTimeFormatTest {
     }
 
     @Test
-    void defaultTest() {
+    void defaultTimeFormatTest() {
         String time = "12/18/2023:12:40:53";
         long expected = 1702896053L;
         long actual = new DefaultTimeFormat().getEpoch(time);
@@ -89,7 +89,7 @@ public class DefaultTimeFormatTest {
     }
 
     @Test
-    void defaultTest_2() {
+    void defaultTimeFormatTest_2() {
         String time = "04/16/2020:10:25:40";
         long expected = 1587021940L;
         long actual = new DefaultTimeFormat().getEpoch(time);

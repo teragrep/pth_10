@@ -99,7 +99,7 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimeformatTest() {
+    public void parseEpochTimeformatTest() {
         // unix epoch format
         String q = "index=kafka_topic timeformat=%s earliest=1587032680 latest=1587021942";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -116,7 +116,7 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimeformat_example_default_format_Test() {
+    public void parseDefaultTimeformatTest() {
         // default but given manually
         String q = "index=kafka_topic timeformat=%m/%d/%Y:%H:%M:%S earliest=\"04/16/2020:10:24:40\" latest=\"04/16/2020:10:25:42\"";
 
@@ -135,7 +135,7 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimeformat_custom_format1_Test() {
+    public void parseCustomTimeFormatTest() {
         // custom format SS-MM-HH YY-DD-MM
         String q = "index=kafka_topic timeformat=\"%S-%M-%H %Y-%d-%m\" earliest=\"40-24-10 2020-16-04\" latest=\"42-25-10 2020-16-04\"";
 
@@ -153,7 +153,7 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimeformat_custom_format2_Test() {
+    public void parseCustomComplexTimeformatTest() {
         // earliest custom format ISO8601 + HH:MM:SS , latest default
         String q = "index=kafka_topic timeformat=\"%F %T\" earliest=\"2020-04-16 10:24:40\" latest=\"2020-04-16 10:25:42\"";
 
@@ -172,7 +172,7 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimeformat_custom_format3_Test() {
+    public void parseCustomTimeformatWithMonthNameTest() {
         // earliest custom format 16 Apr 2020 10.24.40 AM (dd MMM y hh.mm.ss a) , latest default
         String q = "index=kafka_topic timeformat=\"%d %b %Y %I.%M.%S %p\" earliest=\"16 Apr 2020 10.24.40 AM\" latest=\"16 Apr 2020 10.25.42 AM\"";
 
@@ -412,7 +412,7 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimestampRelativeTicket24QueryTest() {
+    public void parseTimestampEarliestRelativeSnapToDayLatestNow() {
         // pth10 ticket #24 query: 'index=... sourcetype=... earliest=@d latest=now'
         String q = "index=cinnamon earliest=@d latest=now";
 
@@ -436,7 +436,7 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimestampRelativeTicket66QueryTest() {
+    public void parseTimestampRelativeInvalidSnapToTimeUnitTest() {
         // pth10 ticket #66 query: 'index=... sourcetype=... earliest=@-5h latest=@-3h'
         String query = "index=cinnamon earliest=\"@-5h\" latest=\"@-3h\"";
         String expected = "TimeQualifier conversion error: <@-5h> can't be parsed.";

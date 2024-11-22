@@ -456,7 +456,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit3() {
+    void testConvertRmunitExponentValues() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \".54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
@@ -487,7 +487,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit4() {
+    void testConvertRmunitExponentValuesWithPrecedingMinus() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"-0.54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
@@ -517,7 +517,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit5() {
+    void testConvertRmunitWithInvalidNumbers() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"-0.21.54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
@@ -547,7 +547,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit6() {
+    void testConvertRmunitExponentValuesWithPrecedingPlus() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
@@ -577,7 +577,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit7() {
+    void testConvertRmunitNegExponentValuesWithPrecedingPlus() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e-23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
@@ -608,7 +608,7 @@ public class ConvertTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void convert8_rmunit8() {
+    void testConvertRmunitPositiveExponentValuesWithPrecedingPlus() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e+23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,

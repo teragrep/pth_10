@@ -108,7 +108,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest1() {
+    public void earliestRelativeTimeInTheMiddleTest() {
         String query = "index=strawberry earliest=-10y OR index=seagull";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -129,7 +129,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest2() {
+    public void earliestLatestNotSpecifiedTest() {
         String query = "index=strawberry OR index=seagull | stats count(_raw) by index";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             List<String> indexAsList = res
@@ -149,7 +149,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest3() {
+    public void earliestRelativeTimeInTheEndTest() {
         String query = "index=strawberry OR index=seagull earliest=-10y | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -170,7 +170,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest4() {
+    public void earliestRelativeTimeAtStartOfQueryTest() {
         String query = "earliest=-10y index=strawberry OR index=seagull | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -191,7 +191,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest5() {
+    public void SimilarEarliestLatestRelativeTimeWithBracketsTest() {
         String query = "earliest=-10y index=strawberry OR (index=seagull latest=-10y) | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -212,7 +212,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest6() {
+    public void similarEarliestLatestRelativeTimeTest() {
         String query = "earliest=-10y index=strawberry OR index=seagull latest=-10y | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -233,7 +233,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest7() {
+    public void earliestRelativeTimeAtStartAndLatestAtEndOfMainSearchTest() {
         String query = "earliest=-10y index=strawberry OR index=seagull latest=-1y | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -254,7 +254,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest8() {
+    public void earliestRelativeTimeAtStartAndEndOfMainSearchTest() {
         String query = "earliest=-20y index=strawberry OR index=seagull earliest=-1d | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -275,7 +275,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest9() {
+    public void earliestRelativeTimeAtStartAndEarliestNowAtEndOfMainSearchTest() {
         String query = "earliest=-20y index=strawberry OR index=seagull earliest=now | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -296,7 +296,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void earliestLatestTest10() {
+    public void earliestRelativeTimeAtStartAndLatestNowAtEndOfMainSearchTest() {
         String query = "earliest=-20y index=strawberry OR index=seagull latest=now | stats count(_raw) by index";
         this.streamingTestUtil
                 .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
@@ -425,7 +425,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void TimeformatTest1() {
+    public void epochTimeformatTest() {
         String query = "index=strawberry timeformat=%s earliest=0";
         this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
             // epoch test data contains values from 1970-01-01 till 2050-03-15
@@ -442,7 +442,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void TimeformatTest2() {
+    public void timeformatTest() {
         String query = "index=strawberry timeformat=\"%Y-%m-%d-%H-%M-%S\" earliest=2030-01-01-00-00-00 latest=2040-01-01-00-00-00";
         this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
             // epoch test data contains values from 1970-01-01 till 2050-03-15
