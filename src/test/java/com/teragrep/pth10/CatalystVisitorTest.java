@@ -180,7 +180,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void SearchQueryWithOrTest() {
+    void searchQueryWithOrTest() {
         //LOGGER.info("------ OR ---------");
         String q = "index != \"strawberry\" OR sourcetype =\"example:strawberry:strawberry\"";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -266,7 +266,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void AggregatesUsedTest() {
+    void aggregatesUsedTest() {
         this.streamingTestUtil.performDPLTest("index = jla02logger ", this.testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
             Assertions.assertFalse(aggregates);

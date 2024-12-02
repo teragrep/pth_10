@@ -158,7 +158,6 @@ public class FormatTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         q, testFile, res -> {
-                            res.show(false);
                             // Check if result contains the column that was created for format result
                             Assertions.assertTrue(Arrays.toString(res.columns()).contains("search"));
 
@@ -187,7 +186,7 @@ public class FormatTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void testFormatTransformationWithSearchStrings() {
+    void testFormatTransformationWithParameters() {
         String q = "index=index_A | format maxresults=2 \"ROWPRE\" \"COLPRE\" \"COLSEP\" \"COLSUF\"\"ROWSEP\" \"ROWSUF\" ";
 
         streamingTestUtil

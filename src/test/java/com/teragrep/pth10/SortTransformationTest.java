@@ -143,7 +143,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // descending sourcetype (pth03 parsing issue?, seems to be ascending)
-    public void testSortMinusAndLimit() {
+    public void testSortPLusAndLimit() {
         streamingTestUtil.performDPLTest("index=index_A | sort limit=0 + sourcetype", testFile, ds -> {
             List<Row> listOfSourcetype = ds.select("sourcetype").collectAsList();
 

@@ -109,7 +109,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void testExplainWithSearchString() {
+    void testExplainExtended() {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain extended";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {

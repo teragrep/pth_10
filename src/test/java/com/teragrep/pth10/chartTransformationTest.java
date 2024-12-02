@@ -256,7 +256,6 @@ public class chartTransformationTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             boolean aggregates = this.streamingTestUtil.getCatalystVisitor().getAggregatesUsed();
-            System.out.println(aggregates);
             Assertions.assertTrue(aggregates);
         });
     }
