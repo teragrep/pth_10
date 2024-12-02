@@ -442,7 +442,7 @@ public class EarliestLatestTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void timeformatTest() {
+    public void customTimeformatTest() {
         String query = "index=strawberry timeformat=\"%Y-%m-%d-%H-%M-%S\" earliest=2030-01-01-00-00-00 latest=2040-01-01-00-00-00";
         this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
             // epoch test data contains values from 1970-01-01 till 2050-03-15
