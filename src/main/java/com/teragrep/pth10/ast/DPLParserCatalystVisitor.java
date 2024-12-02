@@ -279,7 +279,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
         }
         else {
             // no logical part, e.g. makeresults or similar command in use without main search
-            this.getStepList().add(new EmptyDataframeStep());
+            this.getStepList().add(new EmptyDataframeStep(catCtx));
         }
 
         // Just transform part

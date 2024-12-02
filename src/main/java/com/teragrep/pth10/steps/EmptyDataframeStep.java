@@ -45,9 +45,11 @@
  */
 package com.teragrep.pth10.steps;
 
+import com.teragrep.pth10.ast.DPLParserCatalystContext;
+import com.teragrep.pth10.datasources.GeneratedDatasource;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.StreamingQueryException;
 
 /**
  * Used to provide a empty dataframe in case of not using a LogicalStatement in the command. For example, the '|
@@ -55,12 +57,19 @@ import org.apache.spark.sql.SparkSession;
  */
 public class EmptyDataframeStep extends AbstractStep {
 
+    private final DPLParserCatalystContext catCtx;
+
+    public EmptyDataframeStep(DPLParserCatalystContext catCtx) {
+        this.catCtx = catCtx;
+    }
+
     @Override
-    public Dataset<Row> get(Dataset<Row> dataset) {
+    public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
         if (dataset != null) {
             // this should be in use only without any dataset
             throw new RuntimeException("EmptyDataframeStep was called with a non-null dataframe!");
         }
-        return SparkSession.builder().getOrCreate().emptyDataFrame();
+
+        return new GeneratedDatasource(catCtx).constructEmptyStream();
     }
 }
