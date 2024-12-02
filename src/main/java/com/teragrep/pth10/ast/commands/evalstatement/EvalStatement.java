@@ -46,6 +46,7 @@
 package com.teragrep.pth10.ast.commands.evalstatement;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
+import com.teragrep.pth10.ast.QuotedText;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.*;
@@ -2729,7 +2730,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         ss.udf().register("SpathUDF", SpathUDF);
 
         Column res = functions.callUDF("SpathUDF", input, spathExpr, functions.lit(""), functions.lit(""));
-        rv = new ColumnNode(res);
+        // wrap expression in backticks to escape dots
+        rv = new ColumnNode(res.getItem(new QuotedText(new TextString(spathExpr.toString()), "`").read()));
 
         return rv;
     }

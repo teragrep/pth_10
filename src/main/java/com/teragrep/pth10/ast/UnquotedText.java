@@ -45,23 +45,37 @@
  */
 package com.teragrep.pth10.ast;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Objects;
 
 /**
  * Decorator for unquoting text.
  */
 public class UnquotedText implements Text {
 
-    private Text origin;
+    private final Text origin;
+    private final String[] quoteCharacters;
 
     public UnquotedText(Text origin) {
+        this(origin, new String[] {
+                "\"", "'", "`"
+        });
+    }
+
+    public UnquotedText(Text origin, String ... quoteCharacters) {
         this.origin = origin;
+        this.quoteCharacters = quoteCharacters;
     }
 
     @Override
     public String read() {
+        validate();
         return stripQuotes(this.origin.read());
+    }
+
+    private void validate() {
+        if (quoteCharacters.length <= 0) {
+            throw new IllegalArgumentException("Quote character(s) must be provided!");
+        }
     }
 
     /**
@@ -69,21 +83,33 @@ public class UnquotedText implements Text {
      * 
      * @return string with stripped quotes
      */
-    private String stripQuotes(String quoted) {
-        Matcher m = Pattern.compile("^\"(.*)\"$").matcher(quoted);
-        Matcher m1 = Pattern.compile("^'(.*)'$").matcher(quoted);
+    private String stripQuotes(final String quoted) {
+        String rv = quoted;
 
-        String strUnquoted = quoted;
-        // check "-quotes
-        if (m.find()) {
-            strUnquoted = m.group(1);
-        }
-        else {
-            // check '-quotes
-            if (m1.find()) {
-                strUnquoted = m1.group(1);
+        // Removes outer quotes
+        for (int i = 0; i < quoteCharacters.length; i++) {
+            final String quoteCharacter = quoteCharacters[i];
+            if (rv.startsWith(quoteCharacter) && rv.endsWith(quoteCharacter)) {
+                rv = rv.substring(quoteCharacter.length(), rv.length() - quoteCharacter.length());
+                break;
             }
         }
-        return strUnquoted;
+
+        return rv;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        UnquotedText that = (UnquotedText) o;
+        return Objects.equals(origin, that.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(origin);
     }
 }

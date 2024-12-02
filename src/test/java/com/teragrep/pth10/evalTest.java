@@ -2842,7 +2842,6 @@ public class evalTest {
     }
 
     // Test spath() with JSON
-    @Disabled("broken due to spath udf changes, to be looked at in PTH-10 issue #295")
     @Test
     public void parseEvalSpathJSONCatalystTest() {
         String q = "index=index_A | eval a=spath(json_field, \"name\") | eval b=spath(json_field,\"invalid_spath\")";
@@ -2877,7 +2876,6 @@ public class evalTest {
     }
 
     // Test spath() with XML
-    @Disabled(value = "broken due to spath udf changes, to be looked at in PTH-10 issue #295")
     @Test
     public void parseEvalSpathXMLCatalystTest() {
         String q = "index=index_A | eval a=spath(xml_field, \"people.person.name\")";
@@ -2889,27 +2887,12 @@ public class evalTest {
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             Assertions.assertEquals(schema, res.schema().toString());
 
-            //"StructField(b,StringType,true))";
-
             // Get column 'a'
-            Dataset<Row> resA = res.select("a"); //.orderBy("a").distinct();
+            Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
 
-            // Get column 'b'
-            //            Dataset<Row> resB = res.select("b").orderBy("b").distinct();
-            //            List<Row> lstB = resB.collectAsList();
-
+            Assertions.assertEquals(1, lst.size());
             Assertions.assertEquals("John", lst.get(0).getString(0));
-            Assertions.assertEquals("John", lst.get(1).getString(0));
-            Assertions.assertEquals("John", lst.get(2).getString(0));
-            Assertions.assertEquals("John", lst.get(3).getString(0));
-            Assertions.assertEquals("John", lst.get(4).getString(0));
-            Assertions.assertEquals("John", lst.get(5).getString(0));
-            Assertions.assertEquals("John", lst.get(6).getString(0));
-            Assertions.assertEquals("John", lst.get(7).getString(0));
-            Assertions.assertEquals("John", lst.get(8).getString(0));
-
-            //Assertions.assertEquals(null, lstB.get(0).getString(0));
         });
     }
 
