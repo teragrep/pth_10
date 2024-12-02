@@ -194,7 +194,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void teragrep_Issue149_Test() {
+    void testTeragrepSystemVersionWithoutDataset() {
         String q = " | teragrep get system version";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -220,7 +220,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void dplTest() {
+    void testDplWithSubsearchTrue() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=true";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -233,7 +233,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void dpl2Test() {
+    void testDplWithSubsearchFalse() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree subsearch=false";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -246,7 +246,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void dpl3Test() {
+    void testDplWithoutSubsearchParameter() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|dpl debug=parsetree";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -259,7 +259,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void dpl4Test() {
+    void testDplAfterMultipleSubsearch() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]  [ search sourcetype= c:X:0| top limit=1 host | fields + host] |dpl debug=parsetree subsearch=true";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {

@@ -189,7 +189,7 @@ public class subSearchTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEndSearchTest() {
+    void testSearchWithTopLimit2AndFieldsTransformation() {
         String q = "sourcetype=A:X:0| top limit=2 host | fields + host";
         String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
 
@@ -208,7 +208,7 @@ public class subSearchTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEndSearch1Test() {
+    void testSearchWithNoAggs() {
         String q = "index = index_A AND computer01.example.com AND computer02.example.com";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 
@@ -223,7 +223,7 @@ public class subSearchTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEndSearch3Test() {
+    void testSearchWithTopLimit1AndFieldsTransformation() {
         String q = "sourcetype=c:X:0| top limit=1 host | fields + host";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 
