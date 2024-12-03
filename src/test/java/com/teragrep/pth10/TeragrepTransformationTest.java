@@ -849,6 +849,23 @@ public class TeragrepTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
+    public void tgSetConfigLongWithNoLogicalStatementTest() {
+        Config fakeConfig = ConfigFactory
+                .defaultApplication()
+                .withValue("dpl.pth_00.dummy.value", ConfigValueFactory.fromAnyRef(12345));
+        streamingTestUtil.getCtx().setConfig(fakeConfig);
+        Assertions.assertEquals(12345L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
+        streamingTestUtil.performDPLTest(" | teragrep set config dpl.pth_00.dummy.value 99999", testFile, ds -> {
+            Assertions.assertEquals(99999L, streamingTestUtil.getCtx().getConfig().getLong("dpl.pth_00.dummy.value"));
+            Assertions.assertEquals(0, ds.count());
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgSetConfigLongTest() {
         Config fakeConfig = ConfigFactory
                 .defaultApplication()

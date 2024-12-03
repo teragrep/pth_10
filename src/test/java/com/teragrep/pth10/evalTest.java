@@ -427,7 +427,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseEvalIfCatalyst1Test() {
+    public void parseEvalIfSubstrCatalystTest() {
         String q = "index=index_A | eval val2=if( 1 < 2  , substr(_raw,165,100) , \"b\")";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(val2,ArrayType(StringType,true),true))";
@@ -460,7 +460,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseEvalLen1Test() {
+    public void parseEvalIfLenTest() {
         String q = "index=index_A | eval a=if(substr(_raw,0,11)=\"127.0.0.123\",len( _raw),0)";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true))";
@@ -2109,7 +2109,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseEvalMatch2CatalystTest() {
+    public void parseEvalIfMatchCatalystTest() {
         String q = "index=index_A | eval a=if(match(ip,\"3\"),1,0)";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
@@ -2842,7 +2842,6 @@ public class evalTest {
     }
 
     // Test spath() with JSON
-    @Disabled("broken due to spath udf changes, to be looked at in PTH-10 issue #295")
     @Test
     public void parseEvalSpathJSONCatalystTest() {
         String q = "index=index_A | eval a=spath(json_field, \"name\") | eval b=spath(json_field,\"invalid_spath\")";
@@ -2877,7 +2876,6 @@ public class evalTest {
     }
 
     // Test spath() with XML
-    @Disabled(value = "broken due to spath udf changes, to be looked at in PTH-10 issue #295")
     @Test
     public void parseEvalSpathXMLCatalystTest() {
         String q = "index=index_A | eval a=spath(xml_field, \"people.person.name\")";
@@ -2889,27 +2887,12 @@ public class evalTest {
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             Assertions.assertEquals(schema, res.schema().toString());
 
-            //"StructField(b,StringType,true))";
-
             // Get column 'a'
-            Dataset<Row> resA = res.select("a"); //.orderBy("a").distinct();
+            Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
 
-            // Get column 'b'
-            //            Dataset<Row> resB = res.select("b").orderBy("b").distinct();
-            //            List<Row> lstB = resB.collectAsList();
-
+            Assertions.assertEquals(1, lst.size());
             Assertions.assertEquals("John", lst.get(0).getString(0));
-            Assertions.assertEquals("John", lst.get(1).getString(0));
-            Assertions.assertEquals("John", lst.get(2).getString(0));
-            Assertions.assertEquals("John", lst.get(3).getString(0));
-            Assertions.assertEquals("John", lst.get(4).getString(0));
-            Assertions.assertEquals("John", lst.get(5).getString(0));
-            Assertions.assertEquals("John", lst.get(6).getString(0));
-            Assertions.assertEquals("John", lst.get(7).getString(0));
-            Assertions.assertEquals("John", lst.get(8).getString(0));
-
-            //Assertions.assertEquals(null, lstB.get(0).getString(0));
         });
     }
 
@@ -3100,7 +3083,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseEvalArithmeticsWithString_2_Test() {
+    public void testConcatenatingStringsWithEvalArithmetics() {
         String q = "index=index_A | eval a=offset+\"string\"";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
@@ -3124,7 +3107,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void evalAfterSpath_arithmetics() {
+    public void testEvalMinusArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json - 1";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
@@ -3149,7 +3132,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void evalAfterSpath_arithmetics2() {
+    public void testEvalPlusArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json + 1";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
@@ -3174,7 +3157,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void evalAfterSpath_arithmetics3() {
+    public void testEvalDivideArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json / 2";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
@@ -3201,7 +3184,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void evalAfterSpath_arithmetics4() {
+    public void testEvalDivideArithmeticPrecisionAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json / 3";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
@@ -3232,7 +3215,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void evalAfterSpath_arithmetics5() {
+    public void testEvalMultiplyArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json * 5";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
@@ -3259,7 +3242,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void evalAfterSpath_arithmetics6() {
+    public void testEvalModulusArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json % 2";
         String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";

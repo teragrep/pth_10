@@ -102,7 +102,7 @@ public class Rex4jTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rex4jTest_ExtractionModeMultipleCaptureGroups() {
+    public void testRex4jExtractionModeMultipleCaptureGroups() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rex4j \".*rainfall_rate\\\":\\s(?<rainFALL>\\d+.\\d+).*wind_speed\\\":\\s(?<windSPEDE>\\d+.\\d+).*latitude\\\":\\s(?<latiTUDE>-?\\d+.\\d+)\"",
@@ -148,7 +148,7 @@ public class Rex4jTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rex4jTest_ExtractionModeSingleCaptureGroup() {
+    public void testRex4jExtractionModeSingleCaptureGroup() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rex4j \".*rainfall_rate\\\":\\s(?<rainFALL>\\d+.\\d+)\"", testFile, ds -> {
@@ -169,7 +169,7 @@ public class Rex4jTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rex4jTest_ExtractionMode_EmptyResults() {
+    public void testRex4jExtractionModeEmptyResults() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rex4j \"(?<rainFALL>)\"", testFile, ds -> {
@@ -190,7 +190,7 @@ public class Rex4jTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rex4jTest_SedMode() {
+    public void testRex4jSedMode() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rex4j mode=sed \"s/rainfall_rate/meltdown_rate/g\"", testFile, ds -> {
@@ -211,12 +211,12 @@ public class Rex4jTransformationTest {
     }
 
     @Test
-    @Disabled(value = "Needs Spark 3.x to work")
+    @Disabled(value = "Needs Spark 3.x to work, issue #391")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rex4jTest_ExtractNestedCaptureGroup_Issue391() {
+    public void testRex4jExtractNestedCaptureGroup() {
         // FIXME: Rex4j needs regexp_extract_all support introduced in Spark 3.x
         //  Workaround is to use rex command instead
         streamingTestUtil

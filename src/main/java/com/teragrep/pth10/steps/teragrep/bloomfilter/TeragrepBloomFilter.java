@@ -127,8 +127,8 @@ public final class TeragrepBloomFilter {
                         );
                 filter.writeTo(baos);
                 InputStream is = new ByteArrayInputStream(baos.toByteArray());
-                stmt.setInt(1, Integer.parseInt(partitionID)); // bloomfilter.partition_id
-                stmt.setInt(2, (int) selectedExpectedNumOfItems); // filtertype.expectedElements
+                stmt.setLong(1, Long.parseLong(partitionID)); // bloomfilter.partition_id
+                stmt.setLong(2, selectedExpectedNumOfItems); // filtertype.expectedElements
                 stmt.setDouble(3, selectedFpp); // filtertype.targetFpp
                 stmt.setString(4, regex); // filtertype.pattern
                 stmt.setBlob(5, is); // bloomfilter.filter

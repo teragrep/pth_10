@@ -126,7 +126,7 @@ public class IplocationTransformationTest {
             named = "skipGeoLiteTest",
             matches = "true"
     )
-    public void iplocationTest_GeoLite2City_1() {
+    public void testIplocationGeoLite2City() {
         String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
         String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
         String ipColumn = "source";
@@ -162,7 +162,7 @@ public class IplocationTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void iplocationTest_RirDataSample_2() {
+    public void testIplocationRirDataSample() {
         String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
         String[] expectedCols = RIR_COLUMNS;
         String ipColumn = "source";
@@ -203,7 +203,7 @@ public class IplocationTransformationTest {
             named = "skipGeoLiteTest",
             matches = "true"
     )
-    public void iplocationTest_GeoLite2Country_3() {
+    public void testIplocationGeoLite2Country() {
         String mmdbPath = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
         String[] expectedCols = COUNTRY_COLUMNS;
         String ipColumn = "source";
@@ -243,7 +243,7 @@ public class IplocationTransformationTest {
             named = "skipGeoLiteTest",
             matches = "true"
     )
-    public void iplocationTest_GeoLite2City_4() {
+    public void testIplocationGeoLite2CityWithAllfieldsTrue() {
         String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
         String[] expectedCols = GEOIP_FULL_COLUMNS;
         String ipColumn = "source";
@@ -283,7 +283,7 @@ public class IplocationTransformationTest {
             named = "skipGeoLiteTest",
             matches = "true"
     )
-    public void iplocationTest_GeoLite2City_InvalidIPAddress_5() {
+    public void testIplocationGeoLite2CityInvalidIPAddressWithAllfieldsTrue() {
         String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
         String[] expectedCols = GEOIP_FULL_COLUMNS;
         String ipColumn = "otherIP";
@@ -328,7 +328,7 @@ public class IplocationTransformationTest {
             named = "skipGeoLiteTest",
             matches = "true"
     )
-    public void iplocationTest_GeoLite2City_InvalidIPAddress_6() {
+    public void testIplocationGeoLite2CityInvalidIPAddressWithAllfieldsFalse() {
         String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
         String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
         String ipColumn = "otherIP";
@@ -373,7 +373,7 @@ public class IplocationTransformationTest {
             named = "skipGeoLiteTest",
             matches = "true"
     )
-    public void iplocationTest_RirData_InvalidIPAddress_7() {
+    public void testIplocationRirDataInvalidIPAddress() {
         String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
         String[] expectedCols = RIR_COLUMNS;
         String ipColumn = "otherIP";
@@ -415,7 +415,7 @@ public class IplocationTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void iplocationTest_InvalidMmdbPath_8() {
+    public void testIplocationInvalidMmdbPath() {
         String mmdbPath = "/tmp/this-path-is-invalid/fake.mmdb";
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
 

@@ -237,7 +237,7 @@ public class RexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rexTest_SedMode() {
+    public void rexTest_SedModeSubstituteFirstMatchFlag() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rex mode=sed \"s/rainfall_rate/meltdown_rate/1\"", testFile, ds -> {
@@ -262,7 +262,7 @@ public class RexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rexTest_SedMode2() {
+    public void rexTest_SedModeSubstituteAllFlag() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rex mode=sed \"s/rainfall_rate/meltdown_rate/g\"", testFile, ds -> {
@@ -345,7 +345,7 @@ public class RexTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void rexTest_SedMode3() {
+    public void rexTest_SedModeWithTwoSubstituteFlags() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | rex mode=sed \"s/rainfall_rate/meltdown_rate/2g\"", testFile, ds -> {

@@ -98,7 +98,7 @@ public class TokenizerTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void tokenize() {
+    public void testTokenizer() {
         streamingTestUtil.performDPLTest("index=index_A | teragrep exec tokenizer", testFile, ds -> {
             Assertions.assertEquals("tokens", ds.columns()[ds.columns().length - 1]);
         });
@@ -109,7 +109,7 @@ public class TokenizerTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void tokenize2() {
+    public void testTokenizerFormatString() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | teragrep exec tokenizer format string input _raw output strtokens", testFile,
@@ -126,7 +126,7 @@ public class TokenizerTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void tokenize3() {
+    public void testTokenizerFormatBytes() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | teragrep exec tokenizer format bytes input _raw output bytetokens", testFile,

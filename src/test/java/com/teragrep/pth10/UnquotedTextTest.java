@@ -62,6 +62,46 @@ public class UnquotedTextTest {
         Assertions.assertEquals(expected, actual);
     }
 
+    // test with single quotes
+    @Test
+    public void unquoteSingleQuotesProvidedInConstructorTest() {
+        String original = "'foo'";
+        String expected = "foo";
+
+        String actual = new UnquotedText(new TextString(original), "'").read();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    // test with single quotes
+    @Test
+    public void unquoteDifferentQuotesProvidedInConstructorTest() {
+        String original = "'foo'";
+        String expected = "'foo'";
+
+        String actual = new UnquotedText(new TextString(original), "`", "\"").read();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    // test with empty quotes
+    @Test
+    public void unquoteEmptyQuotesTest() {
+        String original = "''";
+        String expected = "";
+
+        String actual = new UnquotedText(new TextString(original)).read();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    // test with backtick quotes
+    @Test
+    public void unquoteBacktickQuotesTest() {
+        String original = "`foo`";
+        String expected = "foo";
+
+        String actual = new UnquotedText(new TextString(original)).read();
+        Assertions.assertEquals(expected, actual);
+    }
+
     // test with double quotes
     @Test
     public void unquoteDoubleQuotesTest() {
@@ -79,5 +119,19 @@ public class UnquotedTextTest {
 
         String actual = new UnquotedText(new TextString(original)).read();
         Assertions.assertEquals(original, actual);
+    }
+
+    @Test
+    public void testEquals() {
+        UnquotedText ut1 = new UnquotedText(new TextString("foo"));
+        UnquotedText ut2 = new UnquotedText(new TextString("foo"));
+        Assertions.assertEquals(ut1, ut2);
+    }
+
+    @Test
+    public void testNotEquals() {
+        UnquotedText ut1 = new UnquotedText(new TextString("foo"));
+        UnquotedText ut2 = new UnquotedText(new TextString("bar"));
+        Assertions.assertNotEquals(ut1, ut2);
     }
 }

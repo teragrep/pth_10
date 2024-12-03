@@ -43,48 +43,68 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast;
+package com.teragrep.pth10;
 
-import java.util.Objects;
+import com.teragrep.pth10.ast.QuotedText;
+import com.teragrep.pth10.ast.TextString;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-/**
- * Basic text from String
- */
-public final class TextString implements Text {
+public class QuotedTextTest {
 
-    private final String text;
+    // test with single quotes
+    @Test
+    public void quoteSingleQuotesTest() {
+        String original = "foo";
+        String expected = "'foo'";
 
-    public TextString(String text) {
-        this.text = text;
+        String actual = new QuotedText(new TextString(original), "'").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    public TextString(Object text) {
-        if (text == null) {
-            this.text = "";
-        }
-        else {
-            this.text = text.toString();
-        }
+    // test with empty quotes
+    @Test
+    public void quoteEmptyQuotesTest() {
+        String original = "";
+        String expected = "''";
+
+        String actual = new QuotedText(new TextString(original), "'").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    @Override
-    public String read() {
-        return text;
+    // test with backtick quotes
+    @Test
+    public void quoteBacktickQuotesTest() {
+        String original = "foo";
+        String expected = "`foo`";
+
+        String actual = new QuotedText(new TextString(original), "`").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        TextString that = (TextString) o;
-        return Objects.equals(text, that.text);
+    // test with double quotes
+    @Test
+    public void quoteDoubleQuotesTest() {
+        String original = "foo";
+        String expected = "\"foo\"";
+
+        String actual = new QuotedText(new TextString(original), "\"").read();
+        Assertions.assertEquals(expected, actual);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(text);
+    @Test
+    public void testEquals() {
+        QuotedText ut1 = new QuotedText(new TextString("foo"), "'");
+        QuotedText ut2 = new QuotedText(new TextString("foo"), "'");
+        Assertions.assertEquals(ut1, ut2);
+    }
+
+    @Test
+    public void testNotEquals() {
+        QuotedText ut1 = new QuotedText(new TextString("foo"), "`");
+        QuotedText ut2 = new QuotedText(new TextString("foo'"), "`");
+        Assertions.assertNotEquals(ut1, ut2);
+
     }
 
 }

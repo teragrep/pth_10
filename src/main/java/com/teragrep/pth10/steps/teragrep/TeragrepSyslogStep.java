@@ -66,6 +66,7 @@ public class TeragrepSyslogStep extends AbstractStep {
     public TeragrepSyslogStep(String relpHost, int relpPort) {
         this.relpHost = relpHost;
         this.relpPort = relpPort;
+        this.properties.add(CommandProperty.NO_PRECEDING_AGGREGATE);
     }
 
     @Override
@@ -74,5 +75,10 @@ public class TeragrepSyslogStep extends AbstractStep {
         final SyslogStreamer syslogStreamer = new SyslogStreamer(relpHost, relpPort);
 
         return dataset.map(syslogStreamer, dataset.exprEnc());
+    }
+
+    @Override
+    public String toString() {
+        return String.format("TeragrepSyslogStep{relpHost=%s, relpPort=%d}", relpHost, relpPort);
     }
 }

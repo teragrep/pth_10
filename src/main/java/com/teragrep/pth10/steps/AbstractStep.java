@@ -59,7 +59,8 @@ public abstract class AbstractStep {
         IGNORE_DEFAULT_SORTING, // Command applies a certain order to the rows
         SEQUENTIAL_ONLY, // Works only in Sequential mode (forEachBatch)
         AGGREGATE, // If there are multiple aggregate commands, switch to sequential mode is necessary
-        REQUIRE_PRECEDING_AGGREGATE // this command requires an aggregate command before it
+        REQUIRE_PRECEDING_AGGREGATE, // this command requires an aggregate command before it
+        NO_PRECEDING_AGGREGATE // command does not allow an aggregate command before it
     }
 
     protected final Set<CommandProperty> properties = new HashSet<>();

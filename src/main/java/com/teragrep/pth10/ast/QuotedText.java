@@ -47,29 +47,34 @@ package com.teragrep.pth10.ast;
 
 import java.util.Objects;
 
-/**
- * Basic text from String
- */
-public final class TextString implements Text {
+public class QuotedText implements Text {
 
-    private final String text;
+    private final Text origin;
+    private final String quoteCharacter;
 
-    public TextString(String text) {
-        this.text = text;
-    }
-
-    public TextString(Object text) {
-        if (text == null) {
-            this.text = "";
-        }
-        else {
-            this.text = text.toString();
-        }
+    public QuotedText(final Text origin, final String quoteCharacter) {
+        this.origin = origin;
+        this.quoteCharacter = quoteCharacter;
     }
 
     @Override
     public String read() {
-        return text;
+        validate();
+        return quotes(origin.read());
+    }
+
+    private void validate() {
+        if (quoteCharacter.length() != 1) {
+            throw new IllegalArgumentException("Quote character should be a single character");
+        }
+    }
+
+    private String quotes(final String s) {
+        if (s.startsWith(quoteCharacter) && s.endsWith(quoteCharacter)) {
+            return s;
+        }
+
+        return quoteCharacter.concat(s).concat(quoteCharacter);
     }
 
     @Override
@@ -78,13 +83,12 @@ public final class TextString implements Text {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        TextString that = (TextString) o;
-        return Objects.equals(text, that.text);
+        QuotedText that = (QuotedText) o;
+        return Objects.equals(origin, that.origin) && Objects.equals(quoteCharacter, that.quoteCharacter);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(text);
+        return Objects.hash(origin, quoteCharacter);
     }
-
 }
