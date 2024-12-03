@@ -45,55 +45,39 @@
  */
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
-import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.EarliestLatestBuffer;
-import org.apache.spark.sql.Encoder;
-import org.apache.spark.sql.Encoders;
+import java.sql.Timestamp;
 
-import java.io.Serializable;
+public final class CurrentTimestampImpl implements CurrentTimestamp {
 
-/**
- * Used for rate() function
- */
-public class EarliestLatestAggregator_Double extends EarliestLatestAggregator<Double> implements Serializable {
+    private final Timestamp timestamp;
 
-    private final AggregatorMode.EarliestLatestAggregatorMode mode; // 0=earliest, 1=latest, 2=earliest_time, 3=latest_time, 4=rate
-    private static final long serialVersionUID = 1L;
-
-    /**
-     * Initialize with column and mode
-     * 
-     * @param colName column name
-     * @param mode    aggregator mode
-     */
-    public EarliestLatestAggregator_Double(java.lang.String colName, AggregatorMode.EarliestLatestAggregatorMode mode) {
-        super(colName);
-        this.mode = mode;
+    public CurrentTimestampImpl(final Timestamp timestamp) {
+        this.timestamp = timestamp;
     }
 
-    /**
-     * Output encoder
-     * 
-     * @return double encoder
-     */
-    @Override
-    public Encoder<Double> outputEncoder() {
-        return Encoders.DOUBLE();
+    public Timestamp timestamp() {
+        return timestamp;
     }
 
-    /**
-     * Return the rate
-     * 
-     * @param buffer buffer
-     * @return rate as double
-     */
+    public boolean isEmpty() {
+        return false;
+    }
+
     @Override
-    public Double finish(EarliestLatestBuffer buffer) {
-        switch (this.mode) {
-            case RATE: // rate
-                return buffer.rate();
-            default: // shouldn't happen, throw Exception
-                throw new UnsupportedOperationException("EarliestLatestAggregator was called with unsupported mode");
+    public boolean isBefore(CurrentTimestamp other) {
+        if (other.isEmpty()) {
+            return false;
         }
+
+        return timestamp.before(other.timestamp());
     }
 
+    @Override
+    public boolean isAfter(CurrentTimestamp other) {
+        if (other.isEmpty()) {
+            return false;
+        }
+
+        return timestamp.after(other.timestamp());
+    }
 }

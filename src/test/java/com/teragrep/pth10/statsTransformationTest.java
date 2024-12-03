@@ -190,7 +190,6 @@ public class statsTransformationTest {
     void statsTransform_AggEarliest_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats earliest(offset) AS earliest_offset", testFile, ds -> {
             Assertions.assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
-
             List<String> destAsList = ds
                     .select("earliest_offset")
                     .collectAsList()
