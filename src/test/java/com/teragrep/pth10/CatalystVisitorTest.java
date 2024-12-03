@@ -163,7 +163,7 @@ public class CatalystVisitorTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void searchQueryWithOrTest() {
+    void searchQueryWithOrTest2() {
         //LOGGER.info("------ OR ---------");
         String q = "index != \"strawberry\" OR sourcetype =\"example:strawberry:strawberry\"";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
