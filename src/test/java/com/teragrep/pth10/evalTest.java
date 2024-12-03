@@ -3589,4 +3589,40 @@ public class evalTest {
             Assertions.assertEquals(expected, a);
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalFieldWithDoubleQuotes() {
+        String query = "index=index_A | eval \"quotedField\" = \"string\"";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(quotedField,StringType,false))";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
+
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            Assertions.assertEquals(schema, ds.schema().toString());
+            Row r = ds.select("quotedField").distinct().first();
+
+            Assertions.assertEquals("string", r.getAs(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalFieldWithSingleQuotes() {
+        String query = "index=index_A | eval 'quotedField' = \"string\"";
+        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(quotedField,StringType,false))";
+        String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
+
+        streamingTestUtil.performDPLTest(query, testFile, ds -> {
+            Assertions.assertEquals(schema, ds.schema().toString());
+            Row r = ds.select("quotedField").distinct().first();
+
+            Assertions.assertEquals("string", r.getAs(0));
+        });
+    }
 }

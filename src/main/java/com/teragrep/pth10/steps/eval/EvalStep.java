@@ -45,6 +45,8 @@
  */
 package com.teragrep.pth10.steps.eval;
 
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
@@ -78,7 +80,7 @@ public final class EvalStep extends AbstractEvalStep {
         }
 
         // perform eval and long->ts
-        ds = ds.withColumn(leftSide, rightSide);
+        ds = ds.withColumn(new UnquotedText(new TextString(leftSide)).read(), rightSide);
         if (timeColumnExists) {
             ds = ds.withColumn("_time", functions.from_unixtime(functions.col("_time")).cast(DataTypes.TimestampType));
         }

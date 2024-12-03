@@ -119,4 +119,35 @@ public class RenameTransformationTest {
                         }
                 );
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void rename_DoubleQuotes_test() {
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=1 | eval \"a\" = \"something\" | rename \"a\" as \"b\"", testFile, ds -> {
+                            Assertions
+                                    .assertEquals("[_time, b]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void rename_SingleQuotes_test() {
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=1 | eval 'abc(def)' = \"xyz\" | rename 'abc(def)' as '(foo)bar'", testFile,
+                        ds -> {
+                            Assertions
+                                    .assertEquals("[_time, (foo)bar]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                        }
+                );
+    }
 }
