@@ -82,7 +82,7 @@ public class subSearchTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEndSubSearch2Test() {
+    void testSubSearchLimitOne() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host]";
         String testFile = "src/test/resources/subsearchData*.jsonl";
 
@@ -104,7 +104,7 @@ public class subSearchTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEndSubSearch3Test() {
+    void testSubSearchLimitGTOne() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 

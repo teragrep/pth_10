@@ -89,7 +89,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void explainTest() {
+    void testExplain() {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -109,7 +109,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void explain1Test() {
+    void testExplainExtended() {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host |explain extended";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -130,7 +130,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void explain2Test() {
+    void testExplainWithSubsearch() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]|explain extended";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -151,7 +151,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void auditTest() {
+    void testAuditInformation() {
         String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host] | explain extended";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -169,7 +169,7 @@ public class commandTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void teragrepTest() {
+    void testTeragrep() {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host | teragrep get system version";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {

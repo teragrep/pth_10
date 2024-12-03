@@ -85,7 +85,7 @@ public class chartTransformationTest {
     }
 
     @Test
-    public void chartCountAsTest() {
+    public void testChartCountAs() {
         String query = "index = index_A | chart count(_raw) as count";
 
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -111,7 +111,7 @@ public class chartTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEnd2Test() {
+    void testChartCountWithAsAndSplitBy() {
         String q = "( index = index_A OR index = index_B ) _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count by offset";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -144,7 +144,7 @@ public class chartTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEnd3Test() {
+    void testChartCountAsFieldIsUsable() {
         String q = "index = index_A _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count by offset | where count > 0";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -177,7 +177,7 @@ public class chartTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEnd4Test() {
+    void testChartCount() {
         String q = "index = index_B _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw)";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -209,7 +209,7 @@ public class chartTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void chart_multipleAggs_issue184_Test() {
+    void testChartMultipleAggregations() {
         String q = "index=* | chart count(_raw), min(offset), max(offset) by index";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -251,7 +251,7 @@ public class chartTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void endToEnd5Test() {
+    void testAggregateUsed() {
         String q = "index = jla02logger | chart count(_raw)";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {

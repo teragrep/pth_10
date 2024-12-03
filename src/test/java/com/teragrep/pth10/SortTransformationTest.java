@@ -111,7 +111,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // ascending auto sortByType with desc override
-    public void sort_test_1() {
+    public void testSortPlusAutoWithDesc() {
         streamingTestUtil.performDPLTest("index=index_A | sort + auto(offset) desc", testFile, ds -> {
             List<Row> listOfOffset = ds.select("offset").collectAsList();
             long firstOffset = listOfOffset.get(0).getLong(0);
@@ -127,7 +127,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // override default/auto sorting
-    public void sort_test_1b() {
+    public void testSortPlusStrPlainIntegerLimit() {
         streamingTestUtil.performDPLTest("index=index_A | sort 10 + str(offset)", testFile, ds -> {
             List<Row> listOfOffset = ds.select("offset").collectAsList();
 
@@ -143,7 +143,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // descending sourcetype (pth03 parsing issue?, seems to be ascending)
-    public void sort_test_2() {
+    public void testSortPLusAndLimit() {
         streamingTestUtil.performDPLTest("index=index_A | sort limit=0 + sourcetype", testFile, ds -> {
             List<Row> listOfSourcetype = ds.select("sourcetype").collectAsList();
 
@@ -160,7 +160,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // descending sort by ip address type
-    public void sort_test_3() {
+    public void testSortMinusIp() {
         streamingTestUtil.performDPLTest("index=index_A | sort - ip(source)", testFile, ds -> {
             List<Row> listOfSource = ds.select("source").collectAsList();
 
@@ -177,7 +177,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // sort with aggregate
-    public void sort_test_4() {
+    public void testSortPlusNumAfterAgg() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats count(offset) as count_offset avg(offset) as avg_offset by sourcetype | sort +num(avg_offset)",
@@ -195,7 +195,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // chained sort
-    public void sort_test_5() {
+    public void testSortMinusNum() {
         streamingTestUtil.performDPLTest("index=index_A | sort - num(offset)", testFile, ds -> {
             List<Row> listOfSource = ds.select("offset").collectAsList();
 
@@ -211,7 +211,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // sort with a group by aggregate, descending sort
-    public void sort_test_6() {
+    public void testSortMinusNumAfterAgg() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats max(offset) AS max_off by id | sort -num(max_off)", testFile, ds -> {
@@ -231,7 +231,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // sort with a group by aggregate, ascending sort
-    public void sort_test_7() {
+    public void testSortPlusNumAfterSplitBy() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats max(offset) AS max_off by id | sort +num(max_off)", testFile, ds -> {
@@ -251,7 +251,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // sort with a group by aggregate with auto sort
-    public void sort_test_8() {
+    public void testSortMinusAutoAfterSplitBy() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats max(offset) AS max_off by id | sort -auto(max_off)", testFile, ds -> {
@@ -271,7 +271,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // auto sort after eval
-    public void sort_test_9() {
+    public void TestSortMinusAutoAfterEval() {
         streamingTestUtil.performDPLTest("index=index_A | eval a = offset + 4 | sort -auto(a)", testFile, ds -> {
             List<Row> listOfSource = ds.select("a").collectAsList();
 
@@ -288,7 +288,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // auto sort strings
-    public void sort_test_10() {
+    public void testSortPlusAutoOnStrings() {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | eval a = if ( offset < 6, \"abc\", \"bcd\") | sort +auto(a)", testFile, ds -> {
@@ -308,7 +308,7 @@ public class SortTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // auto sort ip addresses
-    public void sort_test_11() {
+    public void testSortPlusAutoOnIp() {
         streamingTestUtil.performDPLTest("index=index_A | sort +auto(source)", testFile, ds -> {
             List<Row> listOfSource = ds.select("source").collectAsList();
 

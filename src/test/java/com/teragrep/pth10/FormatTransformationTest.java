@@ -99,7 +99,7 @@ public class FormatTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void formatTransformationTest0() {
+    void testFormatTransformation() {
         String q = "index=index_A | format ";
 
         streamingTestUtil
@@ -152,7 +152,7 @@ public class FormatTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void formatTransformationTest1() {
+    void testFormatWithMultiValue() {
         String q = "index=index_A | eval a=mvappend(\"1\", \"2\") | format maxresults=1 ";
 
         streamingTestUtil
@@ -186,7 +186,7 @@ public class FormatTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    void formatTransformationTest2() {
+    void testFormatTransformationWithParameters() {
         String q = "index=index_A | format maxresults=2 \"ROWPRE\" \"COLPRE\" \"COLSEP\" \"COLSUF\"\"ROWSEP\" \"ROWSUF\" ";
 
         streamingTestUtil
