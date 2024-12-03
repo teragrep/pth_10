@@ -54,6 +54,9 @@ import org.slf4j.LoggerFactory;
 import org.sparkproject.guava.reflect.TypeToken;
 
 import java.io.Serializable;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.*;
 
 public final class FilterTypes implements Serializable {
@@ -106,55 +109,6 @@ public final class FilterTypes implements Serializable {
         return bitsizeToExpectedItemsMap;
     }
 
-    public String pattern() {
-        final String pattern;
-        final String BLOOM_PATTERN_CONFIG_ITEM = "dpl.pth_06.bloom.pattern";
-        if (config.hasPath(BLOOM_PATTERN_CONFIG_ITEM)) {
-            final String patternFromConfig = config.getString(BLOOM_PATTERN_CONFIG_ITEM);
-            if (patternFromConfig == null || patternFromConfig.isEmpty()) {
-                throw new RuntimeException("Bloom filter pattern was not configured.");
-            }
-            pattern = patternFromConfig.trim();
-        }
-        else {
-            throw new RuntimeException("Missing configuration item: '" + BLOOM_PATTERN_CONFIG_ITEM + "'.");
-        }
-        return pattern;
-    }
-
-    public String tableName() {
-        final String tableName;
-        final String BLOOM_TABLE_NAME_ITEM = "dpl.pth_06.bloom.table.name";
-        if (config.hasPath(BLOOM_TABLE_NAME_ITEM)) {
-            final String tableNameFromConfig = config.getString(BLOOM_TABLE_NAME_ITEM);
-            if (tableNameFromConfig == null || tableNameFromConfig.isEmpty()) {
-                throw new RuntimeException("Bloom filter table name was not configured.");
-            }
-            tableName = tableNameFromConfig.replaceAll("\\s", "").trim();
-        }
-        else {
-            throw new RuntimeException("Missing configuration item: '" + BLOOM_TABLE_NAME_ITEM + "'.");
-        }
-
-        return tableName;
-    }
-
-    public String journalDBName() {
-        final String journalDBName;
-        final String JOURNALDB_TABLE_NAME_ITEM = "dpl.pth_06.archive.db.journaldb.name";
-        if (config.hasPath(JOURNALDB_TABLE_NAME_ITEM)) {
-            final String journalDBNameFromConfig = config.getString(JOURNALDB_TABLE_NAME_ITEM);
-            if (journalDBNameFromConfig == null || journalDBNameFromConfig.isEmpty()) {
-                throw new RuntimeException("Journaldb name was not configured.");
-            }
-            journalDBName = journalDBNameFromConfig;
-        }
-        else {
-            throw new RuntimeException("Missing configuration item: '" + JOURNALDB_TABLE_NAME_ITEM + "'.");
-        }
-        return journalDBName;
-    }
-
     private String sizesJsonString() {
         final String jsonString;
         final String BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM = "dpl.pth_06.bloom.db.fields";
@@ -170,15 +124,50 @@ public final class FilterTypes implements Serializable {
         return jsonString;
     }
 
+    /** Save filter types with a given regex pattern */
+    public void saveToDatabase(String regex) {
+        final Connection connection = new LazyConnection(config).get();
+        final SortedMap<Long, Double> filterSizeMap = sortedMap();
+        for (final Map.Entry<Long, Double> entry : filterSizeMap.entrySet()) {
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER
+                        .info(
+                                "Writing filtertype (expected <[{}]>, fpp: <[{}]>, pattern: <[{}]>)", entry.getKey(),
+                                entry.getValue(), regex
+                        );
+            }
+            final String sql = "INSERT IGNORE INTO `filtertype` (`expectedElements`, `targetFpp`, `pattern`) VALUES (?, ?, ?)";
+            try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+                stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
+                stmt.setDouble(2, entry.getValue()); // filtertype.targetFpp
+                stmt.setString(3, regex); // filtertype.pattern
+                stmt.executeUpdate();
+                stmt.clearParameters();
+                connection.commit();
+            }
+            catch (SQLException e) {
+                if (LOGGER.isErrorEnabled()) {
+                    LOGGER
+                            .error(
+                                    "Error writing filter[expected: <{}>, fpp: <{}>, pattern: <{}>] into database",
+                                    entry.getKey(), entry.getValue(), regex
+                            );
+                }
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     @Override
-    public boolean equals(final Object object) {
-        if (this == object)
-            return true;
-        if (object == null)
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
             return false;
-        if (object.getClass() != this.getClass())
-            return false;
-        final FilterTypes cast = (FilterTypes) object;
-        return config.equals(cast.config);
+        final FilterTypes cast = (FilterTypes) o;
+        return Objects.equals(config, cast.config);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(config);
     }
 }

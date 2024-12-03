@@ -56,11 +56,11 @@ import java.util.List;
 import java.util.Properties;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class BloomFilterTableTest {
+public class BloomFilterTableTest {
 
     final String username = "sa";
     final String password = "";
-    final String connectionUrl = "jdbc:h2:~/test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
 
     @BeforeAll
     void setEnv() {
@@ -84,12 +84,11 @@ class BloomFilterTableTest {
     }
 
     @Test
-    void testInvalidInputCharacters() {
+    public void testInvalidInputCharacters() {
         Properties properties = getDefaultProperties();
         String injection = "test;%00SELECT%00CONCAT('DROP%00TABLE%00IF%00EXISTS`',table_name,'`;')";
-        properties.put("dpl.pth_06.bloom.table.name", injection);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable injectionTable = new BloomFilterTable(config, true);
+        BloomFilterTable injectionTable = new BloomFilterTable(config, injection, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, injectionTable::create);
         Assertions
                 .assertEquals(
@@ -102,9 +101,8 @@ class BloomFilterTableTest {
     void testInputOverMaxLimit() {
         Properties properties = getDefaultProperties();
         String tooLongName = "testname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestname_thatistoolongtestnamethati";
-        properties.put("dpl.pth_06.bloom.table.name", tooLongName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table = new BloomFilterTable(config, true);
+        BloomFilterTable table = new BloomFilterTable(config, tooLongName, true);
         RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
         Assertions
                 .assertEquals(
@@ -117,9 +115,8 @@ class BloomFilterTableTest {
     void testCreateToDatabase() {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table = new BloomFilterTable(config, true);
+        BloomFilterTable table = new BloomFilterTable(config, tableName, true);
         table.create();
         String sql = "SHOW COLUMNS FROM " + tableName + ";";
         Assertions.assertDoesNotThrow(() -> {
@@ -140,37 +137,36 @@ class BloomFilterTableTest {
     }
 
     @Test
-    void testCreateToDatabaseFailure() {
+    void testCreateExceptionOnConstraintFailure() {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table = new BloomFilterTable(config);
-        Assertions.assertThrows(RuntimeException.class, table::create);
+        BloomFilterTable table = new BloomFilterTable(config, tableName);
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, table::create);
+        String expectedMessage = "Error creating bloom filter table: org.h2.jdbc.JdbcSQLSyntaxErrorException: Schema \"journaldb\" not found; SQL statement:\n" +
+                "CREATE TABLE IF NOT EXISTS `test_table`(`id` BIGINT UNSIGNED NOT NULL auto_increment PRIMARY KEY,`partition_id` BIGINT UNSIGNED NOT NULL UNIQUE,`filter_type_id` BIGINT UNSIGNED NOT NULL,`filter` LONGBLOB NOT NULL,CONSTRAINT `test_table_ibfk_1` FOREIGN KEY (filter_type_id) REFERENCES filtertype (id)ON DELETE CASCADE,CONSTRAINT `test_table_ibfk_2` FOREIGN KEY (partition_id) REFERENCES journaldb.logfile (id)ON DELETE CASCADE); [90079-224]";
+        Assertions.assertEquals(expectedMessage, e.getMessage());
     }
 
     @Test
     void testEquals() {
+        String tableName1 = "test_table";
         Properties properties = getDefaultProperties();
-        String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table1 = new BloomFilterTable(config, true);
-        BloomFilterTable table2 = new BloomFilterTable(config, true);
+        BloomFilterTable table1 = new BloomFilterTable(config, tableName1, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, tableName1, true);
         table1.create();
         Assertions.assertEquals(table1, table2);
     }
 
     @Test
     void testNotEqualsName() {
-        Properties properties1 = getDefaultProperties();
-        Properties properties2 = getDefaultProperties();
-        properties1.put("dpl.pth_06.bloom.table.name", "test_table");
-        properties2.put("dpl.pth_06.bloom.table.name", "table_test");
-        Config config1 = ConfigFactory.parseProperties(properties1);
-        Config config2 = ConfigFactory.parseProperties(properties2);
-        BloomFilterTable table1 = new BloomFilterTable(config1, true);
-        BloomFilterTable table2 = new BloomFilterTable(config2, true);
+        String tableName1 = "test_table";
+        String tableName2 = "table_test";
+        Properties properties = getDefaultProperties();
+        Config config = ConfigFactory.parseProperties(properties);
+        BloomFilterTable table1 = new BloomFilterTable(config, tableName1, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, tableName2, true);
         table1.create();
         Assertions.assertNotEquals(table1, table2);
     }
@@ -179,10 +175,9 @@ class BloomFilterTableTest {
     void testNotEqualsIgnoreConstraints() {
         Properties properties = getDefaultProperties();
         String tableName = "test_table";
-        properties.put("dpl.pth_06.bloom.table.name", tableName);
         Config config = ConfigFactory.parseProperties(properties);
-        BloomFilterTable table1 = new BloomFilterTable(config, true);
-        BloomFilterTable table2 = new BloomFilterTable(config, false);
+        BloomFilterTable table1 = new BloomFilterTable(config, tableName, true);
+        BloomFilterTable table2 = new BloomFilterTable(config, tableName, false);
         table1.create();
         Assertions.assertNotEquals(table1, table2);
     }

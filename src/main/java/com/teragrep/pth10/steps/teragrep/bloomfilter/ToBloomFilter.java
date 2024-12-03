@@ -54,6 +54,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * BloomFilter from byte[] used in a constructor of TeragrepBloomFilter
@@ -169,7 +170,7 @@ public final class ToBloomFilter extends BloomFilter {
     }
 
     @Override
-    public boolean equals(Object object) {
+    public boolean equals(final Object object) {
         if (this == object)
             return true;
         if (object == null)
@@ -178,5 +179,10 @@ public final class ToBloomFilter extends BloomFilter {
             return false;
         final ToBloomFilter cast = (ToBloomFilter) object;
         return Arrays.equals(this.bytes, cast.bytes);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(Arrays.hashCode(bytes), cache);
     }
 }
