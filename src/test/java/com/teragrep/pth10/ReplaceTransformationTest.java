@@ -121,7 +121,8 @@ public class ReplaceTransformationTest {
                     Assertions.assertEquals("SomethingNew", listOfRawCol.get(0));
                 });
     }
-//"?$.data^){"
+
+    //"?$.data^){"
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",

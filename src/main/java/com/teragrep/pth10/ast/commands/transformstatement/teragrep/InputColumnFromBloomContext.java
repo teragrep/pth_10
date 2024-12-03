@@ -61,9 +61,7 @@ public final class InputColumnFromBloomContext implements ContextValue<String> {
     public String value() {
         final String value;
         if (ctx.t_inputParameter() != null) {
-            value = new UnquotedText(
-                    new TextString(ctx.t_inputParameter().fieldType().getText())
-            ).read();
+            value = new UnquotedText(new TextString(ctx.t_inputParameter().fieldType().getText())).read();
         }
         else {
             value = "tokens";
