@@ -61,9 +61,7 @@ public final class RegexValueFromBloomContext implements ContextValue<String> {
     public String value() {
         final String regex;
         if (ctx.t_regexParameter() != null) {
-            regex = new UnquotedText(
-                    new TextString(ctx.t_regexParameter().stringType().getText())
-            ).read();
+            regex = new UnquotedText(new TextString(ctx.t_regexParameter().stringType().getText())).read();
         }
         else {
             throw new IllegalArgumentException("Missing regex parameter in '| teragrep exec bloom'.");

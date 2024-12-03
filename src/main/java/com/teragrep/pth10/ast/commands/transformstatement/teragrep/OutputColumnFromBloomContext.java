@@ -63,9 +63,7 @@ public final class OutputColumnFromBloomContext implements ContextValue<String> 
     public String value() {
         final String outputCol;
         if (ctx.t_outputParameter() != null) {
-            outputCol = new UnquotedText(
-                    new TextString(ctx.t_outputParameter().fieldType().getText())
-            ).read();
+            outputCol = new UnquotedText(new TextString(ctx.t_outputParameter().fieldType().getText())).read();
         }
         else {
             outputCol = String.format("estimate(%s)", inputCol);

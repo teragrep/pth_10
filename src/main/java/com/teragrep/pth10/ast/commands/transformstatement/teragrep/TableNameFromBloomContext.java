@@ -61,9 +61,7 @@ public final class TableNameFromBloomContext implements ContextValue<String> {
     public String value() {
         final String tableName;
         if (ctx.t_tableParameter() != null) {
-            tableName = new UnquotedText(
-                    new TextString(ctx.t_tableParameter().fieldType().getText())
-            ).read();
+            tableName = new UnquotedText(new TextString(ctx.t_tableParameter().fieldType().getText())).read();
         }
         else {
             throw new IllegalArgumentException("Missing table parameter in '| teragrep exec bloom'.");

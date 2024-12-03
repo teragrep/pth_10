@@ -510,7 +510,8 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                     estimateCol.value()
             );
             rv = new StepListNode(Arrays.asList(aggregateStep, bloomStepWithRegexAndTable));
-        } else {
+        }
+        else {
             final TeragrepBloomStep bloomStep = new TeragrepBloomStep(
                     this.zplnConfig,
                     mode.value(),
@@ -521,7 +522,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             rv = new StepNode(bloomStep);
         }
 
-        return  rv;
+        return rv;
     }
 
     @Override
