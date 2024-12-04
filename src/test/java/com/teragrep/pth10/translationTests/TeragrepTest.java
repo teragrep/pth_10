@@ -326,7 +326,7 @@ public class TeragrepTest {
 
     @Test
     void testTeragrepBloomCreateTranslation() {
-        final String query = "| teragrep exec bloom create";
+        final String query = "| teragrep exec bloom create table myTable regex \\w{4}";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
@@ -353,7 +353,7 @@ public class TeragrepTest {
 
     @Test
     void testTeragrepBloomUpdateTranslation() {
-        final String query = "| teragrep exec bloom update";
+        final String query = "| teragrep exec bloom update table myTable regex \\w{4}";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
