@@ -65,19 +65,11 @@ public final class CurrentTimestampImpl implements CurrentTimestamp {
 
     @Override
     public boolean isBefore(CurrentTimestamp other) {
-        if (other.isEmpty()) {
-            return false;
-        }
-
         return timestamp.before(other.timestamp());
     }
 
     @Override
     public boolean isAfter(CurrentTimestamp other) {
-        if (other.isEmpty()) {
-            return false;
-        }
-
         return timestamp.after(other.timestamp());
     }
 }
