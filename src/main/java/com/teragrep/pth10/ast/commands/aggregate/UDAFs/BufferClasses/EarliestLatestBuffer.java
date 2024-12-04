@@ -58,63 +58,30 @@ import java.sql.Timestamp;
  * 
  * @author eemhu
  */
-public class EarliestLatestBuffer implements Serializable {
+public final class EarliestLatestBuffer implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private CurrentTimestamp earliest = new CurrentTimestampStub();
-    private CurrentTimestamp latest = new CurrentTimestampStub();
-    private Row earliestRow = Row.empty();
-    private Row latestRow = Row.empty();
+    private final CurrentTimestamp earliestTimestamp;
+    private final CurrentTimestamp latestTimestamp;
+    private final Row earliestRow;
+    private final Row latestRow;
     private final String colName;
 
     public EarliestLatestBuffer(final String colName) {
         this.colName = colName;
+        this.earliestTimestamp = new CurrentTimestampStub();
+        this.latestTimestamp = new CurrentTimestampStub();
+        this.earliestRow = Row.empty();
+        this.latestRow = Row.empty();
     }
 
-    /**
-     * Merge two buffers.
-     * 
-     * @param other buffer
-     */
-    public void merge(EarliestLatestBuffer other) {
-        if (this.earliest.isEmpty()) {
-            this.earliest = other.earliest;
-            this.earliestRow = other.earliestRow;
-        }
-
-        if (this.latest.isEmpty()) {
-            this.latest = other.latest;
-            this.latestRow = other.latestRow;
-        }
-
-        if (!other.earliest.isEmpty() && other.earliest.isBefore(this.earliest)) {
-            this.earliest = other.earliest;
-            this.earliestRow = other.earliestRow;
-        }
-
-        if (!other.latest.isEmpty() && other.latest.isAfter(this.latest)) {
-            this.latest = other.latest;
-            this.latestRow = other.latestRow;
-        }
-    }
-
-    /**
-     * Add Time, Data pair
-     * 
-     * @param time key
-     * @param data value
-     */
-    public void add(Timestamp time, Row data) {
-        CurrentTimestamp currentTimestamp = new CurrentTimestampImpl(time);
-        if (this.earliest.isEmpty() || currentTimestamp.isBefore(this.earliest)) {
-            this.earliest = currentTimestamp;
-            this.earliestRow = data;
-        }
-
-        if (this.latest.isEmpty() || currentTimestamp.isAfter(this.latest)) {
-            this.latest = currentTimestamp;
-            this.latestRow = data;
-        }
+    public EarliestLatestBuffer(final String colName, final CurrentTimestamp earliestTimestamp, final CurrentTimestamp latestTimestamp,
+                                final Row earliestRow, final Row latestRow) {
+        this.colName = colName;
+        this.earliestTimestamp = earliestTimestamp;
+        this.latestTimestamp = latestTimestamp;
+        this.earliestRow = earliestRow;
+        this.latestRow = latestRow;
     }
 
     /**
@@ -147,10 +114,10 @@ public class EarliestLatestBuffer implements Serializable {
      * @return field time as unix epoch
      */
     public String earliest_time() {
-        if (earliest.isEmpty()) {
+        if (earliestTimestamp.isEmpty()) {
             return "";
         }
-        return String.valueOf(earliest.timestamp().getTime() / 1000L);
+        return String.valueOf(earliestTimestamp.timestamp().getTime() / 1000L);
     }
 
     /**
@@ -159,10 +126,10 @@ public class EarliestLatestBuffer implements Serializable {
      * @return field time as unix epoch
      */
     public String latest_time() {
-        if (latest.isEmpty()) {
+        if (latestTimestamp.isEmpty()) {
             return "";
         }
-        return String.valueOf(latest.timestamp().getTime() / 1000L);
+        return String.valueOf(latestTimestamp.timestamp().getTime() / 1000L);
     }
 
     /**
@@ -197,5 +164,25 @@ public class EarliestLatestBuffer implements Serializable {
         double rate = dividend / divisor;
 
         return rate;
+    }
+
+    public Row earliestRow() {
+        return earliestRow;
+    }
+
+    public Row latestRow() {
+        return latestRow;
+    }
+
+    public CurrentTimestamp earliestTimestamp() {
+        return earliestTimestamp;
+    }
+
+    public CurrentTimestamp latestTimestamp() {
+        return latestTimestamp;
+    }
+
+    public String colName() {
+        return colName;
     }
 }

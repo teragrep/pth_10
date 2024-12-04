@@ -105,8 +105,33 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Earl
     // Merge two buffers into one
     @Override
     public EarliestLatestBuffer merge(EarliestLatestBuffer buffer, EarliestLatestBuffer buffer2) {
-        buffer.merge(buffer2);
-        return buffer;
+        CurrentTimestamp newEarliest = buffer.earliestTimestamp();
+        CurrentTimestamp newLatest = buffer.latestTimestamp();
+        Row newEarliestRow = buffer.earliestRow();
+        Row newLatestRow = buffer.latestRow();
+
+
+        if (buffer.earliestTimestamp().isEmpty()) {
+            newEarliest = buffer2.earliestTimestamp();
+            newEarliestRow = buffer2.earliestRow();
+        }
+
+        if (buffer.latestTimestamp().isEmpty()) {
+            newLatest = buffer2.latestTimestamp();
+            newLatestRow = buffer2.latestRow();
+        }
+
+        if (!buffer2.earliestTimestamp().isEmpty() && buffer2.earliestTimestamp().isBefore(newEarliest)) {
+            newEarliest = buffer2.earliestTimestamp();
+            newEarliestRow = buffer2.earliestRow();
+        }
+
+        if (!buffer2.latestTimestamp().isEmpty() && buffer2.latestTimestamp().isAfter(newLatest)) {
+            newLatest = buffer2.latestTimestamp();
+            newLatestRow = buffer2.latestRow();
+        }
+
+        return new EarliestLatestBuffer(colName, newEarliest, newLatest, newEarliestRow, newLatestRow);
     }
 
     /** Gets the timestamp column as a timestamp, even if it is a string instead of the proper TimestampType */
@@ -132,8 +157,8 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Earl
     @Override
     public EarliestLatestBuffer reduce(EarliestLatestBuffer buffer, Row input) {
         Timestamp time = getColumnAsTimestamp(input);
-        buffer.add(time, input);
+        EarliestLatestBuffer newBuffer = new EarliestLatestBuffer(colName, new CurrentTimestampImpl(time), new CurrentTimestampImpl(time), input, input);
 
-        return buffer;
+        return merge(buffer, newBuffer);
     }
 }
