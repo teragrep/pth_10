@@ -110,7 +110,6 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Earl
         Row newEarliestRow = buffer.earliestRow();
         Row newLatestRow = buffer.latestRow();
 
-
         if (buffer.earliestTimestamp().isEmpty()) {
             newEarliest = buffer2.earliestTimestamp();
             newEarliestRow = buffer2.earliestRow();
@@ -157,7 +156,13 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Earl
     @Override
     public EarliestLatestBuffer reduce(EarliestLatestBuffer buffer, Row input) {
         Timestamp time = getColumnAsTimestamp(input);
-        EarliestLatestBuffer newBuffer = new EarliestLatestBuffer(colName, new CurrentTimestampImpl(time), new CurrentTimestampImpl(time), input, input);
+        EarliestLatestBuffer newBuffer = new EarliestLatestBuffer(
+                colName,
+                new CurrentTimestampImpl(time),
+                new CurrentTimestampImpl(time),
+                input,
+                input
+        );
 
         return merge(buffer, newBuffer);
     }

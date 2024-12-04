@@ -46,12 +46,10 @@
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
 import com.teragrep.pth10.ast.commands.aggregate.UDAFs.CurrentTimestamp;
-import com.teragrep.pth10.ast.commands.aggregate.UDAFs.CurrentTimestampImpl;
 import com.teragrep.pth10.ast.commands.aggregate.UDAFs.CurrentTimestampStub;
 import org.apache.spark.sql.Row;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
 
 /**
  * Java Bean compliant class with helper methods used in EarliestLatestAggregator.java
@@ -75,8 +73,13 @@ public final class EarliestLatestBuffer implements Serializable {
         this.latestRow = Row.empty();
     }
 
-    public EarliestLatestBuffer(final String colName, final CurrentTimestamp earliestTimestamp, final CurrentTimestamp latestTimestamp,
-                                final Row earliestRow, final Row latestRow) {
+    public EarliestLatestBuffer(
+            final String colName,
+            final CurrentTimestamp earliestTimestamp,
+            final CurrentTimestamp latestTimestamp,
+            final Row earliestRow,
+            final Row latestRow
+    ) {
         this.colName = colName;
         this.earliestTimestamp = earliestTimestamp;
         this.latestTimestamp = latestTimestamp;
