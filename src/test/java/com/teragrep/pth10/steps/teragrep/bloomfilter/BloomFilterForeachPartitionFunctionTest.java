@@ -45,50 +45,15 @@
  */
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
-import org.apache.spark.util.sketch.BloomFilter;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.Arrays;
+public class BloomFilterForeachPartitionFunctionTest {
 
-/**
- * BloomFilter from byte[] used in a constructor of TeragrepBloomFilter
- * 
- * @see TeragrepBloomFilter
- */
-public final class ToBloomFilter {
-
-    private final byte[] bytes;
-
-    public ToBloomFilter(final byte[] bytes) {
-        this.bytes = bytes;
-    }
-
-    public BloomFilter fromBytes() {
-        final BloomFilter filter;
-        try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes)) {
-            filter = BloomFilter.readFrom(bais);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("Error reading bytes to filter: " + e.getMessage());
-        }
-        return filter;
-    }
-
-    @Override
-    public boolean equals(final Object object) {
-        if (this == object)
-            return true;
-        if (object == null)
-            return false;
-        if (object.getClass() != this.getClass())
-            return false;
-        final ToBloomFilter cast = (ToBloomFilter) object;
-        return Arrays.equals(this.bytes, cast.bytes);
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(bytes);
+    @Test
+    public void testEqualsVerifier() {
+        EqualsVerifier
+                .forClass(BloomFilterForeachPartitionFunction.class)
+                .withNonnullFields("filterTypes", "lazyConnection", "overwrite", "tableName", "regex");
     }
 }

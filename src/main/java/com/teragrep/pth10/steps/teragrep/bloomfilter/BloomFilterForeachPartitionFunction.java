@@ -51,6 +51,7 @@ import org.apache.spark.sql.Row;
 
 import java.sql.Connection;
 import java.util.Iterator;
+import java.util.Objects;
 
 public final class BloomFilterForeachPartitionFunction implements ForeachPartitionFunction<Row> {
 
@@ -100,5 +101,19 @@ public final class BloomFilterForeachPartitionFunction implements ForeachPartiti
             tgFilter.saveFilter(overwrite);
             conn.commit();
         }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
+            return false;
+        final BloomFilterForeachPartitionFunction cast = (BloomFilterForeachPartitionFunction) o;
+        return filterTypes.equals(cast.filterTypes) && lazyConnection.equals(cast.lazyConnection)
+                && overwrite == cast.overwrite && tableName.equals(cast.tableName) && regex.equals(cast.regex);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(filterTypes, lazyConnection, overwrite, tableName, regex);
     }
 }
