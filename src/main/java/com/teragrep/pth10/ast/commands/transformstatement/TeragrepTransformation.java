@@ -53,7 +53,7 @@ import com.teragrep.pth10.ast.bo.StringNode;
 import com.teragrep.pth10.ast.bo.Token;
 import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst;
 import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementXML;
-import com.teragrep.pth10.ast.commands.transformstatement.teragrep.ModeFromBloomContext;
+import com.teragrep.pth10.ast.commands.transformstatement.teragrep.ContextBloomMode;
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.EstimateColumnFromBloomContext;
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.InputColumnFromBloomContext;
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.OutputColumnFromBloomContext;
@@ -480,7 +480,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_bloomOptionParameter(final DPLParser.T_bloomOptionParameterContext ctx) {
         // values from context
-        final ContextValue<TeragrepBloomStep.BloomMode> mode = new ModeFromBloomContext(ctx);
+        final ContextValue<TeragrepBloomStep.BloomMode> mode = new ContextBloomMode(ctx);
         final ContextValue<String> inputCol = new InputColumnFromBloomContext(ctx);
         final ContextValue<String> outputCol = new OutputColumnFromBloomContext(ctx, inputCol.value());
         final ContextValue<String> estimateCol = new EstimateColumnFromBloomContext(ctx, inputCol.value());

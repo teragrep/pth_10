@@ -121,6 +121,12 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>nl.jqno.equalsverifier</groupId>
+      <artifactId>equalsverifier</artifactId>
+      <version>3.17.4</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.teragrep</groupId>
       <artifactId>pth_06</artifactId>
       <version>${teragrep.pth_06.version}</version>
