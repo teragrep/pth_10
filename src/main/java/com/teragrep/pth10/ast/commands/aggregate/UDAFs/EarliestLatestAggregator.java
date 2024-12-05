@@ -45,13 +45,11 @@
  */
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
-import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.TimestampMapBuffer;
+import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.EarliestLatestBuffer;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.expressions.Aggregator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.sql.Timestamp;
@@ -67,14 +65,11 @@ import java.time.format.DateTimeFormatter;
  * 
  * @author eemhu
  */
-public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, TimestampMapBuffer, OUT>
+public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, EarliestLatestBuffer, OUT>
         implements Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(EarliestLatestAggregator.class);
-
     private static final long serialVersionUID = 1L;
-    private String colName = null;
-    private static final boolean debugEnabled = false;
+    private final String colName;
 
     /**
      * Constructor used to feed in the column name
@@ -86,14 +81,11 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Time
         this.colName = colName;
     }
 
-    /** Encoder for the buffer (class: TimestampMapBuffer) */
+    /** Encoder for the buffer (class: EarliestLatestBuffer) */
     @Override
-    public Encoder<TimestampMapBuffer> bufferEncoder() {
-        if (debugEnabled)
-            LOGGER.info("Buffer encoder");
-
+    public Encoder<EarliestLatestBuffer> bufferEncoder() {
         // TODO using kryo should speed this up
-        return Encoders.javaSerialization(TimestampMapBuffer.class);
+        return Encoders.javaSerialization(EarliestLatestBuffer.class);
     }
 
     /** Abstract implementation for output encoder */
@@ -102,32 +94,50 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Time
 
     /** Initialization */
     @Override
-    public TimestampMapBuffer zero() {
-        if (debugEnabled)
-            LOGGER.info("zero");
-
-        return new TimestampMapBuffer();
+    public EarliestLatestBuffer zero() {
+        return new EarliestLatestBuffer(colName);
     }
 
     /** Perform at the end of the aggregation */
     @Override
-    public abstract OUT finish(TimestampMapBuffer buffer);
+    public abstract OUT finish(EarliestLatestBuffer buffer);
 
     // Merge two buffers into one
     @Override
-    public TimestampMapBuffer merge(TimestampMapBuffer buffer, TimestampMapBuffer buffer2) {
-        if (debugEnabled)
-            LOGGER.info("merge");
+    public EarliestLatestBuffer merge(EarliestLatestBuffer buffer, EarliestLatestBuffer buffer2) {
+        CurrentTimestamp newEarliest = buffer.earliestTimestamp();
+        CurrentTimestamp newLatest = buffer.latestTimestamp();
+        Row newEarliestRow = buffer.earliestRow();
+        Row newLatestRow = buffer.latestRow();
 
-        buffer.mergeMap(buffer2.getMap());
-        return buffer;
+        if (buffer.earliestTimestamp().isEmpty()) {
+            newEarliest = buffer2.earliestTimestamp();
+            newEarliestRow = buffer2.earliestRow();
+        }
+
+        if (buffer.latestTimestamp().isEmpty()) {
+            newLatest = buffer2.latestTimestamp();
+            newLatestRow = buffer2.latestRow();
+        }
+
+        if (!buffer2.earliestTimestamp().isEmpty() && buffer2.earliestTimestamp().isBefore(newEarliest)) {
+            newEarliest = buffer2.earliestTimestamp();
+            newEarliestRow = buffer2.earliestRow();
+        }
+
+        if (!buffer2.latestTimestamp().isEmpty() && buffer2.latestTimestamp().isAfter(newLatest)) {
+            newLatest = buffer2.latestTimestamp();
+            newLatestRow = buffer2.latestRow();
+        }
+
+        return new EarliestLatestBuffer(colName, newEarliest, newLatest, newEarliestRow, newLatestRow);
     }
 
     /** Gets the timestamp column as a timestamp, even if it is a string instead of the proper TimestampType */
     private Timestamp getColumnAsTimestamp(Row input) {
-        Timestamp rv = null;
+        Timestamp rv;
         try {
-            rv = (Timestamp) input.getAs("_time");
+            rv = input.getAs("_time");
         }
         catch (ClassCastException cce) {
             // This should really never be needed, but it seems like the test reads timestamp in as a stringtype
@@ -144,14 +154,16 @@ public abstract class EarliestLatestAggregator<OUT> extends Aggregator<Row, Time
 
     /** Update TimestampMapBuffer with new value */
     @Override
-    public TimestampMapBuffer reduce(TimestampMapBuffer buffer, Row input) {
-        if (debugEnabled)
-            LOGGER.info("reduce");
-
+    public EarliestLatestBuffer reduce(EarliestLatestBuffer buffer, Row input) {
         Timestamp time = getColumnAsTimestamp(input);
-        String val = input.getAs(colName).toString();
-        buffer.add(time, val);
+        EarliestLatestBuffer newBuffer = new EarliestLatestBuffer(
+                colName,
+                new CurrentTimestampImpl(time),
+                new CurrentTimestampImpl(time),
+                input,
+                input
+        );
 
-        return buffer;
+        return merge(buffer, newBuffer);
     }
 }

@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth10;
 
+import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -190,7 +191,6 @@ public class statsTransformationTest {
     void statsTransform_AggEarliest_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats earliest(offset) AS earliest_offset", testFile, ds -> {
             Assertions.assertEquals("[earliest_offset]", Arrays.toString(ds.columns()));
-
             List<String> destAsList = ds
                     .select("earliest_offset")
                     .collectAsList()
@@ -198,6 +198,21 @@ public class statsTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
             Assertions.assertEquals(Collections.singletonList("1"), destAsList);
+        });
+    }
+
+    // Test earliest() and latest() combination
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void statsTransform_AggEarliestAndLatestCombo_Test() {
+        streamingTestUtil.performDPLTest("index=index_A | stats earliest(offset), latest(offset)", testFile, ds -> {
+            Assertions.assertEquals("[earliest(offset), latest(offset)]", Arrays.toString(ds.columns()));
+            List<Row> destAsList = ds.select("earliest(offset)", "latest(offset)").collectAsList();
+            Assertions.assertEquals("1", destAsList.get(0).getString(0));
+            Assertions.assertEquals("11", destAsList.get(0).getString(1));
         });
     }
 

@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
-import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.TimestampMapBuffer;
+import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.EarliestLatestBuffer;
 import org.apache.spark.sql.Encoder;
 import org.apache.spark.sql.Encoders;
 
@@ -54,9 +54,10 @@ import java.io.Serializable;
 /**
  * Used for earliest, latest, earliest_time, latest_time, rate
  */
-public class EarliestLatestAggregator_String extends EarliestLatestAggregator<String> implements Serializable {
+public final class EarliestLatestAggregator_String extends EarliestLatestAggregator<String> implements Serializable {
 
-    private AggregatorMode.EarliestLatestAggregatorMode mode = AggregatorMode.EarliestLatestAggregatorMode.EARLIEST; // 0=earliest, 1=latest, 2=earliest_time, 3=latest_time, 4=rate
+    private final AggregatorMode.EarliestLatestAggregatorMode mode; // 0=earliest, 1=latest, 2=earliest_time, 3=latest_time, 4=rate
+    private static final long serialVersionUID = 1L;
 
     /**
      * Initialize with column name and mode
@@ -64,12 +65,10 @@ public class EarliestLatestAggregator_String extends EarliestLatestAggregator<St
      * @param colName column name
      * @param mode    aggregator mode
      */
-    public EarliestLatestAggregator_String(java.lang.String colName, AggregatorMode.EarliestLatestAggregatorMode mode) {
+    public EarliestLatestAggregator_String(String colName, AggregatorMode.EarliestLatestAggregatorMode mode) {
         super(colName);
         this.mode = mode;
     }
-
-    private static final long serialVersionUID = 1L;
 
     /**
      * Gets the output encoder
@@ -88,16 +87,16 @@ public class EarliestLatestAggregator_String extends EarliestLatestAggregator<St
      * @return result as a string
      */
     @Override
-    public String finish(TimestampMapBuffer buffer) {
+    public String finish(EarliestLatestBuffer buffer) {
         switch (this.mode) {
             case EARLIEST: // earliest
                 return buffer.earliest();
             case LATEST: // latest
                 return buffer.latest();
             case EARLIEST_TIME: // earliest_time
-                return buffer.earliest_time().toString();
+                return buffer.earliest_time();
             case LATEST_TIME: // latest_time
-                return buffer.latest_time().toString();
+                return buffer.latest_time();
             case RATE: // rate
                 return buffer.rate().toString();
             default: // shouldn't happen, throw Exception

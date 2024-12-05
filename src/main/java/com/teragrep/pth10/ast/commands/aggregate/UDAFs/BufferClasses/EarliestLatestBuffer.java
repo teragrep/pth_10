@@ -45,86 +45,46 @@
  */
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 
+import com.teragrep.pth10.ast.commands.aggregate.UDAFs.CurrentTimestamp;
+import com.teragrep.pth10.ast.commands.aggregate.UDAFs.CurrentTimestampStub;
+import org.apache.spark.sql.Row;
+
 import java.io.Serializable;
-import java.sql.Timestamp;
-import java.util.Map;
-import java.util.Optional;
 
 /**
- * Java Bean compliant class to enclose the map with helper methods used in EarliestLatestAggregator.java
+ * Java Bean compliant class with helper methods used in EarliestLatestAggregator.java
  * 
  * @author eemhu
  */
-public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements Serializable {
+public final class EarliestLatestBuffer implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private final CurrentTimestamp earliestTimestamp;
+    private final CurrentTimestamp latestTimestamp;
+    private final Row earliestRow;
+    private final Row latestRow;
+    private final String colName;
 
-    /**
-     * Merge the buffer's map with another
-     * 
-     * @param another map to merge with
-     */
-    public void mergeMap(Map<Timestamp, String> another) {
-        another.forEach((key, value) -> {
-            this.map
-                    .merge(key, value, (v1, v2) -> {
-                        // This gets called for possible duplicates
-                        // In that case, retain the first value
-                        return v1;
-                    });
-        });
+    public EarliestLatestBuffer(final String colName) {
+        this.colName = colName;
+        this.earliestTimestamp = new CurrentTimestampStub();
+        this.latestTimestamp = new CurrentTimestampStub();
+        this.earliestRow = Row.empty();
+        this.latestRow = Row.empty();
     }
 
-    /**
-     * Add Time, Data pair to map
-     * 
-     * @param time key
-     * @param data value
-     */
-    public void add(Timestamp time, String data) {
-        if (!this.map.containsKey(time)) {
-            this.map.put(time, data);
-        }
-    }
-
-    /**
-     * Gets the earliest map entry
-     * 
-     * @return Map.Entry
-     */
-    public Optional<Map.Entry<Timestamp, String>> earliestMapEntry() {
-        Optional<Map.Entry<Timestamp, String>> earliestEntry = Optional.empty();
-
-        for (Map.Entry<Timestamp, String> entry : this.map.entrySet()) {
-            if (!earliestEntry.isPresent()) {
-                earliestEntry = Optional.of(entry);
-            }
-            else if (entry.getKey().before(earliestEntry.get().getKey())) {
-                earliestEntry = Optional.of(entry);
-            }
-        }
-
-        return earliestEntry;
-    }
-
-    /**
-     * Gets the latest map entry
-     * 
-     * @return Map.Entry
-     */
-    public Optional<Map.Entry<Timestamp, String>> latestMapEntry() {
-        Optional<Map.Entry<Timestamp, String>> latestEntry = Optional.empty();
-
-        for (Map.Entry<Timestamp, String> entry : this.map.entrySet()) {
-            if (!latestEntry.isPresent()) {
-                latestEntry = Optional.of(entry);
-            }
-            else if (entry.getKey().after(latestEntry.get().getKey())) {
-                latestEntry = Optional.of(entry);
-            }
-        }
-
-        return latestEntry;
+    public EarliestLatestBuffer(
+            final String colName,
+            final CurrentTimestamp earliestTimestamp,
+            final CurrentTimestamp latestTimestamp,
+            final Row earliestRow,
+            final Row latestRow
+    ) {
+        this.colName = colName;
+        this.earliestTimestamp = earliestTimestamp;
+        this.latestTimestamp = latestTimestamp;
+        this.earliestRow = earliestRow;
+        this.latestRow = latestRow;
     }
 
     /**
@@ -133,12 +93,10 @@ public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements 
      * @return field value as string
      */
     public String earliest() {
-        if (this.earliestMapEntry().isPresent()) {
-            return this.earliestMapEntry().get().getValue();
-        }
-        else {
+        if (earliestRow.size() == 0) {
             return "";
         }
+        return earliestRow.get(earliestRow.fieldIndex(colName)).toString();
     }
 
     /**
@@ -147,12 +105,10 @@ public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements 
      * @return field value as string
      */
     public String latest() {
-        if (this.latestMapEntry().isPresent()) {
-            return this.latestMapEntry().get().getValue();
-        }
-        else {
+        if (latestRow.size() == 0) {
             return "";
         }
+        return latestRow.get(latestRow.fieldIndex(colName)).toString();
     }
 
     /**
@@ -161,12 +117,10 @@ public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements 
      * @return field time as unix epoch
      */
     public String earliest_time() {
-        if (this.earliestMapEntry().isPresent()) {
-            return String.valueOf(this.earliestMapEntry().get().getKey().getTime() / 1000L);
-        }
-        else {
+        if (earliestTimestamp.isEmpty()) {
             return "";
         }
+        return String.valueOf(earliestTimestamp.timestamp().getTime() / 1000L);
     }
 
     /**
@@ -175,12 +129,10 @@ public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements 
      * @return field time as unix epoch
      */
     public String latest_time() {
-        if (this.latestMapEntry().isPresent()) {
-            return String.valueOf(this.latestMapEntry().get().getKey().getTime() / 1000L);
-        }
-        else {
+        if (latestTimestamp.isEmpty()) {
             return "";
         }
+        return String.valueOf(latestTimestamp.timestamp().getTime() / 1000L);
     }
 
     /**
@@ -191,19 +143,19 @@ public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements 
      * @return rate as double
      */
     public Double rate() {
-        Optional<Map.Entry<Timestamp, String>> earliestEntry = this.earliestMapEntry();
-        Optional<Map.Entry<Timestamp, String>> latestEntry = this.latestMapEntry();
-        if (!earliestEntry.isPresent() || !latestEntry.isPresent()) {
+        String earliestEntry = earliest();
+        String latestEntry = latest();
+        if (earliestEntry.isEmpty() || latestEntry.isEmpty()) {
             throw new IllegalStateException("Could not get earliest / latest entry from data!");
         }
 
         // get earliest and latest values - must be numerical!
-        long earliest = Long.parseLong(earliestEntry.get().getValue());
-        long latest = Long.parseLong(latestEntry.get().getValue());
+        long earliest = Long.parseLong(earliestEntry);
+        long latest = Long.parseLong(latestEntry);
 
         // get earliest and latest time
-        long earliest_time = earliestEntry.get().getKey().getTime() / 1000L;
-        long latest_time = latestEntry.get().getKey().getTime() / 1000L;
+        long earliest_time = Long.parseLong(earliest_time());
+        long latest_time = Long.parseLong(latest_time());
 
         if (earliest_time == latest_time) {
             throw new IllegalStateException("Earliest time was the same as the latest time! Can't calculate rate.");
@@ -215,5 +167,25 @@ public class TimestampMapBuffer extends MapBuffer<Timestamp, String> implements 
         double rate = dividend / divisor;
 
         return rate;
+    }
+
+    public Row earliestRow() {
+        return earliestRow;
+    }
+
+    public Row latestRow() {
+        return latestRow;
+    }
+
+    public CurrentTimestamp earliestTimestamp() {
+        return earliestTimestamp;
+    }
+
+    public CurrentTimestamp latestTimestamp() {
+        return latestTimestamp;
+    }
+
+    public String colName() {
+        return colName;
     }
 }

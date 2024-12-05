@@ -45,55 +45,16 @@
  */
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
-import com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.EarliestLatestBuffer;
-import org.apache.spark.sql.Encoder;
-import org.apache.spark.sql.Encoders;
-
 import java.io.Serializable;
+import java.sql.Timestamp;
 
-/**
- * Used for rate() function
- */
-public class EarliestLatestAggregator_Double extends EarliestLatestAggregator<Double> implements Serializable {
+public interface CurrentTimestamp extends Serializable {
 
-    private final AggregatorMode.EarliestLatestAggregatorMode mode; // 0=earliest, 1=latest, 2=earliest_time, 3=latest_time, 4=rate
-    private static final long serialVersionUID = 1L;
+    public abstract Timestamp timestamp();
 
-    /**
-     * Initialize with column and mode
-     * 
-     * @param colName column name
-     * @param mode    aggregator mode
-     */
-    public EarliestLatestAggregator_Double(java.lang.String colName, AggregatorMode.EarliestLatestAggregatorMode mode) {
-        super(colName);
-        this.mode = mode;
-    }
+    public abstract boolean isEmpty();
 
-    /**
-     * Output encoder
-     * 
-     * @return double encoder
-     */
-    @Override
-    public Encoder<Double> outputEncoder() {
-        return Encoders.DOUBLE();
-    }
+    public abstract boolean isBefore(CurrentTimestamp other);
 
-    /**
-     * Return the rate
-     * 
-     * @param buffer buffer
-     * @return rate as double
-     */
-    @Override
-    public Double finish(EarliestLatestBuffer buffer) {
-        switch (this.mode) {
-            case RATE: // rate
-                return buffer.rate();
-            default: // shouldn't happen, throw Exception
-                throw new UnsupportedOperationException("EarliestLatestAggregator was called with unsupported mode");
-        }
-    }
-
+    public abstract boolean isAfter(CurrentTimestamp other);
 }
