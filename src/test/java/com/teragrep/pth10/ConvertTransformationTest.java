@@ -45,6 +45,10 @@
  */
 package com.teragrep.pth10;
 
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -91,11 +95,20 @@ public class ConvertTransformationTest {
     void testConvertCtimeAs() {
         // "%m/%d/%Y %H:%M:%S";
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset) AS new", testFile, ds -> {
-            Assertions
-                    .assertEquals(
-                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, new]",
-                            Arrays.toString(ds.columns())
-                    );
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("new", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            String actualSchema = ds.schema().toString();
+            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
 
             List<String> listOfResults = ds
                     .select("new")
@@ -119,11 +132,19 @@ public class ConvertTransformationTest {
     )
     void testConvertCtime() {
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset)", testFile, ds -> {
-            Assertions
-                    .assertEquals(
-                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype]",
-                            Arrays.toString(ds.columns())
-                    );
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            String actualSchema = ds.schema().toString();
+            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
 
             List<String> listOfResults = ds
                     .select("offset")
