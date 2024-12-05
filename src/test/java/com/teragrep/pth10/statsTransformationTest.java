@@ -210,9 +210,7 @@ public class statsTransformationTest {
     void statsTransform_AggEarliestAndLatestCombo_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats earliest(offset), latest(offset)", testFile, ds -> {
             Assertions.assertEquals("[earliest(offset), latest(offset)]", Arrays.toString(ds.columns()));
-            List<Row> destAsList = ds
-                    .select("earliest(offset)", "latest(offset)")
-                    .collectAsList();
+            List<Row> destAsList = ds.select("earliest(offset)", "latest(offset)").collectAsList();
             Assertions.assertEquals("1", destAsList.get(0).getString(0));
             Assertions.assertEquals("11", destAsList.get(0).getString(1));
         });

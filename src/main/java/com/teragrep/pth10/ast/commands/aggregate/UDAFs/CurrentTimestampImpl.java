@@ -46,6 +46,7 @@
 package com.teragrep.pth10.ast.commands.aggregate.UDAFs;
 
 import java.sql.Timestamp;
+import java.util.Objects;
 
 public final class CurrentTimestampImpl implements CurrentTimestamp {
 
@@ -71,5 +72,19 @@ public final class CurrentTimestampImpl implements CurrentTimestamp {
     @Override
     public boolean isAfter(CurrentTimestamp other) {
         return timestamp.after(other.timestamp());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        CurrentTimestampImpl that = (CurrentTimestampImpl) o;
+        return Objects.equals(timestamp, that.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(timestamp);
     }
 }
