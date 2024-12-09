@@ -370,7 +370,8 @@ class TeragrepBloomFilterTest {
     public void testEqualsVerifier() {
         EqualsVerifier
                 .forClass(TeragrepBloomFilter.class)
-                .withNonnullFields("partitionID", "filter", "connection", "filterTypes", "tableName", "regex");
+                .withNonnullFields("partitionID", "filter", "connection", "filterTypes", "tableName", "regex")
+                .verify();
     }
 
     // -- Helper methods --

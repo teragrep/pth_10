@@ -132,7 +132,7 @@ public class ToBloomFilterTest {
     @Test
     void testEqualityCacheFilled() {
         ToBloomFilter filter = new ToBloomFilter(bytes);
-        filter.fromBytes();
+        Assertions.assertTrue(filter.fromBytes().mightContain("one"));
         Assertions.assertEquals(new ToBloomFilter(bytes), filter);
     }
 

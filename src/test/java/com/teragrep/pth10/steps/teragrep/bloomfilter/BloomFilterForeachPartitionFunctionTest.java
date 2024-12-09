@@ -54,6 +54,7 @@ public class BloomFilterForeachPartitionFunctionTest {
     public void testEqualsVerifier() {
         EqualsVerifier
                 .forClass(BloomFilterForeachPartitionFunction.class)
-                .withNonnullFields("filterTypes", "lazyConnection", "overwrite", "tableName", "regex");
+                .withNonnullFields("filterTypes", "lazyConnection", "overwrite", "tableName", "regex")
+                .verify();
     }
 }
