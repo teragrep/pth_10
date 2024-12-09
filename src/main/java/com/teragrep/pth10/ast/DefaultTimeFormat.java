@@ -47,6 +47,7 @@ package com.teragrep.pth10.ast;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 /**
@@ -55,6 +56,16 @@ import java.util.Date;
  * uses the system default
  */
 public class DefaultTimeFormat {
+
+    private final boolean isLatest;
+
+    public DefaultTimeFormat() {
+        this(false);
+    }
+
+    public DefaultTimeFormat(boolean isLatest) {
+        this.isLatest = isLatest;
+    }
 
     /**
      * Calculate the epoch from given string.
@@ -85,11 +96,19 @@ public class DefaultTimeFormat {
                     date = this.parseDate(time, "MM/dd/yyyy:HH:mm:ss");
                 }
                 else if (attempt == 1) {
-                    // On first fail, try ISO 8601 with timezone offset, e.g. '2011-12-03T10:15:30+01:00'
+                    // On first fail, try ISO 8601 with timezone offset, e.g. '2011-12-03T10:15:30.123+01:00'
+                    date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                }
+                else if (attempt == 2) {
+                    // On second fail, try ISO 8601 without offset, e.g. '2011-12-03T10:15:30.123'
+                    // Use system default timezone
+                    date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ss.SSS");
+                } else if (attempt == 3) {
+                    // On third fail, try ISO 8601 with timezone offset, e.g. '2011-12-03T10:15:30+01:00'
                     date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ssXXX");
                 }
                 else {
-                    // On second fail, try ISO 8601 without offset, e.g. '2011-12-03T10:15:30'
+                    // On fourth fail, try ISO 8601 without offset, e.g. '2011-12-03T10:15:30'
                     // Use system default timezone
                     date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ss");
                 }
@@ -97,7 +116,7 @@ public class DefaultTimeFormat {
 
             }
             catch (ParseException e) {
-                if (attempt > 1) {
+                if (attempt > 4) {
                     throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
                 }
             }
@@ -112,6 +131,13 @@ public class DefaultTimeFormat {
     private Date parseDate(String time, String timeFormat) throws ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
         sdf.setLenient(false);
-        return sdf.parse(time);
+        Date date = sdf.parse(time);
+
+        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
+        // that are on the same second
+        if (date.toInstant().getNano() > 0 && isLatest) {
+            date = Date.from(date.toInstant().plus(1, ChronoUnit.SECONDS));
+        }
+        return date;
     }
 }
