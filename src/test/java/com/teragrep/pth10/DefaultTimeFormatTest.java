@@ -62,6 +62,25 @@ public class DefaultTimeFormatTest {
     }
 
     @Test
+    void ISO8601_fractions_latest_Test() {
+        String time = "2023-12-18T12:40:53.001+03:00"; // different timeformat than default (default would be +02:00)
+        // No longer handled by DefaultTimeFormat, see RoundedUpTimestamp
+        long expected = 1702892453L;
+        long actual = new DefaultTimeFormat().getEpoch(time);
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void ISO8601_fractions_earliest_Test() {
+        String time = "2023-12-18T12:40:53.001+03:00"; // different timeformat than default (default would be +02:00)
+        long expected = 1702892453L;
+        long actual = new DefaultTimeFormat().getEpoch(time);
+
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
     void ISO8601_offsetTest() {
         String time = "2023-12-18T12:40:53+03:00"; // different timeformat than default (default would be +02:00)
         long expected = 1702892453L;
@@ -95,5 +114,15 @@ public class DefaultTimeFormatTest {
         long actual = new DefaultTimeFormat().getEpoch(time);
 
         Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    void invalidTimeformat() {
+        String time = "12/34/2020:10:25:40";
+        RuntimeException rte = Assertions
+                .assertThrows(RuntimeException.class, () -> new DefaultTimeFormat().getEpoch(time));
+
+        Assertions
+                .assertEquals("TimeQualifier conversion error: <12/34/2020:10:25:40> can't be parsed.", rte.getMessage());
     }
 }
