@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -164,5 +165,13 @@ class TableSQLTest {
         TableSQL table1 = new TableSQL("table_1", true);
         TableSQL table2 = new TableSQL("table_2");
         Assertions.assertNotEquals(table1, table2);
+    }
+
+    @Test
+    public void testEqualsVerifier() {
+        EqualsVerifier
+                .forClass(TableSQL.class)
+                .withNonnullFields("validPattern", "name", "journalDBName", "ignoreConstraints")
+                .verify();
     }
 }

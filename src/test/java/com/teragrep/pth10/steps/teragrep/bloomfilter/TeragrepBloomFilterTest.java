@@ -47,6 +47,7 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.util.sketch.BloomFilter;
@@ -363,6 +364,14 @@ class TeragrepBloomFilterTest {
                 pattern
         );
         Assertions.assertNotEquals(filter1, filter2);
+    }
+
+    @Test
+    public void testEqualsVerifier() {
+        EqualsVerifier
+                .forClass(TeragrepBloomFilter.class)
+                .withNonnullFields("partitionID", "filter", "connection", "filterTypes", "tableName", "regex")
+                .verify();
     }
 
     // -- Helper methods --

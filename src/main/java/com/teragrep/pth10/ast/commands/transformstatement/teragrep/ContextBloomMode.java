@@ -49,11 +49,11 @@ import com.teragrep.pth10.ast.ContextValue;
 import com.teragrep.pth10.steps.teragrep.TeragrepBloomStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 
-public final class ModeFromBloomContext implements ContextValue<TeragrepBloomStep.BloomMode> {
+public final class ContextBloomMode implements ContextValue<TeragrepBloomStep.BloomMode> {
 
     private final DPLParser.T_bloomOptionParameterContext ctx;
 
-    public ModeFromBloomContext(final DPLParser.T_bloomOptionParameterContext ctx) {
+    public ContextBloomMode(final DPLParser.T_bloomOptionParameterContext ctx) {
         this.ctx = ctx;
     }
 

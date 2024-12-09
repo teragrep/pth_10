@@ -47,6 +47,7 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.*;
 
 import java.sql.Connection;
@@ -180,6 +181,11 @@ public class BloomFilterTableTest {
         BloomFilterTable table2 = new BloomFilterTable(config, tableName, false);
         table1.create();
         Assertions.assertNotEquals(table1, table2);
+    }
+
+    @Test
+    void testEqualsVerifier() {
+        EqualsVerifier.forClass(BloomFilterTable.class).withNonnullFields("tableSQL", "conn").verify();
     }
 
     private Properties getDefaultProperties() {

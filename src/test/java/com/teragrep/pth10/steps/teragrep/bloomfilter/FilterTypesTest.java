@@ -47,6 +47,7 @@ package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.util.sketch.BloomFilter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -168,6 +169,11 @@ class FilterTypesTest {
         FilterTypes filterTypes1 = new FilterTypes(config1);
         FilterTypes filterTypes2 = new FilterTypes(config2);
         assertNotEquals(filterTypes1, filterTypes2);
+    }
+
+    @Test
+    public void testEqualsVerifier() {
+        EqualsVerifier.forClass(FilterTypes.class).withNonnullFields("config").verify();
     }
 
     public Properties defaultProperties() {

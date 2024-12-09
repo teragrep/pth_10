@@ -79,7 +79,7 @@ public final class TeragrepBloomFilter {
             String tableName,
             String regex
     ) {
-        this(partition, new ToBloomFilter(bytes), connection, filterTypes, tableName, regex);
+        this(partition, new BloomFilterBlob(bytes).toBloomFilter(), connection, filterTypes, tableName, regex);
     }
 
     public TeragrepBloomFilter(
