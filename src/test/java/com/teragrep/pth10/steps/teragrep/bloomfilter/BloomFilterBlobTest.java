@@ -55,7 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ToBloomFilterTest {
+public class BloomFilterBlobTest {
 
     private final List<String> tokens = new ArrayList<>(Arrays.asList("one", "two"));
     private final byte[] bytes = Assertions.assertDoesNotThrow(() -> {
@@ -70,14 +70,14 @@ public class ToBloomFilterTest {
 
     @Test
     void testCreation() {
-        Assertions.assertDoesNotThrow(() -> new ToBloomFilter(bytes));
+        Assertions.assertDoesNotThrow(() -> new BloomFilterBlob(bytes));
     }
 
     @Test
     void testIsCompatible() {
-        BloomFilter filter = new ToBloomFilter(bytes).fromBytes();
+        BloomFilter filter = new BloomFilterBlob(bytes).toBloomFilter();
         Assertions.assertTrue(filter.isCompatible(BloomFilter.create(1000, 0.01)));
-        Assertions.assertTrue(filter.isCompatible(new ToBloomFilter(bytes).fromBytes()));
+        Assertions.assertTrue(filter.isCompatible(new BloomFilterBlob(bytes).toBloomFilter()));
     }
 
     @Test
@@ -92,8 +92,8 @@ public class ToBloomFilterTest {
             });
             return baos.toByteArray();
         });
-        BloomFilter filter = new ToBloomFilter(bytes).fromBytes();
-        BloomFilter secondFilter = new ToBloomFilter(secondBytes).fromBytes();
+        BloomFilter filter = new BloomFilterBlob(bytes).toBloomFilter();
+        BloomFilter secondFilter = new BloomFilterBlob(secondBytes).toBloomFilter();
         Assertions.assertTrue(filter.mightContain("one"));
         Assertions.assertFalse(filter.mightContain("three"));
         Assertions.assertTrue(secondFilter.mightContain("three"));
@@ -114,10 +114,10 @@ public class ToBloomFilterTest {
             });
             return baos.toByteArray();
         });
-        BloomFilter filter = new ToBloomFilter(bytes).fromBytes();
+        BloomFilter filter = new BloomFilterBlob(bytes).toBloomFilter();
         Assertions.assertTrue(filter.mightContain("one"));
         Assertions.assertTrue(filter.mightContain("two"));
-        BloomFilter secondFilter = new ToBloomFilter(secondBytes).fromBytes();
+        BloomFilter secondFilter = new BloomFilterBlob(secondBytes).toBloomFilter();
         Assertions.assertDoesNotThrow(() -> filter.intersectInPlace(secondFilter));
         Assertions.assertTrue(filter.mightContain("two"));
         Assertions.assertFalse(filter.mightContain("one"));
@@ -126,14 +126,14 @@ public class ToBloomFilterTest {
 
     @Test
     void testEquality() {
-        Assertions.assertEquals(new ToBloomFilter(bytes), new ToBloomFilter(bytes));
+        Assertions.assertEquals(new BloomFilterBlob(bytes), new BloomFilterBlob(bytes));
     }
 
     @Test
     void testEqualityCacheFilled() {
-        ToBloomFilter filter = new ToBloomFilter(bytes);
-        Assertions.assertTrue(filter.fromBytes().mightContain("one"));
-        Assertions.assertEquals(new ToBloomFilter(bytes), filter);
+        BloomFilterBlob filter = new BloomFilterBlob(bytes);
+        Assertions.assertTrue(filter.toBloomFilter().mightContain("one"));
+        Assertions.assertEquals(new BloomFilterBlob(bytes), filter);
     }
 
     @Test
@@ -148,11 +148,11 @@ public class ToBloomFilterTest {
             });
             return baos.toByteArray();
         });
-        Assertions.assertNotEquals(new ToBloomFilter(bytes), new ToBloomFilter(secondBytes));
+        Assertions.assertNotEquals(new BloomFilterBlob(bytes), new BloomFilterBlob(secondBytes));
     }
 
     @Test
     void testEqualsVerifier() {
-        EqualsVerifier.forClass(ToBloomFilter.class).withNonnullFields("bytes").verify();
+        EqualsVerifier.forClass(BloomFilterBlob.class).withNonnullFields("bytes").verify();
     }
 }

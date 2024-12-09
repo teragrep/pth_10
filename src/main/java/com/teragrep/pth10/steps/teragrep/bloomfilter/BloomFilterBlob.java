@@ -56,15 +56,15 @@ import java.util.Arrays;
  * 
  * @see TeragrepBloomFilter
  */
-public final class ToBloomFilter {
+public final class BloomFilterBlob {
 
     private final byte[] bytes;
 
-    public ToBloomFilter(final byte[] bytes) {
+    public BloomFilterBlob(final byte[] bytes) {
         this.bytes = bytes;
     }
 
-    public BloomFilter fromBytes() {
+    public BloomFilter toBloomFilter() {
         final BloomFilter filter;
         try (ByteArrayInputStream bais = new ByteArrayInputStream(bytes)) {
             filter = BloomFilter.readFrom(bais);
@@ -83,7 +83,7 @@ public final class ToBloomFilter {
             return false;
         if (object.getClass() != this.getClass())
             return false;
-        final ToBloomFilter cast = (ToBloomFilter) object;
+        final BloomFilterBlob cast = (BloomFilterBlob) object;
         return Arrays.equals(this.bytes, cast.bytes);
     }
 
