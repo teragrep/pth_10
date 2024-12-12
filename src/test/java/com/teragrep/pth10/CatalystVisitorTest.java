@@ -219,9 +219,8 @@ public class CatalystVisitorTest {
                             new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     });
 
-                    String resSchema = res.schema().toString();
                     // check schema
-                    Assertions.assertEquals(expectedSchema.toString(), resSchema);
+                    Assertions.assertEquals(expectedSchema, res.schema());
 
                     String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
                     // check column for archive query i.e. only logical part'
@@ -256,8 +255,7 @@ public class CatalystVisitorTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
             });
 
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema);
+            Assertions.assertEquals(expectedSchema, res.schema());
             // Check result count
             List<Row> lst = res.collectAsList();
             // check result count

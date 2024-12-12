@@ -89,10 +89,10 @@ public class chartTransformationTest {
         String query = "index = index_A | chart count(_raw) as count";
 
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            String[] expectedColumns = new String[] {
-                    "count"
-            };
-            Assertions.assertArrayEquals(expectedColumns, res.columns()); // check that the schema is correct
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); // check that the schema is correct
 
             List<String> resultList = res
                     .select("count")
@@ -120,8 +120,7 @@ public class chartTransformationTest {
                     new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
             });
 
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); // At least schema is correct
+            Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
             // 3 first rows are earlier than where _index_earliest is set to
             List<String> expectedValues = new ArrayList<>();
@@ -158,8 +157,7 @@ public class chartTransformationTest {
                     new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
             });
 
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); // At least schema is correct
+            Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
             List<String> expectedValues = new ArrayList<>();
             // Only first 5 rows have index: index_A
@@ -194,8 +192,7 @@ public class chartTransformationTest {
                     new StructField("count(_raw)", DataTypes.LongType, true, new MetadataBuilder().build())
             });
 
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); // At least schema is correct
+            Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
             List<String> expectedValues = new ArrayList<>();
             expectedValues.add("5"); // only last 5 rows have index: index_B
