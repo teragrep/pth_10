@@ -74,7 +74,7 @@ jobs:
 
       - name: Compile Coverity
         run: |
-           ${{ env.COVERITY }}/bin/cov-build --dir cov-int mvn -B -Drevision=${{ env.RELEASE_VERSION }} -Dsha1= -Dchangelist= clean compile
+           ${{ env.COVERITY }}/bin/cov-build --dir cov-int mvn -B -Drevision=${{ env.RELEASE_VERSION }} -Dsha1= -Dchangelist= clean verify
            tar czvf ${{ vars.COVERITY_PROJECT_URL_NAME }}.tgz cov-int
 
       - name: Prepare response url
