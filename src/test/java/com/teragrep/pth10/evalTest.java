@@ -115,8 +115,7 @@ public class evalTest {
                     new StructField("a", DataTypes.IntegerType, false, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.IntegerType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             List<String> listOfA = res
                     .select("a")
@@ -162,8 +161,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("lenField", DataTypes.IntegerType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             Dataset<Row> orderedDs = res.select("lenField").orderBy("lenField").distinct();
             List<Integer> lst = orderedDs
@@ -204,8 +202,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
@@ -243,8 +240,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
@@ -291,8 +287,7 @@ public class evalTest {
                     new StructField("e", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("f", DataTypes.StringType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // ltrim()
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
@@ -357,8 +352,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lstA = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -394,8 +388,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("str", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
             List<Row> lst = orderedDs.collectAsList();
@@ -428,8 +421,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("str", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
             List<String> lst = orderedDs
@@ -469,8 +461,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
 
@@ -504,8 +495,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("mvf", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
@@ -539,8 +529,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("mvf", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
@@ -574,8 +563,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
             List<String> lst = orderedDs
@@ -619,8 +607,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             //  Get only distinct field and sort it by value
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
@@ -663,8 +650,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get only distinct field 'a' and sort it by value
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<Row> lst = orderedDs.collectAsList();
@@ -697,8 +683,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order it by the values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -738,8 +723,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<String> lst = resA
@@ -783,8 +767,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order it by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -821,8 +804,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -866,8 +848,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -914,8 +895,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by value
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -959,8 +939,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1010,8 +989,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // for rounding since there are small deviations between spark log10 and java log10
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
@@ -1068,8 +1046,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // for rounding since there are small deviations between spark log10 and java log10
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
@@ -1130,8 +1107,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Integer> lst = resA.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
@@ -1164,8 +1140,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1197,8 +1172,7 @@ public class evalTest {
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Double> lstA = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1237,8 +1211,7 @@ public class evalTest {
                     new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                     new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             /*
              *  eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245)
              */
@@ -1297,8 +1270,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1335,8 +1307,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1378,8 +1349,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1421,8 +1391,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1464,8 +1433,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1508,8 +1476,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1543,8 +1510,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1578,8 +1544,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1623,8 +1588,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1668,8 +1632,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1714,8 +1677,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1762,8 +1724,7 @@ public class evalTest {
                     new StructField("sha256", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sha512", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column '_raw'
             Dataset<Row> resRaw = res.select("_raw").orderBy("offset");
             List<String> lstRaw = resRaw.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1832,8 +1793,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA
@@ -1878,8 +1838,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA
@@ -1925,8 +1884,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<String> lst = orderedDs.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1962,8 +1920,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -2007,8 +1964,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -2051,8 +2007,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -2086,8 +2041,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -2121,8 +2075,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -2159,8 +2112,7 @@ public class evalTest {
                     new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                     new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Without orderBy collectAsList will change the order randomly. Order every column by offset.
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
@@ -2234,8 +2186,7 @@ public class evalTest {
                     new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                     new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -2309,8 +2260,7 @@ public class evalTest {
                     new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                     new StructField("e", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' atan
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -2386,8 +2336,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -2428,8 +2377,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -2470,8 +2418,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -2512,8 +2459,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -2555,8 +2501,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -2602,8 +2547,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -2641,8 +2585,7 @@ public class evalTest {
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("c", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2688,8 +2631,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -2726,8 +2668,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -2764,8 +2705,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -2801,8 +2741,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA
@@ -2843,8 +2782,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Integer> lst = resA.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
@@ -2879,8 +2817,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("c", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -2924,8 +2861,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -2958,8 +2894,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -3004,8 +2939,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -3044,8 +2978,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("mv1", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("mv2", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -3084,8 +3017,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
 
@@ -3133,8 +3065,7 @@ public class evalTest {
                     new StructField("isStr", DataTypes.BooleanType, true, new MetadataBuilder().build()),
                     new StructField("isNotStr", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Boolean
             Dataset<Row> ds_isBoolean = res.select("isBoolean").orderBy("isBoolean").distinct();
             List<Row> lst_isBoolean = ds_isBoolean.collectAsList();
@@ -3198,8 +3129,7 @@ public class evalTest {
                     new StructField("c", DataTypes.BooleanType, false, new MetadataBuilder().build()),
                     new StructField("d", DataTypes.BooleanType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Boolean
             Dataset<Row> ds_isNull = res.select("a").orderBy("a").distinct();
             List<Row> lst_isNull = ds_isNull.collectAsList();
@@ -3243,8 +3173,7 @@ public class evalTest {
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("c", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // number
             Dataset<Row> dsNumber = res.select("a").orderBy("a").distinct();
             List<Row> dsNumberLst = dsNumber.collectAsList();
@@ -3284,8 +3213,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("d", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // invalid
             Dataset<Row> dsInvalid = res.select("d").orderBy("d").distinct();
@@ -3318,8 +3246,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             //Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resMvAppend = res.select("a").orderBy("a").distinct();
             List<Row> lst = resMvAppend.collectAsList();
@@ -3352,8 +3279,7 @@ public class evalTest {
                     new StructField("one_value", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("two_values", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get results
             Dataset<Row> res1V = res.select("one_value").orderBy("one_value").distinct();
             Dataset<Row> res2V = res.select("two_values").orderBy("two_values").distinct();
@@ -3390,8 +3316,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
             Assertions.assertEquals("[1, 2, 3, 4]", lstA.get(0).getList(0).toString());
@@ -3417,8 +3342,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resEmail = res.select("email");
 
             Dataset<Row> resA = res.select("a");
@@ -3451,8 +3375,7 @@ public class evalTest {
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -3529,8 +3452,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -3567,8 +3489,7 @@ public class evalTest {
                     new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -3604,8 +3525,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -3646,8 +3566,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -3688,8 +3607,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -3727,8 +3645,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -3768,8 +3685,7 @@ public class evalTest {
                     new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -3804,8 +3720,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a"); //.orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -3848,8 +3763,7 @@ public class evalTest {
                     new StructField("xml_field", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
@@ -3883,8 +3797,7 @@ public class evalTest {
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -3922,8 +3835,7 @@ public class evalTest {
                     new StructField("test2", DataTypes.BooleanType, false, new MetadataBuilder().build()),
                     new StructField("test3", DataTypes.BooleanType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'test'
             Dataset<Row> resA = res.select("test").orderBy("offset");
             List<Row> lst = resA.collectAsList();
@@ -3987,8 +3899,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("test", DataTypes.BooleanType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'test'
             Dataset<Row> resA = res.select("_raw", "test").orderBy("offset");
             List<Row> lst = resA.collectAsList();
@@ -4030,8 +3941,7 @@ public class evalTest {
                     new StructField("a", DataTypes.LongType, false, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -4106,8 +4016,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = res.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lst = resA.collectAsList();
@@ -4144,8 +4053,7 @@ public class evalTest {
                     new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             //Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds
                     .select("a")
@@ -4183,8 +4091,7 @@ public class evalTest {
                     new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -4221,8 +4128,7 @@ public class evalTest {
                     new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -4261,8 +4167,7 @@ public class evalTest {
                     new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -4305,8 +4210,7 @@ public class evalTest {
                     new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -4345,8 +4249,7 @@ public class evalTest {
                     new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -4406,8 +4309,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -4463,8 +4365,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -4520,8 +4421,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -4577,8 +4477,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -4634,8 +4533,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -4691,8 +4589,7 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -4750,8 +4647,7 @@ public class evalTest {
                     new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            String resSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), resSchema); //check schema
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
