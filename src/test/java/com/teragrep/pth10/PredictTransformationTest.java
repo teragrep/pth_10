@@ -55,7 +55,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -111,8 +110,29 @@ public class PredictTransformationTest {
                 .performDPLTest(
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred upper 98 = u98 lower 98 = l98",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(Arrays.asList("_time", "avgo", "pred", "u98(pred)", "l98(pred)"), Arrays.asList(ds.schema().fieldNames()));
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("avgo", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "u98(pred)",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "l98(pred)",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             // future_timespan=5 -> five nulls
                             List<Row> lr = ds
@@ -136,10 +156,29 @@ public class PredictTransformationTest {
                 .performDPLTest(
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred future_timespan=10",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            Arrays.asList("_time", "avgo", "pred", "upper95(pred)", "lower95(pred)"), Arrays.asList(ds.schema().fieldNames())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("avgo", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "upper95(pred)",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "lower95(pred)",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             // future_timespan=10 -> ten nulls
                             List<Row> lr = ds
@@ -163,10 +202,29 @@ public class PredictTransformationTest {
                 .performDPLTest(
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred algorithm=LLT future_timespan=10 ",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            Arrays.asList("_time", "avgo", "pred", "upper95(pred)", "lower95(pred)"), Arrays.asList(ds.schema().fieldNames())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("avgo", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "upper95(pred)",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "lower95(pred)",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             // future_timespan=10 -> ten nulls
                             List<Row> lr = ds
