@@ -55,7 +55,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -113,10 +112,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A earliest=-100y | eval a=12345 | teragrep exec hdfs save /tmp/join0 overwrite=true",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("a", DataTypes.IntegerType, false, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             Row r = ds.select("a").distinct().first();
@@ -128,10 +146,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A earliest=-100y | join partition [ | teragrep exec hdfs load /tmp/join0 | where partition >= 0 ]",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R_a", DataTypes.IntegerType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema.toString(), ds.schema().toString(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             Row r = ds.select("R_a").distinct().first();
@@ -151,10 +188,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join type=left max=3 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ] <!--| fields + _time offset a ]-->",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R_a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             List<Row> listOfRows = ds.collectAsList();
@@ -183,10 +239,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=2 offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R_a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema.toString(), ds.schema().toString(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             Assertions.assertEquals(2, ds.count(), "Should return 2 rows");
@@ -205,10 +280,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream3\", \"2\") | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             Assertions.assertEquals(10, ds.count(), "Should return 10 rows");
@@ -234,10 +328,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R_a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             Assertions.assertEquals(1, ds.count(), "Should return 1 row");
@@ -255,10 +368,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=0 overwrite=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R_a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             List<Row> listOfRows = ds.collectAsList();
@@ -282,10 +414,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=0 usetime=true earlier=true offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R_a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R_a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             Assertions.assertEquals(10, ds.count(), "Should return 10 rows");
@@ -304,10 +455,29 @@ public class JoinTransformationTest {
                 .performDPLTest(
                         "index=index_A | join max=0 usetime=true earlier=false overwrite=false offset [ search index=index_A | eval a=case(sourcetype=\"stream1\", \"1\", sourcetype=\"stream2\", \"2\") ]",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R__time", DataTypes.TimestampType, true, new MetadataBuilder().build()), new StructField("R_id", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("R__raw", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("R_index", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("R_sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("R_host", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("R_source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("R_partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("R_a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, R__time, R_id, R__raw, R_index, R_sourcetype, R_host, R_source, R_partition, R_a]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             List<Row> listOfRows = ds.collectAsList();

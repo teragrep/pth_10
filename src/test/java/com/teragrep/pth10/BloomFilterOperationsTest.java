@@ -113,8 +113,25 @@ public class BloomFilterOperationsTest {
                 .performDPLTest(
                         "index=index_A earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z | teragrep exec tokenizer | teragrep exec bloom estimate",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "estimate(tokens)",
+                                            DataTypes.LongType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
                             Assertions
-                                    .assertEquals("[partition, estimate(tokens)]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema.toString(), ds.schema().toString(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                             List<Integer> results = ds
                                     .select("estimate(tokens)")
                                     .collectAsList()
@@ -139,8 +156,25 @@ public class BloomFilterOperationsTest {
                         // index_Empty _raw = "" so tokenizer step will produce an empty array
                         "index=index_Empty earliest=2020-01-01T00:00:00z latest=2023-01-01T00:00:00z | teragrep exec tokenizer | teragrep exec bloom estimate",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "estimate(tokens)",
+                                            DataTypes.LongType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
                             Assertions
-                                    .assertEquals("[partition, estimate(tokens)]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                             List<Integer> results = ds
                                     .select("estimate(tokens)")
                                     .collectAsList()

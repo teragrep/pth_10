@@ -65,7 +65,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -141,10 +140,29 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | sendemail to=exa@mple.test from=from@example.test cc=cc@example.test server=localhost:2525",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
                         }
                 );
@@ -180,10 +198,29 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | eval extraField=null() | eval oneMoreField=true() | sendemail to=\"exa@mple.test\" server=localhost:2525",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("extraField", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("oneMoreField", DataTypes.BooleanType, false, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, extraField, oneMoreField]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
                         }
                 );
@@ -247,10 +284,29 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | sendemail to=\"exa@mple.test\" subject=\"Custom subject\" sendresults=true inline=true format=csv server=localhost:2525",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
                         }
                 );
@@ -285,8 +341,15 @@ public class SendemailTransformationTest {
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avgo count(offset) as co | where co > 1 | sendemail to=\"exa@mple.test\" server=localhost:2525",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("avgo", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                                    new StructField("co", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals("[avgo, co]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
 
@@ -315,8 +378,15 @@ public class SendemailTransformationTest {
         // Perform DPL query with streaming data
         streamingTestUtil.performDPLTest("index=index_A" + "|chart count(_raw) as craw" + "|where craw < 0 " + // filter out all
                 "|sendemail to=\"1@example.com\" server=localhost:2525", testFile, ds -> {
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField("craw", DataTypes.LongType, true, new MetadataBuilder().build())
+                    });
                     // returns empty dataframe, but has column names present
-                    Assertions.assertEquals("[craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    Assertions
+                            .assertEquals(
+                                    expectedSchema, ds.schema(),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
                 }
         );
 

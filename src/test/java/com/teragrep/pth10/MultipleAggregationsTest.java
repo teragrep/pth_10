@@ -111,8 +111,14 @@ public class MultipleAggregationsTest {
                 .performDPLTest(
                         "index=index_A | chart count(offset) as c_offset by partition | chart count(c_offset) as final",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("final", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals(Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }
@@ -127,8 +133,14 @@ public class MultipleAggregationsTest {
                 .performDPLTest(
                         "index=index_A | stats count(_raw) as raw_count | chart count(raw_count) as count", testFile,
                         ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals(Arrays.toString(ds.columns()), "[count]", "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }
@@ -143,8 +155,16 @@ public class MultipleAggregationsTest {
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avg1 count(offset) as c_offset dc(offset) as dc | stats count(avg1) as c_avg count(c_offset) as c_count count(dc) as c_dc",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("c_avg", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("c_count", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("c_dc", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals(Arrays.toString(ds.columns()), "[c_avg, c_count, c_dc]", "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }
@@ -159,8 +179,20 @@ public class MultipleAggregationsTest {
                 .performDPLTest(
                         "index=index_A | stats avg(offset) as avg_offset | chart count(avg_offset) as c_avg_offset | eval final=c_avg_offset * 5",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "c_avg_offset",
+                                            DataTypes.LongType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("final", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals(Arrays.toString(ds.columns()), "[c_avg_offset, final]", "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }
@@ -175,8 +207,14 @@ public class MultipleAggregationsTest {
                 .performDPLTest(
                         "index=index_A | eval a=exp(offset) | eval b=pow(a, 2) | eval x = a + b | stats var(x) as field | chart count(field) as final",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("final", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals(Arrays.toString(ds.columns()), "[final]", "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }
