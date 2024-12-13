@@ -129,7 +129,7 @@ public class BloomFilterOperationsTest {
                             });
                             Assertions
                                     .assertEquals(
-                                            expectedSchema.toString(), ds.schema().toString(),
+                                            expectedSchema, ds.schema(),
                                             "Batch handler dataset contained an unexpected column arrangement !"
                                     );
                             List<Integer> results = ds

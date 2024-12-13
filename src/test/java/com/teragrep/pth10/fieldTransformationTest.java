@@ -120,8 +120,7 @@ public class fieldTransformationTest {
                 Assertions.assertEquals(expectedValues.get(i), dsAsList.get(i));
             }
 
-            String actualSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+            Assertions.assertEquals(expectedSchema, ds.schema());
         });
     }
 
@@ -138,7 +137,7 @@ public class fieldTransformationTest {
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(5, res.count());
-            Assertions.assertEquals(expectedSchema.toString(), res.schema().toString());
+            Assertions.assertEquals(expectedSchema, res.schema());
         });
     }
 
@@ -160,9 +159,8 @@ public class fieldTransformationTest {
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String schema = res.schema().toString();
             Assertions.assertEquals(5, res.count());
-            Assertions.assertEquals(expectedSchema.toString(), schema);
+            Assertions.assertEquals(expectedSchema, res.schema());
         });
     }
 
@@ -181,9 +179,8 @@ public class fieldTransformationTest {
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String schema = res.schema().toString();
             Assertions.assertEquals(5, res.count());
-            Assertions.assertEquals(expectedSchema.toString(), schema);
+            Assertions.assertEquals(expectedSchema, res.schema());
         });
     }
 
@@ -199,7 +196,7 @@ public class fieldTransformationTest {
                     new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(5, ds.count());
-            Assertions.assertEquals(expectedSchema.toString(), ds.schema().toString()); //check schema is correct
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema is correct
         });
 
     }
@@ -218,7 +215,7 @@ public class fieldTransformationTest {
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(5, ds.count());
-            Assertions.assertEquals(expectedSchema.toString(), ds.schema().toString()); //check schema is correct
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema is correct
         });
 
     }

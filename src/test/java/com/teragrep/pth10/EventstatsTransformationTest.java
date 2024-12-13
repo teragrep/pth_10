@@ -119,10 +119,9 @@ public class EventstatsTransformationTest {
                     new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("avg_offset", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
-            String actualSchema = ds.schema().toString();
             Assertions
                     .assertEquals(
-                            expectedSchema.toString(), actualSchema,
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     ); //check schema
 
@@ -158,10 +157,9 @@ public class EventstatsTransformationTest {
                             new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                             new StructField("avg_offset", DataTypes.DoubleType, true, new MetadataBuilder().build())
                     });
-                    String actualSchema = ds.schema().toString();
                     Assertions
                             .assertEquals(
-                                    expectedSchema.toString(), actualSchema,
+                                    expectedSchema, ds.schema(),
                                     "Batch handler dataset contained an unexpected column arrangement !"
                             ); //check schema
 
@@ -197,10 +195,9 @@ public class EventstatsTransformationTest {
                     new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
             });
-            String actualSchema = ds.schema().toString();
             Assertions
                     .assertEquals(
-                            expectedSchema.toString(), actualSchema,
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     ); //check schema
 
@@ -237,10 +234,9 @@ public class EventstatsTransformationTest {
                             new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                             new StructField("stdevp(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build())
                     });
-                    String actualSchema = ds.schema().toString();
                     Assertions
                             .assertEquals(
-                                    expectedSchema.toString(), actualSchema,
+                                    expectedSchema, ds.schema(),
                                     "Batch handler dataset contained an unexpected column arrangement !"
                             ); //check schema
 

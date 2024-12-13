@@ -167,7 +167,7 @@ public class JoinTransformationTest {
                             });
                             Assertions
                                     .assertEquals(
-                                            expectedSchema.toString(), ds.schema().toString(),
+                                            expectedSchema, ds.schema(),
                                             "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
@@ -260,7 +260,7 @@ public class JoinTransformationTest {
                             });
                             Assertions
                                     .assertEquals(
-                                            expectedSchema.toString(), ds.schema().toString(),
+                                            expectedSchema, ds.schema(),
                                             "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 

@@ -55,7 +55,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -102,21 +101,18 @@ public class DedupTransformationTest {
     public void dedupTest_NoParams() {
         this.streamingTestUtil.performDPLTest("index=index_A | dedup _raw", this.testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            List<String> actualColumns = Arrays.asList(res.columns());
-            List<String> expectedColumns = Arrays.asList(expectedSchema.fieldNames());
             // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
-            Assertions
-                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
@@ -138,21 +134,18 @@ public class DedupTransformationTest {
         String query = "index=index_A | dedup _raw consecutive= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            List<String> actualColumns = Arrays.asList(res.columns());
-            List<String> expectedColumns = Arrays.asList(expectedSchema.fieldNames());
             // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
-            Assertions
-                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
@@ -173,21 +166,18 @@ public class DedupTransformationTest {
         String query = "index=index_A | dedup _raw sortby - num(_raw)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            List<String> actualColumns = Arrays.asList(res.columns());
-            List<String> expectedColumns = Arrays.asList(expectedSchema.fieldNames());
             // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
-            Assertions
-                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             Assertions.assertEquals(2, listOfRaw.size());
@@ -205,21 +195,18 @@ public class DedupTransformationTest {
         String query = "index=index_A | dedup _raw keepevents= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            List<String> actualColumns = Arrays.asList(res.columns());
-            List<String> expectedColumns = Arrays.asList(expectedSchema.fieldNames());
             // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
-            Assertions
-                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
@@ -242,21 +229,18 @@ public class DedupTransformationTest {
         String query = "index=index_A | dedup _raw keepevents= true | dedup _raw keepempty= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            List<String> actualColumns = Arrays.asList(res.columns());
-            List<String> expectedColumns = Arrays.asList(expectedSchema.fieldNames());
             // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
-            Assertions
-                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
@@ -276,21 +260,18 @@ public class DedupTransformationTest {
         String query = "index=index_A | dedup _raw, sourcetype, partition";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
-                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            List<String> actualColumns = Arrays.asList(res.columns());
-            List<String> expectedColumns = Arrays.asList(expectedSchema.fieldNames());
             // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
-            Assertions
-                    .assertTrue(actualColumns.containsAll(expectedColumns) && expectedColumns.containsAll(actualColumns));
+            Assertions.assertEquals(expectedSchema, res.schema());
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));

@@ -107,8 +107,7 @@ public class ConvertTransformationTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("new", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String actualSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+            Assertions.assertEquals(expectedSchema, ds.schema());
 
             List<String> listOfResults = ds
                     .select("new")
@@ -143,8 +142,7 @@ public class ConvertTransformationTest {
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String actualSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+            Assertions.assertEquals(expectedSchema, ds.schema());
 
             List<String> listOfResults = ds
                     .select("offset")
@@ -190,8 +188,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("epochTime", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("epochTime")
@@ -244,8 +241,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("epochTime", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("epochTime")
@@ -284,8 +280,7 @@ public class ConvertTransformationTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("dur_sec", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            String actualSchema = ds.schema().toString();
-            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+            Assertions.assertEquals(expectedSchema, ds.schema());
 
             List<String> listOfResults = ds
                     .select("dur_sec")
@@ -330,8 +325,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offsetM", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("offsetK", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("offsetG", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("memk_M", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("memk_K", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("memk_G", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("memk_def", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> resDef = ds
                                     .select("memk_def")
@@ -408,8 +402,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("mst2", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("res2", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -459,8 +452,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("mst2", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res2", DataTypes.StringType, false, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -509,8 +501,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -552,8 +543,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -595,8 +585,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -638,8 +627,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -680,8 +668,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -722,8 +709,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -764,8 +750,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -807,8 +792,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -849,8 +833,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("with_results", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("no_results", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("with_results")
@@ -902,8 +885,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("with_results", DataTypes.DoubleType, true, new MetadataBuilder().build()), new StructField("no_results", DataTypes.DoubleType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("with_results")
@@ -954,8 +936,7 @@ public class ConvertTransformationTest {
                                     ),
                                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("dur_sec", DataTypes.StringType, true, new MetadataBuilder().build())
                             });
-                            String actualSchema = ds.schema().toString();
-                            Assertions.assertEquals(expectedSchema.toString(), actualSchema);
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("dur_sec")
