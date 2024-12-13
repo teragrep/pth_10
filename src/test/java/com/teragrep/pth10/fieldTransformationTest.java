@@ -45,6 +45,10 @@
  */
 package com.teragrep.pth10;
 
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -93,6 +97,9 @@ public class fieldTransformationTest {
     void testFieldsTransformKeepOne() {
         String q = "index=index_B | fields _time";
         this.streamingTestUtil.performDPLTest(q, this.testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             List<String> expectedValues = new ArrayList<>();
             expectedValues.add("2006-06-06T06:06:06.060+03:00");
             expectedValues.add("2007-07-07T07:07:07.070+03:00");
@@ -113,7 +120,7 @@ public class fieldTransformationTest {
                 Assertions.assertEquals(expectedValues.get(i), dsAsList.get(i));
             }
 
-            Assertions.assertEquals("[_time: string]", ds.toString());
+            Assertions.assertEquals(expectedSchema, ds.schema());
         });
     }
 
@@ -125,8 +132,12 @@ public class fieldTransformationTest {
     void testFieldsTransformKeepMultiple() {
         String q = "index=index_B | fields _time host";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions.assertEquals(5, res.count());
-            Assertions.assertEquals("[_time: string, host: string]", res.toString());
+            Assertions.assertEquals(expectedSchema, res.schema());
         });
     }
 
@@ -138,13 +149,18 @@ public class fieldTransformationTest {
     void testFieldsTransformDropOne() {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host", this.testFile, res -> {
             // check that we drop only host-column
-            String schema = res.schema().toString();
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions.assertEquals(5, res.count());
-            Assertions
-                    .assertEquals(
-                            "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
-                            schema
-                    );
+            Assertions.assertEquals(expectedSchema, res.schema());
         });
     }
 
@@ -155,13 +171,16 @@ public class fieldTransformationTest {
     )
     void testFieldsTransformDropSeveral() {
         this.streamingTestUtil.performDPLTest("index=index_B | fields - host index partition", this.testFile, res -> {
-            String schema = res.schema().toString();
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions.assertEquals(5, res.count());
-            Assertions
-                    .assertEquals(
-                            "StructType(StructField(_raw,StringType,true),StructField(_time,StringType,true),StructField(id,LongType,true),StructField(offset,LongType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true))",
-                            schema
-                    );
+            Assertions.assertEquals(expectedSchema, res.schema());
         });
     }
 
@@ -173,8 +192,11 @@ public class fieldTransformationTest {
     void testFieldsWithPlus() {
         String query = "index = index_B | fields + offset";
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
             Assertions.assertEquals(5, ds.count());
-            Assertions.assertEquals("[offset: bigint]", ds.toString()); //check schema is correct
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema is correct
         });
 
     }
@@ -187,8 +209,13 @@ public class fieldTransformationTest {
     void testFieldsWithPlusMultiple() {
         String query = "index = index_B | fields + offset, source, host";
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions.assertEquals(5, ds.count());
-            Assertions.assertEquals("[offset, source, host]", Arrays.toString(ds.columns())); //check schema is correct
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema is correct
         });
 
     }

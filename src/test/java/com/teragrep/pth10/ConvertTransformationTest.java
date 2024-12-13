@@ -45,6 +45,10 @@
  */
 package com.teragrep.pth10;
 
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -91,11 +95,19 @@ public class ConvertTransformationTest {
     void testConvertCtimeAs() {
         // "%m/%d/%Y %H:%M:%S";
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset) AS new", testFile, ds -> {
-            Assertions
-                    .assertEquals(
-                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, new]",
-                            Arrays.toString(ds.columns())
-                    );
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("new", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema());
 
             List<String> listOfResults = ds
                     .select("new")
@@ -119,11 +131,18 @@ public class ConvertTransformationTest {
     )
     void testConvertCtime() {
         streamingTestUtil.performDPLTest("index=index_A | convert ctime(offset)", testFile, ds -> {
-            Assertions
-                    .assertEquals(
-                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype]",
-                            Arrays.toString(ds.columns())
-                    );
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema());
 
             List<String> listOfResults = ds
                     .select("offset")
@@ -154,11 +173,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | convert timeformat=\"%Y-%m-%d'T'%H:%M:%S.%f%z\" mktime(_time) as epochTime",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, epochTime]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("epochTime", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("epochTime")
@@ -191,11 +221,27 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | eval a=\"2001-01-01T01:01:01.010\" | convert timeformat=\"%Y-%m-%d'T'%H:%M:%S.%f\" mktime(a) as epochTime",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, a, epochTime]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("epochTime", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("epochTime")
@@ -222,11 +268,19 @@ public class ConvertTransformationTest {
     )
     void testConvertDur2sec() {
         streamingTestUtil.performDPLTest("index=index_A | convert dur2sec(dur) as dur_sec", testFile, ds -> {
-            Assertions
-                    .assertEquals(
-                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, dur_sec]",
-                            Arrays.toString(ds.columns())
-                    );
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("dur_sec", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema());
 
             List<String> listOfResults = ds
                     .select("dur_sec")
@@ -256,11 +310,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat offset \"m\" offsetM | strcat offset \"k\" offsetK | strcat offset \"g\" offsetG | convert memk(offsetM) as memk_M memk(offsetK) as memk_K memk(offsetG) as memk_G memk(offset) as memk_def",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, offsetM, offsetK, offsetG, memk_M, memk_K, memk_G, memk_def]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offsetM", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("offsetK", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("offsetG", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("memk_M", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("memk_K", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("memk_G", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("memk_def", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> resDef = ds
                                     .select("memk_def")
@@ -322,11 +387,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"\" \"47.\" \"329\" mst | strcat \"32:\" \"47.\" \"329\" mst2 | convert mstime(mst) as res mstime(mst2) as res2",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, mst2, res, res2]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("mst2", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("res2", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -361,11 +437,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"\" \"47,\" \"329\" mst | strcat \"32,\" \"47,\" \"329\" mst2 | convert rmcomma(mst) as res rmcomma(mst2) as res2",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, mst2, res, res2]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("mst2", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res2", DataTypes.StringType, false, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -399,11 +486,22 @@ public class ConvertTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"abc\" as mst | convert rmunit(mst) as res", testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -430,11 +528,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"329.45\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -461,11 +570,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \".54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -492,11 +612,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"-0.54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -522,11 +653,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"-0.21.54e2\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -552,11 +694,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -582,11 +735,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e-23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -613,11 +777,22 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"+21.54e+23\" \"abc\" as mst | convert rmunit(mst) as res", testFile,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, mst, res]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("mst", DataTypes.StringType, false, new MetadataBuilder().build()), new StructField("res", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
 
                             List<String> listOfResults = ds
                                     .select("res")
@@ -643,11 +818,23 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"\" with_results |strcat \"329\" \"aa\" no_results | convert auto(with_results) | convert auto(no_results)",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, with_results, no_results]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("with_results", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("no_results", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
+
                             List<String> listOfResults = ds
                                     .select("with_results")
                                     .limit(1)
@@ -683,11 +870,23 @@ public class ConvertTransformationTest {
                 .performDPLTest(
                         "index=index_A | strcat \"329\" \"\" with_results |strcat \"329\" \"aa\" no_results | convert num(with_results) | convert num(no_results)",
                         testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, with_results, no_results]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("with_results", DataTypes.DoubleType, true, new MetadataBuilder().build()), new StructField("no_results", DataTypes.DoubleType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
+
                             List<String> listOfResults = ds
                                     .select("with_results")
                                     .limit(1)
@@ -722,11 +921,23 @@ public class ConvertTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | convert dur2sec(\"dur|offset\") AS dur_sec none(offset)", testFile, ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_raw, _time, dur, host, index, offset, partition, source, sourcetype, dur_sec]",
-                                            Arrays.toString(ds.columns())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("dur", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "partition",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("dur_sec", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
+
                             List<String> listOfResults = ds
                                     .select("dur_sec")
                                     .collectAsList()
