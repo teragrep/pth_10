@@ -58,10 +58,12 @@ public final class EpochTimestamp {
 
     private final String value;
     private final String timeformat;
+    private final boolean isLatest;
 
-    public EpochTimestamp(final String value, final String timeformat) {
+    public EpochTimestamp(final String value, final String timeformat, final boolean isLatest) {
         this.value = value;
         this.timeformat = timeformat;
+        this.isLatest = isLatest;
     }
 
     public long epoch() {
@@ -83,7 +85,7 @@ public final class EpochTimestamp {
         final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
         final long timevalue;
         if (timeFormatString == null || timeFormatString.isEmpty()) {
-            timevalue = new DefaultTimeFormat().getEpoch(unquotedValue);
+            timevalue = new DefaultTimeFormat(isLatest).getEpoch(unquotedValue);
         }
         else {
             // TODO: should be included in DPLTimeFormat

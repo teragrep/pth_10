@@ -68,6 +68,7 @@ public final class TimeQualifier {
     }
 
     public long epoch() {
+        final boolean isLatest = isEndTime();
         if (isUnixEpoch()) {
             try {
                 return Long.parseLong(value);
@@ -76,7 +77,7 @@ public final class TimeQualifier {
                 throw new IllegalArgumentException("Invalid unix epoch: <[" + value + "]>", e);
             }
         }
-        return new EpochTimestamp(value, timeformat).epoch();
+        return new EpochTimestamp(value, timeformat, isLatest).epoch();
     }
 
     public Column column() {

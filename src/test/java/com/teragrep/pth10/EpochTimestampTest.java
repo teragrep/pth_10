@@ -56,7 +56,16 @@ public class EpochTimestampTest {
         final String value = "2024-31-10";
         final String timeformat = "%Y-%d-%m";
         final Long expected = 1730325600L;
-        EpochTimestamp et = new EpochTimestamp(value, timeformat);
+        EpochTimestamp et = new EpochTimestamp(value, timeformat, false);
+        Assertions.assertEquals(expected, et.epoch());
+    }
+
+    @Test
+    public void testWithReadableTimeformatAndIsLatest() {
+        final String value = "2024-31-10";
+        final String timeformat = "%Y-%d-%m";
+        final Long expected = 1730325600L;
+        EpochTimestamp et = new EpochTimestamp(value, timeformat, true);
         Assertions.assertEquals(expected, et.epoch());
     }
 
@@ -65,7 +74,16 @@ public class EpochTimestampTest {
         final String value = "1730325600";
         final String timeformat = "%s";
         final Long expected = 1730325600L;
-        EpochTimestamp et = new EpochTimestamp(value, timeformat);
+        EpochTimestamp et = new EpochTimestamp(value, timeformat, false);
+        Assertions.assertEquals(expected, et.epoch());
+    }
+
+    @Test
+    public void testWithUnixTimeformatAndIsLatest() {
+        final String value = "1730325600";
+        final String timeformat = "%s";
+        final Long expected = 1730325600L;
+        EpochTimestamp et = new EpochTimestamp(value, timeformat, true);
         Assertions.assertEquals(expected, et.epoch());
     }
 
@@ -74,7 +92,16 @@ public class EpochTimestampTest {
         final String value = "2024-10-31T10:10:10z";
         final String timeformat = "";
         final Long expected = 1730362210L;
-        EpochTimestamp et = new EpochTimestamp(value, timeformat);
+        EpochTimestamp et = new EpochTimestamp(value, timeformat, false);
+        Assertions.assertEquals(expected, et.epoch());
+    }
+
+    @Test
+    public void testDefaultTimeformatAndIsLatest() {
+        final String value = "2024-10-31T10:10:10.001";
+        final String timeformat = "";
+        final Long expected = 1730362210L + 1L;
+        EpochTimestamp et = new EpochTimestamp(value, timeformat, true);
         Assertions.assertEquals(expected, et.epoch());
     }
 
@@ -83,7 +110,7 @@ public class EpochTimestampTest {
         final String value = "xyz";
         final String timeformat = "%Y-%d-%m";
         RuntimeException e = Assertions
-                .assertThrows(RuntimeException.class, () -> new EpochTimestamp(value, timeformat).epoch());
+                .assertThrows(RuntimeException.class, () -> new EpochTimestamp(value, timeformat, false).epoch());
         Assertions.assertEquals("TimeQualifier conversion error: <" + value + "> can't be parsed.", e.getMessage());
     }
 
@@ -92,7 +119,7 @@ public class EpochTimestampTest {
         final String value = "2024-10-31T10:10:10z";
         final String timeformat = "%Y-%d-%m";
 
-        Assertions.assertEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value, timeformat));
+        Assertions.assertEquals(new EpochTimestamp(value, timeformat, false), new EpochTimestamp(value, timeformat, false));
     }
 
     @Test
@@ -101,7 +128,7 @@ public class EpochTimestampTest {
         final String value2 = "2024-10-30T10:10:10z";
         final String timeformat = "%Y-%d-%m";
 
-        Assertions.assertNotEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value2, timeformat));
+        Assertions.assertNotEquals(new EpochTimestamp(value, timeformat, false), new EpochTimestamp(value2, timeformat, false));
     }
 
 }
