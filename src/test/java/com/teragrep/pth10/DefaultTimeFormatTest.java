@@ -114,4 +114,12 @@ public class DefaultTimeFormatTest {
 
         Assertions.assertEquals(expected, actual);
     }
+
+    @Test
+    void invalidTimeformat() {
+        String time = "12/34/2020:10:25:40";
+        RuntimeException rte = Assertions.assertThrows(RuntimeException.class, () -> new DefaultTimeFormat().getEpoch(time));
+
+        Assertions.assertEquals("TimeQualifier conversion error: <12/34/2020:10:25:40> can't be parsed.", rte.getMessage());
+    }
 }
