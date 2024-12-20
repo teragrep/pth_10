@@ -54,7 +54,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.stream.Collectors;
 
 /**
@@ -68,15 +67,15 @@ public class XmlkvTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlkvTransformationTest.class);
 
     private final StructType testSchema = new StructType(new StructField[] {
-            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-            new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
-            new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
-            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
-            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
-            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
-            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
-            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
-            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+            new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+            new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
     });
 
     private StreamingTestUtil streamingTestUtil;
@@ -113,10 +112,23 @@ public class XmlkvTransformationTest {
     )
     public void testXmlkvWithNestedXml() {
         streamingTestUtil.performDPLTest("index=index_A | xmlkv _raw", XML_DATA_2, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("item", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("something", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, item, something]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
                     );
 
             String result = ds
@@ -138,10 +150,21 @@ public class XmlkvTransformationTest {
     )
     public void testXmlkvWithSimpleXml() {
         streamingTestUtil.performDPLTest("index=index_A | xmlkv _raw", XML_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("item", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, item]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
 
@@ -168,7 +191,11 @@ public class XmlkvTransformationTest {
                         "index=index_A | xmlkv _raw", INVALID_DATA, ds -> {
                             // invalid data does not generate a result; only checking column arrangement
                             // to be the same as the input data.
-                            Assertions.assertEquals(Arrays.toString(testSchema.fieldNames()), Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                            Assertions
+                                    .assertEquals(
+                                            testSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }

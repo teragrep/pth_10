@@ -272,10 +272,20 @@ public class whereTest {
     )
     public void whereTestIntegerColumnLessThan() {
         streamingTestUtil.performDPLTest("index=index_A | where offset < 3", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
 
@@ -294,8 +304,19 @@ public class whereTest {
                         "index=index_A " + "| chart avg(offset) as aoffset" + "| chart values(aoffset) as voffset"
                                 + "| chart sum(voffset) as soffset" + "| where soffset > 3",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "soffset",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
                             Assertions
-                                    .assertEquals("[soffset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             Assertions.assertEquals(1, ds.collectAsList().size());
                         }

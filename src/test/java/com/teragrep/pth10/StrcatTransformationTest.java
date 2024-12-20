@@ -107,8 +107,20 @@ public class StrcatTransformationTest {
         String q = "index=index_A | strcat _raw sourcetype \"literal\" dest";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("dest", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
             // check if result contains the column that was created for strcat result
-            Assertions.assertTrue(Arrays.toString(res.columns()).contains("dest"));
+            Assertions.assertEquals(res.schema(), expectedSchema);
 
             // List of expected values for the strcat destination field
             List<String> expectedValues = new ArrayList<>(
@@ -145,8 +157,20 @@ public class StrcatTransformationTest {
         String q = "index=index_A | strcat allrequired=t _raw \"literal\" sourcetype dest";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("dest", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
             // check if result contains the column that was created for strcat result
-            Assertions.assertTrue(Arrays.toString(res.columns()).contains("dest"));
+            Assertions.assertEquals(res.schema(), expectedSchema);
 
             // List of expected values for the strcat destination field
             List<String> expectedValues = new ArrayList<>(
@@ -183,8 +207,20 @@ public class StrcatTransformationTest {
         String q = "index=index_A | strcat allrequired=f _raw sourcetype \"hello world\" dest";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("dest", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
             // check if result contains the column that was created for strcat result
-            Assertions.assertTrue(Arrays.toString(res.columns()).contains("dest"));
+            Assertions.assertEquals(res.schema(), expectedSchema);
 
             // List of expected values for the strcat destination field
             List<String> expectedValues = new ArrayList<>(
@@ -221,22 +257,36 @@ public class StrcatTransformationTest {
     void strcatTransformAllRequiredTrueWithMissingFieldTest() {
         String q = "index=index_A | strcat allrequired=t _raw sourcetype NOT_A_REAL_FIELD \"literal\" dest";
 
-        streamingTestUtil
-                .performDPLTest(
-                        q, testFile, res -> {
-                            // check if result contains the column that was created for strcat result
-                            Assertions.assertTrue(Arrays.toString(res.columns()).contains("dest"));
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("dest", DataTypes.NullType, true, new MetadataBuilder().build())
+            });
+            // check if result contains the column that was created for strcat result
+            Assertions.assertEquals(res.schema(), expectedSchema);
 
-                            // List of expected values for the strcat destination field
-                            List<String> expectedValues = new ArrayList<>(Arrays.asList(null, null, null, null, null));
+            // List of expected values for the strcat destination field
+            List<String> expectedValues = new ArrayList<>(Arrays.asList(null, null, null, null, null));
 
-                            // Destination field from result dataset<row>
-                            List<String> destAsList = res.select("dest").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+            // Destination field from result dataset<row>
+            List<String> destAsList = res
+                    .select("dest")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
 
-                            // assert dest field contents as equals with expected contents
-                            Assertions.assertEquals(expectedValues, destAsList);
-                        }
-                );
+            // assert dest field contents as equals with expected contents
+            Assertions.assertEquals(expectedValues, destAsList);
+        });
     }
 
     // strcat with allRequired=False AND missing(incorrect) field
@@ -249,8 +299,20 @@ public class StrcatTransformationTest {
         String q = "index=index_A | strcat allrequired=f _raw sourcetype \"literal\" NOT_A_REAL_FIELD dest";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("dest", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
             // check if result contains the column that was created for strcat result
-            Assertions.assertTrue(Arrays.toString(res.columns()).contains("dest"));
+            Assertions.assertEquals(res.schema(), expectedSchema);
 
             // List of expected values for the strcat destination field
             List<String> expectedValues = new ArrayList<>(
@@ -287,8 +349,20 @@ public class StrcatTransformationTest {
         String q = "index=index_A | strcat allrequired=f _raw \",\" sourcetype \",\" index dest";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("dest", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
             // check if result contains the column that was created for strcat result
-            Assertions.assertTrue(Arrays.toString(res.columns()).contains("dest"));
+            Assertions.assertEquals(res.schema(), expectedSchema);
 
             // List of expected values for the strcat destination field
             List<String> expectedValues = new ArrayList<>(

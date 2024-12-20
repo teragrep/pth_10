@@ -54,8 +54,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
  * 
@@ -108,8 +106,15 @@ public class TableTransformationTest {
     )
     public void testTableWithWildcard() {
         streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table _time*", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("_time2", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
             Assertions
-                    .assertEquals("[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
         });
     }
 
@@ -120,8 +125,15 @@ public class TableTransformationTest {
     )
     public void testTableMultipleFieldsWithComma() {
         streamingTestUtil.performDPLTest("index=index_A | table index, offset", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
             Assertions
-                    .assertEquals("[index, offset]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
         });
     }
 
@@ -132,8 +144,16 @@ public class TableTransformationTest {
     )
     public void testTableMultipleFieldsWithSpace() {
         streamingTestUtil.performDPLTest("index=index_A | table _time offset index", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
-                    .assertEquals("[_time, offset, index]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
         });
     }
 
@@ -145,8 +165,12 @@ public class TableTransformationTest {
     )
     public void testTableWithSpecialCharactersFieldName() {
         streamingTestUtil.performDPLTest("index=index_A | table \"?????\"", testFile, ds -> {
+            final StructType expectedSchema = new StructType();
             Assertions
-                    .assertEquals("[]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
         });
     }
 
@@ -157,8 +181,15 @@ public class TableTransformationTest {
     )
     public void testTableWithMultipleWildcards() {
         streamingTestUtil.performDPLTest("index=index_A | strcat _time \"\" _time2 | table *ime*", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("_time2", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
             Assertions
-                    .assertEquals("[_time, _time2]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
         });
     }
 }
