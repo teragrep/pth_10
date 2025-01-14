@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -115,16 +116,17 @@ public final class TeragrepSystemStep extends AbstractStep {
     private List<String> getComponentVersions() {
         final List<String> rv = new ArrayList<>();
 
-        LOGGER.info("programmatically resolved package: <{}>", TeragrepSystemStep.class.getPackage());
-        LOGGER
-                .info(
-                        "programmatically resolved: <{}>",
-                        TeragrepSystemStep.class.getPackage().getImplementationVersion()
-                );
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("programmatically resolved package: <{}>", TeragrepSystemStep.class.getPackage());
+            LOGGER
+                    .info(
+                            "programmatically resolved: <{}>",
+                            TeragrepSystemStep.class.getPackage().getImplementationVersion()
+                    );
+        }
 
-        java.io.InputStream is = TeragrepSystemStep.class.getClassLoader().getResourceAsStream("maven.properties");
-        java.util.Properties p = new Properties();
-        try {
+        try (final InputStream is = TeragrepSystemStep.class.getClassLoader().getResourceAsStream("maven.properties")) {
+            final Properties p = new Properties();
             p.load(is);
             LOGGER.debug("package properties: <{}>", p);
 
