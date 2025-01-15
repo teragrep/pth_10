@@ -3231,8 +3231,6 @@ public class evalTest {
     public void parseMvappendCatalystTest() {
         String q = "index=index_A | eval a = mvappend(\"Hello\",\"World\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        //        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,"
-        //                + "StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
