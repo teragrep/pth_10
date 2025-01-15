@@ -51,6 +51,7 @@ import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -100,13 +101,22 @@ public class evalTest {
     public void parseEvalMultipleStatementsTest() {
         String q = "index=index_A | eval a = 1, b = 2";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),"
-                + "StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),"
-                + "StructField(a,IntegerType,false),StructField(b,IntegerType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.IntegerType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+
             List<String> listOfA = res
                     .select("a")
                     .distinct()
@@ -137,11 +147,22 @@ public class evalTest {
     public void parseEvalLenCatalystTest() {
         String q = "index=index_A | eval lenField = len(_raw)";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the file into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(lenField,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
-            //  Get only distinct lenField and sort it by value
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("lenField", DataTypes.IntegerType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+
             Dataset<Row> orderedDs = res.select("lenField").orderBy("lenField").distinct();
             List<Integer> lst = orderedDs
                     .collectAsList()
@@ -167,12 +188,22 @@ public class evalTest {
     public void parseEvalUpperLowerCatalystTest() {
         String q = "index=index_A | eval a=upper(\"hello world\") | eval b=lower(\"HELLO WORLD\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lstA = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -195,12 +226,22 @@ public class evalTest {
     public void parseEvalUrldecodeCatalystTest() {
         String q = "index=index_A | eval a=urldecode(\"http%3A%2F%2Fwww.example.com%2Fdownload%3Fr%3Dlatest\") | eval b=urldecode(\"https%3A%2F%2Fwww.longer-domain-here.example.com%2Fapi%2Fv1%2FgetData%3Fmode%3Dall%26type%3Dupdate%26random%3Dtrue\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lstA = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -228,13 +269,25 @@ public class evalTest {
         String q = "index=index_A | eval a=ltrim(\" \t aabbccdd \") | eval b=ltrim(\"  zZaabcdzz \",\" zZ\") "
                 + "| eval c=rtrim(\"\t abcd  \t\") | eval d=rtrim(\" AbcDeF g\",\"F g\") | eval e=trim(\"\tabcd\t\") | eval f=trim(\"\t zzabcdzz \t\",\"\t zz\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false),"
-                + "StructField(c,StringType,false),StructField(d,StringType,false),StructField(e,StringType,false),StructField(f,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("d", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("e", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("f", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // ltrim()
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
@@ -285,10 +338,21 @@ public class evalTest {
     public void parseEvalReplaceCatalystTest() {
         String q = "index=index_A | eval a=replace(\"Hello world\", \"He\", \"Ha\") | eval b=replace(a, \"world\", \"welt\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false),StructField(b,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lstA = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -310,10 +374,21 @@ public class evalTest {
     public void parseEvalSubstringCatalystTest() {
         String q = "index=index_A | eval str = substr(_raw,1,14)";
         String testFile = "src/test/resources/subsearchData*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(str,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("str", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
             List<Row> lst = orderedDs.collectAsList();
@@ -332,10 +407,21 @@ public class evalTest {
     public void parseEvalSubstringNoLengthParamCatalystTest() {
         String q = "index=index_A | eval str = substr(_raw,185)";
         String testFile = "src/test/resources/subsearchData*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(str,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("str", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             //  Get only distinct lenField and sort it by value
             Dataset<Row> orderedDs = res.select("str").orderBy("str").distinct();
             List<String> lst = orderedDs
@@ -361,10 +447,21 @@ public class evalTest {
     public void parseEvalIfCatalystTest() {
         String q = "index=index_A | eval val2=if((false() OR true()),\"a\", \"b\")";
         String testFile = "src/test/resources/subsearchData*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(val2,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
 
@@ -384,13 +481,24 @@ public class evalTest {
     public void parseEvalIfMultiValueCatalystTest() {
         String q = "index=index_A | eval mvf=mvappend(\"\") |eval val2=if(mvf==\"\",\"t\",\"f\"))";
         String testFile = "src/test/resources/subsearchData*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(mvf,ArrayType(StringType,false),false),StructField(val2,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("mvf", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
-
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
             Assertions.assertEquals(1, lst.size());
@@ -407,13 +515,24 @@ public class evalTest {
     public void parseEvalIfMultiValueAsResultCatalystTest() {
         String q = "index=index_A | eval mvf=mvappend(\"\") |eval val2=if(mvf==\"\",mvappend(\"tr\",\"ue\"),\"f\"))";
         String testFile = "src/test/resources/subsearchData*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(mvf,ArrayType(StringType,false),false),StructField(val2,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("mvf", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+
             //  Get only distinct val2 and sort it by value
             Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
-
             List<Row> lst = orderedDs.collectAsList();
             // we should get 1 distinct values
             Assertions.assertEquals(1, lst.size());
@@ -430,12 +549,23 @@ public class evalTest {
     public void parseEvalIfSubstrCatalystTest() {
         String q = "index=index_A | eval val2=if( 1 < 2  , substr(_raw,165,100) , \"b\")";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(val2,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
-            Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("val2", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
+            Dataset<Row> orderedDs = res.select("val2").orderBy("val2").distinct();
             List<String> lst = orderedDs
                     .collectAsList()
                     .stream()
@@ -463,10 +593,22 @@ public class evalTest {
     public void parseEvalIfLenTest() {
         String q = "index=index_A | eval a=if(substr(_raw,0,11)=\"127.0.0.123\",len( _raw),0)";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+
             //  Get only distinct field and sort it by value
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<String> lst = orderedDs
@@ -494,10 +636,21 @@ public class evalTest {
     public void parseEvalNullCatalystTest() {
         String q = "index=index_A | eval a=null()";
         String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(origin,StringType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("origin", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get only distinct field 'a' and sort it by value
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<Row> lst = orderedDs.collectAsList();
@@ -517,10 +670,20 @@ public class evalTest {
     public void parseEvalPowCatalystTest() {
         String q = "index=index_A | eval a=pow(offset,2)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order it by the values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -547,10 +710,20 @@ public class evalTest {
     public void parseEvalNullifCatalystTest() {
         String q = "index=index_A | eval a=nullif(offset,_raw)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<String> lst = resA
@@ -581,10 +754,20 @@ public class evalTest {
     public void parseEvalAbsCatalystTest() {
         String q = "index=index_A | eval a=abs(offset)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order it by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -608,10 +791,20 @@ public class evalTest {
     public void parseEvalCeilingCatalystTest() {
         String q = "index=index_A | eval a=ceiling(offset+0.5)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -642,10 +835,20 @@ public class evalTest {
     public void parseEvalExpCatalystTest() {
         String q = "index=index_A | eval a=exp(offset)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -679,10 +882,20 @@ public class evalTest {
     public void parseEvalFloorCatalystTest() {
         String q = "index=index_A | eval a=floor(offset+0.5)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by value
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -713,10 +926,20 @@ public class evalTest {
     public void parseEvalLnCatalystTest() {
         String q = "index=index_A | eval a=ln(offset)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -753,10 +976,20 @@ public class evalTest {
     public void parseEvalLogCatalystTest() {
         String q = "index=index_A | eval a=log(offset, 10)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to  make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // for rounding since there are small deviations between spark log10 and java log10
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
@@ -800,10 +1033,20 @@ public class evalTest {
     public void parseEvalLogWithoutBaseParamCatalystTest() {
         String q = "index=index_A | eval a=log(offset)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to  make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // for rounding since there are small deviations between spark log10 and java log10
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
@@ -851,10 +1094,20 @@ public class evalTest {
     public void parseEvalRandomCatalystTest() {
         String q = "index=index_A | eval a=random()";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Integer> lst = resA.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
@@ -874,10 +1127,20 @@ public class evalTest {
     public void parseEvalPiCatalystTest() {
         String q = "index=index_A | eval a=pi()";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -895,12 +1158,21 @@ public class evalTest {
     public void parseEvalRoundCatalystTest() {
         String q = "index=index_A | eval a=round(1.545) | eval b=round(5.7432, 3)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Double> lstA = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -923,13 +1195,23 @@ public class evalTest {
     public void parseEvalSigfigCatalystTest() {
         String q = "index=index_A | eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),"
-                + "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             /*
              *  eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245)
              */
@@ -975,10 +1257,20 @@ public class evalTest {
     public void parseEvalSqrtCatalystTest() {
         String q = "index=index_A | eval a=sqrt(offset)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1002,10 +1294,20 @@ public class evalTest {
     public void parseEvalSumTest() {
         String q = "index=index_A | eval a=sum(offset, 1, 3)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1034,10 +1336,20 @@ public class evalTest {
     public void parseEvalSumWithStringsTest() { // should use the string in the sum if it is numerical, ignore otherwise
         String q = "index=index_A | eval a=sum(\"foo\", offset, \"2\", index)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1066,10 +1378,20 @@ public class evalTest {
     public void parseEvalSumWithDoubleTest() {
         String q = "index=index_A | eval a=sum(offset, 2.6, 3.5)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1098,10 +1420,20 @@ public class evalTest {
     public void parseEvalSumWithArithmeticalOperation() {
         String q = "index=index_A | eval a=sum(offset, 2 + 5)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
             Dataset<Row> resA = res.select("a").orderBy("a");
@@ -1131,10 +1463,20 @@ public class evalTest {
     public void parseEvalConcatCatalystTest() {
         String q = "index=index_A | eval a=\"ab\"+\"cd\"";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1155,10 +1497,20 @@ public class evalTest {
     public void parseEvalPlusCatalystTest() {
         String q = "index=index_A | eval a=0.1+1.4";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1179,10 +1531,20 @@ public class evalTest {
     public void parseEvalMinusCatalystTest() {
         String q = "index=index_A | eval a = offset - 1";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1213,10 +1575,20 @@ public class evalTest {
     public void parseEvalMultiplyCatalystTest() {
         String q = "index=index_A | eval a = offset * offset";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1247,10 +1619,20 @@ public class evalTest {
     public void parseEvalDivideCatalystTest() {
         String q = "index=index_A | eval a = offset / offset";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1282,10 +1664,20 @@ public class evalTest {
     public void parseEvalModCatalystTest() {
         String q = "index=index_A | eval a = offset % 2";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
@@ -1316,10 +1708,23 @@ public class evalTest {
     public void parseEvalCryptographicCatalystTest() {
         String q = "index=index_A | eval md5=md5(_raw) | eval sha1=sha1(_raw) | eval sha256=sha256(_raw) | eval sha512=sha512(_raw)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(md5,StringType,true),StructField(sha1,StringType,true),StructField(sha256,StringType,true),StructField(sha512,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("md5", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sha1", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sha256", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sha512", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column '_raw'
             Dataset<Row> resRaw = res.select("_raw").orderBy("offset");
             List<String> lstRaw = resRaw.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1375,10 +1780,20 @@ public class evalTest {
     public void parseEvalCaseCatalystTest() {
         String q = "index=index_A | eval a=case(offset < 2, \"Less than two\", offset > 2, \"More than two\", offset == 2, \"Exactly two\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA
@@ -1410,10 +1825,20 @@ public class evalTest {
     public void parseEvalValidateCatalystTest() {
         String q = "index=index_A | eval a=validate(offset < 10, \"Not less than 10\", offset < 9, \"Not less than 9\", offset < 6, \"Not less than 6\", offset > 0, \"Not more than 0\", offset == 0, \"Not 0\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA
@@ -1446,10 +1871,20 @@ public class evalTest {
     public void parseEvalTostring_NoOptionalArgument_CatalystTest() {
         String q = "index=index_A | eval a=tostring(true())";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> orderedDs = res.select("a").orderBy("a").distinct();
             List<String> lst = orderedDs.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1472,10 +1907,20 @@ public class evalTest {
     public void parseEvalTostring_Hex_CatalystTest() {
         String q = "index=index_A | eval a=tostring(offset, \"hex\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1506,10 +1951,20 @@ public class evalTest {
     public void parseEvalTostring_Duration_CatalystTest() {
         String q = "index=index_A | eval a=tostring(offset, \"duration\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1539,10 +1994,20 @@ public class evalTest {
     public void parseEvalTostring_Commas_CatalystTest() {
         String q = "index=index_A | eval a=tostring(12345.6789, \"commas\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -1563,10 +2028,20 @@ public class evalTest {
     public void parseEvalTonumberCatalystTest() {
         String q = "index=index_A | eval a=tonumber(\"0A4\", 16)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -1587,10 +2062,20 @@ public class evalTest {
     public void parseEvalTonumberNoBaseArgumentCatalystTest() {
         String q = "index=index_A | eval a=tonumber(\"12345\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
@@ -1611,10 +2096,23 @@ public class evalTest {
     public void parseEvalCosCatalystTest() {
         String q = "index=index_A | eval a=acos(offset / 10) | eval b=acosh(offset) | eval c=cos(offset / 10) | eval d=cosh(offset / 10)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Without orderBy collectAsList will change the order randomly. Order every column by offset.
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
@@ -1672,13 +2170,23 @@ public class evalTest {
     public void parseEvalSinCatalystTest() {
         String q = "index=index_A | eval a=asin(offset / 10) | eval b=asinh(offset) | eval c=sin(offset / 10) | eval d=sinh(offset / 10)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),"
-                + "StructField(c,DoubleType,true),StructField(d,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1735,10 +2243,24 @@ public class evalTest {
     public void parseEvalTanCatalystTest() {
         String q = "index=index_A | eval a=atan(offset) | eval b=atanh(offset / 10) | eval c=tan(offset / 10) | eval d=tanh(offset / 10) | eval e=atan2(offset / 10, offset / 20)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,DoubleType,true),StructField(b,DoubleType,true),StructField(c,DoubleType,true),StructField(d,DoubleType,true),StructField(e,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("e", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' atan
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1801,12 +2323,20 @@ public class evalTest {
     public void evalAvgTest() {
         String q = "index=index_A | eval a=avg(offset, 1, 2)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1834,12 +2364,20 @@ public class evalTest {
     public void evalAvgWithStringsTest() { // Should ignore non-numerical Strings
         String q = "index=index_A | eval a=avg(\"foo\", offset, \"1\", \"bar\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1867,12 +2405,20 @@ public class evalTest {
     public void evalAvgWithDoublesTest() {
         String q = "index=index_A | eval a=avg(offset, 1.5, 3.5)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1900,12 +2446,20 @@ public class evalTest {
     public void evalAvgWithArithmeticsTest() {
         String q = "index=index_A | eval a=avg(offset, 1 + 4, 5 + 6)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> a = res.select("a").orderBy("offset");
@@ -1934,12 +2488,20 @@ public class evalTest {
     public void parseEvalHypotCatalystTest() {
         String q = "index=index_A | eval a=hypot(offset, offset)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,DoubleType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
@@ -1971,10 +2533,21 @@ public class evalTest {
     public void parseEvalCidrmatchCatalystTest() {
         String q = "index=index_A | eval a=cidrmatch(ip, \"192.168.2.0/24\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -1997,13 +2570,22 @@ public class evalTest {
     public void parseEvalCoalesceCatalystTest() {
         String q = "index=index_A | eval a=coalesce(null(),index) | eval b=coalesce(index, null()) | eval c=coalesce(null())";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),"
-                + "StructField(a,StringType,true),StructField(b,StringType,true),StructField(c,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2035,10 +2617,21 @@ public class evalTest {
     public void parseEvalInCatalystTest() {
         String q = "index=index_A | eval a=in(ip,\"192.168.2.1\",\"127.0.0.91\", \"127.0.0.1\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -2061,10 +2654,21 @@ public class evalTest {
     public void parseEvalLikeCatalystTest() {
         String q = "index=index_A | eval a=like(ip,\"192.168.3%\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -2087,10 +2691,21 @@ public class evalTest {
     public void parseEvalMatchCatalystTest() {
         String q = "index=index_A | eval a=match(ip,\"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
@@ -2112,13 +2727,21 @@ public class evalTest {
     public void parseEvalIfMatchCatalystTest() {
         String q = "index=index_A | eval a=if(match(ip,\"3\"),1,0)";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<String> lst = resA
@@ -2145,10 +2768,21 @@ public class evalTest {
     public void parseEvalMvfindCatalystTest() {
         String q = "index=index_A | eval a=mvfind(mvappend(\"random\",\"192.168.1.1\",\"192.168.10.1\"),\"^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,IntegerType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.IntegerType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Integer> lst = resA.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
@@ -2169,10 +2803,21 @@ public class evalTest {
                 + "| eval b=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2, 3)"
                 + "| eval c=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),-1)";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true),StructField(c,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("c", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -2202,10 +2847,21 @@ public class evalTest {
         String q = "index=index_A | eval a=mvjoin(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),\";;\") "
                 + "<!--| eval b=mvindex(mvappend(\"mv1\",\"mv2\",\"mv3\",\"mv4\",\"mv5\"),2, 3)--> ";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
@@ -2224,10 +2880,21 @@ public class evalTest {
     public void parseEvalMvrangeCatalystTest() {
         String q = "index=index_A | eval a=mvrange(1514834731,1524134919,\"7d\")" + "| eval b=mvrange(1, 10, 2)";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -2258,13 +2925,21 @@ public class evalTest {
     public void parseEvalMvsortCatalystTest() {
         String q = "index=index_A | eval a=mvsort(mvappend(\"6\", \"4\", \"Aa\", \"Bb\", \"aa\", \"cd\", \"g\", \"b\", \"10\", \"11\", \"100\"))";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -2289,10 +2964,21 @@ public class evalTest {
         String q = "index=index_A | eval mv1=mvappend(\"mv1-1\",\"mv1-2\",\"mv1-3\") | eval mv2=mvappend(\"mv2-1\",\"mv2-2\",\"mv2-3\")"
                 + "| eval a=mvzip(mv1, mv2) | eval b=mvzip(mv1, mv2, \"=\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(mv1,ArrayType(StringType,false),false),StructField(mv2,ArrayType(StringType,false),false),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("mv1", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("mv2", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<List<Object>> lst = resA.collectAsList().stream().map(r -> r.getList(0)).collect(Collectors.toList());
@@ -2317,13 +3003,21 @@ public class evalTest {
         String q = "index=index_A | eval a=commands(\"search foo | stats count | sort count\") "
                 + "| eval b=commands(\"eval a=random() | eval b=a % 10 | stats avg(b) as avg min(b) as min max(b) as max var(b) as var | table avg min max var\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),"
-                + "StructField(host,StringType,true),StructField(index,StringType,true),StructField(ip,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true),StructField(b,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
 
@@ -2351,10 +3045,27 @@ public class evalTest {
                 + "| eval isNum = isnum(5.4) | eval isNotNum = isnum(false()) "
                 + "| eval isStr = isstr(\"a\") | eval isNotStr = isstr(3)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(isBoolean,BooleanType,true),StructField(isNotBoolean,BooleanType,true),StructField(isInt,BooleanType,true),StructField(isNotInt,BooleanType,true),StructField(isNum,BooleanType,true),StructField(isNotNum,BooleanType,true),StructField(isStr,BooleanType,true),StructField(isNotStr,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("isBoolean", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("isNotBoolean", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("isInt", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("isNotInt", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("isNum", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("isNotNum", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("isStr", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("isNotStr", DataTypes.BooleanType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Boolean
             Dataset<Row> ds_isBoolean = res.select("isBoolean").orderBy("isBoolean").distinct();
             List<Row> lst_isBoolean = ds_isBoolean.collectAsList();
@@ -2402,10 +3113,23 @@ public class evalTest {
     public void parseEvalIsNullCatalystTest() {
         String q = "index=index_A | eval a = isnull(null()) | eval b = isnull(true()) | eval c = isnotnull(null()) | eval d = isnotnull(true())";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,BooleanType,false),StructField(b,BooleanType,false),StructField(c,BooleanType,false),StructField(d,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.BooleanType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.BooleanType, false, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.BooleanType, false, new MetadataBuilder().build()),
+                    new StructField("d", DataTypes.BooleanType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Boolean
             Dataset<Row> ds_isNull = res.select("a").orderBy("a").distinct();
             List<Row> lst_isNull = ds_isNull.collectAsList();
@@ -2434,10 +3158,22 @@ public class evalTest {
     public void parseEvalTypeofCatalystTest() {
         String q = "index=index_A | eval a = typeof(12) | eval b = typeof(\"string\") | eval c = typeof(1==2)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true),StructField(c,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // number
             Dataset<Row> dsNumber = res.select("a").orderBy("a").distinct();
             List<Row> dsNumberLst = dsNumber.collectAsList();
@@ -2464,10 +3200,20 @@ public class evalTest {
     public void testEvalTypeofInvalid() {
         String q = "index=index_A | eval d = typeof(badfield)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(d,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("d", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // invalid
             Dataset<Row> dsInvalid = res.select("d").orderBy("d").distinct();
@@ -2485,11 +3231,21 @@ public class evalTest {
     public void parseMvappendCatalystTest() {
         String q = "index=index_A | eval a = mvappend(\"Hello\",\"World\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,"
-                + "StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            //Assertions.assertEquals(schema, res.schema().toString());
             Dataset<Row> resMvAppend = res.select("a").orderBy("a").distinct();
             List<Row> lst = resMvAppend.collectAsList();
 
@@ -2507,13 +3263,21 @@ public class evalTest {
     public void parseMvcountCatalystTest() {
         String q = "index=index_A | eval one_value = mvcount(mvappend(offset)) | eval two_values = mvcount(mvappend(index, offset))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(one_value,StringType,true),"
-                + "StructField(two_values,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("one_value", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("two_values", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get results
             Dataset<Row> res1V = res.select("one_value").orderBy("one_value").distinct();
             Dataset<Row> res2V = res.select("two_values").orderBy("two_values").distinct();
@@ -2537,12 +3301,20 @@ public class evalTest {
     public void parseMvdedupCatalystTest() {
         String q = "index=index_A | eval a = mvdedup(mvappend(\"1\",\"2\",\"3\",\"1\",\"2\",\"4\"))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),"
-                + "StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),"
-                + "StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
             Assertions.assertEquals("[1, 2, 3, 4]", lstA.get(0).getList(0).toString());
@@ -2555,12 +3327,20 @@ public class evalTest {
     public void parseMvfilterCatalystTest() {
         String q = "index=index_A | eval email = mvappend(\"aa@bb.example.test\",\"aa@yy.example.test\",\"oo@ii.example.test\",\"zz@uu.example.test\",\"auau@uiui.example.test\") | eval a = mvfilter( email != \"aa@bb.example.test\" )";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resEmail = res.select("email");
 
             Dataset<Row> resA = res.select("a");
@@ -2579,10 +3359,21 @@ public class evalTest {
         String q = "index=index_A | eval a=strptime(\"2018-08-13 11:22:33\",\"%Y-%m-%d %H:%M:%S\") "
                 + "| eval b=strptime(\"2018-08-13 11:22:33 11 AM PST\",\"%Y-%m-%d %T %I %p %Z\") ";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true),StructField(b,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -2646,10 +3437,20 @@ public class evalTest {
         String q = "index=index_A | eval a=split(\"a;b;c;d;e;f;g;h\",\";\") "
                 + "| eval b=split(\"1,2,3,4,5,6,7,8,9,10\",\",\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,false),false),StructField(b,ArrayType(StringType,false),false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, false), false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -2672,12 +3473,21 @@ public class evalTest {
         String q = "index=index_A | eval a=relative_time(1645092037, \"-7d\") "
                 + "| eval b=relative_time(1645092037,\"@d\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,true),StructField(b,LongType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lstA = resA.collectAsList();
 
@@ -2699,12 +3509,21 @@ public class evalTest {
     public void parseEvalMinMaxCatalystTest() {
         String q = "index=index_A | eval a=min(offset, offset - 2, offset - 3, offset - 4, offset - 5, offset) | eval b=max(offset, offset - 1, offset + 5) ";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2731,12 +3550,21 @@ public class evalTest {
     public void parseEvalMinMaxWithStringCatalystTest() {
         String q = "index=index_A | eval a=min(offset, \"foo\") | eval b=max(offset, \"foo\") ";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2763,12 +3591,21 @@ public class evalTest {
     public void parseEvalMinMaxWithStringNumbersCatalystTest() {
         String q = "index=index_A | eval a=min(\"9\", \"10\", \"foo\") | eval b=max(\"9\", \"10\", \"foo\") ";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2792,12 +3629,21 @@ public class evalTest {
     public void parseEvalMinMaxWithStringDecimalsCatalystTest() {
         String q = "index=index_A | eval a=min(\"10.0\", \"4.7\") | eval b=max(\"10.0\", \"4.7\") ";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lstA = resA.collectAsList();
 
@@ -2821,13 +3667,23 @@ public class evalTest {
     public void parseEvalJSONValidCatalystTest() {
         String q = " index=index_A | eval a=json_valid(_raw) | eval b=json_valid(json_field)";
         String testFile = "src/test/resources/eval_test_json*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,BooleanType,true),"
-                + "StructField(b,BooleanType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json_field", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("xml_field", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.BooleanType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2846,13 +3702,23 @@ public class evalTest {
     public void parseEvalSpathJSONCatalystTest() {
         String q = "index=index_A | eval a=spath(json_field, \"name\") | eval b=spath(json_field,\"invalid_spath\")";
         String testFile = "src/test/resources/eval_test_json*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,StringType,true),"
-                + "StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json_field", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("xml_field", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a"); //.orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2880,12 +3746,22 @@ public class evalTest {
     public void parseEvalSpathXMLCatalystTest() {
         String q = "index=index_A | eval a=spath(xml_field, \"people.person.name\")";
         String testFile = "src/test/resources/eval_test_json*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(json_field,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(xml_field,StringType,true),StructField(a,StringType,true))"; //, " +
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json_field", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("xml_field", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
@@ -2905,10 +3781,21 @@ public class evalTest {
     public void parseEvalExactCatalystTest() {
         String q = "index=index_A | eval a=8.250 * 0.2 | eval b=exact(8.250 * 0.2)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true),StructField(b,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -2931,13 +3818,22 @@ public class evalTest {
     public void parseEvalSearchmatchCatalystTest() {
         String q = "index=index_A | eval test=searchmatch(\"index=index_A\") | eval test2=searchmatch(\"index=index_B\") | eval test3=searchmatch(\"offset<10 index=index_A sourcetype=a*\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(test,BooleanType,false),"
-                + "StructField(test2,BooleanType,false),StructField(test3,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("test", DataTypes.BooleanType, false, new MetadataBuilder().build()),
+                    new StructField("test2", DataTypes.BooleanType, false, new MetadataBuilder().build()),
+                    new StructField("test3", DataTypes.BooleanType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'test'
             Dataset<Row> resA = res.select("test").orderBy("offset");
             List<Row> lst = resA.collectAsList();
@@ -2988,12 +3884,20 @@ public class evalTest {
     public void parseEvalSearchmatchImplicitRawCatalystTest() {
         String q = "index=index_A | eval test=searchmatch(\"*cOmPuter02.example.com*\")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),"
-                + "StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),"
-                + "StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(test,BooleanType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("test", DataTypes.BooleanType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'test'
             Dataset<Row> resA = res.select("_raw", "test").orderBy("offset");
             List<Row> lst = resA.collectAsList();
@@ -3021,10 +3925,21 @@ public class evalTest {
     public void parseEval_Now_Time_CatalystTest() {
         String q = " index=index_A | eval a=now() | eval b=time()";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,LongType,false),StructField(b,StringType,false))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.LongType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Row> lst = resA.collectAsList();
@@ -3086,10 +4001,20 @@ public class evalTest {
     public void testConcatenatingStringsWithEvalArithmetics() {
         String q = "index=index_A | eval a=offset+\"string\"";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,StringType,true))";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            Assertions.assertEquals(schema, res.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             Dataset<Row> resA = res.select("a").orderBy("offset");
             List<Row> lst = resA.collectAsList();
@@ -3109,11 +4034,25 @@ public class evalTest {
     )
     public void testEvalMinusArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json - 1";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
+        //String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
+            //Assertions.assertEquals(schema, ds.schema().toString());
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -3134,11 +4073,23 @@ public class evalTest {
     )
     public void testEvalPlusArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json + 1";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -3159,11 +4110,23 @@ public class evalTest {
     )
     public void testEvalDivideArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json / 2";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -3186,11 +4149,23 @@ public class evalTest {
     )
     public void testEvalDivideArithmeticPrecisionAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json / 3";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -3217,11 +4192,23 @@ public class evalTest {
     )
     public void testEvalMultiplyArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json * 5";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -3244,11 +4231,23 @@ public class evalTest {
     )
     public void testEvalModulusArithmeticAfterSpath() {
         String query = "index=index_A | spath path= json | eval a = json % 2";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,StringType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("id")
@@ -3294,11 +4293,21 @@ public class evalTest {
     )
     public void evalOperationEqTest() {
         String query = "index=index_A | eval a = if(offset == 1, \"true\", \"false\") | eval b = if(sourcetype == \"A:X:0\", \"true\", \"false\")";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -3340,11 +4349,21 @@ public class evalTest {
     )
     public void evalOperationNeqTest() {
         String query = "index=index_A | eval a = if(offset != 1, \"true\", \"false\") | eval b = if(sourcetype != \"A:X:0\", \"true\", \"false\")";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -3386,11 +4405,21 @@ public class evalTest {
     )
     public void evalOperationGtTest() {
         String query = "index=index_A | eval a = if(offset > 1, \"true\", \"false\") | eval b = if(sourcetype > \"A:X:0\", \"true\", \"false\")";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -3432,11 +4461,21 @@ public class evalTest {
     )
     public void evalOperationGteTest() {
         String query = "index=index_A | eval a = if(offset >= 2, \"true\", \"false\") | eval b = if(sourcetype >= \"b:X:0\", \"true\", \"false\")";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -3478,11 +4517,21 @@ public class evalTest {
     )
     public void evalOperationLtTest() {
         String query = "index=index_A | eval a = if(offset < 2, \"true\", \"false\") | eval b = if(sourcetype < \"b:X:0\", \"true\", \"false\")";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -3524,11 +4573,21 @@ public class evalTest {
     )
     public void evalOperationLteTest() {
         String query = "index=index_A | eval a = if(offset <= 2, \"true\", \"false\") | eval b = if(sourcetype <= \"b:X:0\", \"true\", \"false\")";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(a,ArrayType(StringType,true),true),StructField(b,ArrayType(StringType,true),true))";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")
@@ -3570,11 +4629,23 @@ public class evalTest {
     )
     public void evalAfterSpath_ComparisonTest() {
         String query = "index=index_A | spath path= json | eval a= json > 40";
-        String schema = "StructType(StructField(_raw,StringType,true),StructField(_time,TimestampType,true),StructField(host,StringType,true),StructField(id,LongType,true),StructField(index,StringType,true),StructField(offset,LongType,true),StructField(partition,StringType,true),StructField(source,StringType,true),StructField(sourcetype,StringType,true),StructField(json,StringType,true),StructField(a,BooleanType,true))";
         String testFile = "src/test/resources/spath/spathTransformationTest_numeric2*.jsonl";
 
         streamingTestUtil.performDPLTest(query, testFile, ds -> {
-            Assertions.assertEquals(schema, ds.schema().toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
             List<String> a = ds
                     .select("a")
                     .orderBy("offset")

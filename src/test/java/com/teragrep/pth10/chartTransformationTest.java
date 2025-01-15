@@ -89,10 +89,10 @@ public class chartTransformationTest {
         String query = "index = index_A | chart count(_raw) as count";
 
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            String[] expectedColumns = new String[] {
-                    "count"
-            };
-            Assertions.assertArrayEquals(expectedColumns, res.columns()); // check that the schema is correct
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); // check that the schema is correct
 
             List<String> resultList = res
                     .select("count")
@@ -115,9 +115,12 @@ public class chartTransformationTest {
         String q = "( index = index_A OR index = index_B ) _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw) as count by offset";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
 
-            String e = "[offset: bigint, count: bigint]"; // At least schema is correct
-            Assertions.assertEquals(e, res.toString());
+            Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
             // 3 first rows are earlier than where _index_earliest is set to
             List<String> expectedValues = new ArrayList<>();
@@ -149,8 +152,12 @@ public class chartTransformationTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
 
-            String e = "[offset: bigint, count: bigint]"; // At least schema is correct
-            Assertions.assertEquals(e, res.toString());
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
             List<String> expectedValues = new ArrayList<>();
             // Only first 5 rows have index: index_A
@@ -181,9 +188,11 @@ public class chartTransformationTest {
         String q = "index = index_B _index_earliest=\"04/16/2003:10:25:40\" | chart count(_raw)";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("count(_raw)", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
 
-            String e = "[count(_raw): bigint]"; // At least schema is correct
-            Assertions.assertEquals(e, res.toString());
+            Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
             List<String> expectedValues = new ArrayList<>();
             expectedValues.add("5"); // only last 5 rows have index: index_B
