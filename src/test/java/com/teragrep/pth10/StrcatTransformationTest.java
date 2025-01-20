@@ -273,20 +273,16 @@ public class StrcatTransformationTest {
             // check if result contains the column that was created for strcat result
             Assertions.assertEquals(res.schema(), expectedSchema);
 
-            // List of expected values for the strcat destination field
-            List<String> expectedValues = new ArrayList<>(Arrays.asList(null, null, null, null, null));
+                            // List of expected values for the strcat destination field
+                            List<String> expectedValues = new ArrayList<>(Arrays.asList(null, null, null, null, null));
 
-            // Destination field from result dataset<row>
-            List<String> destAsList = res
-                    .select("dest")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getString(0))
-                    .collect(Collectors.toList());
+                            // Destination field from result dataset<row>
+                            List<String> destAsList = res.select("dest").collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
-            // assert dest field contents as equals with expected contents
-            Assertions.assertEquals(expectedValues, destAsList);
-        });
+                            // assert dest field contents as equals with expected contents
+                            Assertions.assertEquals(expectedValues, destAsList);
+                        }
+                );
     }
 
     // strcat with allRequired=False AND missing(incorrect) field
