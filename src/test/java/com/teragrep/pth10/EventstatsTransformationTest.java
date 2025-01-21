@@ -54,7 +54,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,12 +107,24 @@ public class EventstatsTransformationTest {
     ) // Standard eventstats, without wildcards in WITH-clause
     public void eventstats_test_NoByClause() {
         streamingTestUtil.performDPLTest("index=index_A | eventstats avg(offset) AS avg_offset", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("avg_offset", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
-                    );
+                    ); //check schema
+
             List<String> listOfOffset = ds
                     .select("avg_offset")
                     .dropDuplicates()
@@ -134,11 +145,24 @@ public class EventstatsTransformationTest {
     public void eventstats_test_WithByClause() {
         streamingTestUtil
                 .performDPLTest("index=index_A | eventstats avg(offset) AS avg_offset BY sourcetype", testFile, ds -> {
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                            new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField("avg_offset", DataTypes.DoubleType, true, new MetadataBuilder().build())
+                    });
                     Assertions
                             .assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, avg_offset]",
-                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                                    expectedSchema, ds.schema(),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            ); //check schema
+
                     List<String> listOfOffset = ds
                             .select("avg_offset")
                             .dropDuplicates()
@@ -159,12 +183,24 @@ public class EventstatsTransformationTest {
     ) // count with implied wildcard
     public void eventstats_test_count() {
         streamingTestUtil.performDPLTest("index=index_A | eventstats count", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
-                    );
+                    ); //check schema
+
             List<String> listOfCount = ds
                     .select("count")
                     .dropDuplicates()
@@ -184,11 +220,26 @@ public class EventstatsTransformationTest {
     public void eventstats_test_multi() {
         streamingTestUtil
                 .performDPLTest("index=index_A | eventstats count avg(offset) stdevp(offset)", testFile, ds -> {
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                            new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField("avg(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                            new StructField("stdevp(offset)", DataTypes.DoubleType, true, new MetadataBuilder().build())
+                    });
                     Assertions
                             .assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, count, avg(offset), stdevp(offset)]",
-                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
-                            );
+                                    expectedSchema, ds.schema(),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            ); //check schema
+
                     List<String> listOfCount = ds
                             .select("count")
                             .dropDuplicates()

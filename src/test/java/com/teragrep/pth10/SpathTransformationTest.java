@@ -56,7 +56,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -119,10 +118,22 @@ public class SpathTransformationTest {
     )
     public void spathTestXml() {
         streamingTestUtil.performDPLTest("index=index_A | spath input=_raw path=\"main.sub.item\"", XML_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("main.sub.item", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, main.sub.item]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
                     );
 
             String result = ds
@@ -146,10 +157,29 @@ public class SpathTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | spath input=_raw output=OUT path=\"main.sub.item\"", XML_DATA_1, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("OUT", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             String result = ds
@@ -174,10 +204,29 @@ public class SpathTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | spath input=_raw output=OUT path=\"main.sub[1].item\"", XML_DATA_2, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()), new StructField("OUT", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
                             String result = ds
@@ -200,10 +249,21 @@ public class SpathTransformationTest {
     )
     public void spathTestJson() {
         streamingTestUtil.performDPLTest("index=index_A | spath input=_raw path=json", JSON_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
             String result = ds
@@ -225,10 +285,21 @@ public class SpathTransformationTest {
     )
     public void spathTestJsonWithOutput() {
         streamingTestUtil.performDPLTest("index=index_A | spath input=_raw output=OUT path=json", JSON_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("OUT", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, OUT]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
             String result = ds
@@ -250,12 +321,25 @@ public class SpathTransformationTest {
     )
     public void spathTestJsonNoPath() {
         streamingTestUtil.performDPLTest("index=index_A | spath input=_raw", JSON_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("lil", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
+
             List<Row> result = ds.select("json", "lil").dropDuplicates().collectAsList();
             Assertions.assertEquals(1, result.size());
             Assertions.assertEquals("debugo", result.get(0).getAs("json"));
@@ -273,11 +357,26 @@ public class SpathTransformationTest {
                 .performThrowingDPLTest(
                         RuntimeException.class, "index=index_A | eval a = \"12.34\" | spath input=a", JSON_DATA_1,
                         ds -> {
-                            Assertions
-                                    .assertEquals(
-                                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]",
-                                            Arrays.toString(ds.schema().fieldNames())
-                                    );
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
+                            Assertions.assertEquals(expectedSchema, ds.schema());
                         }
                 );
 
@@ -296,8 +395,26 @@ public class SpathTransformationTest {
                 .performDPLTest(
                         "| makeresults count=10 | eval a = \"<main><sub>Hello</sub><sub>World</sub></main>\" | spath input=a",
                         XML_DATA_2, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "main.sub",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
                             Assertions
-                                    .assertEquals("[_time, a, main.sub]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                             String result = ds
                                     .select("`main.sub`")
                                     .dropDuplicates()
@@ -318,10 +435,22 @@ public class SpathTransformationTest {
     )
     public void spathTestAutoExtractionXml() {
         streamingTestUtil.performDPLTest("index=index_A | spath", XML_DATA_2, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("main.sub.item", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, main.sub.item]",
-                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
                     );
             String result = ds
                     .select("`main.sub.item`")
@@ -342,10 +471,22 @@ public class SpathTransformationTest {
     )
     public void spathTestAutoExtractionJson() {
         streamingTestUtil.performDPLTest("index=index_A | spath", JSON_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("lil", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
             String result = ds
@@ -376,10 +517,21 @@ public class SpathTransformationTest {
     )
     public void spathTestNestedJsonData() {
         streamingTestUtil.performDPLTest("index=index_A | spath output=log path=.log", JSON_DATA_NESTED, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("log", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, log]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
             String result = ds
@@ -406,15 +558,24 @@ public class SpathTransformationTest {
     public void testSpathEvaledJsonData() {
         String query = "index=index_A | eval catworld = \"{\\\"kissa\\\" : \\\"fluff\\\"}\" | spath input=catworld output=cat path=kissa";
         streamingTestUtil.performDPLTest(query, JSON_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("catworld", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("cat", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Dataset<Row> res = ds.select("cat").orderBy("offset").distinct();
             List<Row> catList = res.collectAsList();
 
             Assertions.assertEquals(1, catList.size());
-            Assertions
-                    .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, catworld, cat]",
-                            Arrays.toString(ds.columns())
-                    );
+            Assertions.assertEquals(expectedSchema, ds.schema());
             Assertions.assertEquals("fluff", catList.get(0).getString(0));
         });
     }
@@ -426,10 +587,21 @@ public class SpathTransformationTest {
     )
     public void spathTest_invalidInput() {
         streamingTestUtil.performDPLTest("index=index_A | spath path=abc", INVALID_DATA, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("abc", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, abc]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
             Object result = ds
@@ -451,10 +623,20 @@ public class SpathTransformationTest {
     )
     public void spathTest_invalidInputAutoExtraction() {
         streamingTestUtil.performDPLTest("index=index_A | spath", INVALID_DATA, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
         });
@@ -468,10 +650,27 @@ public class SpathTransformationTest {
     public void spathTest_invalidInputManualExtraction() {
         streamingTestUtil
                 .performDPLTest("index=index_A | spath path=\"randomPathThatDoesNotExist\"", INVALID_DATA, ds -> {
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                            new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                            new StructField(
+                                    "randomPathThatDoesNotExist",
+                                    DataTypes.StringType,
+                                    true,
+                                    new MetadataBuilder().build()
+                            )
+                    });
                     Assertions
                             .assertEquals(
-                                    "[_time, id, _raw, index, sourcetype, host, source, partition, offset, randomPathThatDoesNotExist]",
-                                    Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                    expectedSchema, ds.schema(),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
                             );
                     // all should be nulls, so distinct() returns 1 row
                     List<Row> rows = ds.select("randomPathThatDoesNotExist").distinct().collectAsList();
@@ -488,10 +687,22 @@ public class SpathTransformationTest {
     )
     public void spathTest_ImplicitPath() {
         streamingTestUtil.performDPLTest("index=index_A | spath json", JSON_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("lil", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions
                     .assertEquals(
-                            "[_time, id, _raw, index, sourcetype, host, source, partition, offset, json, lil]", Arrays
-                                    .toString(ds.columns()),
+                            expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
             String json = ds

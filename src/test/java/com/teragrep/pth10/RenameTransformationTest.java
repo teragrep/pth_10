@@ -54,8 +54,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-
 /**
  * Tests for the RenameTransformationTest implementation Uses streaming datasets
  * 
@@ -111,10 +109,29 @@ public class RenameTransformationTest {
                 .performDPLTest(
                         "index=index_A | rename _raw AS DATA , offset AS number, sourcetype AS typeOfSource, INVALID_FIELD AS fieldOfInvalid",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                                    new StructField("DATA", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "typeOfSource",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("number", DataTypes.LongType, true, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
-                                            "[_time, id, DATA, index, typeOfSource, host, source, partition, number]",
-                                            Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !"
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
                                     );
                         }
                 );
@@ -129,8 +146,19 @@ public class RenameTransformationTest {
         streamingTestUtil
                 .performDPLTest(
                         "| makeresults count=1 | eval \"a\" = \"something\" | rename \"a\" as \"b\"", testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ), new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals("[_time, b]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }
@@ -145,8 +173,25 @@ public class RenameTransformationTest {
                 .performDPLTest(
                         "| makeresults count=1 | eval 'abc(def)' = \"xyz\" | rename 'abc(def)' as '(foo)bar'", testFile,
                         ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "(foo)bar",
+                                            DataTypes.StringType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
                             Assertions
-                                    .assertEquals("[_time, (foo)bar]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                         }
                 );
     }
