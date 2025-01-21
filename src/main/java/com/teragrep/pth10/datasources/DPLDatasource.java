@@ -84,16 +84,11 @@ public class DPLDatasource {
     public Dataset<Row> constructStreams(ArchiveQuery archiveQuery, boolean isMetadataQuery) {
         // resolve archive Query which is then used with archiveDatasource
         LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]>", archiveQuery);
-
-        Dataset<Row> archiveDS = null;
         LOGGER.info("DPL Interpreter constructStream config=<[{}]>", config);
-        // table name per paragraph
-        if (config.getBoolean("dpl.pth_06.enabled")) {
-            // Execute search against ArchiveDataSource
-            archiveDS = archiveStreamConsumerDataset(archiveQuery, isMetadataQuery);
+        if (!config.getBoolean("dpl.pth_06.enabled")) {
+            throw new RuntimeException("Teragrep datasource was disabled: <dpl.pth_06.disabled=false>");
         }
-
-        return archiveDS;
+        return archiveStreamConsumerDataset(archiveQuery, isMetadataQuery);
     }
 
     /**
@@ -104,7 +99,6 @@ public class DPLDatasource {
      */
     private Dataset<Row> archiveStreamConsumerDataset(ArchiveQuery query, boolean isMetadataQuery) {
         DataStreamReader reader;
-
         LOGGER.info("ArchiveStreamConsumerDatasource initialized with query: <[{}]>", query);
 
         // setup s3 credentials
