@@ -55,7 +55,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -113,8 +112,26 @@ public class TimechartStreamingTest {
                 .performDPLTest(
                         "index=index_A earliest=2020-01-01T00:00:00z latest=2021-01-01T00:00:00z | timechart span=1mon count(_raw) as craw by sourcetype",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("craw", DataTypes.LongType, false, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             List<Row> listOfTime = ds.select("_time").collectAsList();
 
@@ -134,8 +151,26 @@ public class TimechartStreamingTest {
                 .performDPLTest(
                         "index=index_A earliest=2020-12-12T00:00:00z latest=2020-12-12T00:30:00z | timechart span=1min count(_raw) as craw by sourcetype",
                         testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("craw", DataTypes.LongType, false, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             List<Row> listOfTime = ds.select("_time").collectAsList();
 
@@ -154,8 +189,26 @@ public class TimechartStreamingTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | timechart span=1min count(_raw) as craw by sourcetype", testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField(
+                                            "sourcetype",
+                                            DataTypes.StringType,
+                                            false,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("craw", DataTypes.LongType, false, new MetadataBuilder().build())
+                            });
                             Assertions
-                                    .assertEquals("[_time, sourcetype, craw]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
 
                             List<String> listOfSourcetype = ds
                                     .select("sourcetype")
@@ -183,8 +236,16 @@ public class TimechartStreamingTest {
     )
     public void testTimechartSplitBy() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count by host", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("count", DataTypes.LongType, false, new MetadataBuilder().build())
+            });
             Assertions
-                    .assertEquals("[_time, host, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
 
             List<String> listOfHosts = ds
                     .select("host")
@@ -206,8 +267,15 @@ public class TimechartStreamingTest {
     )
     public void testTimechartBasicCount() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    new StructField("count", DataTypes.LongType, false, new MetadataBuilder().build())
+            });
             Assertions
-                    .assertEquals("[_time, count]", Arrays.toString(ds.columns()), "Batch handler dataset contained an unexpected column arrangement !");
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
 
             List<String> listOfCount = ds
                     .select("count")
