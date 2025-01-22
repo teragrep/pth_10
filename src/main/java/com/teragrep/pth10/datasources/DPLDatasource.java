@@ -86,7 +86,7 @@ public class DPLDatasource {
         LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]>", archiveQuery);
         LOGGER.info("DPL Interpreter constructStream config=<[{}]>", config);
         if (!config.getBoolean("dpl.pth_06.enabled")) {
-            throw new RuntimeException("Teragrep datasource was disabled: <dpl.pth_06.disabled=false>");
+            throw new RuntimeException("Teragrep datasource was disabled: <dpl.pth_06.enabled=false>");
         }
         return archiveStreamConsumerDataset(archiveQuery, isMetadataQuery);
     }
