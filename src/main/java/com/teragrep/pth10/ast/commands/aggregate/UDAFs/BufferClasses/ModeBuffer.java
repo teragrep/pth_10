@@ -93,13 +93,13 @@ public class ModeBuffer extends MapBuffer<String, Long> implements Serializable 
      * @return most frequent entry as a string
      */
     public String mode() {
-        Map.Entry<String, Long> mostFrequentEntry = null;
+        if (map.isEmpty()) {
+            throw new IllegalStateException("Entry set was empty");
+        }
+        Map.Entry<String, Long> mostFrequentEntry = map.entrySet().iterator().next();
 
-        for (Map.Entry<String, Long> entry : this.map.entrySet()) {
-            if (mostFrequentEntry == null) {
-                mostFrequentEntry = entry;
-            }
-            else if (mostFrequentEntry != null && entry.getValue() > mostFrequentEntry.getValue()) {
+        for (final Map.Entry<String, Long> entry : map.entrySet()) {
+            if (entry.getValue() > mostFrequentEntry.getValue()) {
                 mostFrequentEntry = entry;
             }
         }
