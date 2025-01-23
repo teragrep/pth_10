@@ -400,11 +400,11 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     public Node aggregateMethodVarianceEmitCatalyst(DPLParser.AggregateMethodVarianceContext ctx) {
-        Node rv = null;
-        TerminalNode cmd = (TerminalNode) ctx.getChild(0);
-        String colName = ctx.getChild(1).getText();
-        Column col = null;
-        String resultColumnName = "var()";
+        final Node rv;
+        final TerminalNode cmd = (TerminalNode) ctx.getChild(0);
+        final String colName = ctx.getChild(1).getText();
+        final Column col;
+        final String resultColumnName;
 
         // Switch between var_samp() / var_pop() based on given command
         // var() and varp()
@@ -418,6 +418,8 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
                 col = functions.var_pop(colName);
                 resultColumnName = String.format("varp(%s)", colName);
                 break;
+            default:
+                throw new IllegalArgumentException("Unrecognized method variance command");
         }
 
         rv = new ColumnNode(col.as(resultColumnName));
@@ -436,11 +438,11 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
     }
 
     public Node aggregateMethodStandardDeviationEmitCatalyst(DPLParser.AggregateMethodStandardDeviationContext ctx) {
-        Node rv = null;
-        TerminalNode cmd = (TerminalNode) ctx.getChild(0);
-        String colName = ctx.getChild(1).getText();
-        Column col = null;
-        String resultColumnName = "stdev()";
+        final Node rv;
+        final TerminalNode cmd = (TerminalNode) ctx.getChild(0);
+        final String colName = ctx.getChild(1).getText();
+        final Column col;
+        final String resultColumnName;
 
         // Switch between stddev_samp() / stddev_pop() based on given command
         // stdev() and stdevp()
@@ -453,6 +455,8 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
                 col = functions.stddev_pop(colName);
                 resultColumnName = String.format("stdevp(%s)", colName);
                 break;
+            default:
+                throw new IllegalArgumentException("Unrecognized method standard deviation command");
         }
 
         rv = new ColumnNode(col.as(resultColumnName));
@@ -719,21 +723,21 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
 
     // TODO Implement upperperc
     public Node aggregateMethodPercentileVariableEmitCatalyst(DPLParser.AggregateMethodPercentileVariableContext ctx) {
-        TerminalNode func = (TerminalNode) ctx.getChild(0);
-        String commandName = func.getText();
-        String colName = ctx.getChild(2).getText();
-        Column col = null;
+        final TerminalNode func = (TerminalNode) ctx.getChild(0);
+        final String commandName = func.getText();
+        final String colName = ctx.getChild(2).getText();
+        final Column col;
 
         // Make sure the result column name matches the DPL command
-        String resultColumnName = String.format("%s(%s)", commandName, colName);
+        final String resultColumnName = String.format("%s(%s)", commandName, colName);
 
         LOGGER.debug("Command: <[{}]>", commandName);
 
         // There are four different options for func: pX, percX, exactpercX, upperpercX
         // This separates the X from the command name into its own variable xThPercentileArg.
-        String funcAsString = func.getText();
+        final String funcAsString = func.getText();
 
-        double xThPercentileArg = (funcAsString.length() <= 4) ? Double
+        final double xThPercentileArg = (funcAsString.length() <= 4) ? Double
                 .valueOf(funcAsString.substring(funcAsString.indexOf('p') + 1)) : /* pX */
                 Double
                         .valueOf(funcAsString.substring(funcAsString.lastIndexOf('c') + 1)); /* percX, exactpercX, upperpercX */
@@ -742,23 +746,24 @@ public class AggregateFunction extends DPLParserBaseVisitor<Node> {
 
         switch (func.getSymbol().getType()) {
             case DPLLexer.METHOD_AGGREGATE_P_VARIABLE:
-            case DPLLexer.METHOD_AGGREGATE_PERC_VARIABLE: {
+            case DPLLexer.METHOD_AGGREGATE_PERC_VARIABLE:
                 col = new PercentileApprox()
                         .percentile_approx(functions.col(colName), functions.lit(xThPercentileArg / 100));
                 break;
-            }
-            case DPLLexer.METHOD_AGGREGATE_EXACTPERC_VARIABLE: {
+
+            case DPLLexer.METHOD_AGGREGATE_EXACTPERC_VARIABLE:
                 col = new ExactPercentileAggregator(colName, xThPercentileArg / 100).toColumn();
                 break;
-            }
-            case DPLLexer.METHOD_AGGREGATE_UPPERPERC_VARIABLE: {
+
+            case DPLLexer.METHOD_AGGREGATE_UPPERPERC_VARIABLE:
                 // upperperc() returns the same as perc() if under 1000 values
                 // TODO over 1000 distinct values
                 col = new PercentileApprox()
                         .percentile_approx(functions.col(colName), functions.lit(xThPercentileArg / 100));
                 //throw new UnsupportedOperationException("Upper percentile mode not supported yet");
                 break;
-            }
+            default:
+                throw new IllegalArgumentException("Unrecognized method precentile variable command");
         }
 
         return new ColumnNode(col.as(resultColumnName));
