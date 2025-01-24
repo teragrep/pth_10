@@ -231,7 +231,7 @@ public class relativeTimeTest {
         Instant exp = t1.plus(-1, ChronoUnit.HOURS);
         LocalDateTime etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
         RelativeTimestamp rtTimestamp = rtParser.parse("-1h");
-        long rtEpoch = rtTimestamp.calculate(timestamp);
+        long rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
         Assertions
                 .assertEquals(etime.getHour(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getHour());
 
@@ -239,7 +239,7 @@ public class relativeTimeTest {
         exp = t1.plus(-3, ChronoUnit.MINUTES);
         etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
         rtTimestamp = rtParser.parse("-3m");
-        rtEpoch = rtTimestamp.calculate(timestamp);
+        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
         Assertions
                 .assertEquals(etime.getMinute(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMinute());
         // Using localDateTime-method
@@ -247,14 +247,14 @@ public class relativeTimeTest {
         LocalDateTime dt = timestamp.toLocalDateTime();
         LocalDateTime et = dt.minusWeeks(1);
         rtTimestamp = rtParser.parse("-1w");
-        rtEpoch = rtTimestamp.calculate(timestamp);
+        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
         Assertions
                 .assertEquals(et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getDayOfWeek());
         // -3 month
         dt = timestamp.toLocalDateTime();
         et = dt.minusMonths(3);
         rtTimestamp = rtParser.parse("-3mon");
-        rtEpoch = rtTimestamp.calculate(timestamp);
+        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
         Assertions
                 .assertEquals(et.getMonth(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMonth());
 
@@ -262,7 +262,7 @@ public class relativeTimeTest {
         dt = timestamp.toLocalDateTime();
         et = dt.minusYears(7);
         rtTimestamp = rtParser.parse("-7y");
-        rtEpoch = rtTimestamp.calculate(timestamp);
+        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
         Assertions
                 .assertEquals(et.getYear(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getYear());
     }
@@ -286,7 +286,7 @@ public class relativeTimeTest {
         et = et.minusSeconds(40); // Thu Feb 3, 2022 00:00 UTC
 
         RelativeTimestamp rtTimestamp = rtParser.parse("@d");
-        long rtEpoch = rtTimestamp.calculate(timestamp);
+        long rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
         Assertions
                 .assertEquals(et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.systemDefault()).getDayOfWeek());
     }

@@ -47,6 +47,7 @@ package com.teragrep.pth10.ast;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 
 /**
  * For using the DPL custom timeformat like Java's SimpleDateFormat. Get a Date object with parse -function for example.
@@ -78,8 +79,8 @@ public final class DPLTimeFormat {
      * @return Unix Epoch
      * @throws ParseException when dplTime doesn't have the correct format
      */
-    public long getEpoch(String dplTime) throws ParseException {
-        return createSimpleDateFormat().parse(dplTime).getTime() / 1000L;
+    public Instant instantOf(String dplTime) throws ParseException {
+        return createSimpleDateFormat().parse(dplTime).toInstant();
     }
 
     // replace dpl time units with java-compatible time units

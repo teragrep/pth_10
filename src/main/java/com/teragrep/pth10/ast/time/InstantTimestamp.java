@@ -52,26 +52,27 @@ import com.teragrep.pth10.ast.UnquotedText;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Objects;
 
-public final class EpochTimestamp {
+public final class InstantTimestamp implements DPLTimestamp {
 
     private final String value;
     private final String timeformat;
 
-    public EpochTimestamp(final String value, final String timeformat) {
+    public InstantTimestamp(final String value, final String timeformat) {
         this.value = value;
         this.timeformat = timeformat;
     }
 
-    public long epoch() {
-        long rv;
+    public Instant instant() {
+        Instant rv;
         try {
             RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(value);
             rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
         }
         catch (NumberFormatException ne) {
-            rv = epochFromString(value, timeformat);
+            rv = instantFromString(value, timeformat);
         }
 
         return rv;
@@ -79,19 +80,19 @@ public final class EpochTimestamp {
 
     // Uses defaultTimeFormat if timeformat is null and DPLTimeFormat if timeformat isn't null (which means that the
     // timeformat= option was used).
-    private long epochFromString(final String value, final String timeFormatString) {
+    private Instant instantFromString(final String value, final String timeFormatString) {
         final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
-        final long timevalue;
+        final Instant timevalue;
         if (timeFormatString == null || timeFormatString.isEmpty()) {
-            timevalue = new DefaultTimeFormat().getEpoch(unquotedValue);
+            timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
         }
         else {
             // TODO: should be included in DPLTimeFormat
             if (timeFormatString.equals("%s")) {
-                return Long.parseLong(unquotedValue);
+                return Instant.ofEpochSecond(Long.parseLong(unquotedValue));
             }
             try {
-                timevalue = new DPLTimeFormat(timeFormatString).getEpoch(unquotedValue);
+                timevalue = new DPLTimeFormat(timeFormatString).instantOf(unquotedValue);
             }
             catch (ParseException e) {
                 throw new RuntimeException("TimeQualifier conversion error: <" + unquotedValue + "> can't be parsed.");
@@ -106,7 +107,7 @@ public final class EpochTimestamp {
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        EpochTimestamp that = (EpochTimestamp) o;
+        InstantTimestamp that = (InstantTimestamp) o;
         return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat);
     }
 

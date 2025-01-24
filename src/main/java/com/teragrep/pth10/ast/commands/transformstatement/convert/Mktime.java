@@ -61,7 +61,7 @@ public class Mktime implements UDF2<String, String, String> {
     @Override
     public String call(String hrt, String tf) throws Exception {
         DPLTimeFormat format = new DPLTimeFormat(tf);
-        Long rv = format.getEpoch(hrt);
+        Long rv = format.instantOf(hrt).getEpochSecond();
 
         return rv.toString();
     }
