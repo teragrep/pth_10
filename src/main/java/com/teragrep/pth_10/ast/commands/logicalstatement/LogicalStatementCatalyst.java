@@ -600,7 +600,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
         LOGGER.info("queryId <{}> visitSubsearchStatement with brackets: <{}>", catCtx.getQueryName(), ctx.getText());
         if (catCtx == null) {
-            throw new IllegalStateException("Catalyst context is null!");
+            throw new IllegalStateException("DPL parser catalyst context is missing");
         }
         LOGGER.info("queryId <{}> Cloning main visitor to subsearch", catCtx.getQueryName());
         final DPLParserCatalystContext subCtx = catCtx.clone();
@@ -624,7 +624,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         this.catVisitor.getStepList().add(subsearchStep);
 
         //Node rv = new CatalystNode(subVisitor.getStack().pop());
-        return null;
+        return new NullNode();
     }
 
     /*@Override
