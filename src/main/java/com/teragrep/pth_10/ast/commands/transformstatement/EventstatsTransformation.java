@@ -52,7 +52,6 @@ import com.teragrep.pth_10.steps.eventstats.EventstatsStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -118,30 +117,26 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_eventstats_aggregationInstruction(DPLParser.T_eventstats_aggregationInstructionContext ctx) {
         ParseTree cmd = ctx.getChild(0);
         AggregateFunction aggFunction = new AggregateFunction(catCtx);
-        Column aggCol = null;
+        Column aggCol;
+        final ParseTree fieldRenameInst = ctx.getChild(1);
 
-        if (cmd instanceof TerminalNode) {
-            /* if (((TerminalNode)cmd).getSymbol().getType() == DPLLexer.COMMAND_EVENTSTATS_MODE_COUNT) {
-                LOGGER.info("Implied wildcard COUNT mode - count({}", ds.columns()[0] + ")");
-                aggCol = functions.count(ds.columns()[0]).as("count");
-            }*/
-        }
-        else if (cmd instanceof DPLParser.AggregateFunctionContext) {
+        if (cmd instanceof DPLParser.AggregateFunctionContext) {
             // visit agg function
             LOGGER.debug("Aggregate function: text=<{}>", cmd.getText());
-            Node aggNode = aggFunction.visit((DPLParser.AggregateFunctionContext) cmd);
+            Node aggNode = aggFunction.visit(cmd);
             aggCol = ((ColumnNode) aggNode).getColumn();
         }
 
-        ParseTree fieldRenameInst = ctx.getChild(1);
+        else
+            throw new IllegalStateException("aggregation column is null");
+
         if (fieldRenameInst instanceof DPLParser.T_eventstats_fieldRenameInstructionContext) {
             LOGGER.debug("Field rename instruction: text=<{}>", fieldRenameInst.getText());
             // AS new-fieldname
             aggCol = aggCol.as(fieldRenameInst.getChild(1).getText());
         }
-
         listOfAggregations.add(aggCol);
-        return null;
+        return new NullNode();
     }
 
     @Override
