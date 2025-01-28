@@ -48,7 +48,6 @@ package com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses;
 import com.teragrep.pth10.ast.NullValue;
 
 import java.io.Serializable;
-import java.util.Comparator;
 import java.util.Map;
 
 /**
@@ -96,11 +95,12 @@ public class ModeBuffer extends MapBuffer<String, Long> implements Serializable 
      * @return most frequent entry as a string
      */
     public String mode() {
-        return map.entrySet()
+        return map
+                .entrySet()
                 .stream()
                 .max(Map.Entry.comparingByValue()) // find max value
                 .map(Map.Entry::getKey) // select key
-                .orElse(new NullValue(NullValue.Type.EMPTY_STRING).value()); // is an empty map return an empty string
+                .orElse(new NullValue(NullValue.Type.EMPTY_STRING).value()); // if an empty map returns an empty string
     }
 
 }

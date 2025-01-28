@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.NullValue;
 import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -365,18 +364,21 @@ public class statsTransformationTest {
             matches = "true"
     )
     void statsTransformAggModeTestEmptyDataset() {
-        streamingTestUtil.performDPLTest("index=index_A earliest=2020-10-10T11:20:10.100+03:00 | stats mode(offset)", testFile, ds -> {
-            Assertions.assertEquals("[mode(offset)]", Arrays.toString(ds.columns()));
+        streamingTestUtil
+                .performDPLTest(
+                        "index=index_A earliest=2020-10-10T11:20:10.100+03:00 | stats mode(offset)", testFile, ds -> {
+                            Assertions.assertEquals("[mode(offset)]", Arrays.toString(ds.columns()));
 
-            List<Object> destAsList = ds
-                    .select("mode(offset)")
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getAs(0).toString())
-                    .collect(Collectors.toList());
+                            List<Object> destAsList = ds
+                                    .select("mode(offset)")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList());
 
-            Assertions.assertEquals(Collections.singletonList(""), destAsList);
-        });
+                            Assertions.assertEquals(Collections.singletonList(""), destAsList);
+                        }
+                );
     }
 
     // Test min()
