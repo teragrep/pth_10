@@ -587,23 +587,22 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
-        LOGGER.info("visitSubsearchStatement with brackets: <{}>", ctx.getText());
-        // Strip brackets around statement
+        final DPLParserCatalystContext subCtx = catCtx.clone();
+        final DPLParserCatalystVisitor subVisitor = new DPLParserCatalystVisitor(subCtx);
+        // Pass actual subsearch branch
+        final StepNode subSearchNode = (StepNode) subVisitor.visit(ctx);
+        final SubsearchStep subsearchStep = (SubsearchStep) subSearchNode.get();
 
-        if (catCtx == null) {
-            throw new IllegalStateException("DPL parser catalyst context is missing");
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("visitSubsearchStatement with brackets: <{}>", ctx.getText());
         }
         LOGGER.info("Cloning main visitor to subsearch");
-        final DPLParserCatalystContext subCtx = catCtx.clone();
-
         LOGGER.info("(Catalyst) subVisitor init with subCtx= <{}>", subCtx);
-        DPLParserCatalystVisitor subVisitor = new DPLParserCatalystVisitor(subCtx);
 
-        // Pass actual subsearch branch
-        StepNode subSearchNode = (StepNode) subVisitor.visit(ctx);
-        LOGGER.info("SubSearchTransformation (Catalyst) Result: class=<{}>", subSearchNode.getClass().getName());
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("SubSearchTransformation (Catalyst) Result: class=<{}>", subSearchNode.getClass().getName());
+        }
 
-        SubsearchStep subsearchStep = (SubsearchStep) subSearchNode.get();
         // These have to be set here and not in subVisitor to be the same as in other Steps
         subsearchStep.setListener(this.catCtx.getInternalStreamingQueryListener());
         subsearchStep.setHdfsPath(this.catVisitor.getHdfsPath());
@@ -611,7 +610,6 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         // add subsearch to stepList
         this.catVisitor.getStepList().add(subsearchStep);
 
-        //Node rv = new CatalystNode(subVisitor.getStack().pop());
         return new NullNode();
     }
 
