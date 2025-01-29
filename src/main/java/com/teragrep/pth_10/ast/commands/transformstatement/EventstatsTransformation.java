@@ -52,7 +52,6 @@ import com.teragrep.pth_10.steps.eventstats.EventstatsStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -117,13 +116,9 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_eventstats_aggregationInstruction(DPLParser.T_eventstats_aggregationInstructionContext ctx) {
         final ParseTree cmd = ctx.getChild(0);
-
-        if (cmd instanceof TerminalNode) {
-            throw new IllegalStateException("The command is terminal Node");
-        }
-
-        if (!(cmd instanceof DPLParser.AggregateFunctionContext))  {
-            throw new IllegalStateException ("Command not supported by DPLParser.AggregateFunctionContext");
+        System.out.println(cmd.getText());
+        if (!(cmd instanceof DPLParser.AggregateFunctionContext)) {
+            throw new RuntimeException("Eventstats command expected an aggregation function, but found " + cmd + ".");
         }
 
         final AggregateFunction aggFunction = new AggregateFunction(catCtx);
@@ -142,7 +137,8 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
             }
             // AS new-fieldname
             listOfAggregations.add(aggCol.as(fieldRenameInst.getChild(1).getText()));
-        } else {
+        }
+        else {
             listOfAggregations.add(aggCol);
         }
 
