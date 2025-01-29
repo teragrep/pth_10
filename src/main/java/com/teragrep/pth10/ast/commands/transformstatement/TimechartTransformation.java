@@ -70,29 +70,19 @@ import java.util.regex.Pattern;
  * Provides a pivoted dataset, making it easier to form time-field graphs in the UI
  * <pre>Dataset.groupBy("_time").pivot(aggregateField).sum(fieldname)</pre>
  */
-public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
+public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTransformation.class);
-    private DPLParserCatalystContext catCtx = null;
-    private DPLParserCatalystVisitor catVisitor;
-    private Document doc;
+    private final DPLParserCatalystContext catCtx;
+    private final Document doc;
 
-    EvalTransformation evalTransformation;
-    AggregateFunction aggregateFunction;
-    private String aggregateField = null;
+    private final AggregateFunction aggregateFunction;
+    private String aggregateField;
 
-    public TimechartStep timechartStep = null;
-
-    public TimechartTransformation(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
+    public TimechartTransformation(final DPLParserCatalystContext catCtx, final DPLParserCatalystVisitor catVisitor) {
         this.doc = null;
         this.catCtx = catCtx;
-        this.catVisitor = catVisitor;
-        this.evalTransformation = new EvalTransformation(catCtx);
         this.aggregateFunction = new AggregateFunction(catCtx);
-    }
-
-    public String getAggregateField() {
-        return this.aggregateField;
     }
 
     /**
@@ -108,9 +98,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     private Node timechartTransformationEmitCatalyst(DPLParser.TimechartTransformationContext ctx) {
-        this.timechartStep = new TimechartStep();
-
-        Column span = null;
+        Column span = createDefaultSpan();
 
         if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty()) {
             LOGGER.info("Timechart Optional parameters: <[{}]>", ctx.t_timechart_binOptParameter().get(0).getText());
@@ -152,26 +140,16 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         }
         listOfAggFunCols.add(funCol); // need to add last one; for loop above only adds if there's a new one coming
 
-        if (span == null) {
-            span = createDefaultSpan();
-        }
-
-        timechartStep.setHdfsPath(this.catVisitor.getHdfsPath());
-        timechartStep.setCatCtx(catCtx);
-        timechartStep.setSpan(span);
-        timechartStep.setAggCols(listOfAggFunCols);
-        timechartStep.setDivByInsts(listOfDivideByInst);
+        TimechartStep timechartStep = new TimechartStep(listOfAggFunCols, listOfDivideByInst, span);
 
         // span
         this.catCtx.setTimeChartSpanSeconds(getSpanSeconds(span));
 
-        LOGGER.debug("span= <[{}]>", timechartStep.getSpan().toString());
-        LOGGER.debug("aggcols= <[{}]>", Arrays.toString(timechartStep.getAggCols().toArray()));
-        LOGGER.debug("divby= <[{}]>", Arrays.toString(timechartStep.getDivByInsts().toArray()));
+        LOGGER.debug("span= <[{}]>", span);
+        LOGGER.debug("aggcols= <[{}]>", listOfAggFunCols);
+        LOGGER.debug("divby= <[{}]>", listOfDivideByInst);
 
         return new StepNode(timechartStep);
-
-        //throw new RuntimeException("Chart transformation operation not supported yet");
     }
 
     /**
