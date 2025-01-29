@@ -46,7 +46,6 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
 import com.teragrep.pth10.ast.bo.ColumnNode;
 import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.ast.commands.aggregate.AggregateFunction;
@@ -96,10 +95,8 @@ public class TimechartTest {
 
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
-
         // traverse the tree in PTH-10 and create TimechartStep
-        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
+        TimechartTransformation tct = new TimechartTransformation(ctx);
         StepNode timechartNode = (StepNode) tct.visitTimechartTransformation(timechartContext);
         AbstractStep tcs = timechartNode.get();
 
@@ -145,10 +142,9 @@ public class TimechartTest {
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         // traverse the tree in PTH-10 and create TimechartStep
-        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
+        TimechartTransformation tct = new TimechartTransformation(ctx);
         StepNode timechartNode = (StepNode) tct.visitTimechartTransformation(timechartContext);
         AbstractStep tcs = timechartNode.get();
 
@@ -184,10 +180,9 @@ public class TimechartTest {
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         // traverse the tree in PTH-10 and create TimechartStep
-        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
+        TimechartTransformation tct = new TimechartTransformation(ctx);
         StepNode timechartNode = (StepNode) tct
                 .visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
         AbstractStep tcs = timechartNode.get();

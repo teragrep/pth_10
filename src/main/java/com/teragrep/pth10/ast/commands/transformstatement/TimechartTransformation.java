@@ -47,19 +47,15 @@ package com.teragrep.pth10.ast.commands.transformstatement;
 
 import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
-import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.aggregate.AggregateFunction;
 import com.teragrep.pth10.steps.timechart.TimechartStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
 import org.apache.spark.unsafe.types.CalendarInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -67,20 +63,20 @@ import java.util.regex.Pattern;
 
 /**
  * Class that contains the visitor methods for the <code>timechart</code> command<br>
- * Provides a pivoted dataset, making it easier to form time-field graphs in the UI
- * <pre>Dataset.groupBy("_time").pivot(aggregateField).sum(fieldname)</pre>
  */
 public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTransformation.class);
     private final DPLParserCatalystContext catCtx;
-    private final Document doc;
 
     private final AggregateFunction aggregateFunction;
-    private String aggregateField;
 
-    public TimechartTransformation(final DPLParserCatalystContext catCtx, final DPLParserCatalystVisitor catVisitor) {
-        this.doc = null;
+    // fields set in visit functions
+    private Column span;
+    private final ArrayList<Column> aggFunCols = new ArrayList<>();
+    private final ArrayList<String> divByInsts = new ArrayList<>();
+
+    public TimechartTransformation(final DPLParserCatalystContext catCtx) {
         this.catCtx = catCtx;
         this.aggregateFunction = new AggregateFunction(catCtx);
     }
@@ -98,56 +94,18 @@ public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     private Node timechartTransformationEmitCatalyst(DPLParser.TimechartTransformationContext ctx) {
-        Column span = createDefaultSpan();
+        span = createDefaultSpan();
 
-        if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty()) {
-            LOGGER.info("Timechart Optional parameters: <[{}]>", ctx.t_timechart_binOptParameter().get(0).getText());
+        visitChildren(ctx); // visit all the parameters
 
-            ColumnNode spanNode = (ColumnNode) visit(ctx.t_timechart_binOptParameter().get(0));
-            if (spanNode != null) {
-                span = spanNode.getColumn();
-            }
-        }
-
-        Column funCol = null;
-        List<Column> listOfAggFunCols = new ArrayList<>();
-        List<String> listOfDivideByInst = new ArrayList<>();
-        for (int i = 0; i < ctx.getChildCount(); i++) {
-            ParseTree child = ctx.getChild(i);
-
-            if (child instanceof DPLParser.AggregateFunctionContext) {
-                // go through each agg. function
-                DPLParser.AggregateFunctionContext aggFunCtx = (DPLParser.AggregateFunctionContext) child;
-                Node funNode = visit(aggFunCtx);
-                if (funNode != null) {
-                    if (funCol != null) {
-                        listOfAggFunCols.add(funCol);
-                    }
-                    funCol = ((ColumnNode) funNode).getColumn();
-                }
-            }
-            else if (child instanceof DPLParser.T_timechart_divideByInstructionContext) {
-                String divByInst = ((StringNode) visitT_timechart_divideByInstruction(
-                        (DPLParser.T_timechart_divideByInstructionContext) child
-                )).toString();
-                listOfDivideByInst.add(divByInst);
-            }
-            else if (child instanceof DPLParser.T_timechart_fieldRenameInstructionContext) {
-                if (funCol != null) {
-                    funCol = funCol.as(visit(child).toString());
-                }
-            }
-        }
-        listOfAggFunCols.add(funCol); // need to add last one; for loop above only adds if there's a new one coming
-
-        TimechartStep timechartStep = new TimechartStep(listOfAggFunCols, listOfDivideByInst, span);
+        TimechartStep timechartStep = new TimechartStep(aggFunCols, divByInsts, span);
 
         // span
         this.catCtx.setTimeChartSpanSeconds(getSpanSeconds(span));
 
         LOGGER.debug("span= <[{}]>", span);
-        LOGGER.debug("aggcols= <[{}]>", listOfAggFunCols);
-        LOGGER.debug("divby= <[{}]>", listOfDivideByInst);
+        LOGGER.debug("aggcols= <[{}]>", aggFunCols);
+        LOGGER.debug("divby= <[{}]>", divByInsts);
 
         return new StepNode(timechartStep);
     }
@@ -187,47 +145,35 @@ public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitAggregateFunction(DPLParser.AggregateFunctionContext ctx) {
-        Node rv = aggregateFunction.visitAggregateFunction(ctx);
-        if (aggregateField == null)
-            aggregateField = aggregateFunction.getAggregateField();
-        return aggregateFunction.visitAggregateFunction(ctx);
+        ColumnNode aggCol = (ColumnNode) aggregateFunction.visitAggregateFunction(ctx);
+        aggFunCols.add(aggCol.getColumn());
+        return new NullNode();
     }
 
     @Override
     public Node visitT_timechart_divideByInstruction(DPLParser.T_timechart_divideByInstructionContext ctx) {
-        //        LOGGER.info(ctx.getChildCount()+"--visitT_chart_divideByInstruction incoming{}", ctx.getText());
-        if (ctx.getChildCount() == 0) {
-            return null;
-        }
-        String target = ctx.getChild(1).getChild(0).toString();
+        String field = ctx.fieldType().getChild(0).toString();
+        divByInsts.add(field);
 
-        if (doc != null) {
-            Element el = doc.createElement("divideBy");
-            el.setAttribute("field", target);
-            return new ElementNode(el);
-        }
-        else {
-            return new StringNode(new Token(Type.STRING, target));
-        }
+        return new NullNode();
     }
 
     @Override
     public Node visitT_timechart_fieldRenameInstruction(DPLParser.T_timechart_fieldRenameInstructionContext ctx) {
-        String field = ctx.getChild(1).getText();
-        if (doc != null) {
-            Element el = doc.createElement("fieldRename");
-            el.setAttribute("field", field);
-            return new ElementNode(el);
+        String rename = ctx.getChild(1).getText();
+        if (!aggFunCols.isEmpty()) {
+            Column latestAgg = aggFunCols.remove(aggFunCols.size() - 1);
+            aggFunCols.add(latestAgg.as(rename)); // rename the newest visited aggregation column
         }
-        else {
-            return new StringNode(new Token(Type.STRING, field));
-        }
+
+        return new NullNode();
     }
 
     @Override
     public Node visitT_timechart_binOptParameter(DPLParser.T_timechart_binOptParameterContext ctx) {
         LOGGER.info("visitT_timechart_binOptParameter:<{}>", ctx.getText());
-        return visitChildren(ctx);
+        span = ((ColumnNode) visitChildren(ctx)).getColumn();
+        return new NullNode();
     }
 
     @Override
@@ -246,10 +192,9 @@ public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
      * @return
      */
     private Column createDefaultSpan() {
-        long sec = 0;
+        final long sec;
+        final String duration;
         TimeRange tr = TimeRange.ONE_HOUR;
-        String duration = "1 days"; // Default duration
-        //        LOGGER.info("createDefaultSpan="+catCtx.getTimeRange());
         DPLParserConfig pConf = catCtx.getParserConfig();
         if (pConf != null) {
             tr = pConf.getTimeRange();
@@ -310,7 +255,6 @@ public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         // default timescale is sec
         String timescale = "sec";
         int numericalValue;
-        int month = 0;
         long sec = 0;
         Pattern p = Pattern.compile("\\d+");
         Matcher m = p.matcher(value);
@@ -378,7 +322,7 @@ public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 break;
             }
         }
-        return new CalendarInterval(month, 0, sec * 1000 * 1000L);
+        return new CalendarInterval(0, 0, sec * 1000 * 1000L);
     }
 
     @Override
@@ -461,33 +405,8 @@ public final class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         return visitChildren(ctx);
     }
 
-    /*@Override public Node visitT_timechart_singleAggregation(DPLParser.T_timechart_singleAggregationContext ctx) {
-        String oper = ctx.getText();
-        String defaultField="*";
-        Node rv = null;
-        Column col = null;
-        if(oper.equalsIgnoreCase("count") || oper.equalsIgnoreCase("c")) {
-            aggregateField = "count"; // use default name
-            col = org.apache.spark.sql.functions.count(defaultField);
-    //            LOGGER.info("T_timechart_singleAggregation (Catalyst):{}", col.expr().sql()+" default field="+defaultField);
-            traceBuffer.add("Visit AggregateMethodCount(Catalyst):{}", col.expr().sql());
-            rv = new ColumnNode(col);
-        }else {
-            rv = this.aggregateFunction.visitAggregateFunction(ctx.aggregateFunction());
-            this.aggregateField = aggregateFunction.getAggregateField();
-        }
-        // Check whether field needs to be renamed
-        if(ctx.t_timechart_fieldRenameInstruction() != null){
-            Node renameCmd = visitT_timechart_fieldRenameInstruction(ctx.t_timechart_fieldRenameInstruction());
-            aggregateField = renameCmd.toString();
-    //            rv = new ColumnNode(((ColumnNode) rv).getColumn().as(renameCmd.toString()));
-        }
-        return rv;
-    }*/
-
     @Override
     public Node visitSpanType(DPLParser.SpanTypeContext ctx) {
-        //        LOGGER.info("visitSpanType:"+ctx.getText());
         return visitChildren(ctx);
     }
 
