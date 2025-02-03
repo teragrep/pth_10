@@ -57,6 +57,11 @@ jobs:
           mkdir -p ${RUNNER_TEMP}/${{ env.COVERITY }}
           tar zxf ${RUNNER_TEMP}/${{ env.COVERITY }}.tgz -C ${RUNNER_TEMP}/${{ env.COVERITY }} --strip-components 1
 
+      - name: Compile Coverity
+        run: |
+          ${RUNNER_TEMP}/${{ env.COVERITY }}/bin/cov-build --dir ${RUNNER_TEMP}/cov-int mvn -B -Drevision=${{ env.RELEASE_VERSION }} -Dsha1= -Dchangelist= clean verify
+          cd ${RUNNER_TEMP} && tar czvf ${{ vars.COVERITY_PROJECT_URL_ID }}.tgz cov-int
+
       - name: Wait for Coverity analysis slot
         run: |
           while true; do
@@ -76,11 +81,6 @@ jobs:
               break
             fi
           done
-
-      - name: Compile Coverity
-        run: |
-          ${RUNNER_TEMP}/${{ env.COVERITY }}/bin/cov-build --dir ${RUNNER_TEMP}/cov-int mvn -B -Drevision=${{ env.RELEASE_VERSION }} -Dsha1= -Dchangelist= clean verify
-          tar czvf ${RUNNER_TEMP}/${{ vars.COVERITY_PROJECT_URL_ID }}.tgz ${RUNNER_TEMP}/cov-int
 
       - name: Prepare response url
         run: printf "RESPONSE_URL=%q\n" "$(jq -r '.url' ${RUNNER_TEMP}/response)" >> $GITHUB_ENV
