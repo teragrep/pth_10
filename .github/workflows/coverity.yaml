@@ -59,7 +59,7 @@ jobs:
 
       - name: Compile Coverity
         run: |
-          ${RUNNER_TEMP}/${{ env.COVERITY }}/bin/cov-build --dir ${RUNNER_TEMP}/cov-int mvn -B -Drevision=${{ env.RELEASE_VERSION }} -Dsha1= -Dchangelist= clean verify
+          ${RUNNER_TEMP}/${{ env.COVERITY }}/bin/cov-build --dir ${RUNNER_TEMP}/cov-int mvn -B -Drevision=${{ env.RELEASE_VERSION }} -Dsha1= -Dchangelist= -Dmaven.test.skip.exec=true clean verify
           cd ${RUNNER_TEMP} && tar czvf ${{ vars.COVERITY_PROJECT_URL_ID }}.tgz cov-int
 
       - name: Wait for Coverity analysis slot
