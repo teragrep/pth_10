@@ -62,7 +62,7 @@ import java.util.function.Consumer;
  * Encapsulates parameters for Catalyst code generator. In addition to that offers access to sparkcontext and incoming
  * datasource
  */
-public class DPLParserCatalystContext {
+public class DPLParserCatalystContext implements Cloneable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLParserCatalystContext.class);
 
