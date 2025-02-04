@@ -49,11 +49,13 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.util.sketch.BloomFilter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -65,15 +67,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class FilterTypesTest {
 
-    Connection conn;
-    final String username = "sa";
-    final String password = "";
-    final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final String username = "sa";
+    private final String password = "";
+    private final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final Connection conn = Assertions
+            .assertDoesNotThrow(() -> DriverManager.getConnection(connectionUrl, username, password));
 
     @BeforeEach
     public void setup() {
-        Config config = ConfigFactory.parseProperties(defaultProperties());
-        this.conn = new LazyConnection(config).get();
         Assertions.assertDoesNotThrow(() -> {
             conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
         });
@@ -88,6 +89,11 @@ class FilterTypesTest {
             conn.prepareStatement(createFilterType).execute();
         });
 
+    }
+
+    @AfterEach
+    public void teardown() {
+        Assertions.assertDoesNotThrow(conn::close);
     }
 
     @Test
@@ -136,12 +142,12 @@ class FilterTypesTest {
             Assertions.assertEquals(3, fppList.size());
             Assertions.assertEquals(Arrays.asList(1000L, 2000L, 3000L), expectedSizeList);
             Assertions.assertEquals(Arrays.asList(0.01, 0.02, 0.03), fppList);
+            Assertions.assertDoesNotThrow(result::close);
         });
     }
 
     @Test
     public void testEquals() {
-        ;
         Config config = ConfigFactory.parseProperties(defaultProperties());
         FilterTypes filterTypes1 = new FilterTypes(config);
         FilterTypes filterTypes2 = new FilterTypes(config);
