@@ -123,6 +123,17 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     public AbstractStep visitLogicalStatementCatalyst(DPLParser.SearchTransformationRootContext ctx) {
         if (ctx != null) {
             final Node ret = visitSearchTransformationRoot(ctx);
+            if (!(ret instanceof NullNode)) {
+                final Column filterColumn = ((ColumnNode) visitSearchTransformationRoot(ctx)).getColumn();
+                return new LogicalCatalystStep(filterColumn);
+            }
+        }
+        return new NullStep();
+    }
+
+    /*
+      if (ctx != null) {
+            final Node ret = visitSearchTransformationRoot(ctx);
             if (ret != null) {
                 final ColumnNode colNode = (ColumnNode) visitSearchTransformationRoot(ctx);
                 if (colNode.getColumn() != null) {
@@ -132,7 +143,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             }
         }
         return new NullStep();
-    }
+    */
+
 
     /**
      * The main visitor function for searchTransformation, used for the main search function. <pre>
@@ -145,6 +157,14 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitSearchTransformationRoot(DPLParser.SearchTransformationRootContext ctx) {
+        final Node rv;
+        LOGGER
+                .info(
+                        "[SearchTransformationRoot CAT] Visiting: <{}> with <{}> children", ctx.getText(),
+                        ctx.getChildCount()
+                );
+
+        /*
         final ColumnNode rv;
         if (LOGGER.isInfoEnabled()) {
             LOGGER
@@ -153,38 +173,76 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                             catCtx.getQueryName(), ctx.getText(), ctx.getChildCount()
                     );
         }
-
+         */
         if (ctx.getChildCount() == 1) {
             // just a single directoryStatement -or- logicalStatement
-            rv = (ColumnNode) visit(ctx.getChild(0));
+            final Node singleNode = visit(ctx.getChild(0));
+            if (singleNode instanceof NullNode) {
+                LOGGER.info("Child node was a NullNode");
+                return singleNode;
+            }
+            rv = singleNode;
         }
         else {
             final ParseTree secondChild = ctx.getChild(1);
-
             if (
                 secondChild instanceof TerminalNode && ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR
             ) {
                 // case: directoryStmt OR logicalStmt
-                final ColumnNode dirStatColumnNode = (ColumnNode) visit(ctx.directoryStatement());
+                /*
+                 final ColumnNode dirStatColumnNode = (ColumnNode) visit(ctx.directoryStatement());
                 final ColumnNode logiStatColumnNode = (ColumnNode) visit(ctx.logicalStatement(0));
                 rv = new ColumnNode(dirStatColumnNode.getColumn().or(logiStatColumnNode.getColumn()));
+                 */
+                final Node directoryNode = visit(ctx.directoryStatement());
+                final Node logicalNode = visit(ctx.logicalStatement(0));
+                if (directoryNode instanceof NullNode) {
+                    LOGGER.info("Directory statement node was a NullNode");
+                    rv = new NullNode();
+                }
+                else if (logicalNode instanceof NullNode) {
+                    LOGGER.info("Logical statement node was a NullNode");
+                    rv = new NullNode();
+                }
+                else {
+                    final ColumnNode dirStatColumnNode = (ColumnNode) directoryNode;
+                    final ColumnNode logiStatColumnNode = (ColumnNode) logicalNode;
+                    rv = new ColumnNode(dirStatColumnNode.getColumn().or(logiStatColumnNode.getColumn()));
+                }
             }
             else {
                 // case: (logicalStmt AND?)*? directoryStmt (AND? logicalStmt)*?
-                Column finalColumn = ((ColumnNode) visit(ctx.directoryStatement())).getColumn();
-
-                for (DPLParser.LogicalStatementContext logiStatCtx : ctx.logicalStatement()) {
-                    finalColumn = finalColumn.and(((ColumnNode) visit(logiStatCtx)).getColumn());
+                final Node finalNode = visit(ctx.directoryStatement());
+                if (finalNode instanceof NullNode) {
+                    LOGGER.info("Directory statement node was a NullNode");
+                    rv = finalNode;
                 }
+                else {
 
-                rv = new ColumnNode(finalColumn);
+                    Column finalColumn = ((ColumnNode) finalNode).getColumn();
+
+                    for (DPLParser.LogicalStatementContext logiStatCtx : ctx.logicalStatement()) {
+                        finalColumn = finalColumn.and(((ColumnNode) visit(logiStatCtx)).getColumn());
+                    }
+
+                    rv = new ColumnNode(finalColumn);
+                }
             }
         }
-
+        /*
         if (rv != null && rv.getColumn() != null) {
             this.catCtx.setSparkQuery(rv.getColumn().toString());
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info("queryId <{}> Spark column: <{}>", catCtx.getQueryName(), rv.getColumn().toString());
+            }
+        }
+         */
+
+        if (rv instanceof ColumnNode) {
+            final ColumnNode columnNode = (ColumnNode) rv;
+            if (columnNode.getColumn() != null) {
+                LOGGER.info("Spark column: <{}>", columnNode.getColumn().toString());
+                this.catCtx.setSparkQuery(columnNode.getColumn().toString());
             }
         }
 
