@@ -9,3 +9,4 @@
 fuzzer/**
 output.log
 .project
+dependency-reduced-pom.xml
