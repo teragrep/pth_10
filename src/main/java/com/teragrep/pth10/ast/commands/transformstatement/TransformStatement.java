@@ -176,7 +176,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitTimechartTransformation(DPLParser.TimechartTransformationContext ctx) {
         // timechart command
-        return new TimechartTransformation(catCtx, catVisitor).visitTimechartTransformation(ctx);
+        return new TimechartTransformation(catCtx).visitTimechartTransformation(ctx);
     }
 
     @Override
