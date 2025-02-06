@@ -53,8 +53,8 @@
           <packager>teragrep &lt;servicedesk@teragrep.com&gt;</packager>
           <group>teragrep/LogManagementSuite</group>
           <needarch>false</needarch>
-          <defaultUsername>srv-zpln</defaultUsername>
-          <defaultGroupname>srv-zpln</defaultGroupname>
+          <defaultUsername>root</defaultUsername>
+          <defaultGroupname>root</defaultGroupname>
           <defaultFilemode>0644</defaultFilemode>
           <defaultDirmode>0755</defaultDirmode>
           <defineStatements>
@@ -68,8 +68,8 @@
               <directoryIncluded>true</directoryIncluded>
               <filemode>755</filemode>
               <dirmode>755</dirmode>
-              <username>srv-zpln</username>
-              <groupname>srv-zpln</groupname>
+              <username>root</username>
+              <groupname>root</groupname>
               <recurseDirectories>true</recurseDirectories>
               <sources>
                 <source>
