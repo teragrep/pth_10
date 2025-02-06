@@ -179,9 +179,10 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             final Node singleNode = visit(ctx.getChild(0));
             if (singleNode instanceof NullNode) {
                 LOGGER.info("Child node was a NullNode");
-                return singleNode;
+                rv = new NullNode();
+            } else {
+                rv = singleNode;
             }
-            rv = singleNode;
         }
         else {
             final ParseTree secondChild = ctx.getChild(1);
