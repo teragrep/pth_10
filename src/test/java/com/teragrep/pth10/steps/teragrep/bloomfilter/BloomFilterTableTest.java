@@ -51,6 +51,7 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.*;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,14 +60,14 @@ import java.util.Properties;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BloomFilterTableTest {
 
-    final String username = "sa";
-    final String password = "";
-    final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final String username = "sa";
+    private final String password = "";
+    private final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final Connection connection = Assertions
+            .assertDoesNotThrow(() -> DriverManager.getConnection(connectionUrl, username, password));
 
     @BeforeAll
     void setEnv() {
-        Config config = ConfigFactory.parseProperties(getDefaultProperties());
-        Connection connection = new LazyConnection(config).get();
         Assertions.assertDoesNotThrow(() -> {
             connection.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
         });
@@ -78,10 +79,9 @@ public class BloomFilterTableTest {
     @AfterAll
     void tearDown() {
         Assertions.assertDoesNotThrow(() -> {
-            Config config = ConfigFactory.parseProperties(getDefaultProperties());
-            Connection connection = new LazyConnection(config).get();
             connection.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
         });
+        Assertions.assertDoesNotThrow(connection::close);
     }
 
     @Test
@@ -121,7 +121,7 @@ public class BloomFilterTableTest {
         table.create();
         String sql = "SHOW COLUMNS FROM " + tableName + ";";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = new LazyConnection(config).get().prepareStatement(sql).executeQuery();
+            ResultSet rs = connection.prepareStatement(sql).executeQuery();
             int cols = 0;
             List<String> columnList = new ArrayList<>(4);
             while (rs.next()) {
@@ -133,7 +133,7 @@ public class BloomFilterTableTest {
             Assertions.assertEquals(columnList.get(1), "partition_id");
             Assertions.assertEquals(columnList.get(2), "filter_type_id");
             Assertions.assertEquals(columnList.get(3), "filter");
-            rs.close();
+            Assertions.assertDoesNotThrow(rs::close);
         });
     }
 
