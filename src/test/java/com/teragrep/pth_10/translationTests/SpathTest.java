@@ -103,6 +103,5 @@ public class SpathTest {
 
         // internal column name used for auto-extraction
         Assertions.assertEquals("$$dpl_pth10_internal_column_spath_output$$", cs.getOutputColumn());
-        System.out.println(cs.getOutputColumn());
     }
 }
