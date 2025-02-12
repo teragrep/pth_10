@@ -66,21 +66,8 @@ public class BloomFilterTableTest {
     private final Connection connection = Assertions
             .assertDoesNotThrow(() -> DriverManager.getConnection(connectionUrl, username, password));
 
-    @BeforeAll
-    void setEnv() {
-        Assertions.assertDoesNotThrow(() -> {
-            connection.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
-        });
-        Assertions.assertDoesNotThrow(() -> {
-            Class.forName("org.h2.Driver");
-        });
-    }
-
     @AfterAll
     void tearDown() {
-        Assertions.assertDoesNotThrow(() -> {
-            connection.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
-        });
         Assertions.assertDoesNotThrow(connection::close);
     }
 
