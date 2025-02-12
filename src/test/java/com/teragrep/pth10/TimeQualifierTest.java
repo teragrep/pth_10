@@ -76,6 +76,70 @@ public class TimeQualifierTest {
     }
 
     @Test
+    public void testEarliestWithFractions() {
+        final String value = "2024-01-01T10:00:00.001Z";
+        final int type = DPLLexer.EARLIEST;
+        final Document doc = Assertions
+                .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
+        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
+        Element el = doc.createElement("earliest");
+        el.setAttribute("operation", "GE");
+        el.setAttribute("value", Long.toString(1704103200L));
+
+        Assertions.assertEquals(expected, tq.column());
+        Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
+    }
+
+    @Test
+    public void testEarliestWithoutFractions() {
+        final String value = "2024-01-01T10:00:00.000Z";
+        final int type = DPLLexer.EARLIEST;
+        final Document doc = Assertions
+                .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
+        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
+        Element el = doc.createElement("earliest");
+        el.setAttribute("operation", "GE");
+        el.setAttribute("value", Long.toString(1704103200L));
+
+        Assertions.assertEquals(expected, tq.column());
+        Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
+    }
+
+    @Test
+    public void testLatestWithFractions() {
+        final String value = "2024-01-01T10:00:00.001Z";
+        final int type = DPLLexer.LATEST;
+        final Document doc = Assertions
+                .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
+        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L + 1L)));
+        Element el = doc.createElement("latest");
+        el.setAttribute("operation", "LE");
+        el.setAttribute("value", Long.toString(1704103200L + 1L));
+
+        Assertions.assertEquals(expected, tq.column());
+        Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
+    }
+
+    @Test
+    public void testLatestWithoutFractions() {
+        final String value = "2024-01-01T10:00:00.000Z";
+        final int type = DPLLexer.LATEST;
+        final Document doc = Assertions
+                .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
+        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L)));
+        Element el = doc.createElement("latest");
+        el.setAttribute("operation", "LE");
+        el.setAttribute("value", Long.toString(1704103200L));
+
+        Assertions.assertEquals(expected, tq.column());
+        Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
+    }
+
+    @Test
     public void testLatest() {
         final String value = "2024-31-10";
         final String timeformat = "%Y-%d-%m";

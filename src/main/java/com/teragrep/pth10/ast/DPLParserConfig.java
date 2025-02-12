@@ -111,7 +111,7 @@ public class DPLParserConfig {
         // Try to check if it is relative and catch exception
         try {
             RelativeTimestamp rtTimestamp = rtParser.parse(earliest); // can throw error if not relative timestamp
-            earliestEpoch = rtTimestamp.calculate(now);
+            earliestEpoch = rtTimestamp.calculate(now).getEpochSecond();
         }
         catch (NumberFormatException ne) {
             // absolute time
@@ -145,7 +145,7 @@ public class DPLParserConfig {
         // Try to check if it is relative and catch exception
         try {
             RelativeTimestamp rtTimestamp = rtParser.parse(latest); // can throw exception if not relative timestamp
-            latestEpoch = rtTimestamp.calculate(now);
+            latestEpoch = rtTimestamp.calculate(now).getEpochSecond();
         }
         catch (NumberFormatException ne) {
             // absolute time
