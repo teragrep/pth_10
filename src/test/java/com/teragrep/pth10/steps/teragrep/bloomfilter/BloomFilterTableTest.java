@@ -120,7 +120,7 @@ public class BloomFilterTableTest {
             Assertions.assertEquals(columnList.get(1), "partition_id");
             Assertions.assertEquals(columnList.get(2), "filter_type_id");
             Assertions.assertEquals(columnList.get(3), "filter");
-            Assertions.assertDoesNotThrow(rs::close);
+            rs.close();
         });
     }
 
