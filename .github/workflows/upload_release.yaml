@@ -29,6 +29,15 @@ jobs:
       - name: Install test dependencies
         run: cd / && sudo apt-get update && sudo apt-get install wget rpm2cpio && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-city-20180605-1.el8.noarch.rpm && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-country-20180605-1.el8.noarch.rpm && rpm2cpio geolite2-city-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories && rpm2cpio geolite2-country-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 8.0.292+10
+          distribution: 'adopt'
+
+      - name: Run CI
+        run: mvn --batch-mode clean verify
+
       - name: Setup Maven Central
         uses: actions/setup-java@v2
         with:
@@ -41,7 +50,7 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Publish to Maven Central
-        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean deploy -Ppublish-maven-central
+        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -Dmaven.test.skip.exec=true clean deploy -Ppublish-maven-central
         env:
           CENTRAL_SONATYPE_ORG_USERNAME: ${{ secrets.CENTRAL_SONATYPE_ORG_USERNAME }}
           CENTRAL_SONATYPE_ORG_PASSWORD: ${{ secrets.CENTRAL_SONATYPE_ORG_PASSWORD }}
@@ -55,13 +64,19 @@ jobs:
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
 
       - name: Publish to GitHub Packages
-        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean deploy -Ppublish-github-packages
+        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -Dmaven.test.skip.exec=true clean deploy -Ppublish-github-packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
 
+      - name: Setup GitHub Assets
+        uses: actions/setup-java@v2
+        with:
+          java-version: 8.0.292+10
+          distribution: 'adopt'
+
       - name: Publish shaded jar as RPM to GitHub Assets
-        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
+        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -Dmaven.test.skip.exec=true clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
