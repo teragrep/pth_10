@@ -142,7 +142,7 @@ class FilterTypesTest {
             Assertions.assertEquals(3, fppList.size());
             Assertions.assertEquals(Arrays.asList(1000L, 2000L, 3000L), expectedSizeList);
             Assertions.assertEquals(Arrays.asList(0.01, 0.02, 0.03), fppList);
-            Assertions.assertDoesNotThrow(result::close);
+            result.close();
         });
     }
 
