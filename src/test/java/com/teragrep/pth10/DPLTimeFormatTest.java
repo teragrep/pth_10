@@ -72,7 +72,7 @@ public class DPLTimeFormatTest {
         long expectedEpoch = 1702620279;
 
         DPLTimeFormat format = new DPLTimeFormat(dplPattern);
-        long actualEpoch = Assertions.assertDoesNotThrow(() -> format.getEpoch(dplDate));
+        long actualEpoch = Assertions.assertDoesNotThrow(() -> format.instantOf(dplDate).getEpochSecond());
         Assertions.assertEquals(expectedEpoch, actualEpoch);
     }
 }
