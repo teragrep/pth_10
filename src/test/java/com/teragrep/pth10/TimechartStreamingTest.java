@@ -222,4 +222,19 @@ public class TimechartStreamingTest {
             Assertions.assertEquals("10", listOfCount.get(0));
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testTimechartMultipleSpans() {
+        IllegalArgumentException e = streamingTestUtil
+                .performThrowingDPLTest(
+                        IllegalArgumentException.class, "index=index_A | timechart span=1min span=2min count", testFile,
+                        ds -> {
+                        }
+                );
+        Assertions.assertEquals("| timechart does not allow multiple 'span=' parameters", e.getMessage());
+    }
 }

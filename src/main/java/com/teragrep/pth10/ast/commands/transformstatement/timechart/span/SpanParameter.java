@@ -43,8 +43,35 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast;
+package com.teragrep.pth10.ast.commands.transformstatement.timechart.span;
 
-public enum TimeRange {
-    TEN_SECONDS, ONE_MINUTE, FIVE_MINUTES, THIRTY_MINUTES, ONE_HOUR, ONE_DAY, ONE_MONTH
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.functions;
+import org.apache.spark.unsafe.types.CalendarInterval;
+
+/**
+ * | timechart commands 'span=' parameter
+ */
+public final class SpanParameter implements Span {
+
+    private final Column column;
+    private final CalendarInterval ival;
+
+    public SpanParameter(TimeRange timeRange) {
+        this(timeRange.asSeconds());
+    }
+
+    public SpanParameter(long seconds) {
+        this(new Column("_time"), new CalendarInterval(0, 0, seconds * 1000 * 1000L));
+    }
+
+    public SpanParameter(Column column, CalendarInterval ival) {
+        this.column = column;
+        this.ival = ival;
+    }
+
+    @Override
+    public Column asColumn() {
+        return functions.window(column, String.valueOf(ival));
+    }
 }
