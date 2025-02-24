@@ -64,10 +64,6 @@ public final class TimeRange {
         this.duration = duration;
     }
 
-    public String asString() {
-        return duration;
-    }
-
     public long asSeconds() {
         // incoming span-length consist of <int>[<timescale>]
         // default timescale is sec

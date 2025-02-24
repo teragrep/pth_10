@@ -48,7 +48,6 @@ package com.teragrep.pth10.ast.commands.transformstatement.timechart;
 import com.teragrep.pth10.ast.ContextValue;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 
-import com.teragrep.pth10.ast.commands.transformstatement.timechart.span.DefaultSpan;
 import com.teragrep.pth10.ast.commands.transformstatement.timechart.span.Span;
 import com.teragrep.pth10.ast.commands.transformstatement.timechart.span.SpanParameter;
 import com.teragrep.pth10.ast.commands.transformstatement.timechart.span.TimeRange;
@@ -80,16 +79,17 @@ public final class SpanContextValue implements ContextValue<Column> {
     public SpanContextValue(
             List<DPLParser.T_timechart_binOptParameterContext> ctxList,
             DPLParserCatalystContext catCtx,
-            TimeRange timeRange
+            TimeRange defaultTimeRange
     ) {
         this.ctxList = ctxList;
         this.catCtx = catCtx;
-        this.defaultTimeRange = timeRange;
+        this.defaultTimeRange = defaultTimeRange;
     }
 
     @Override
     public Column value() {
-        Span span = new DefaultSpan(defaultTimeRange); // uses default if no span parameter is found
+        // use default time range from config if span= parameter is not used
+        Span span = new SpanParameter(defaultTimeRange);
         TimeRange actualTimeRange = defaultTimeRange;
 
         boolean spanFound = false;
