@@ -45,18 +45,27 @@
  */
 package com.teragrep.pth10.steps.timechart;
 
+import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.*;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-public final class TimechartStep extends AbstractTimechartStep {
+public final class TimechartStep extends AbstractStep {
 
-    public TimechartStep() {
+    private final List<Column> aggCols;
+    private final List<String> divByInsts;
+    private final Column span;
+
+    public TimechartStep(final List<Column> aggCols, final List<String> divByInsts, final Column span) {
         super();
+        this.aggCols = aggCols;
+        this.divByInsts = divByInsts;
+        this.span = span;
         this.properties.add(CommandProperty.AGGREGATE);
     }
 
@@ -66,18 +75,17 @@ public final class TimechartStep extends AbstractTimechartStep {
             return null;
         }
 
-        if (this.getAggCols() == null || this.getAggCols().isEmpty()) {
+        if (aggCols.isEmpty()) {
             throw new RuntimeException("Aggregate columns not present in TimechartStep, cannot proceed");
         }
 
         // .agg has funky arguments; just giving a Seq of columns is no good, first arg needs to be a column
-        Column firstAggCol = this.aggCols.get(0);
-        Seq<Column> seqOfAggColsExceptFirst = JavaConversions
-                .asScalaBuffer(this.aggCols.subList(1, this.aggCols.size()));
+        Column firstAggCol = aggCols.get(0);
+        Seq<Column> seqOfAggColsExceptFirst = JavaConversions.asScalaBuffer(aggCols.subList(1, aggCols.size()));
 
         List<Column> allGroupBys = new ArrayList<>();
-        allGroupBys.add(this.span);
-        allGroupBys.addAll(this.divByInsts.stream().map(functions::col).collect(Collectors.toList()));
+        allGroupBys.add(span);
+        allGroupBys.addAll(divByInsts.stream().map(functions::col).collect(Collectors.toList()));
 
         Seq<Column> seqOfAllGroupBys = JavaConversions.asScalaBuffer(allGroupBys);
 
@@ -89,5 +97,21 @@ public final class TimechartStep extends AbstractTimechartStep {
                 .withColumnRenamed("start", "_time")
                 .drop("window")
                 .orderBy("_time");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        final TimechartStep that = (TimechartStep) o;
+        // Column.equals() doesn't work, using String representation instead to see that the same operations are done on both
+        return Objects.equals(aggCols.toString(), that.aggCols.toString())
+                && Objects.equals(divByInsts, that.divByInsts) && Objects.equals(span.toString(), that.span.toString());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(aggCols, divByInsts, span);
     }
 }

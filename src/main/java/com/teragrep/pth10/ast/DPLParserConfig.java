@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth10.ast;
 
+import com.teragrep.pth10.ast.commands.transformstatement.timechart.span.TimeRange;
 import com.teragrep.pth10.ast.time.RelativeTimeParser;
 import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import org.slf4j.Logger;
@@ -65,8 +66,6 @@ public class DPLParserConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLParserConfig.class);
 
     private Map<String, Object> config = new LinkedHashMap<>();
-
-    TimeRange timeRange = TimeRange.ONE_MONTH;
 
     /**
      * Get named value from config map
@@ -162,7 +161,7 @@ public class DPLParserConfig {
      * @return enum range values 10s,...,1M
      */
     public TimeRange getTimeRange() {
-        TimeRange rv = TimeRange.ONE_DAY;
+        TimeRange timeRange = new TimeRange("1 days");
         long r = 0;
         // Earliest set, latest not
         if (config.get("earliest") != null && config.get("latest") == null) {
@@ -181,21 +180,21 @@ public class DPLParserConfig {
             r = abs(r);
         LOGGER.info("Calculated range=<{}>", r);
         if (r <= 15 * 60) {
-            rv = TimeRange.TEN_SECONDS;
+            timeRange = new TimeRange("10 seconds");
         }
         else if (r <= 60 * 60) {
-            rv = TimeRange.ONE_MINUTE;
+            timeRange = new TimeRange("1 minutes");
         }
         else if (r <= 4 * 60 * 60) {
-            rv = TimeRange.FIVE_MINUTES;
+            timeRange = new TimeRange("5 minutes");
         }
         else if (r <= 24 * 60 * 60) {
-            rv = TimeRange.THIRTY_MINUTES;
+            timeRange = new TimeRange("30 minutes");
         }
         else if (r > 30 * 24 * 60 * 60) {
             // Default max value is 1 day
-            rv = TimeRange.ONE_DAY;
+            timeRange = new TimeRange("1 days");
         }
-        return rv;
+        return timeRange;
     }
 }
