@@ -45,49 +45,69 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.timechart.span;
 
-import org.apache.spark.sql.Column;
-import org.apache.spark.sql.functions;
-import org.apache.spark.unsafe.types.CalendarInterval;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
+public class TimeRangeTest {
 
-/**
- * | timechart commands 'span=' parameter
- */
-public final class SpanParameter implements Span {
-
-    private final Column column;
-    private final CalendarInterval ival;
-
-    public SpanParameter(TimeRange timeRange) {
-        this(timeRange.asSeconds());
+    @Test
+    public void testEqualsVerifier() {
+        EqualsVerifier.forClass(TimeRange.class).withNonnullFields("duration").verify();
     }
 
-    public SpanParameter(long seconds) {
-        this(new Column("_time"), new CalendarInterval(0, 0, seconds * 1000 * 1000L));
+    @Test
+    public void testSeconds() {
+        String duration = "5 seconds";
+        TimeRange timeRange = new TimeRange(duration);
+
+        long expectedSeconds = 5;
+        Assertions.assertEquals(expectedSeconds, timeRange.asSeconds());
     }
 
-    public SpanParameter(Column column, CalendarInterval ival) {
-        this.column = column;
-        this.ival = ival;
+    @Test
+    public void testMinutes() {
+        String duration = "5 minutes";
+        TimeRange timeRange = new TimeRange(duration);
+
+        long expectedSeconds = 5 * 60;
+        Assertions.assertEquals(expectedSeconds, timeRange.asSeconds());
     }
 
-    @Override
-    public Column asColumn() {
-        return functions.window(column, String.valueOf(ival));
+    @Test
+    public void testHours() {
+        String duration = "5 hours";
+        TimeRange timeRange = new TimeRange(duration);
+
+        long expectedSeconds = 5 * 60 * 60;
+        Assertions.assertEquals(expectedSeconds, timeRange.asSeconds());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SpanParameter that = (SpanParameter) o;
-        return Objects.equals(column, that.column) && Objects.equals(ival, that.ival);
+    @Test
+    public void testDays() {
+        String duration = "5 days";
+        TimeRange timeRange = new TimeRange(duration);
+
+        long expectedSeconds = 5 * 60 * 60 * 24;
+        Assertions.assertEquals(expectedSeconds, timeRange.asSeconds());
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(column, ival);
+    @Test
+    public void testMonths() {
+        String duration = "5 months";
+        TimeRange timeRange = new TimeRange(duration);
+
+        long expectedSeconds = 5 * 60 * 60 * 24 * 30;
+        Assertions.assertEquals(expectedSeconds, timeRange.asSeconds());
+    }
+
+    @Test
+    public void testYears() {
+        String duration = "5 years";
+        TimeRange timeRange = new TimeRange(duration);
+
+        String expectedErrorMessage = "| timechart 'span' parameter only accepts seconds, minutes, hours, days, weeks and months. Got 'years' instead.";
+        RuntimeException e = Assertions.assertThrows(RuntimeException.class, timeRange::asSeconds);
+        Assertions.assertEquals(expectedErrorMessage, e.getMessage());
     }
 }

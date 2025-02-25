@@ -45,49 +45,35 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.timechart.span;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
 import org.apache.spark.unsafe.types.CalendarInterval;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
+public class SpanParameterTest {
 
-/**
- * | timechart commands 'span=' parameter
- */
-public final class SpanParameter implements Span {
-
-    private final Column column;
-    private final CalendarInterval ival;
-
-    public SpanParameter(TimeRange timeRange) {
-        this(timeRange.asSeconds());
+    @Test
+    public void testEqualsVerifier() {
+        // equalsVerifier flags Spark's Column as a recursive data structure, have to use prefabs
+        EqualsVerifier
+                .forClass(SpanParameter.class)
+                .withNonnullFields("column", "ival")
+                .withPrefabValues(Column.class, new Column("_time"), functions.lit(""))
+                .verify();
     }
 
-    public SpanParameter(long seconds) {
-        this(new Column("_time"), new CalendarInterval(0, 0, seconds * 1000 * 1000L));
-    }
+    @Test
+    public void testAsColumn() {
+        TimeRange timeRange = new TimeRange("5 minutes");
+        SpanParameter spanParameter = new SpanParameter(timeRange);
 
-    public SpanParameter(Column column, CalendarInterval ival) {
-        this.column = column;
-        this.ival = ival;
-    }
+        long microSeconds = timeRange.asSeconds() * 1000 * 1000;
+        Column expectedColumn = functions
+                .window(new Column("_time"), String.valueOf(new CalendarInterval(0, 0, microSeconds)));
 
-    @Override
-    public Column asColumn() {
-        return functions.window(column, String.valueOf(ival));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SpanParameter that = (SpanParameter) o;
-        return Objects.equals(column, that.column) && Objects.equals(ival, that.ival);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(column, ival);
+        // Spark's Columns seem to be equal only with same reference. Using String representation instead.
+        Assertions.assertEquals(expectedColumn.toString(), spanParameter.asColumn().toString());
     }
 }

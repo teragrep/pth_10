@@ -48,6 +48,7 @@ package com.teragrep.pth10.ast.commands.transformstatement.timechart.span;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -144,5 +145,19 @@ public final class TimeRange {
         }
 
         return sec;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        TimeRange timeRange = (TimeRange) o;
+        return Objects.equals(duration, timeRange.duration);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(duration);
     }
 }
