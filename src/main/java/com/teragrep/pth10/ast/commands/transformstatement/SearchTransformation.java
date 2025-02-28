@@ -51,6 +51,7 @@ import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst
 import com.teragrep.pth10.steps.search.SearchStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
+import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,11 +85,16 @@ public class SearchTransformation extends DPLParserBaseVisitor<Node> {
         if (searchRootCtx != null) {
             // isSearchCommand=true is used to skip generating archiveQuery as 'search' is used to filter existing dataset
             // rather than getting a new one and filtering it
-            LogicalStatementCatalyst logiStat = new LogicalStatementCatalyst(this.catCtx);
+            final LogicalStatementCatalyst logiStat = new LogicalStatementCatalyst(this.catCtx);
             LOGGER.info("SearchTransformationRoot - skipping xml generation");
-            ColumnNode filter = (ColumnNode) logiStat.visitSearchTransformationRoot(searchRootCtx);
-            searchStep.setFilteringColumn(filter.getColumn());
-
+            final ColumnNode filter = (ColumnNode) logiStat.visitSearchTransformationRoot(searchRootCtx);
+            if (filter.getColumn() != null) {
+                searchStep.setFilteringColumn(filter.getColumn());
+            }
+            else {
+                final ColumnNode filterColumn = new ColumnNode(functions.lit(false));
+                searchStep.setFilteringColumn(filterColumn.getColumn());
+            }
         }
         else {
             throw new IllegalStateException(
