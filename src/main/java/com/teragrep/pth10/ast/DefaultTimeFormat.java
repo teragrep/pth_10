@@ -97,7 +97,7 @@ public class DefaultTimeFormat {
             catch (ParseException ignored) {
             }
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        throw new RuntimeException("Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats <>)");
     }
 
     private Date parseDate(String time, String timeFormat) throws ParseException {

@@ -358,7 +358,10 @@ public class EarliestLatestTest {
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
                 });
         Assertions
-                .assertEquals("TimeQualifier conversion error: <31/31/2014:00:00:00> can't be parsed.", sqe.getMessage());
+                .assertEquals(
+                        "Error parsing <31/31/2014:00:00:00>. Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats <MM/dd/yyyy:HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ssXXX>). Unknown relative time modifier string [31/31/2014:00:00:00].",
+                        sqe.getMessage()
+                );
     }
 
     @Test
