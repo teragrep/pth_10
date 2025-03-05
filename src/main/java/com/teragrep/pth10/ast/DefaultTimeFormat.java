@@ -75,30 +75,35 @@ public class DefaultTimeFormat {
     public Date parse(String time) {
         // Try parsing all the three default timeformats
         Date date;
-
+        final String defaultFormat = "MM/dd/yyyy:HH:mm:ss";
+        final String withTimezone = "yyyy-MM-dd'T'HH:mm:ssXXX";
+        final String withoutTimezone = "yyyy-MM-dd'T'HH:mm:ss";
         int attempt = 0;
         while (true) {
             try {
                 if (attempt == 0) {
                     // Use default format (MM/dd/yyyy:HH:mm:ss)
                     // Use system default timezone
-                    date = this.parseDate(time, "MM/dd/yyyy:HH:mm:ss");
+                    date = this.parseDate(time, defaultFormat);
                 }
                 else if (attempt == 1) {
                     // On first fail, try ISO 8601 with timezone offset, e.g. '2011-12-03T10:15:30+01:00'
-                    date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ssXXX");
+                    date = this.parseDate(time, withTimezone);
                 }
                 else {
                     // On second fail, try ISO 8601 without offset, e.g. '2011-12-03T10:15:30'
                     // Use system default timezone
-                    date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ss");
+                    date = this.parseDate(time, withoutTimezone);
                 }
                 break;
 
             }
-            catch (ParseException e) {
+            catch (final ParseException e) {
                 if (attempt > 1) {
-                    throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+                    throw new RuntimeException(
+                            "Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats <"
+                                    + defaultFormat + ">, <" + withoutTimezone + ">, <" + withTimezone + ">)"
+                    );
                 }
             }
             finally {
