@@ -336,7 +336,7 @@ public class relativeTimeTest {
     )
     public void parseTimestampLatestRelativeTestWithoutSign() {
         String q = "index=cinnamon latest=3h ";
-        String expected = "TimeQualifier conversion error: <3h> can't be parsed.";
+        String expected = "Error parsing <3h>. Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats <MM/dd/yyyy:HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ssXXX>). Unknown relative time modifier string [3h].";
 
         RuntimeException exception = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
@@ -422,7 +422,7 @@ public class relativeTimeTest {
             String expectedLatestString = String.valueOf(expectedLatest).substring(0, 7); // don't check last 2 numbers as the query takes some time and the "now" is different
             String regex = "^.*_time >= from_unixtime\\(" + expectedEarliest + ".*_time < from_unixtime\\("
                     + expectedLatestString + ".*$";
-            ;
+
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
         });
@@ -437,7 +437,7 @@ public class relativeTimeTest {
     public void parseTimestampRelativeInvalidSnapToTimeUnitTest() {
         // pth10 ticket #66 query: 'index=... sourcetype=... earliest=@-5h latest=@-3h'
         String query = "index=cinnamon earliest=\"@-5h\" latest=\"@-3h\"";
-        String expected = "TimeQualifier conversion error: <@-5h> can't be parsed.";
+        String expected = "Error parsing <@-5h>. Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats <MM/dd/yyyy:HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ssXXX>). Unknown relative time modifier string [@-5h].";
 
         RuntimeException exception = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {

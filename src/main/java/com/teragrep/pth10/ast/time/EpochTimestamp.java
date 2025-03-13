@@ -49,6 +49,8 @@ import com.teragrep.pth10.ast.DPLTimeFormat;
 import com.teragrep.pth10.ast.DefaultTimeFormat;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -56,6 +58,7 @@ import java.util.Objects;
 
 public final class EpochTimestamp {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(EpochTimestamp.class);
     private final String value;
     private final String timeformat;
 
@@ -71,7 +74,8 @@ public final class EpochTimestamp {
             rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
         }
         catch (NumberFormatException ne) {
-            rv = epochFromString(value, timeformat);
+            LOGGER.debug("Could not parse relative timestamp, trying default formats");
+            rv = epochFromString(value, timeformat, ne);
         }
 
         return rv;
@@ -79,11 +83,19 @@ public final class EpochTimestamp {
 
     // Uses defaultTimeFormat if timeformat is null and DPLTimeFormat if timeformat isn't null (which means that the
     // timeformat= option was used).
-    private long epochFromString(final String value, final String timeFormatString) {
+    private long epochFromString(final String value, final String timeFormatString, final NumberFormatException cause) {
         final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
         final long timevalue;
         if (timeFormatString == null || timeFormatString.isEmpty()) {
-            timevalue = new DefaultTimeFormat().getEpoch(unquotedValue);
+            try {
+                timevalue = new DefaultTimeFormat().getEpoch(unquotedValue);
+            }
+            catch (final RuntimeException ex) {
+                throw new RuntimeException(
+                        "Error parsing <" + unquotedValue + ">. " + ex.getMessage() + ". " + cause.getMessage() + ".",
+                        cause
+                );
+            }
         }
         else {
             // TODO: should be included in DPLTimeFormat
