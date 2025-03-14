@@ -51,6 +51,9 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
@@ -81,9 +84,20 @@ public class EarliestLatestTest {
     private final String epochTestFile = "src/test/resources/earliestLatestTest_epoch_data*.jsonl";
     private StreamingTestUtil streamingTestUtil;
 
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
+
     @BeforeAll
     void setEnv() {
-        this.streamingTestUtil = new StreamingTestUtil();
+        this.streamingTestUtil = new StreamingTestUtil(testSchema);
         this.streamingTestUtil.setEnv();
     }
 
@@ -327,8 +341,9 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            Assertions.assertEquals("2014-04-15 08:23:17", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14", time.get(1));
+            // Daylight savings happens between these two timestamps, which explains the +1 hour difference.
+            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
         });
     }
 
@@ -361,8 +376,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            Assertions.assertEquals("2014-04-15 08:23:17", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14", time.get(1));
+            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
         });
     }
 
@@ -381,8 +396,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            Assertions.assertEquals("2014-04-15 08:23:17", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14", time.get(1));
+            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
         });
     }
 
@@ -412,11 +427,11 @@ public class EarliestLatestTest {
     public void OverflowTest2() {
         String query = "index=strawberry earliest=-1000y@y latest=+3644444444444444d";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            String maxTime = res.agg(functions.max("_time")).first().getString(0);
-            String minTime = res.agg(functions.min("_time")).first().getString(0);
+            String maxTime = res.agg(functions.max("_time")).first().get(0).toString();
+            String minTime = res.agg(functions.min("_time")).first().get(0).toString();
 
-            Assertions.assertEquals("2014-03-15 21:54:14", maxTime);
-            Assertions.assertEquals("2013-07-15 10:01:50", minTime);
+            Assertions.assertEquals("2014-03-15 21:54:14.0", maxTime);
+            Assertions.assertEquals("2013-07-15 11:01:50.0", minTime);
         });
     }
 
@@ -426,14 +441,14 @@ public class EarliestLatestTest {
             matches = "true"
     )
     public void epochTimeformatTest() {
-        String query = "index=strawberry timeformat=%s earliest=0";
+        String query = "index=strawberry timeformat=%s earliest=-10000";
         this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
             // epoch test data contains values from 1970-01-01 till 2050-03-15
-            String maxTime = res.agg(functions.max("_time")).first().getString(0);
-            String minTime = res.agg(functions.min("_time")).first().getString(0);
+            String maxTime = res.agg(functions.max("_time")).first().get(0).toString();
+            String minTime = res.agg(functions.min("_time")).first().get(0).toString();
 
-            Assertions.assertEquals("2050-03-15 21:54:14", maxTime);
-            Assertions.assertEquals("1970-01-01 00:00:00", minTime);
+            Assertions.assertEquals("2050-03-15 21:54:14.0", maxTime);
+            Assertions.assertEquals("1970-01-01 00:00:00.0", minTime);
         });
     }
 
@@ -446,11 +461,11 @@ public class EarliestLatestTest {
         String query = "index=strawberry timeformat=\"%Y-%m-%d-%H-%M-%S\" earliest=2030-01-01-00-00-00 latest=2040-01-01-00-00-00";
         this.streamingTestUtil.performDPLTest(query, this.epochTestFile, res -> {
             // epoch test data contains values from 1970-01-01 till 2050-03-15
-            String maxTime = res.agg(functions.max("_time")).first().getString(0);
-            String minTime = res.agg(functions.min("_time")).first().getString(0);
+            String maxTime = res.agg(functions.max("_time")).first().get(0).toString();
+            String minTime = res.agg(functions.min("_time")).first().get(0).toString();
 
-            Assertions.assertEquals("2030-01-14 00:56:08", maxTime);
-            Assertions.assertEquals("2030-01-14 00:56:08", minTime);
+            Assertions.assertEquals("2030-01-14 00:56:08.0", maxTime);
+            Assertions.assertEquals("2030-01-14 00:56:08.0", minTime);
         });
     }
 
@@ -471,7 +486,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100sec etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
         });
     }
 
@@ -491,7 +506,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
         });
     }
 
@@ -511,7 +526,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100hour etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
         });
     }
 
@@ -531,7 +546,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
         });
     }
 
@@ -551,7 +566,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
         });
     }
 
@@ -571,7 +586,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
         });
     }
 
@@ -591,7 +606,7 @@ public class EarliestLatestTest {
         RelativeTimeParser rtParser = new RelativeTimeParser();
         units.forEach(unit -> {
             String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
         });
     }
 
@@ -605,7 +620,7 @@ public class EarliestLatestTest {
         final long expected = Timestamp.valueOf("9999-10-10 15:15:30.00").toInstant().getEpochSecond();
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
-        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
     }
 
     @Test
@@ -619,7 +634,7 @@ public class EarliestLatestTest {
         final long expected = now.minusYears(1010).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
 
         RelativeTimeParser rtParser = new RelativeTimeParser();
-        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts));
+        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
     }
 
     @Test
@@ -649,7 +664,7 @@ public class EarliestLatestTest {
 
         // positive overflow epoch should be long max value
         RelativeTimeParser rtParser = new RelativeTimeParser();
-        long result = rtParser.parse("+" + v + "h").calculate(ts);
+        long result = rtParser.parse("+" + v + "h").calculate(ts).getEpochSecond();
         Assertions.assertEquals(expected, result);
     }
 
@@ -663,7 +678,7 @@ public class EarliestLatestTest {
 
         // negative overflow epoch should be epoch=0
         RelativeTimeParser rtParser = new RelativeTimeParser();
-        long result = rtParser.parse(v + "h").calculate(ts);
+        long result = rtParser.parse(v + "h").calculate(ts).getEpochSecond();
         Assertions.assertEquals(0, result);
     }
 
@@ -964,6 +979,23 @@ public class EarliestLatestTest {
                 Assertions.fail("(index=*) Expected result rows, instead got 0");
             }
         });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testFractionsOfSecondsInLatestTimeQualifier() {
+        this.streamingTestUtil
+                .performDPLTest(
+                        "index=* earliest=2013-07-15T10:01:50.000+02:00 latest=2014-04-15T08:23:17.001+02:00",
+                        this.testFile, res -> {
+                            Row r = res.select("_time").agg(functions.min("_time"), functions.max("_time")).first();
+                            Assertions.assertEquals("2013-07-15 11:01:50.0", r.get(0).toString());
+                            Assertions.assertEquals("2014-04-15 09:23:17.0", r.get(1).toString());
+                        }
+                );
     }
 
     // Util function: Set _time column in data to be the same as if $date is current time

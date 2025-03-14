@@ -56,6 +56,22 @@ import java.util.Date;
  */
 public class DefaultTimeFormat {
 
+    private final String[] formats;
+
+    public DefaultTimeFormat() {
+        this(new String[] {
+                "MM/dd/yyyy:HH:mm:ss",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss"
+        });
+    }
+
+    public DefaultTimeFormat(String[] formats) {
+        this.formats = formats;
+    }
+
     /**
      * Calculate the epoch from given string.
      * 
@@ -73,40 +89,15 @@ public class DefaultTimeFormat {
      * @return Date parsed from the given string
      */
     public Date parse(String time) {
-        // Try parsing all the three default timeformats
-        Date date;
-
-        int attempt = 0;
-        while (true) {
+        // Try parsing all provided time formats in order
+        for (final String format : formats) {
             try {
-                if (attempt == 0) {
-                    // Use default format (MM/dd/yyyy:HH:mm:ss)
-                    // Use system default timezone
-                    date = this.parseDate(time, "MM/dd/yyyy:HH:mm:ss");
-                }
-                else if (attempt == 1) {
-                    // On first fail, try ISO 8601 with timezone offset, e.g. '2011-12-03T10:15:30+01:00'
-                    date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ssXXX");
-                }
-                else {
-                    // On second fail, try ISO 8601 without offset, e.g. '2011-12-03T10:15:30'
-                    // Use system default timezone
-                    date = this.parseDate(time, "yyyy-MM-dd'T'HH:mm:ss");
-                }
-                break;
-
+                return parseDate(time, format);
             }
-            catch (ParseException e) {
-                if (attempt > 1) {
-                    throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
-                }
-            }
-            finally {
-                attempt++;
+            catch (ParseException ignored) {
             }
         }
-
-        return date;
+        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
     }
 
     private Date parseDate(String time, String timeFormat) throws ParseException {

@@ -126,8 +126,12 @@ public class CatalystVisitorTest {
         String q = "((( index =\"cpu\" AND host = \"sc-99-99-14-25\" ) AND sourcetype = \"log:cpu:0\" ) AND ( earliest= \"01/01/1970:02:00:00\"  AND latest= \"01/01/2030:00:00:00\" ))";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             try {
-                long earliestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("01/01/1970:02:00:00");
-                long latestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss").getEpoch("01/01/2030:00:00:00");
+                long earliestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss")
+                        .instantOf("01/01/1970:02:00:00")
+                        .getEpochSecond();
+                long latestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss")
+                        .instantOf("01/01/2030:00:00:00")
+                        .getEpochSecond();
                 String e = "(((RLIKE(index, (?i)^cpu$) AND RLIKE(host, (?i)^sc-99-99-14-25)) AND RLIKE(sourcetype, (?i)^log:cpu:0)) AND ((_time >= from_unixtime("
                         + earliestEpoch + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(" + latestEpoch
                         + ", yyyy-MM-dd HH:mm:ss))))";
@@ -188,7 +192,7 @@ public class CatalystVisitorTest {
         String q = "index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
-            long earliest = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
+            long earliest = Assertions.assertDoesNotThrow(() -> tf.instantOf("04/16/2020:10:25:40")).getEpochSecond();
             String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + earliest
                     + ", yyyy-MM-dd HH:mm:ss)))";
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
@@ -225,7 +229,9 @@ public class CatalystVisitorTest {
                     String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
                     // check column for archive query i.e. only logical part'
                     DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
-                    long indexEarliestEpoch = Assertions.assertDoesNotThrow(() -> tf.getEpoch("04/16/2020:10:25:40"));
+                    long indexEarliestEpoch = Assertions
+                            .assertDoesNotThrow(() -> tf.instantOf("04/16/2020:10:25:40"))
+                            .getEpochSecond();
                     String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch
                             + ", yyyy-MM-dd HH:mm:ss)))";
                     Assertions.assertEquals(e, logicalPart);

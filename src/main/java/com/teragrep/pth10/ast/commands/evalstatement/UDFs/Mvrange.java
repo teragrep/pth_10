@@ -106,7 +106,7 @@ public class Mvrange implements UDF3<Integer, Integer, Object, List<String>>, Se
             RelativeTimestamp rtTimestamp = rtParser.parse("+" + stepStr);
             // Go until incremented past end
             while (time < end) {
-                time = rtTimestamp.calculate(new Timestamp(time * 1000L));
+                time = rtTimestamp.calculate(new Timestamp(time * 1000L)).getEpochSecond();
 
                 // If time went past end, stop incrementing and don't add to mv field
                 if (time > end) {

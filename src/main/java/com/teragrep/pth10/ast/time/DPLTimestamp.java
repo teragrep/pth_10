@@ -43,29 +43,11 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
+package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.time.RelativeTimeParser;
-import com.teragrep.pth10.ast.time.RelativeTimestamp;
-import org.apache.spark.sql.api.java.UDF2;
+import java.time.Instant;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
+public interface DPLTimestamp {
 
-/**
- * UDF for command relative_time(unixtime, modifier)<br>
- * 
- * @author eemhu
- */
-public class Relative_time implements UDF2<Long, String, Long>, Serializable {
-
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public Long call(Long unixtime, String modifier) throws Exception {
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        RelativeTimestamp rtTimestamp = rtParser.parse(modifier);
-        return rtTimestamp.calculate(new Timestamp(unixtime * 1000L)).getEpochSecond();
-    }
-
+    public abstract Instant instant();
 }

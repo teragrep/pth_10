@@ -76,7 +76,11 @@ public final class TimeQualifier {
                 throw new IllegalArgumentException("Invalid unix epoch: <[" + value + "]>", e);
             }
         }
-        return new EpochTimestamp(value, timeformat).epoch();
+
+        if (isEndTime()) {
+            return new RoundedUpTimestamp(new InstantTimestamp(value, timeformat)).instant().getEpochSecond();
+        }
+        return new InstantTimestamp(value, timeformat).instant().getEpochSecond();
     }
 
     public Column column() {

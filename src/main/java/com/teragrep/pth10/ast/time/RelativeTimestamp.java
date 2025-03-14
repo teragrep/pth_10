@@ -64,17 +64,22 @@ public class RelativeTimestamp {
      * @param timestamp A moment in time, usually the current time
      * @return Calculated time as epoch milliseconds
      */
-    public long calculate(Timestamp timestamp) {
+    public Instant calculate(Timestamp timestamp) {
         Instant time = timestamp.toInstant();
 
         // if both are null, "now" option is left. Therefore, returns current time.
-        if (offset == null && snapToTime == null)
+        if (offset == null && snapToTime == null) {
             time = new Timestamp(System.currentTimeMillis()).toInstant();
+        }
 
-        if (offset != null)
+        if (offset != null) {
             time = offset.addOffset(time);
-        if (snapToTime != null)
+        }
+
+        if (snapToTime != null) {
             time = snapToTime.snap(time);
-        return time.getEpochSecond();
+        }
+
+        return time;
     }
 }

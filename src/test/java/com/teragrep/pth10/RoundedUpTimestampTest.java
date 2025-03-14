@@ -45,63 +45,23 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.time.EpochTimestamp;
+import com.teragrep.pth10.ast.time.DPLTimestamp;
+import com.teragrep.pth10.ast.time.InstantTimestamp;
+import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class EpochTimestampTest {
+public final class RoundedUpTimestampTest {
 
     @Test
-    public void testWithReadableTimeformat() {
-        final String value = "2024-31-10";
-        final String timeformat = "%Y-%d-%m";
-        final Long expected = 1730325600L;
-        EpochTimestamp et = new EpochTimestamp(value, timeformat);
-        Assertions.assertEquals(expected, et.epoch());
+    void testWithoutFractions() {
+        DPLTimestamp timestamp = new RoundedUpTimestamp(new InstantTimestamp("2024-01-01T00:00:00+00:00", ""));
+        Assertions.assertEquals(1704067200L, timestamp.instant().getEpochSecond());
     }
 
     @Test
-    public void testWithUnixTimeformat() {
-        final String value = "1730325600";
-        final String timeformat = "%s";
-        final Long expected = 1730325600L;
-        EpochTimestamp et = new EpochTimestamp(value, timeformat);
-        Assertions.assertEquals(expected, et.epoch());
+    void testWithFractions() {
+        DPLTimestamp timestamp = new RoundedUpTimestamp(new InstantTimestamp("2024-01-01T00:00:00.240+00:00", ""));
+        Assertions.assertEquals(1704067200L + 1L, timestamp.instant().getEpochSecond());
     }
-
-    @Test
-    public void testDefaultTimeformat() {
-        final String value = "2024-10-31T10:10:10z";
-        final String timeformat = "";
-        final Long expected = 1730362210L;
-        EpochTimestamp et = new EpochTimestamp(value, timeformat);
-        Assertions.assertEquals(expected, et.epoch());
-    }
-
-    @Test
-    public void testInvalidValue() {
-        final String value = "xyz";
-        final String timeformat = "%Y-%d-%m";
-        RuntimeException e = Assertions
-                .assertThrows(RuntimeException.class, () -> new EpochTimestamp(value, timeformat).epoch());
-        Assertions.assertEquals("TimeQualifier conversion error: <" + value + "> can't be parsed.", e.getMessage());
-    }
-
-    @Test
-    public void testEquals() {
-        final String value = "2024-10-31T10:10:10z";
-        final String timeformat = "%Y-%d-%m";
-
-        Assertions.assertEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value, timeformat));
-    }
-
-    @Test
-    public void testNotEquals() {
-        final String value = "2024-10-31T10:10:10z";
-        final String value2 = "2024-10-30T10:10:10z";
-        final String timeformat = "%Y-%d-%m";
-
-        Assertions.assertNotEquals(new EpochTimestamp(value, timeformat), new EpochTimestamp(value2, timeformat));
-    }
-
 }

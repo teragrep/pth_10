@@ -43,29 +43,25 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.evalstatement.UDFs;
+package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.time.RelativeTimeParser;
-import com.teragrep.pth10.ast.time.RelativeTimestamp;
-import org.apache.spark.sql.api.java.UDF2;
+import java.time.Instant;
 
-import java.io.Serializable;
-import java.sql.Timestamp;
+public final class RoundedUpTimestamp implements DPLTimestamp {
 
-/**
- * UDF for command relative_time(unixtime, modifier)<br>
- * 
- * @author eemhu
- */
-public class Relative_time implements UDF2<Long, String, Long>, Serializable {
+    private final DPLTimestamp dplTimestamp;
 
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public Long call(Long unixtime, String modifier) throws Exception {
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        RelativeTimestamp rtTimestamp = rtParser.parse(modifier);
-        return rtTimestamp.calculate(new Timestamp(unixtime * 1000L)).getEpochSecond();
+    public RoundedUpTimestamp(final DPLTimestamp dplTimestamp) {
+        this.dplTimestamp = dplTimestamp;
     }
 
+    public Instant instant() {
+        Instant origin = dplTimestamp.instant();
+        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
+        // that are on the same second
+        if (origin.getNano() > 0) {
+            origin = origin.plusSeconds(1);
+        }
+        return origin;
+    }
 }
