@@ -47,6 +47,7 @@ package com.teragrep.pth10.ast;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -97,7 +98,10 @@ public class DefaultTimeFormat {
             catch (ParseException ignored) {
             }
         }
-        throw new RuntimeException("Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats <>)");
+        throw new RuntimeException(
+                "Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats: "
+                        + Arrays.toString(formats) + ")"
+        );
     }
 
     private Date parseDate(String time, String timeFormat) throws ParseException {

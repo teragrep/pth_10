@@ -359,7 +359,7 @@ public class EarliestLatestTest {
                 });
         Assertions
                 .assertEquals(
-                        "Error parsing <31/31/2014:00:00:00>. Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats <MM/dd/yyyy:HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ss>, <yyyy-MM-dd'T'HH:mm:ssXXX>). Unknown relative time modifier string [31/31/2014:00:00:00].",
+                        "Error parsing <31/31/2014:00:00:00>. Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats: [MM/dd/yyyy:HH:mm:ss, yyyy-MM-dd'T'HH:mm:ss.SSSXXX, yyyy-MM-dd'T'HH:mm:ss.SSS, yyyy-MM-dd'T'HH:mm:ssXXX, yyyy-MM-dd'T'HH:mm:ss]). Unknown relative time modifier string [31/31/2014:00:00:00].",
                         sqe.getMessage()
                 );
     }
