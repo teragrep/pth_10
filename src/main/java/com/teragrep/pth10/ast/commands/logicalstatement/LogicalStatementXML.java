@@ -334,6 +334,9 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
             rv = new ElementNode(el);
         }
 
+        else
+            throw new IllegalStateException("VisitLogicalStatement returned a Null value");
+
         if (rv instanceof SubSearchNode) {
             LOGGER.info("[XML] [LogiStat] Return value was SubsearchNode. Converting to ElementNode!");
             return new ElementNode(((SubSearchNode) rv).asElement(doc));
