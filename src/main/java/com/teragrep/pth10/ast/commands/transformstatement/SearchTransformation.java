@@ -84,11 +84,17 @@ public class SearchTransformation extends DPLParserBaseVisitor<Node> {
         if (searchRootCtx != null) {
             // isSearchCommand=true is used to skip generating archiveQuery as 'search' is used to filter existing dataset
             // rather than getting a new one and filtering it
-            LogicalStatementCatalyst logiStat = new LogicalStatementCatalyst(this.catCtx);
+            final LogicalStatementCatalyst logiStat = new LogicalStatementCatalyst(this.catCtx);
             LOGGER.info("SearchTransformationRoot - skipping xml generation");
-            ColumnNode filter = (ColumnNode) logiStat.visitSearchTransformationRoot(searchRootCtx);
-            searchStep.setFilteringColumn(filter.getColumn());
-
+            final ColumnNode filter = (ColumnNode) logiStat.visitSearchTransformationRoot(searchRootCtx);
+            if (filter.getColumn() != null) {
+                searchStep.setFilteringColumn(filter.getColumn());
+            }
+            else {
+                throw new IllegalStateException(
+                        "search command expected filtering value(s) but found: <" + filter.getColumn() + ">."
+                );
+            }
         }
         else {
             throw new IllegalStateException(
