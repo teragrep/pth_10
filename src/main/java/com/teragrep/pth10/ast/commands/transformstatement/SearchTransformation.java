@@ -51,7 +51,6 @@ import com.teragrep.pth10.ast.commands.logicalstatement.LogicalStatementCatalyst
 import com.teragrep.pth10.steps.search.SearchStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
-import org.apache.spark.sql.functions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,8 +91,9 @@ public class SearchTransformation extends DPLParserBaseVisitor<Node> {
                 searchStep.setFilteringColumn(filter.getColumn());
             }
             else {
-                final ColumnNode filterColumn = new ColumnNode(functions.lit(false));
-                searchStep.setFilteringColumn(filterColumn.getColumn());
+                throw new IllegalStateException(
+                        "search command expected filtering value(s) but found: <" + filter.getColumn() + ">."
+                );
             }
         }
         else {
