@@ -106,6 +106,22 @@ public final class FilterTypesTest {
     }
 
     @Test
+    public void testSortedMapMethodWithEmptyStringJSON() {
+        Config config = ConfigFactory.parseProperties(emptyStringProperties());
+        FilterTypes filterTypes = new FilterTypes(config);
+        Exception exception = assertThrows(RuntimeException.class, () -> {filterTypes.sortedMap();});
+        Assertions.assertEquals("Bloom filter size fields was not configured.", exception.getMessage());
+    }
+
+    @Test
+    public void testSortedMapMethodWithNullStringJSON() {
+        Config config = ConfigFactory.parseProperties(nullStringProperties());
+        FilterTypes filterTypes = new FilterTypes(config);
+        Exception exception = assertThrows(RuntimeException.class, () -> {filterTypes.sortedMap();});
+        Assertions.assertEquals("Bloom filter size fields was not configured.", exception.getMessage());
+    }
+
+    @Test
     public void testBitSizeMapMethod() {
         Config config = ConfigFactory.parseProperties(defaultProperties());
         FilterTypes filterTypes = new FilterTypes(config);
@@ -219,6 +235,32 @@ public final class FilterTypesTest {
                         "dpl.pth_06.bloom.db.fields",
                         "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.02},"
                                 + "{expected: 3000, fpp: 0.03}" + "]"
+                );
+        return properties;
+    }
+
+    public Properties emptyStringProperties() {
+        Properties properties = new Properties();
+        properties.put("dpl.pth_10.bloom.db.username", username);
+        properties.put("dpl.pth_10.bloom.db.password", password);
+        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        ""
+                );
+        return properties;
+    }
+
+    public Properties nullStringProperties() {
+        Properties properties = new Properties();
+        properties.put("dpl.pth_10.bloom.db.username", username);
+        properties.put("dpl.pth_10.bloom.db.password", password);
+        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "null"
                 );
         return properties;
     }
