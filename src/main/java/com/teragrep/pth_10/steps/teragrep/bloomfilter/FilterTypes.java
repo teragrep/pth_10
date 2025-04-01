@@ -123,7 +123,7 @@ public final class FilterTypes implements Serializable {
         final String BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM = "dpl.pth_06.bloom.db.fields";
         if (config.hasPath(BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM)) {
             jsonString = config.getString(BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM);
-            if (jsonString == null || jsonString.isEmpty() || jsonString.equals("null")) {
+            if (jsonString == null || jsonString.isEmpty() || "null".equals(jsonString)) {
                 throw new RuntimeException("Bloom filter size fields was not configured.");
             }
         }
