@@ -671,4 +671,26 @@ public class logicalOperationTest {
             Assertions.assertEquals("\"raw 08\"", listOfRaw.get(3));
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testNotStatementBeforeIndex() {
+        String query = "NOT (index=index_B OR \"raw 01\")";
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            res.show();
+            List<String> listOfRaw = res
+                    .select("_raw")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(5, res.count()); // 1 row of data
+            Assertions.assertNotEquals("\"raw 01\"", listOfRaw.get(0));
+        });
+    }
 }
