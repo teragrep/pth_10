@@ -405,7 +405,7 @@
             <exclude>.github/workflows/*.yml</exclude>
             <exclude>.github/workflows/*.yaml</exclude>
             <exclude>.github/ISSUE_TEMPLATE/*</exclude>
-            <exclude>.github/PULL_REQUEST_TEMPLATE/*</exclude>
+            <exclude>.github/pull_request_template.md</exclude>
             <exclude>toolchains.xml</exclude>
             <exclude>settings.xml</exclude>
             <exclude>dependencies.settings.xml</exclude>
