@@ -56,6 +56,7 @@ import org.junit.jupiter.api.*;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.*;
@@ -64,21 +65,19 @@ import java.util.*;
 class TeragrepBloomFilterTest {
 
     private final String pattern = "[a-zA-Z]*$";
-    private LazyConnection lazyConnection;
     private FilterTypes filterTypes;
     private final BloomFilter emptyFilter = BloomFilter.create(100, 0.01);
     private SortedMap<Long, Double> sizeMap;
     private final String tableName = "bloomfilter_test";
+    private final String username = "sa";
+    private final String password = "";
+    private final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final Connection conn = Assertions
+            .assertDoesNotThrow(() -> DriverManager.getConnection(connectionUrl, username, password));
 
     @BeforeAll
     void setEnv() {
         Properties properties = new Properties();
-        String username = "sa";
-        properties.put("dpl.pth_10.bloom.db.username", username);
-        String password = "";
-        properties.put("dpl.pth_10.bloom.db.password", password);
-        String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
-        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
         properties
                 .put(
                         "dpl.pth_06.bloom.db.fields",
@@ -86,8 +85,6 @@ class TeragrepBloomFilterTest {
                                 + "{expected: 30000, fpp: 0.05}" + "]"
                 );
         Config config = ConfigFactory.parseProperties(properties);
-        lazyConnection = new LazyConnection(config);
-        Connection conn = lazyConnection.get();
         Assertions.assertDoesNotThrow(() -> {
             conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
         });
@@ -128,10 +125,10 @@ class TeragrepBloomFilterTest {
 
     @AfterAll
     public void tearDown() {
-        Connection conn = lazyConnection.get();
         Assertions.assertDoesNotThrow(() -> {
             conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
         });
+        Assertions.assertDoesNotThrow(conn::close);
     }
 
     // -- Tests --
@@ -147,7 +144,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter = new TeragrepBloomFilter(
                 partition,
                 rawFilter,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
@@ -156,7 +153,7 @@ class TeragrepBloomFilterTest {
         Map.Entry<Long, Double> entry = sizeMap.entrySet().iterator().next();
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = lazyConnection.get().prepareStatement(sql).executeQuery();
+            ResultSet rs = conn.prepareStatement(sql).executeQuery();
             int cols = rs.getMetaData().getColumnCount();
             BloomFilter resultFilter = emptyFilter;
             int loops = 0;
@@ -187,7 +184,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter = new TeragrepBloomFilter(
                 partition,
                 rawFilter,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
@@ -196,7 +193,7 @@ class TeragrepBloomFilterTest {
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
             BloomFilter resultFilter = emptyFilter;
-            ResultSet rs = lazyConnection.get().prepareStatement(sql).executeQuery();
+            ResultSet rs = conn.prepareStatement(sql).executeQuery();
             while (rs.next()) {
                 byte[] bytes = rs.getBytes(1);
                 ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
@@ -220,7 +217,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter secondFilter = new TeragrepBloomFilter(
                 secondPartition,
                 rawFilter2,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
@@ -228,7 +225,7 @@ class TeragrepBloomFilterTest {
         secondFilter.saveFilter(true);
         String secondSql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet secondRs = lazyConnection.get().prepareStatement(secondSql).executeQuery();
+            ResultSet secondRs = conn.prepareStatement(secondSql).executeQuery();
             BloomFilter secondResultFilter = emptyFilter;
             while (secondRs.next()) {
                 byte[] bytes = secondRs.getBytes(1);
@@ -242,7 +239,7 @@ class TeragrepBloomFilterTest {
             Assertions.assertFalse(secondResultFilter.mightContain("one"));
             Assertions.assertTrue(secondResultFilter.mightContain("neo"));
             Assertions.assertTrue(secondResultFilter.expectedFpp() <= 0.01D);
-            secondRs.close();
+            Assertions.assertDoesNotThrow(secondRs::close);
         });
     }
 
@@ -261,7 +258,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter = new TeragrepBloomFilter(
                 partition,
                 rawFilter,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
@@ -276,7 +273,7 @@ class TeragrepBloomFilterTest {
         Double fpp = sizeMap.get(size);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = lazyConnection.get().prepareStatement(sql).executeQuery();
+            ResultSet rs = conn.prepareStatement(sql).executeQuery();
             int cols = rs.getMetaData().getColumnCount();
             BloomFilter resultFilter = emptyFilter;
             int loops = 0;
@@ -292,7 +289,7 @@ class TeragrepBloomFilterTest {
             Assertions.assertTrue(resultFilter.mightContain("one"));
             Assertions.assertFalse(resultFilter.mightContain("neo"));
             Assertions.assertTrue(resultFilter.expectedFpp() <= fpp);
-            rs.close();
+            Assertions.assertDoesNotThrow(rs::close);
         });
     }
 
@@ -300,7 +297,7 @@ class TeragrepBloomFilterTest {
     public void testPatternSavedToDatabase() {
         String sql = "SELECT `pattern` FROM `filtertype` GROUP BY `pattern`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = lazyConnection.get().prepareStatement(sql).executeQuery();
+            ResultSet rs = conn.prepareStatement(sql).executeQuery();
             String pattern = "";
             while (rs.next()) {
                 pattern = rs.getString(1);
@@ -320,7 +317,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter1 = new TeragrepBloomFilter(
                 partition,
                 rawFilter,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
@@ -328,7 +325,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter2 = new TeragrepBloomFilter(
                 partition,
                 rawFilter,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
@@ -350,7 +347,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter1 = new TeragrepBloomFilter(
                 row1.getString(0),
                 rawFilter1,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
@@ -358,7 +355,7 @@ class TeragrepBloomFilterTest {
         TeragrepBloomFilter filter2 = new TeragrepBloomFilter(
                 row2.getString(0),
                 rawFilter2,
-                lazyConnection.get(),
+                conn,
                 filterTypes,
                 tableName,
                 pattern
