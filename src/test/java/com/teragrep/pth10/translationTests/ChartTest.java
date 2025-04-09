@@ -81,9 +81,9 @@ public class ChartTest {
         Assertions
                 .assertEquals(
                         "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
-                        Arrays.toString(cs.getListOfAggrExpressions().toArray())
+                        Arrays.toString(cs.aggrExpressionsList().toArray())
                 );
-        Assertions.assertEquals("[_time]", Arrays.toString(cs.getGroupByList().toArray()));
+        Assertions.assertEquals("[_time]", Arrays.toString(cs.groupByList().toArray()));
 
     }
 
@@ -105,9 +105,9 @@ public class ChartTest {
         Assertions
                 .assertEquals(
                         "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
-                        Arrays.toString(cs.getListOfAggrExpressions().toArray())
+                        Arrays.toString(cs.aggrExpressionsList().toArray())
                 );
-        Assertions.assertEquals("[_time, fieldTwo]", Arrays.toString(cs.getGroupByList().toArray()));
+        Assertions.assertEquals("[_time, fieldTwo]", Arrays.toString(cs.groupByList().toArray()));
     }
 
     @Test
@@ -128,9 +128,9 @@ public class ChartTest {
         Assertions
                 .assertEquals(
                         "[countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS `count(_raw)`]",
-                        Arrays.toString(cs.getListOfAggrExpressions().toArray())
+                        Arrays.toString(cs.aggrExpressionsList().toArray())
                 );
-        Assertions.assertEquals("[fieldTwo, _time]", Arrays.toString(cs.getGroupByList().toArray()));
+        Assertions.assertEquals("[fieldTwo, _time]", Arrays.toString(cs.groupByList().toArray()));
 
     }
 }

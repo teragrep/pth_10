@@ -84,11 +84,11 @@ public final class ChartStep extends AbstractStep {
         return dataset.groupBy(seqOfGroupBy).agg(mainExpr, seqOfExpr);
     }
 
-    public List<Column> getListOfAggrExpressions() {
+    public List<Column> aggrExpressionsList() {
         return listOfAggrExpressions;
     }
 
-    public List<Column> getGroupByList() {
+    public List<Column> groupByList() {
         return groupByList;
     }
 }
