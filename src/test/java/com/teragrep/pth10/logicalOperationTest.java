@@ -684,13 +684,17 @@ public class logicalOperationTest {
             res.show();
             List<String> listOfRaw = res
                     .select("_raw")
+                    .orderBy("offset")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-
-            Assertions.assertEquals(5, res.count()); // 1 row of data
-            Assertions.assertNotEquals("\"raw 01\"", listOfRaw.get(0));
+            Assertions.assertEquals(5, res.count()); // 5 rows of data
+            Assertions.assertEquals("\"raw 02\"", listOfRaw.get(0));
+            Assertions.assertEquals("\"raw 03\"", listOfRaw.get(1));
+            Assertions.assertEquals("\"raw 08\"", listOfRaw.get(2));
+            Assertions.assertEquals("\"raw 09\"", listOfRaw.get(3));
+            Assertions.assertEquals("\"raw 10\"", listOfRaw.get(4));
         });
     }
 }
