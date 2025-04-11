@@ -60,6 +60,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -354,11 +355,14 @@ public class EarliestLatestTest {
     )
     public void defaultFormatInvalidInputTest() { // MM/dd/yyyy:HH:mm:ss 2013-07-15 10:01:50
         String query = "(index=strawberry OR index=seagull) AND earliest=31/31/2014:00:00:00";
-        RuntimeException sqe = this.streamingTestUtil
-                .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
+        DateTimeException sqe = this.streamingTestUtil
+                .performThrowingDPLTest(DateTimeException.class, query, this.testFile, res -> {
                 });
         Assertions
-                .assertEquals("TimeQualifier conversion error: <31/31/2014:00:00:00> can't be parsed.", sqe.getMessage());
+                .assertEquals(
+                        "Error parsing <31/31/2014:00:00:00>. Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats: [MM/dd/yyyy:HH:mm:ss, yyyy-MM-dd'T'HH:mm:ss.SSSXXX, yyyy-MM-dd'T'HH:mm:ss.SSS, yyyy-MM-dd'T'HH:mm:ssXXX, yyyy-MM-dd'T'HH:mm:ss]). Unknown relative time modifier string [31/31/2014:00:00:00].",
+                        sqe.getMessage()
+                );
     }
 
     @Test
