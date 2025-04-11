@@ -338,8 +338,8 @@ public class relativeTimeTest {
         String q = "index=cinnamon latest=3h ";
         String expected = "Error parsing <3h>. Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats: [MM/dd/yyyy:HH:mm:ss, yyyy-MM-dd'T'HH:mm:ss.SSSXXX, yyyy-MM-dd'T'HH:mm:ss.SSS, yyyy-MM-dd'T'HH:mm:ssXXX, yyyy-MM-dd'T'HH:mm:ss]). Unknown relative time modifier string [3h].";
 
-        RuntimeException exception = this.streamingTestUtil
-                .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
+        DateTimeException exception = this.streamingTestUtil
+                .performThrowingDPLTest(DateTimeException.class, q, this.testFile, res -> {
                 });
 
         Assertions.assertEquals(expected, exception.getMessage());

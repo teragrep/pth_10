@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.Objects;
 
@@ -95,8 +96,8 @@ public final class InstantTimestamp implements DPLTimestamp {
             try {
                 timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
             }
-            catch (final RuntimeException ex) {
-                throw new RuntimeException(
+            catch (final DateTimeException ex) {
+                throw new DateTimeException(
                         "Error parsing <" + unquotedValue + ">. " + ex.getMessage() + ". " + cause.getMessage() + ".",
                         cause
                 );
