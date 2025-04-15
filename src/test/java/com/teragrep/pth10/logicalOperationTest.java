@@ -681,7 +681,6 @@ public class logicalOperationTest {
         String query = "NOT (index=index_B OR \"raw 01\")";
 
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            res.show();
             List<String> listOfRaw = res
                     .select("_raw")
                     .orderBy("offset")
@@ -689,7 +688,7 @@ public class logicalOperationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
-            Assertions.assertEquals(5, res.count()); // 5 rows of data
+            Assertions.assertEquals(5, listOfRaw.size()); // 5 rows of data
             Assertions.assertEquals("\"raw 02\"", listOfRaw.get(0));
             Assertions.assertEquals("\"raw 03\"", listOfRaw.get(1));
             Assertions.assertEquals("\"raw 08\"", listOfRaw.get(2));
