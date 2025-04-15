@@ -157,7 +157,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             if (singleNode.isStub()) {
                 LOGGER.info("Child node was a NullNode");
                 rv = new NullNode();
-            } else {
+            }
+            else {
                 rv = singleNode;
             }
         }
