@@ -123,28 +123,13 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     public AbstractStep visitLogicalStatementCatalyst(DPLParser.SearchTransformationRootContext ctx) {
         if (ctx != null) {
             final Node ret = visitSearchTransformationRoot(ctx);
-            if (!(ret instanceof NullNode)) {
+            if (!ret.isStub()) {
                 final Column filterColumn = ((ColumnNode) visitSearchTransformationRoot(ctx)).getColumn();
                 return new LogicalCatalystStep(filterColumn);
             }
         }
         return new NullStep();
     }
-
-    /*
-      if (ctx != null) {
-            final Node ret = visitSearchTransformationRoot(ctx);
-            if (ret != null) {
-                final ColumnNode colNode = (ColumnNode) visitSearchTransformationRoot(ctx);
-                if (colNode.getColumn() != null) {
-                    final Column filterColumn = colNode.getColumn();
-                    return new LogicalCatalystStep(filterColumn);
-                }
-            }
-        }
-        return new NullStep();
-    */
-
 
     /**
      * The main visitor function for searchTransformation, used for the main search function. <pre>
@@ -158,26 +143,18 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitSearchTransformationRoot(DPLParser.SearchTransformationRootContext ctx) {
         final Node rv;
-        LOGGER
-                .info(
-                        "[SearchTransformationRoot CAT] Visiting: <{}> with <{}> children", ctx.getText(),
-                        ctx.getChildCount()
-                );
-
-        /*
-        final ColumnNode rv;
-        if (LOGGER.isInfoEnabled()) {
+        if (LOGGER.isInfoEnabled()){
             LOGGER
                     .info(
-                            "queryId <{}> [SearchTransformationRoot CAT] Visiting: <{}> with <{}> children",
-                            catCtx.getQueryName(), ctx.getText(), ctx.getChildCount()
+                            "[SearchTransformationRoot CAT] Visiting: <{}> with <{}> children", ctx.getText(),
+                            ctx.getChildCount()
                     );
         }
-         */
+
         if (ctx.getChildCount() == 1) {
             // just a single directoryStatement -or- logicalStatement
             final Node singleNode = visit(ctx.getChild(0));
-            if (singleNode instanceof NullNode) {
+            if (singleNode.isStub()) {
                 LOGGER.info("Child node was a NullNode");
                 rv = new NullNode();
             } else {
@@ -190,20 +167,15 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 secondChild instanceof TerminalNode && ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR
             ) {
                 // case: directoryStmt OR logicalStmt
-                /*
-                 final ColumnNode dirStatColumnNode = (ColumnNode) visit(ctx.directoryStatement());
-                final ColumnNode logiStatColumnNode = (ColumnNode) visit(ctx.logicalStatement(0));
-                rv = new ColumnNode(dirStatColumnNode.getColumn().or(logiStatColumnNode.getColumn()));
-                 */
                 final Node directoryNode = visit(ctx.directoryStatement());
                 final Node logicalNode = visit(ctx.logicalStatement(0));
-                if (directoryNode instanceof NullNode) {
+                if (directoryNode.isStub()) {
                     LOGGER.info("Directory statement node was a NullNode");
-                    rv = new NullNode();
+                    rv = directoryNode;
                 }
-                else if (logicalNode instanceof NullNode) {
+                else if (logicalNode.isStub()) {
                     LOGGER.info("Logical statement node was a NullNode");
-                    rv = new NullNode();
+                    rv = logicalNode;
                 }
                 else {
                     final ColumnNode dirStatColumnNode = (ColumnNode) directoryNode;
@@ -214,7 +186,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             else {
                 // case: (logicalStmt AND?)*? directoryStmt (AND? logicalStmt)*?
                 final Node finalNode = visit(ctx.directoryStatement());
-                if (finalNode instanceof NullNode) {
+                if (finalNode.isStub()) {
                     LOGGER.info("Directory statement node was a NullNode");
                     rv = finalNode;
                 }
@@ -230,19 +202,13 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 }
             }
         }
-        /*
-        if (rv != null && rv.getColumn() != null) {
-            this.catCtx.setSparkQuery(rv.getColumn().toString());
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("queryId <{}> Spark column: <{}>", catCtx.getQueryName(), rv.getColumn().toString());
-            }
-        }
-         */
 
         if (rv instanceof ColumnNode) {
             final ColumnNode columnNode = (ColumnNode) rv;
             if (columnNode.getColumn() != null) {
-                LOGGER.info("Spark column: <{}>", columnNode.getColumn().toString());
+                if (LOGGER.isInfoEnabled()){
+                    LOGGER.info("Spark column: <{}>", columnNode.getColumn().toString());
+                }
                 this.catCtx.setSparkQuery(columnNode.getColumn().toString());
             }
         }
