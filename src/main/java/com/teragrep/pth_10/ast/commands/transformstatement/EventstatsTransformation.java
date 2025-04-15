@@ -115,30 +115,34 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_eventstats_aggregationInstruction(DPLParser.T_eventstats_aggregationInstructionContext ctx) {
-        final ParseTree cmd = ctx.getChild(0);
-        if (!(cmd instanceof DPLParser.AggregateFunctionContext)) {
-            throw new RuntimeException("Eventstats command expected an aggregation function, but found " + cmd + ".");
+        final ParseTree cmd;
+        final DPLParser.AggregateFunctionContext aggregateFunctionContext;
+        try {
+            aggregateFunctionContext = ctx.aggregateFunction();
+            cmd = aggregateFunctionContext.getChild(0);
+        }
+        catch (final NullPointerException e) {
+            throw new RuntimeException("Eventstats did not get an aggregation function");
         }
 
         final AggregateFunction aggFunction = new AggregateFunction(catCtx);
         final Node aggNode = aggFunction.visit(cmd);
         final Column aggCol = ((ColumnNode) aggNode).getColumn();
-        final ParseTree fieldRenameInst = ctx.getChild(1);
+
+        try { // check for rename instruction
+            final String renameColumnName = ctx.t_eventstats_fieldRenameInstruction().fieldType().getText();
+            LOGGER.debug("Rename column as <{}>", renameColumnName);
+            // AS new-fieldname
+            listOfAggregations.add(aggCol.as(renameColumnName));
+        }
+        catch (final NullPointerException e) {
+            LOGGER.debug("No rename instruction found");
+            listOfAggregations.add(aggCol);
+        }
 
         // visit agg function
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Aggregate function: text=<{}>", cmd.getText());
-        }
-
-        if (fieldRenameInst instanceof DPLParser.T_eventstats_fieldRenameInstructionContext) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Field rename instruction: text=<{}>", fieldRenameInst.getText());
-            }
-            // AS new-fieldname
-            listOfAggregations.add(aggCol.as(fieldRenameInst.getChild(1).getText()));
-        }
-        else {
-            listOfAggregations.add(aggCol);
         }
 
         return new NullNode();
