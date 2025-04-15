@@ -116,9 +116,8 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_eventstats_aggregationInstruction(DPLParser.T_eventstats_aggregationInstructionContext ctx) {
         final ParseTree cmd;
-        final DPLParser.AggregateFunctionContext aggregateFunctionContext;
         try {
-            aggregateFunctionContext = ctx.aggregateFunction();
+            final DPLParser.AggregateFunctionContext aggregateFunctionContext = ctx.aggregateFunction();
             cmd = aggregateFunctionContext.getChild(0);
         }
         catch (final NullPointerException e) {
