@@ -113,6 +113,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         }
         else {
             LOGGER.info("queryId <{}> -> Left tree NULL", catCtx.getQueryName());
+            throw new IllegalArgumentException("Left tree is Null" );
         }
 
         if (rightTree != null) {
