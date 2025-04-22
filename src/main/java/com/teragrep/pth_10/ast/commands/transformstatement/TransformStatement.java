@@ -112,8 +112,11 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
             LOGGER.info("queryId <{}> -> Left tree: text=<{}>", catCtx.getQueryName(), leftTree.getText());
         }
         else {
-            LOGGER.info("queryId <{}> -> Left tree NULL", catCtx.getQueryName());
-            throw new IllegalArgumentException("Left tree is Null" );
+            LOGGER.error("queryId <{}> -> Left tree NULL", catCtx.getQueryName());
+            throw new IllegalArgumentException(
+                    "Transformation command was not given or the given command is not yet implemented, TransformStatement: <"
+                            + ctx.getText() + ">"
+            );
         }
 
         if (rightTree != null) {
