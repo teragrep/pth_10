@@ -109,7 +109,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         }
         else {
             LOGGER.info("-> Left tree NULL");
-            throw new IllegalArgumentException("Left tree is Null" );
+            throw new IllegalArgumentException("Left tree is Null");
         }
 
         if (rightTree != null) {
