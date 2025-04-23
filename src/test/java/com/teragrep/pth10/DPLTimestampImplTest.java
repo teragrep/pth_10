@@ -45,20 +45,28 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.time.InstantTimestamp;
+import com.teragrep.pth10.ast.time.DPLTimestampImpl;
 import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
-public class InstantTimestampTest {
+import java.time.Instant;
+import java.time.ZoneId;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+public class DPLTimestampImplTest {
+
+    private final ZoneId expectedZoneId = ZoneId.of("GMT+2");
 
     @Test
     public void testWithReadableTimeformat() {
         final String value = "2024-31-10";
         final String timeformat = "%Y-%d-%m";
         final Long expected = 1730325600L;
-        InstantTimestamp et = new InstantTimestamp(value, timeformat);
-        Assertions.assertEquals(expected, et.instant().getEpochSecond());
+        final Instant instant = new DPLTimestampImpl(value, timeformat, expectedZoneId).zonedDateTime().toInstant();
+        Assertions.assertEquals(expected, instant.getEpochSecond());
     }
 
     @Test
@@ -66,8 +74,8 @@ public class InstantTimestampTest {
         final String value = "2024-31-10";
         final String timeformat = "%Y-%d-%m";
         final Long expected = 1730325600L;
-        RoundedUpTimestamp et = new RoundedUpTimestamp(new InstantTimestamp(value, timeformat));
-        Assertions.assertEquals(expected, et.instant().getEpochSecond());
+        final RoundedUpTimestamp et = new RoundedUpTimestamp(new DPLTimestampImpl(value, timeformat, expectedZoneId));
+        Assertions.assertEquals(expected, et.zonedDateTime().toInstant().getEpochSecond());
     }
 
     @Test
@@ -75,8 +83,8 @@ public class InstantTimestampTest {
         final String value = "1730325600";
         final String timeformat = "%s";
         final Long expected = 1730325600L;
-        InstantTimestamp et = new InstantTimestamp(value, timeformat);
-        Assertions.assertEquals(expected, et.instant().getEpochSecond());
+        final Instant et = new DPLTimestampImpl(value, timeformat, expectedZoneId).zonedDateTime().toInstant();
+        Assertions.assertEquals(expected, et.getEpochSecond());
     }
 
     @Test
@@ -84,17 +92,17 @@ public class InstantTimestampTest {
         final String value = "1730325600";
         final String timeformat = "%s";
         final Long expected = 1730325600L;
-        RoundedUpTimestamp et = new RoundedUpTimestamp(new InstantTimestamp(value, timeformat));
-        Assertions.assertEquals(expected, et.instant().getEpochSecond());
+        final RoundedUpTimestamp et = new RoundedUpTimestamp(new DPLTimestampImpl(value, timeformat, expectedZoneId));
+        Assertions.assertEquals(expected, et.zonedDateTime().toInstant().getEpochSecond());
     }
 
     @Test
-    public void testDefaultTimeformat() {
-        final String value = "2024-10-31T10:10:10z";
+    public void testEmptyFallsToDefaultTimeformat() {
+        final String value = "2024-10-31T10:10:10Z";
         final String timeformat = "";
-        final Long expected = 1730362210L;
-        InstantTimestamp et = new InstantTimestamp(value, timeformat);
-        Assertions.assertEquals(expected, et.instant().getEpochSecond());
+        final Long expected = 1730369410L;
+        final Instant et = new DPLTimestampImpl(value, timeformat, expectedZoneId).zonedDateTime().toInstant();
+        Assertions.assertEquals(expected, et.getEpochSecond());
     }
 
     @Test
@@ -102,25 +110,25 @@ public class InstantTimestampTest {
         final String value = "2024-10-31T10:10:10.001";
         final String timeformat = "";
         final Long expected = 1730362210L + 1L;
-        RoundedUpTimestamp et = new RoundedUpTimestamp(new InstantTimestamp(value, timeformat));
-        Assertions.assertEquals(expected, et.instant().getEpochSecond());
+        final RoundedUpTimestamp et = new RoundedUpTimestamp(new DPLTimestampImpl(value, timeformat, expectedZoneId));
+        Assertions.assertEquals(expected, et.zonedDateTime().toInstant().getEpochSecond());
     }
 
     @Test
     public void testInvalidValue() {
         final String value = "xyz";
         final String timeformat = "%Y-%d-%m";
-        RuntimeException e = Assertions
-                .assertThrows(RuntimeException.class, () -> new InstantTimestamp(value, timeformat).instant());
-        Assertions.assertEquals("TimeQualifier conversion error: <" + value + "> can't be parsed.", e.getMessage());
+        final RuntimeException e = Assertions
+                .assertThrows(RuntimeException.class, () -> new DPLTimestampImpl(value, timeformat).zonedDateTime());
+        final String expectedMessage = "TimeQualifier conversion error <{Text 'xyz' could not be parsed at index 0}>";
+        Assertions.assertEquals(expectedMessage, e.getMessage());
     }
 
     @Test
     public void testEquals() {
         final String value = "2024-10-31T10:10:10z";
         final String timeformat = "%Y-%d-%m";
-
-        Assertions.assertEquals(new InstantTimestamp(value, timeformat), new InstantTimestamp(value, timeformat));
+        Assertions.assertEquals(new DPLTimestampImpl(value, timeformat), new DPLTimestampImpl(value, timeformat));
     }
 
     @Test
@@ -128,8 +136,11 @@ public class InstantTimestampTest {
         final String value = "2024-10-31T10:10:10z";
         final String value2 = "2024-10-30T10:10:10z";
         final String timeformat = "%Y-%d-%m";
-
-        Assertions.assertNotEquals(new InstantTimestamp(value, timeformat), new InstantTimestamp(value2, timeformat));
+        Assertions.assertNotEquals(new DPLTimestampImpl(value, timeformat), new DPLTimestampImpl(value2, timeformat));
     }
 
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(DPLTimestampImpl.class).withNonnullFields("value", "timeformat", "zoneId").verify();
+    }
 }

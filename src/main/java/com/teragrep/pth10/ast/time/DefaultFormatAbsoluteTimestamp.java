@@ -45,61 +45,66 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.TimeZone;
 
-public final class RelativeTimestamp implements DPLTimestamp {
+/**
+ * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
+ * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
+ * uses the system default
+ */
+public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
 
-    private final ValidRelativeTimestampText offsetString;
-    private final ZonedDateTime baseTime;
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultFormatAbsoluteTimestamp.class);
 
-    public RelativeTimestamp(final String offsetString) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now());
+    private final String[] formats;
+    private final String value;
+    private final ZoneId zoneId;
+
+    public DefaultFormatAbsoluteTimestamp(final String value) {
+        this(value, TimeZone.getDefault().toZoneId());
     }
 
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
+        this(value, new String[] {
+                "MM/dd/yyyy:HH:mm:ss",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss"
+        }, zoneId);
     }
 
-    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
+    public DefaultFormatAbsoluteTimestamp(String value, String[] formats, ZoneId zoneId) {
+        this.value = value;
+        this.formats = formats;
+        this.zoneId = zoneId;
     }
 
-    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
-        this.offsetString = offsetString;
-        this.baseTime = baseTime;
-    }
-
-    @Override
     public ZonedDateTime zonedDateTime() {
-        if (isStub()) {
-            throw new RuntimeException("Object is stub, zonedDateTime() not supported");
+        LOGGER.debug("Parsing value <{}> using default formats", value);
+        for (final String format : formats) {
+            LOGGER.debug("Trying format <{}>", format);
+            final AbsoluteTimestamp absoluteTimestamp = new AbsoluteTimestamp(value, format, zoneId);
+            try {
+                return absoluteTimestamp.zonedDateTime();
+            }
+            catch (final RuntimeException ex) {
+                LOGGER.debug("Couldn't parse value, exception <{}>", ex.getMessage());
+                // passthrough
+            }
         }
-        final String validOffset = offsetString.read();
-        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
-        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
-        final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isStub()) {
-            updatedTime = offsetTimestamp.zonedDateTime();
-        }
-        else {
-            updatedTime = snappedTimestamp.zonedDateTime();
-        }
-        return updatedTime;
+        throw new RuntimeException(
+                "TimeQualifier conversion error: <" + value + "> can't be parsed using default formats."
+        );
     }
 
     @Override
     public boolean isStub() {
-        boolean isStub = false;
-        try {
-            offsetString.read();
-        }
-        catch (final NumberFormatException e) {
-            isStub = true;
-        }
-        return isStub;
+        return false;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
- * Copyright (C) 2019-2025 Suomen Kanuuna Oy
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,66 +43,49 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast;
+package com.teragrep.pth10.ast.time;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.teragrep.pth10.ast.Text;
+import org.apache.hadoop.shaded.com.google.re2j.Matcher;
+import org.apache.hadoop.shaded.com.google.re2j.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
- * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
- * uses the system default
- */
-public class DefaultTimeFormat {
+public class ValidTrailingRelativeTimestampText implements Text {
 
-    private final String[] formats;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValidTrailingRelativeTimestampText.class);
+    private final Text origin;
+    private final Pattern validPattern = Pattern.compile(".*@([a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$");
 
-    public DefaultTimeFormat() {
-        this(new String[] {
-                "MM/dd/yyyy:HH:mm:ss",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
-                "yyyy-MM-dd'T'HH:mm:ss"
-        });
+    public ValidTrailingRelativeTimestampText(final Text origin) {
+        this.origin = origin;
     }
 
-    public DefaultTimeFormat(String[] formats) {
-        this.formats = formats;
-    }
-
-    /**
-     * Calculate the epoch from given string.
-     * 
-     * @param time The human-readable time
-     * @return epoch as long
-     */
-    public long getEpoch(String time) {
-        return this.parse(time).getTime() / 1000L;
-    }
-
-    /**
-     * Parses the given human-readable time to a Date object.
-     * 
-     * @param time The human-readable time
-     * @return Date parsed from the given string
-     */
-    public Date parse(String time) {
-        // Try parsing all provided time formats in order
-        for (final String format : formats) {
-            try {
-                return parseDate(time, format);
-            }
-            catch (ParseException ignored) {
-            }
+    public boolean isStub() {
+        boolean isStub = false;
+        try {
+            read();
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        catch (final RuntimeException e) {
+            isStub = true;
+        }
+        return isStub;
     }
 
-    private Date parseDate(String time, String timeFormat) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
-        sdf.setLenient(false);
-        return sdf.parse(time);
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        LOGGER.debug("origin string <{}>", originString);
+        final String updatedString;
+        final Matcher matcher = validPattern.matcher(originString);
+        if (matcher.find() && matcher.groupCount() > 1 && !matcher.group(2).isEmpty()) {
+            // The second group contains the valid trailing offset (e.g., +3h, -10m)
+            updatedString = matcher.group(2);
+        }
+        else {
+            throw new RuntimeException("Could not find a valid trailing offset after '@'");
+        }
+        LOGGER.debug("trailing timestamp from trail <{}>", updatedString);
+        return updatedString;
     }
 }

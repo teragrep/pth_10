@@ -45,12 +45,15 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.convert;
 
-import com.teragrep.pth10.ast.DPLTimeFormat;
+import com.teragrep.pth10.ast.DPLTimeFormatText;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 import org.apache.spark.sql.api.java.UDF2;
 
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * UDF for convert command 'ctime'<br>
@@ -63,15 +66,14 @@ public class Ctime implements UDF2<String, String, String> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String call(String epoch, String tf) throws Exception {
-        Long e = Long.valueOf(epoch);
-
-        Date date = new Date(e * 1000L);
-        DateFormat format = new DPLTimeFormat(tf).createSimpleDateFormat();
-        format.setTimeZone(TimeZone.getTimeZone("Etc/UTC"));
-        String formatted = format.format(date);
-
-        return formatted;
+    public String call(String epoch, String timeformat) throws Exception {
+        final ZoneId utcZoneId = ZoneId.of("UTC");
+        final long seconds = Long.parseLong(epoch);
+        final Instant instant = Instant.ofEpochSecond(seconds);
+        final ZonedDateTime zonedDateTime = instant.atZone(utcZoneId);
+        final String dplTimeFormatString = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat))).read();
+        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dplTimeFormatString).withZone(utcZoneId);
+        return formatter.format(zonedDateTime);
     }
 
 }

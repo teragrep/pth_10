@@ -1,6 +1,6 @@
 /*
  * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
- * Copyright (C) 2019-2025 Suomen Kanuuna Oy
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,27 +45,33 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLTimeFormat;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.time.ValidTrailingRelativeTimestampText;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
-import java.time.ZoneId;
-import java.util.TimeZone;
-
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class DPLTimeFormatTest {
-
-    private final TimeZone expectedTimeZone = TimeZone.getTimeZone(ZoneId.of("GMT+2"));
+public class ValidTrailingRelativeTimestampTextTest {
 
     @Test
-    void toEpochTest() {
-        String dplPattern = "%Y-%m-%d %H:%M:%S.%f '('%Z')'";
-        String dplDate = "2023-12-15 08:04:39.123 (EET)";
-        long expectedEpoch = 1702620279;
+    public void testValidTrailText() {
+        String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@d+3h")).read();
+        String expected = "+3h";
+        Assertions.assertEquals(expected, read);
+    }
 
-        DPLTimeFormat format = new DPLTimeFormat(dplPattern, expectedTimeZone);
-        long actualEpoch = Assertions.assertDoesNotThrow(() -> format.instantOf(dplDate).getEpochSecond());
-        Assertions.assertEquals(expectedEpoch, actualEpoch);
+    @Test
+    public void testNoAtSymbol() {
+        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+                new TextString("+10hours")
+        );
+        Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
+    }
+
+    @Test
+    public void testInvalidTrailText() {
+        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+                new TextString("@d")
+        );
+        Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
     }
 }

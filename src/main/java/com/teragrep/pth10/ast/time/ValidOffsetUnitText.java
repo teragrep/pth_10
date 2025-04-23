@@ -1,6 +1,6 @@
 /*
  * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
- * Copyright (C) 2019-2025 Suomen Kanuuna Oy
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,29 +43,44 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10;
+package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.DPLTimeFormat;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import com.teragrep.pth10.ast.Text;
 
-import java.time.ZoneId;
-import java.util.TimeZone;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class DPLTimeFormatTest {
+public final class ValidOffsetUnitText implements Text {
 
-    private final TimeZone expectedTimeZone = TimeZone.getTimeZone(ZoneId.of("GMT+2"));
+    private final Text origin;
+    private final Pattern pattern;
 
-    @Test
-    void toEpochTest() {
-        String dplPattern = "%Y-%m-%d %H:%M:%S.%f '('%Z')'";
-        String dplDate = "2023-12-15 08:04:39.123 (EET)";
-        long expectedEpoch = 1702620279;
+    public ValidOffsetUnitText(final Text origin) {
+        this(origin, Pattern.compile("([a-zA-Z]+)"));
+    }
 
-        DPLTimeFormat format = new DPLTimeFormat(dplPattern, expectedTimeZone);
-        long actualEpoch = Assertions.assertDoesNotThrow(() -> format.instantOf(dplDate).getEpochSecond());
-        Assertions.assertEquals(expectedEpoch, actualEpoch);
+    private ValidOffsetUnitText(final Text origin, final Pattern pattern) {
+        this.origin = origin;
+        this.pattern = pattern;
+    }
+
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        final Matcher matcher = pattern.matcher(originString);
+        final String updatedString;
+        if (originString.toLowerCase().startsWith("now")) {
+            updatedString = "now";
+        }
+        else if (originString.toLowerCase().contains("now")) {
+            throw new RuntimeException("timestamp 'now' should not have any values before it");
+        }
+        else {
+            if (!matcher.find()) {
+                throw new RuntimeException("Text did not contain a valid offset unit");
+            }
+            updatedString = matcher.group(); // next group of alphabetical characters
+        }
+        return updatedString;
     }
 }

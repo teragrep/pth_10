@@ -46,28 +46,35 @@
 package com.teragrep.pth10.ast;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.TimeZone;
 
 /**
  * For using the DPL custom timeformat like Java's SimpleDateFormat. Get a Date object with parse -function for example.
  */
 public final class DPLTimeFormat {
 
-    private final String format;
+    private final DPLTimeFormatText format;
+    private final TimeZone timeZone;
 
     public DPLTimeFormat(String format) {
-        this.format = format;
+        this(format, TimeZone.getDefault());
     }
 
-    /**
-     * Create a SimpleDateFormat object from the given DPL specific timeformat. Allows all sorts of parsing and
-     * tampering with the time.
-     * 
-     * @return SimpleDateFormat created from the DPLTimeFormat
-     */
-    public SimpleDateFormat createSimpleDateFormat() {
-        return new SimpleDateFormat(convertDplTimeFormatToJava(this.format));
+    public DPLTimeFormat(String format, TimeZone timeZone) {
+        this(new DPLTimeFormatText(new UnquotedText(new TextString(format))), timeZone);
+    }
+
+    public DPLTimeFormat(DPLTimeFormatText format, TimeZone timeZone) {
+        this.format = format;
+        this.timeZone = timeZone;
+    }
+
+    private DateTimeFormatter dateTimeFormatter() {
+        String javaFormat = format.read();
+        return DateTimeFormatter.ofPattern(javaFormat).withZone(timeZone.toZoneId());
     }
 
     /**
@@ -80,38 +87,6 @@ public final class DPLTimeFormat {
      * @throws ParseException when dplTime doesn't have the correct format
      */
     public Instant instantOf(String dplTime) throws ParseException {
-        return createSimpleDateFormat().parse(dplTime).toInstant();
-    }
-
-    // replace dpl time units with java-compatible time units
-    private String convertDplTimeFormatToJava(String dplTf) {
-        dplTf = new UnquotedText(new TextString(dplTf)).read();
-        return dplTf
-                // Date
-                .replaceAll("%F", "y-MM-dd") // ISO 8601 %Y-%m-%d
-                .replaceAll("%y", "yy") // year without century (00-99)
-                .replaceAll("%Y", "y") // full year
-                .replaceAll("%m", "MM") // month 1-12
-                .replaceAll("%d", "dd") // day 1-31
-                .replaceAll("%b", "MMM") // abbrv. month name
-                .replaceAll("%B", "MMMM") // full month name
-                .replaceAll("%A", "EE") // full weekday name, e.g. "sunday"
-                .replaceAll("%a", "E") // abbrv. weekday name, e.g. "Sun"
-                .replaceAll("%j", "D") // day of year, 001-366
-                .replaceAll("%w", "F") // weekday as decimal 0=sun 6=sat
-                // Time
-                .replaceAll("%H", "HH") // hour 0-23
-                .replaceAll("%k", "H") // hour without leading zeroes
-                .replaceAll("%M", "mm") // minute 0-59
-                .replaceAll("%S", "ss") // second 0-59
-                .replaceAll("%I", "hh") // hour 1-12
-                .replaceAll("%p", "a") // am/pm
-                .replaceAll("%T", "HH:mm:ss") // hour:min:sec
-                .replaceAll("%f", "SSS") // microsecs
-                // Time zone
-                .replaceAll("%Z", "zz") // timezone abbreviation
-                .replaceAll("%z", "X") // timezone offset +00:00
-                // Other
-                .replaceAll("%%", "%"); // percent sign
+        return ZonedDateTime.parse(dplTime, dateTimeFormatter()).toInstant();
     }
 }

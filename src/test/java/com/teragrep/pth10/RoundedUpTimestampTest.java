@@ -46,7 +46,7 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.DPLTimestamp;
-import com.teragrep.pth10.ast.time.InstantTimestamp;
+import com.teragrep.pth10.ast.time.DPLTimestampImpl;
 import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -54,14 +54,14 @@ import org.junit.jupiter.api.Test;
 public final class RoundedUpTimestampTest {
 
     @Test
-    void testWithoutFractions() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new InstantTimestamp("2024-01-01T00:00:00+00:00", ""));
-        Assertions.assertEquals(1704067200L, timestamp.instant().getEpochSecond());
+    void testWithoutNanosecond() {
+        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00+00:00", ""));
+        Assertions.assertEquals(1704067200L, timestamp.zonedDateTime().toInstant().getEpochSecond());
     }
 
     @Test
-    void testWithFractions() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new InstantTimestamp("2024-01-01T00:00:00.240+00:00", ""));
-        Assertions.assertEquals(1704067200L + 1L, timestamp.instant().getEpochSecond());
+    void testWithNanoseconds() {
+        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00.240+00:00", ""));
+        Assertions.assertEquals(1704067200L + 1L, timestamp.zonedDateTime().toInstant().getEpochSecond());
     }
 }

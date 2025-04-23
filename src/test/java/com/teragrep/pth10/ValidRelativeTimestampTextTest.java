@@ -1,6 +1,6 @@
 /*
  * Teragrep Data Processing Language (DPL) translator for Apache Spark (pth_10)
- * Copyright (C) 2019-2025 Suomen Kanuuna Oy
+ * Copyright (C) 2019-2024 Suomen Kanuuna Oy
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -45,27 +45,49 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DPLTimeFormat;
+import com.teragrep.pth10.ast.Text;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.time.ValidRelativeTimestampText;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 
-import java.time.ZoneId;
-import java.util.TimeZone;
-
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class DPLTimeFormatTest {
-
-    private final TimeZone expectedTimeZone = TimeZone.getTimeZone(ZoneId.of("GMT+2"));
+public final class ValidRelativeTimestampTextTest {
 
     @Test
-    void toEpochTest() {
-        String dplPattern = "%Y-%m-%d %H:%M:%S.%f '('%Z')'";
-        String dplDate = "2023-12-15 08:04:39.123 (EET)";
-        long expectedEpoch = 1702620279;
+    public void testPlainValue() {
+        final Text input = new TextString("+5d");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("+5d", offset.read());
+    }
 
-        DPLTimeFormat format = new DPLTimeFormat(dplPattern, expectedTimeZone);
-        long actualEpoch = Assertions.assertDoesNotThrow(() -> format.instantOf(dplDate).getEpochSecond());
-        Assertions.assertEquals(expectedEpoch, actualEpoch);
+    @Test
+    public void testWithSnapValue() {
+        final Text input = new TextString("+5d@hours+3");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("+5d@hours+3", offset.read());
+    }
+
+    @Test
+    public void testOnlySnapValue() {
+        final Text input = new TextString("@hours+3");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("@hours+3", offset.read());
+    }
+
+    @Test
+    public void testNow() {
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(new TextString("now"));
+        final ValidRelativeTimestampText offset2 = new ValidRelativeTimestampText(new TextString("NOW"));
+        Assertions.assertEquals("now", offset.read());
+        Assertions.assertEquals("NOW", offset2.read());
+    }
+
+    @Test
+    public void testInvalidInput() {
+        final Text input = new TextString("invalid");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        final RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, offset::read);
+        final String expectedMessage = "Unknown relative time modifier string <invalid>";
+        Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
     }
 }
