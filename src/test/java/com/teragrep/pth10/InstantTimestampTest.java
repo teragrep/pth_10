@@ -47,10 +47,35 @@ package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.InstantTimestamp;
 import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 
+import java.util.TimeZone;
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class InstantTimestampTest {
+
+    private TimeZone originalDefaultTimezone;
+
+    @BeforeAll
+    public void changeToUTC() {
+        originalDefaultTimezone = TimeZone.getDefault();
+    }
+
+    @BeforeEach
+    public void changeToExpectedTimezone() {
+        // expected values are for GMT+2
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT+02:00"));
+    }
+
+    @AfterEach
+    public void setDefaultTimezone() {
+        TimeZone.setDefault(originalDefaultTimezone);
+    }
 
     @Test
     public void testWithReadableTimeformat() {
