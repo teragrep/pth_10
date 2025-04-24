@@ -54,15 +54,22 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.TimeZone;
 
 public final class InstantTimestamp implements DPLTimestamp {
 
     private final String value;
     private final String timeformat;
+    private final TimeZone timeZone;
 
     public InstantTimestamp(final String value, final String timeformat) {
+        this(value, timeformat, TimeZone.getDefault());
+    }
+
+    public InstantTimestamp(final String value, final String timeformat, final TimeZone timeZone) {
         this.value = value;
         this.timeformat = timeformat;
+        this.timeZone = timeZone;
     }
 
     public Instant instant() {
@@ -72,7 +79,7 @@ public final class InstantTimestamp implements DPLTimestamp {
             rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
         }
         catch (NumberFormatException ne) {
-            rv = instantFromString(value, timeformat);
+            rv = instantFromString();
         }
 
         return rv;
@@ -80,19 +87,19 @@ public final class InstantTimestamp implements DPLTimestamp {
 
     // Uses defaultTimeFormat if timeformat is null and DPLTimeFormat if timeformat isn't null (which means that the
     // timeformat= option was used).
-    private Instant instantFromString(final String value, final String timeFormatString) {
+    private Instant instantFromString() {
         final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
         final Instant timevalue;
-        if (timeFormatString == null || timeFormatString.isEmpty()) {
-            timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
+        if (timeformat == null || timeformat.isEmpty()) {
+            timevalue = new DefaultTimeFormat(timeZone).parse(unquotedValue).toInstant();
         }
         else {
             // TODO: should be included in DPLTimeFormat
-            if (timeFormatString.equals("%s")) {
+            if (timeformat.equals("%s")) {
                 return Instant.ofEpochSecond(Long.parseLong(unquotedValue));
             }
             try {
-                timevalue = new DPLTimeFormat(timeFormatString).instantOf(unquotedValue);
+                timevalue = new DPLTimeFormat(timeformat, timeZone).instantOf(unquotedValue);
             }
             catch (ParseException e) {
                 throw new RuntimeException("TimeQualifier conversion error: <" + unquotedValue + "> can't be parsed.");
@@ -108,11 +115,12 @@ public final class InstantTimestamp implements DPLTimestamp {
         if (o == null || getClass() != o.getClass())
             return false;
         InstantTimestamp that = (InstantTimestamp) o;
-        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat);
+        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat)
+                && Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, timeformat);
+        return Objects.hash(value, timeformat, timeZone);
     }
 }

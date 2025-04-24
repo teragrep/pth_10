@@ -48,6 +48,7 @@ package com.teragrep.pth10.ast;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.TimeZone;
 
 /**
  * For using the DPL custom timeformat like Java's SimpleDateFormat. Get a Date object with parse -function for example.
@@ -55,9 +56,15 @@ import java.time.Instant;
 public final class DPLTimeFormat {
 
     private final String format;
+    private final TimeZone timeZone;
 
     public DPLTimeFormat(String format) {
+        this(format, TimeZone.getDefault());
+    }
+
+    public DPLTimeFormat(String format, TimeZone timeZone) {
         this.format = format;
+        this.timeZone = timeZone;
     }
 
     /**
@@ -67,7 +74,9 @@ public final class DPLTimeFormat {
      * @return SimpleDateFormat created from the DPLTimeFormat
      */
     public SimpleDateFormat createSimpleDateFormat() {
-        return new SimpleDateFormat(convertDplTimeFormatToJava(this.format));
+        final SimpleDateFormat simpleDateFormat = new SimpleDateFormat(convertDplTimeFormatToJava(this.format));
+        simpleDateFormat.setTimeZone(timeZone);
+        return simpleDateFormat;
     }
 
     /**

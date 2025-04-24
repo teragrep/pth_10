@@ -48,6 +48,7 @@ package com.teragrep.pth10.ast;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
@@ -57,19 +58,25 @@ import java.util.Date;
 public class DefaultTimeFormat {
 
     private final String[] formats;
+    private final TimeZone timeZone;
 
     public DefaultTimeFormat() {
+        this(TimeZone.getDefault());
+    }
+
+    public DefaultTimeFormat(TimeZone timeZone) {
         this(new String[] {
                 "MM/dd/yyyy:HH:mm:ss",
                 "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
                 "yyyy-MM-dd'T'HH:mm:ss.SSS",
                 "yyyy-MM-dd'T'HH:mm:ssXXX",
                 "yyyy-MM-dd'T'HH:mm:ss"
-        });
+        }, timeZone);
     }
 
-    public DefaultTimeFormat(String[] formats) {
+    public DefaultTimeFormat(String[] formats, TimeZone timeZone) {
         this.formats = formats;
+        this.timeZone = timeZone;
     }
 
     /**
@@ -103,6 +110,7 @@ public class DefaultTimeFormat {
     private Date parseDate(String time, String timeFormat) throws ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
         sdf.setLenient(false);
+        sdf.setTimeZone(timeZone);
         return sdf.parse(time);
     }
 }
