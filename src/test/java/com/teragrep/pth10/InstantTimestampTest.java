@@ -58,7 +58,7 @@ import java.util.TimeZone;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class InstantTimestampTest {
 
-    final TimeZone expectedTimeZone = TimeZone.getTimeZone(ZoneId.of("GMT+2"));
+    private final TimeZone expectedTimeZone = TimeZone.getTimeZone(ZoneId.of("GMT+2"));
 
     @Test
     public void testWithReadableTimeformat() {
