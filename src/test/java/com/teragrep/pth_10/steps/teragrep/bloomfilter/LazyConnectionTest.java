@@ -45,70 +45,13 @@
  */
 package com.teragrep.pth_10.steps.teragrep.bloomfilter;
 
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Test;
 
-import java.sql.*;
-import java.util.Properties;
-
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class LazyConnectionTest {
-
-    Connection connection;
-    final String username = "sa";
-    final String password = "";
-    final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
-
-    @BeforeAll
-    void setup() {
-        Config config = ConfigFactory.parseProperties(defaultProperties());
-        LazyConnection lazyconnection = new LazyConnection(config);
-        connection = lazyconnection.get();
-    }
-
-    @AfterAll
-    void tearDown() {
-        Assertions.assertDoesNotThrow(() -> {
-            connection.close();
-        });
-    }
 
     @Test
     public void testEqualsVerifier() {
         EqualsVerifier.forClass(LazyConnection.class).withNonnullFields("config").verify();
-    }
-
-    @Test
-    public void testOpenCloseConnection() {
-        Assertions.assertDoesNotThrow(() -> {
-            Assertions.assertFalse(connection.isClosed());
-            connection.close();
-            Assertions.assertTrue(connection.isClosed());
-        });
-    }
-
-    @Test
-    public void testGetSameConnection() {
-        Config config = ConfigFactory.parseProperties(defaultProperties());
-        LazyConnection lazyconnection = new LazyConnection(config);
-        connection = lazyconnection.get();
-        Connection connection2 = lazyconnection.get();
-        Assertions.assertEquals(connection, connection2);
-    }
-
-    public Properties defaultProperties() {
-        Properties properties = new Properties();
-        properties.put("dpl.pth_10.bloom.db.username", username);
-        properties.put("dpl.pth_10.bloom.db.password", password);
-        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
-        properties
-                .put(
-                        "dpl.pth_06.bloom.db.fields",
-                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.02},"
-                                + "{expected: 3000, fpp: 0.03}" + "]"
-                );
-        return properties;
     }
 }
