@@ -102,10 +102,10 @@ public class InstantTimestampTest {
 
     @Test
     public void testEmptyFallsToDefaultTimeformat() {
-        final String value = "2024-10-31T10:10:10";
+        final String value = "2024-10-31T10:10:10z";
         final String timeformat = "";
         final Long expected = 1730362210L;
-        Instant et = new InstantTimestamp(value, timeformat).instantAtZone(ZoneId.of("GMT+2"));
+        Instant et = new InstantTimestamp(value, timeformat).instantAtZone(expectedZoneId);
         Assertions.assertEquals(expected, et.getEpochSecond());
     }
 
