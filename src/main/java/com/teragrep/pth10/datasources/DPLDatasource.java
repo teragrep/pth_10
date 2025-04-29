@@ -181,6 +181,12 @@ public class DPLDatasource {
             reader = reader.option("bloom.withoutFilter", bloomWithoutFilter);
         }
 
+        if (config.hasPath("dpl.pth_06.bloom.withoutFilterPattern")) {
+            String withoutFilterPattern = config.getString("dpl.pth_06.bloom.withoutFilterPattern");
+            LOGGER.debug("Found config dpl.pth_06.bloom.withoutFilterPattern=<[{}]>", withoutFilterPattern);
+            reader = reader.option("bloom.withoutFilterPattern", withoutFilterPattern);
+        }
+
         if (config.getBoolean("dpl.pth_06.kafka.enabled")) {
             LOGGER.debug("Kafka is enabled");
             String s3identityWithoutDomain = s3identity;
