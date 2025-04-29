@@ -91,7 +91,7 @@ public class DefaultTimeFormat {
 
     /**
      * Parses the given human-readable time to a Date object.
-     * 
+     *
      * @param time The human-readable time
      * @return Date parsed from the given string
      */
@@ -107,6 +107,20 @@ public class DefaultTimeFormat {
         throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
     }
 
+    /**
+     * Parses a date string using the provided time format and the configured timezone.
+     * <p>
+     * If the input string contains valid timezone information (e.g. ends with 'Z' for UTC or includes an offset like
+     * '+02:00'), that timezone will take precedence over the one set via {@code setTimeZone()}.
+     * <p>
+     * this is caused by the behavior of the {@link SimpleDateFormat} and may lead to unexpected results if the user
+     * assumes the timezone set by the class is always used.
+     *
+     * @param time       the date/time string to parse
+     * @param timeFormat the expected format of the input string
+     * @return a parsed {@link Date} object
+     * @throws ParseException if the input cannot be parsed using the given format
+     */
     private Date parseDate(String time, String timeFormat) throws ParseException {
         SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
         sdf.setLenient(false);
