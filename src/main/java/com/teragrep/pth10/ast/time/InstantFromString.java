@@ -45,62 +45,82 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.sql.Timestamp;
+import com.teragrep.pth10.ast.DPLTimeFormat;
+import com.teragrep.pth10.ast.DefaultTimeFormat;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
+
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Objects;
+import java.util.TimeZone;
 
-public final class InstantTimestamp implements DPLTimestamp {
+public final class InstantFromString {
 
     private final String value;
-    private final InstantFromString instantFromString;
+    private final String timeformat;
 
-    public InstantTimestamp(final String value, final String timeformat) {
-        this(value, new InstantFromString(value, timeformat));
-    }
-
-    public InstantTimestamp(final String value, final InstantFromString instantFromString) {
+    public InstantFromString(final String value, final String timeformat) {
         this.value = value;
-        this.instantFromString = instantFromString;
+        this.timeformat = timeformat;
     }
 
     public Instant instant() {
-        Instant rv;
-        try {
-            RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(value);
-            rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
+        final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
+        final Instant timevalue;
+        if (timeformat == null || timeformat.isEmpty()) {
+            timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
         }
-        catch (NumberFormatException ne) {
-            rv = instantFromString.instant();
+        else {
+            // TODO: should be included in DPLTimeFormat
+            if (timeformat.equals("%s")) {
+                return Instant.ofEpochSecond(Long.parseLong(unquotedValue));
+            }
+            try {
+                timevalue = new DPLTimeFormat(timeformat).instantOf(unquotedValue);
+            }
+            catch (ParseException e) {
+                throw new RuntimeException("TimeQualifier conversion error: <" + unquotedValue + "> can't be parsed.");
+            }
         }
-
-        return rv;
+        return timevalue;
     }
 
-    public Instant instantAtZone(final ZoneId zoneId) {
-        Instant rv;
-        try {
-            RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(value);
-            rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
+    public Instant instantAtTimezone(final ZoneId zoneId) {
+        final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
+        final TimeZone timezone = TimeZone.getTimeZone(zoneId);
+        final Instant timevalue;
+        if (timeformat == null || timeformat.isEmpty()) {
+            timevalue = new DefaultTimeFormat(timezone).parse(unquotedValue).toInstant();
         }
-        catch (NumberFormatException ne) {
-            rv = instantFromString.instantAtTimezone(zoneId);
+        else {
+            // TODO: should be included in DPLTimeFormat
+            if (timeformat.equals("%s")) {
+                return Instant.ofEpochSecond(Long.parseLong(unquotedValue));
+            }
+            try {
+                timevalue = new DPLTimeFormat(timeformat, timezone).instantOf(unquotedValue);
+            }
+            catch (ParseException e) {
+                throw new RuntimeException("TimeQualifier conversion error: <" + unquotedValue + "> can't be parsed.");
+            }
         }
-        return rv;
+        return timevalue;
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o)
             return true;
         if (o == null || getClass() != o.getClass())
             return false;
-        InstantTimestamp that = (InstantTimestamp) o;
-        return Objects.equals(value, that.value) && Objects.equals(instantFromString, that.instantFromString);
+        final InstantFromString that = (InstantFromString) o;
+        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, instantFromString);
+        return Objects.hash(value, timeformat);
     }
 }

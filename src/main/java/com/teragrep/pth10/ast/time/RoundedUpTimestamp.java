@@ -49,19 +49,26 @@ import java.time.Instant;
 
 public final class RoundedUpTimestamp implements DPLTimestamp {
 
-    private final DPLTimestamp dplTimestamp;
+    private final Instant origin;
 
     public RoundedUpTimestamp(final DPLTimestamp dplTimestamp) {
-        this.dplTimestamp = dplTimestamp;
+        this(dplTimestamp.instant());
+    }
+
+    public RoundedUpTimestamp(final Instant origin) {
+        this.origin = origin;
     }
 
     public Instant instant() {
-        Instant origin = dplTimestamp.instant();
         // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
         // that are on the same second
+        final Instant rv;
         if (origin.getNano() > 0) {
-            origin = origin.plusSeconds(1);
+            rv = origin.plusSeconds(1);
         }
-        return origin;
+        else {
+            rv = origin;
+        }
+        return rv;
     }
 }
