@@ -116,25 +116,29 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_eventstats_aggregationInstruction(DPLParser.T_eventstats_aggregationInstructionContext ctx) {
         final ParseTree cmd;
-        try {
-            final DPLParser.AggregateFunctionContext aggregateFunctionContext = ctx.aggregateFunction();
+
+        final DPLParser.AggregateFunctionContext aggregateFunctionContext = ctx.aggregateFunction();
+        if (aggregateFunctionContext != null) {
             cmd = aggregateFunctionContext.getChild(0);
         }
-        catch (final NullPointerException e) {
-            throw new RuntimeException("Eventstats did not get an aggregation function");
+        else {
+            throw new IllegalArgumentException("Expected evenstats aggregation instruction was not provided");
         }
 
         final AggregateFunction aggFunction = new AggregateFunction(catCtx);
         final Node aggNode = aggFunction.visit(cmd);
         final Column aggCol = ((ColumnNode) aggNode).getColumn();
 
-        try { // check for rename instruction
-            final String renameColumnName = ctx.t_eventstats_fieldRenameInstruction().fieldType().getText();
+        // check for rename instruction
+        final DPLParser.T_eventstats_fieldRenameInstructionContext fieldRenameContext = ctx
+                .t_eventstats_fieldRenameInstruction();
+        if (fieldRenameContext != null) {
+            final String renameColumnName = fieldRenameContext.fieldType().getText();
             LOGGER.debug("Rename column as <{}>", renameColumnName);
             // AS new-fieldname
             listOfAggregations.add(aggCol.as(renameColumnName));
         }
-        catch (final NullPointerException e) {
+        else {
             LOGGER.debug("No rename instruction found");
             listOfAggregations.add(aggCol);
         }
