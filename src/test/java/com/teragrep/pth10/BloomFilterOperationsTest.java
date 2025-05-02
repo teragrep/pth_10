@@ -111,7 +111,7 @@ public class BloomFilterOperationsTest {
     public void estimateTest() {
         streamingTestUtil
                 .performDPLTest(
-                        "index=index_A earliest=2020-01-01T00:00:00 latest=2023-01-01T00:00:00 | teragrep exec tokenizer | teragrep exec bloom estimate",
+                        "index=index_A earliest=2020-01-01T00:00:00Z latest=2023-01-01T00:00:00Z | teragrep exec tokenizer | teragrep exec bloom estimate",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
                                     new StructField(
@@ -154,7 +154,7 @@ public class BloomFilterOperationsTest {
         streamingTestUtil
                 .performDPLTest(
                         // index_Empty _raw = "" so tokenizer step will produce an empty array
-                        "index=index_Empty earliest=2020-01-01T00:00:00 latest=2023-01-01T00:00:00 | teragrep exec tokenizer | teragrep exec bloom estimate",
+                        "index=index_Empty earliest=2020-01-01T00:00:00Z latest=2023-01-01T00:00:00Z | teragrep exec tokenizer | teragrep exec bloom estimate",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
                                     new StructField(
@@ -201,7 +201,7 @@ public class BloomFilterOperationsTest {
         properties.put("dpl.pth_06.bloom.db.fields", "[ {expected: 100, fpp: 0.01}]");
         streamingTestUtil
                 .performDPLTest(
-                        "index=index_A earliest=2020-01-01T00:00:00 latest=2023-01-01T00:00:00 "
+                        "index=index_A earliest=2020-01-01T00:00:00Z latest=2023-01-01T00:00:00Z "
                                 + "| teragrep exec tokenizer format bytes "
                                 + "| teragrep exec hdfs save overwrite=true /tmp/pth_10_hdfs/aggregatorTokenBytes/"
                                 + id,
@@ -266,7 +266,7 @@ public class BloomFilterOperationsTest {
         final String regex = "\\w{8}-\\w{4}-\\w{4}-\\w{4}-\\w{12}";
         streamingTestUtil
                 .performDPLTest(
-                        "index=index_A earliest=2020-01-01T00:00:00 latest=2023-01-01T00:00:00 "
+                        "index=index_A earliest=2020-01-01T00:00:00Z latest=2023-01-01T00:00:00Z "
                                 + "| teragrep exec regexextract regex " + regex
                                 + "| teragrep exec hdfs save overwrite=true /tmp/pth_10_hdfs/aggregatorTokenBytes/"
                                 + id,
