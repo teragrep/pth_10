@@ -111,7 +111,7 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=%m/%d/%Y:%H:%M:%S earliest=\"04/16/2020:10:24:40\" latest=\"04/16/2020:10:25:42\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42",zoneId)
+            long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42", zoneId)
                     .zonedDateTime()
                     .toEpochSecond();
 

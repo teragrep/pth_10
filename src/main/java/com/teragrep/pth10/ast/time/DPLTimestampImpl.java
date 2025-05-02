@@ -45,9 +45,6 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
@@ -78,7 +75,8 @@ public final class DPLTimestampImpl implements DPLTimestamp {
         final CheckedRelativeTimestamp relativeTimestamp = new CheckedRelativeTimestamp(value, zoneId);
         if (!relativeTimestamp.isStub()) {
             timestamp = relativeTimestamp;
-        } else {
+        }
+        else {
             timestamp = new AbsoluteTimestamp(value, timeformat, zoneId);
         }
         return timestamp.zonedDateTime();

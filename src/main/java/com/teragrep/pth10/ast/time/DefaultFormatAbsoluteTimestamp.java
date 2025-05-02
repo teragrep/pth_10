@@ -117,7 +117,9 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
                 // passthrough
             }
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + value + "> can't be parsed using default formats.");
+        throw new RuntimeException(
+                "TimeQualifier conversion error: <" + value + "> can't be parsed using default formats."
+        );
     }
 
     @Override
