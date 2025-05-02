@@ -110,7 +110,7 @@ public class TimechartStreamingTest {
     public void testTimechartBinSizeForMonthSpan() {
         streamingTestUtil
                 .performDPLTest(
-                        "index=index_A earliest=2020-01-01T00:00:00z latest=2021-01-01T00:00:00z | timechart span=1mon count(_raw) as craw by sourcetype",
+                        "index=index_A earliest=2020-01-01T00:00:00Z latest=2021-01-01T00:00:00Z | timechart span=1mon count(_raw) as craw by sourcetype",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
                                     new StructField(
@@ -149,7 +149,7 @@ public class TimechartStreamingTest {
     public void testTimechartBinSizeForMinuteSpan() {
         streamingTestUtil
                 .performDPLTest(
-                        "index=index_A earliest=2020-12-12T00:00:00z latest=2020-12-12T00:30:00z | timechart span=1min count(_raw) as craw by sourcetype",
+                        "index=index_A earliest=2020-12-12T00:00:00Z latest=2020-12-12T00:30:00Z | timechart span=1min count(_raw) as craw by sourcetype",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
                                     new StructField(
