@@ -112,7 +112,6 @@ public class CatalystVisitorTest {
         final String expected = "(((NOT RLIKE(index, (?i)^strawberry$)) AND (RLIKE(sourcetype, (?i)^example:strawberry:strawberry) AND RLIKE(host, (?i)^loadbalancer.example.com))) OR (RLIKE(index, (?i)^.*$) AND (((RLIKE(host, (?i)^firewall.example.com) AND (_time >= from_unixtime(1611619200, yyyy-MM-dd HH:mm:ss))) AND (_time < from_unixtime(1619395200, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QDenied\\E.*))))";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
-            System.out.println(ctx.getSparkQuery());
             Assertions.assertEquals(expected, ctx.getSparkQuery());
         });
     }
