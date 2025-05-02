@@ -45,62 +45,68 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public final class InstantTimestamp implements DPLTimestamp {
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Objects;
+import java.util.TimeZone;
+
+/**
+ * Determines a point for time from input string, timeformat and a timezone id. Supports relative and absolute
+ * timestamps, relative is used if possible to determine the offset
+ */
+public final class DPLTimestampImpl implements DPLTimestamp {
 
     private final String value;
-    private final InstantFromString instantFromString;
+    private final String timeformat;
+    private final ZoneId zoneId;
 
-    public InstantTimestamp(final String value, final String timeformat) {
-        this(value, new InstantFromString(value, timeformat));
+    public DPLTimestampImpl(final String value, final String timeformat) {
+        this(value, timeformat, TimeZone.getDefault().toZoneId());
     }
 
-    public InstantTimestamp(final String value, final InstantFromString instantFromString) {
+    public DPLTimestampImpl(final String value, final String timeformat, final ZoneId zoneId) {
         this.value = value;
-        this.instantFromString = instantFromString;
+        this.timeformat = timeformat;
+        this.zoneId = zoneId;
     }
 
-    public Instant instant() {
-        Instant rv;
-        try {
-            RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(value);
-            rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
+    public ZonedDateTime zonedDateTime() {
+        final DPLTimestamp timestamp;
+        final CheckedRelativeTimestamp relativeTimestamp = new CheckedRelativeTimestamp(value, zoneId);
+        if (!relativeTimestamp.isStub()) {
+            timestamp = relativeTimestamp;
+        } else {
+            timestamp = new AbsoluteTimestamp(value, timeformat, zoneId);
         }
-        catch (NumberFormatException ne) {
-            rv = instantFromString.instant();
-        }
-
-        return rv;
-    }
-
-    public Instant instantAtZone(final ZoneId zoneId) {
-        Instant rv;
-        try {
-            RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(value);
-            rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
-        }
-        catch (NumberFormatException ne) {
-            rv = instantFromString.instantAtTimezone(zoneId);
-        }
-        return rv;
+        return timestamp.zonedDateTime();
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean isStub() {
+        return false;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null) {
             return false;
-        InstantTimestamp that = (InstantTimestamp) o;
-        return Objects.equals(value, that.value) && Objects.equals(instantFromString, that.instantFromString);
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final DPLTimestampImpl that = (DPLTimestampImpl) o;
+        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat)
+                && Objects.equals(zoneId, that.zoneId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, instantFromString);
+        return Objects.hash(value, timeformat, zoneId);
     }
 }

@@ -50,7 +50,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.text.SimpleDateFormat;
 import java.time.ZoneId;
 import java.util.TimeZone;
 
@@ -58,16 +57,6 @@ import java.util.TimeZone;
 public class DPLTimeFormatTest {
 
     private final TimeZone expectedTimeZone = TimeZone.getTimeZone(ZoneId.of("GMT+2"));
-
-    @Test
-    void formatTest() {
-        String dplPattern = "%Y-%m-%d %H:%M:%S.%f '('%Z')'";
-        String expectedPattern = "y-MM-dd HH:mm:ss.SSS '('zz')'";
-
-        SimpleDateFormat format = new DPLTimeFormat(dplPattern, expectedTimeZone).createSimpleDateFormat();
-        String formattedPattern = format.toPattern();
-        Assertions.assertEquals(expectedPattern, formattedPattern);
-    }
 
     @Test
     void toEpochTest() {

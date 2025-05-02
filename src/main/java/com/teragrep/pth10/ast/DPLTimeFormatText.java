@@ -43,25 +43,51 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.transformstatement.convert;
+package com.teragrep.pth10.ast;
 
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import org.apache.spark.sql.api.java.UDF2;
+/** replaces dpl time units with java-compatible time units */
+public class DPLTimeFormatText implements Text {
 
-/**
- * UDF for convert command 'mktime'<br>
- * Human readable time to epoch using given timeformat<br>
- * 
- * @author eemhu
- */
-public class Mktime implements UDF2<String, String, String> {
+    private final Text origin;
 
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public String call(String hrt, String tf) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
-        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
+    public DPLTimeFormatText(final Text origin) {
+        this.origin = origin;
     }
 
+    @Override
+    public String read() {
+        String read = origin.read();
+        if ("%s".equals(read)) {
+            return read;
+        }
+        return read
+                .replaceAll("%F", "yyyy-MM-dd") // ISO 8601 %Y-%m-%d
+                .replaceAll("%y", "yy") // year without century (00-99)
+                .replaceAll("%Y", "yyyy") // full year
+                .replaceAll("%m", "MM") // month 1-12
+                .replaceAll("%d", "dd") // day 1-31
+                .replaceAll("%b", "MMM") // abbrv. month name
+                .replaceAll("%B", "MMMM") // full month name
+                .replaceAll("%A", "EEEE") // full weekday name, e.g. "sunday"
+                .replaceAll("%a", "E") // abbrv. weekday name, e.g. "Sun"
+                .replaceAll("%j", "D") // day of year, 001-366
+                .replaceAll("%w", "e") // weekday as decimal 0=sun 6=sat
+                // Time
+                .replaceAll("%H", "HH") // hour 0-23
+                .replaceAll("%k", "H") // hour without leading zeroes
+                .replaceAll("%M", "mm") // minute 0-59
+                .replaceAll("%S", "ss") // second 0-59
+                .replaceAll("%I", "hh") // hour 1-12
+                .replaceAll("%p", "a") // am/pm
+                .replaceAll("%T", "HH:mm:ss") // hour:min:sec
+                .replaceAll("%f", "SSS") // microsecs
+                // Time zone
+                .replaceAll("%Z", "zzz") // timezone abbreviation
+                .replaceAll("%z", "XXX") // timezone offset +00:00
+                // Other
+                .replaceAll("%%", "%") // percent sign
+                // remove unsupported
+                .replaceAll("%c", "")
+                .replaceAll("%x", "");
+    }
 }

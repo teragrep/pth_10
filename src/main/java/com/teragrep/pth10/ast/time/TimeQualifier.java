@@ -78,9 +78,12 @@ public final class TimeQualifier {
         }
 
         if (isEndTime()) {
-            return new RoundedUpTimestamp(new InstantTimestamp(value, timeformat)).instant().getEpochSecond();
+            return new RoundedUpTimestamp(new DPLTimestampImpl(value, timeformat))
+                    .zonedDateTime()
+                    .toInstant()
+                    .getEpochSecond();
         }
-        return new InstantTimestamp(value, timeformat).instant().getEpochSecond();
+        return new DPLTimestampImpl(value, timeformat).zonedDateTime().toInstant().getEpochSecond();
     }
 
     public Column column() {

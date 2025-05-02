@@ -45,9 +45,12 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public interface DPLTimestamp {
 
-    public abstract Instant instant();
+    public abstract ZonedDateTime zonedDateTime();
+
+    public abstract boolean isStub();
+
 }

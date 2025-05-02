@@ -45,30 +45,32 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
 
 public final class RoundedUpTimestamp implements DPLTimestamp {
 
-    private final Instant origin;
+    private final DPLTimestamp origin;
 
-    public RoundedUpTimestamp(final DPLTimestamp dplTimestamp) {
-        this(dplTimestamp.instant());
-    }
-
-    public RoundedUpTimestamp(final Instant origin) {
+    public RoundedUpTimestamp(final DPLTimestamp origin) {
         this.origin = origin;
     }
 
-    public Instant instant() {
+    public ZonedDateTime zonedDateTime() {
         // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
         // that are on the same second
-        final Instant rv;
-        if (origin.getNano() > 0) {
-            rv = origin.plusSeconds(1);
+        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
+        final ZonedDateTime rv;
+        if (originZoneDateTime.getNano() > 0) {
+            rv = originZoneDateTime.plusSeconds(1);
         }
         else {
-            rv = origin;
+            rv = originZoneDateTime;
         }
         return rv;
+    }
+
+    @Override
+    public boolean isStub() {
+        return origin.isStub();
     }
 }
