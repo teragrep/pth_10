@@ -80,6 +80,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
     public ZonedDateTime zonedDateTime() {
         final ZonedDateTime zonedDateTime;
         final String unquotedValue = new UnquotedText(new TextString(value)).read();
+        // default formats
         if (timeformat == null || timeformat.isEmpty()) {
             LOGGER.info("No timeformat provided for value <{}> using default formats", unquotedValue);
             final DefaultFormatAbsoluteTimestamp defaultFormatAbsoluteTimestamp = new DefaultFormatAbsoluteTimestamp(
@@ -88,10 +89,12 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
             );
             zonedDateTime = defaultFormatAbsoluteTimestamp.zonedDateTime();
         }
+        // direct epoch from value
         else if (timeformat.equals("%s")) {
             LOGGER.info("Parsing value <{}> directly to epoch", unquotedValue);
             zonedDateTime = Instant.ofEpochSecond(Long.parseLong(unquotedValue)).atZone(zoneId);
         }
+        // examine value with formatter using timeformat
         else {
             final String javaAcceptedTimeFormat = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat)))
                     .read();
@@ -99,19 +102,22 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
             try {
                 LOGGER.info("Parsing value <{}> with format <{}>", unquotedValue, javaAcceptedTimeFormat);
                 final TemporalAccessor parseResult = dateTimeFormatter.parse(unquotedValue);
-                if (
-                    parseResult.query(TemporalQueries.zone()) != null
-                            && parseResult.isSupported(ChronoField.HOUR_OF_DAY)
-                ) {
-                    // if value contains zone and time information parse without overwriting the zone set in the value
-                    zonedDateTime = ZonedDateTime.from(parseResult);
+                // use zone from value if available
+                if (parseResult.query(TemporalQueries.zone()) != null) {
+                    if (parseResult.isSupported(ChronoField.HOUR_OF_DAY)) {
+                        zonedDateTime = ZonedDateTime.from(parseResult);
+                    }
+                    else {
+                        zonedDateTime = LocalDate
+                                .from(parseResult)
+                                .atStartOfDay(parseResult.query(TemporalQueries.zone()));
+                    }
                 }
+                // if no zone information uses class default
                 else if (parseResult.isSupported(ChronoField.HOUR_OF_DAY)) {
-                    // parse date time if time information is available and apply at zone
                     zonedDateTime = LocalDateTime.from(parseResult).atZone(zoneId);
                 }
                 else {
-                    // parse just date at zone
                     zonedDateTime = LocalDate.from(parseResult).atStartOfDay(zoneId);
                 }
             }
