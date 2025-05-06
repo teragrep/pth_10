@@ -122,8 +122,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
      */
     public AbstractStep visitLogicalStatementCatalyst(DPLParser.SearchTransformationRootContext ctx) {
         if (ctx != null) {
-            Node ret = visitSearchTransformationRoot(ctx);
-            if (ret != null) {
+            final Node ret = visitSearchTransformationRoot(ctx);
+            if (!ret.isStub()) {
                 Column filterColumn = ((ColumnNode) visitSearchTransformationRoot(ctx)).getColumn();
                 return new LogicalCatalystStep(filterColumn);
             }
@@ -142,7 +142,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitSearchTransformationRoot(DPLParser.SearchTransformationRootContext ctx) {
-        ColumnNode rv;
+        final Node rv;
         LOGGER
                 .info(
                         "[SearchTransformationRoot CAT] Visiting: <{}> with <{}> children", ctx.getText(),
@@ -151,34 +151,63 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
         if (ctx.getChildCount() == 1) {
             // just a single directoryStatement -or- logicalStatement
-            rv = (ColumnNode) visit(ctx.getChild(0));
+            final Node singleNode = visit(ctx.getChild(0));
+            if (singleNode.isStub()) {
+                LOGGER.info("Child node was a NullNode");
+                rv = new NullNode();
+            }
+            else {
+                rv = singleNode;
+            }
         }
         else {
             ParseTree secondChild = ctx.getChild(1);
-
             if (
                 secondChild instanceof TerminalNode && ((TerminalNode) secondChild).getSymbol().getType() == DPLLexer.OR
             ) {
                 // case: directoryStmt OR logicalStmt
-                ColumnNode dirStatColumnNode = (ColumnNode) visit(ctx.directoryStatement());
-                ColumnNode logiStatColumnNode = (ColumnNode) visit(ctx.logicalStatement(0));
-                rv = new ColumnNode(dirStatColumnNode.getColumn().or(logiStatColumnNode.getColumn()));
+                final Node directoryNode = visit(ctx.directoryStatement());
+                final Node logicalNode = visit(ctx.logicalStatement(0));
+                if (directoryNode.isStub()) {
+                    LOGGER.info("Directory statement node was a NullNode");
+                    rv = new NullNode();
+                }
+                else if (logicalNode.isStub()) {
+                    LOGGER.info("Logical statement node was a NullNode");
+                    rv = new NullNode();
+                }
+                else {
+                    final ColumnNode dirStatColumnNode = (ColumnNode) directoryNode;
+                    final ColumnNode logiStatColumnNode = (ColumnNode) logicalNode;
+                    rv = new ColumnNode(dirStatColumnNode.getColumn().or(logiStatColumnNode.getColumn()));
+                }
             }
             else {
                 // case: (logicalStmt AND?)*? directoryStmt (AND? logicalStmt)*?
-                Column finalColumn = ((ColumnNode) visit(ctx.directoryStatement())).getColumn();
-
-                for (DPLParser.LogicalStatementContext logiStatCtx : ctx.logicalStatement()) {
-                    finalColumn = finalColumn.and(((ColumnNode) visit(logiStatCtx)).getColumn());
+                final Node finalNode = visit(ctx.directoryStatement());
+                if (finalNode.isStub()) {
+                    LOGGER.info("Directory statement node was a NullNode");
+                    rv = finalNode;
                 }
+                else {
 
-                rv = new ColumnNode(finalColumn);
+                    Column finalColumn = ((ColumnNode) finalNode).getColumn();
+
+                    for (DPLParser.LogicalStatementContext logiStatCtx : ctx.logicalStatement()) {
+                        finalColumn = finalColumn.and(((ColumnNode) visit(logiStatCtx)).getColumn());
+                    }
+
+                    rv = new ColumnNode(finalColumn);
+                }
             }
         }
 
-        if (rv != null && rv.getColumn() != null) {
-            LOGGER.info("Spark column: <{}>", rv.getColumn().toString());
-            this.catCtx.setSparkQuery(rv.getColumn().toString());
+        if (rv instanceof ColumnNode) {
+            final ColumnNode columnNode = (ColumnNode) rv;
+            if (columnNode.getColumn() != null) {
+                LOGGER.info("Spark column: <{}>", columnNode.getColumn().toString());
+                this.catCtx.setSparkQuery(columnNode.getColumn().toString());
+            }
         }
 
         return rv;
@@ -587,21 +616,22 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
-        LOGGER.info("visitSubsearchStatement with brackets: <{}>", ctx.getText());
-        // Strip brackets around statement
-        DPLParserCatalystContext subCtx = null;
-        if (catCtx != null) {
-            LOGGER.info("Cloning main visitor to subsearch");
-            subCtx = catCtx.clone();
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("visitSubsearchStatement with brackets: <{}>", ctx.getText());
         }
+        LOGGER.info("Cloning main visitor to subsearch");
+        final DPLParserCatalystContext subCtx = catCtx.clone();
+
         LOGGER.info("(Catalyst) subVisitor init with subCtx= <{}>", subCtx);
-        DPLParserCatalystVisitor subVisitor = new DPLParserCatalystVisitor(subCtx);
+        final DPLParserCatalystVisitor subVisitor = new DPLParserCatalystVisitor(subCtx);
 
         // Pass actual subsearch branch
-        StepNode subSearchNode = (StepNode) subVisitor.visit(ctx);
-        LOGGER.info("SubSearchTransformation (Catalyst) Result: class=<{}>", subSearchNode.getClass().getName());
+        final StepNode subSearchNode = (StepNode) subVisitor.visit(ctx);
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("SubSearchTransformation (Catalyst) Result: class=<{}>", subSearchNode.getClass().getName());
+        }
 
-        SubsearchStep subsearchStep = (SubsearchStep) subSearchNode.get();
+        final SubsearchStep subsearchStep = (SubsearchStep) subSearchNode.get();
         // These have to be set here and not in subVisitor to be the same as in other Steps
         subsearchStep.setListener(this.catCtx.getInternalStreamingQueryListener());
         subsearchStep.setHdfsPath(this.catVisitor.getHdfsPath());
@@ -609,8 +639,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         // add subsearch to stepList
         this.catVisitor.getStepList().add(subsearchStep);
 
-        //Node rv = new CatalystNode(subVisitor.getStack().pop());
-        return null;
+        return new NullNode();
     }
 
     /*@Override
