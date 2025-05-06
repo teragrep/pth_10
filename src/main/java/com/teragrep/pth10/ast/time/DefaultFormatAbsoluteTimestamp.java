@@ -48,15 +48,8 @@ package com.teragrep.pth10.ast.time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalAccessor;
-import java.time.temporal.TemporalQueries;
 import java.util.TimeZone;
 
 /**
@@ -68,7 +61,7 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultFormatAbsoluteTimestamp.class);
 
-    private final DateTimeFormatter[] formats;
+    private final String[] formats;
     private final String value;
     private final ZoneId zoneId;
 
@@ -77,43 +70,31 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
     }
 
     public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
-        this(value, new DateTimeFormatter[] {
-                DateTimeFormatter.ofPattern("MM/dd/yyyy:HH:mm:ss"),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX"),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss")
+        this(value, new String[] {
+                "MM/dd/yyyy:HH:mm:ss",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss"
         }, zoneId);
     }
 
-    public DefaultFormatAbsoluteTimestamp(String value, DateTimeFormatter[] formats, ZoneId zoneId) {
+    public DefaultFormatAbsoluteTimestamp(String value, String[] formats, ZoneId zoneId) {
         this.value = value;
         this.formats = formats;
         this.zoneId = zoneId;
     }
 
     public ZonedDateTime zonedDateTime() {
-        LOGGER.debug("Parsing value <{}> to default formats", value);
-        for (final DateTimeFormatter dateTimeFormatter : formats) {
-            LOGGER.debug("Trying format <{}>", dateTimeFormatter);
+        LOGGER.debug("Parsing value <{}> using default formats", value);
+        for (final String format : formats) {
+            LOGGER.debug("Trying format <{}>", format);
+            final AbsoluteTimestamp absoluteTimestamp = new AbsoluteTimestamp(value, format, zoneId);
             try {
-                // We parse the value with format and access the generic temporal object
-                final TemporalAccessor parse = dateTimeFormatter.parse(value);
-                if (parse.query(TemporalQueries.zone()) != null) {
-                    // if a temporal object has zone information, we do not overwrite it
-                    return ZonedDateTime.from(parse);
-                }
-                else if (parse.isSupported(ChronoField.HOUR_OF_DAY)) {
-                    // if a temporal object has time information, we use date time at zone
-                    return LocalDateTime.from(parse).atZone(zoneId);
-                }
-                else {
-                    // date at zone
-                    return LocalDate.from(parse).atStartOfDay(zoneId);
-                }
+                return absoluteTimestamp.zonedDateTime();
             }
-            catch (final DateTimeParseException e) {
-                LOGGER.debug("Failed parse moving on to next formatter");
+            catch (RuntimeException ex) {
+                LOGGER.debug("Couldn't parse value, exception <{}>", ex.getMessage());
                 // passthrough
             }
         }
