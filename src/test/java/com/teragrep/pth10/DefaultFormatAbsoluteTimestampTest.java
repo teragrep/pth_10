@@ -45,28 +45,24 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DefaultTimeFormat;
+import com.teragrep.pth10.ast.time.DefaultFormatAbsoluteTimestamp;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.util.TimeZone;
+import java.time.ZoneId;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class DefaultTimeFormatTest {
+public class DefaultFormatAbsoluteTimestampTest {
 
-    @BeforeEach
-    void enforceTimeZone() {
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
-    }
+    private final ZoneId zoneId = ZoneId.of("GMT+2");
 
     @Test
     void ISO8601_fractions_latest_Test() {
         String time = "2023-12-18T12:40:53.001+03:00"; // different timeformat than default (default would be +02:00)
-        // No longer handled by DefaultTimeFormat, see RoundedUpTimestamp
+        // No longer handled by DefaultFormatAbsoluteTimestamp, see RoundedUpTimestamp
         long expected = 1702892453L;
-        long actual = new DefaultTimeFormat().getEpoch(time);
+        long actual = new DefaultFormatAbsoluteTimestamp(time, zoneId).zonedDateTime().toEpochSecond();
 
         Assertions.assertEquals(expected, actual);
     }
@@ -75,7 +71,7 @@ public class DefaultTimeFormatTest {
     void ISO8601_fractions_earliest_Test() {
         String time = "2023-12-18T12:40:53.001+03:00"; // different timeformat than default (default would be +02:00)
         long expected = 1702892453L;
-        long actual = new DefaultTimeFormat().getEpoch(time);
+        long actual = new DefaultFormatAbsoluteTimestamp(time, zoneId).zonedDateTime().toEpochSecond();
 
         Assertions.assertEquals(expected, actual);
     }
@@ -84,7 +80,7 @@ public class DefaultTimeFormatTest {
     void ISO8601_offsetTest() {
         String time = "2023-12-18T12:40:53+03:00"; // different timeformat than default (default would be +02:00)
         long expected = 1702892453L;
-        long actual = new DefaultTimeFormat().getEpoch(time);
+        long actual = new DefaultFormatAbsoluteTimestamp(time, zoneId).zonedDateTime().toEpochSecond();
 
         Assertions.assertEquals(expected, actual);
     }
@@ -93,7 +89,7 @@ public class DefaultTimeFormatTest {
     void ISO8601_test() {
         String time = "2023-12-18T12:40:53";
         long expected = 1702896053L;
-        long actual = new DefaultTimeFormat().getEpoch(time);
+        long actual = new DefaultFormatAbsoluteTimestamp(time, zoneId).zonedDateTime().toEpochSecond();
 
         Assertions.assertEquals(expected, actual);
     }
@@ -102,7 +98,7 @@ public class DefaultTimeFormatTest {
     void defaultTimeFormatTest() {
         String time = "12/18/2023:12:40:53";
         long expected = 1702896053L;
-        long actual = new DefaultTimeFormat().getEpoch(time);
+        long actual = new DefaultFormatAbsoluteTimestamp(time, zoneId).zonedDateTime().toEpochSecond();
 
         Assertions.assertEquals(expected, actual);
     }
@@ -110,8 +106,8 @@ public class DefaultTimeFormatTest {
     @Test
     void defaultTimeFormatTest_2() {
         String time = "04/16/2020:10:25:40";
-        long expected = 1587021940L;
-        long actual = new DefaultTimeFormat().getEpoch(time);
+        long expected = 1587025540;
+        long actual = new DefaultFormatAbsoluteTimestamp(time, zoneId).zonedDateTime().toEpochSecond();
 
         Assertions.assertEquals(expected, actual);
     }
@@ -120,9 +116,11 @@ public class DefaultTimeFormatTest {
     void invalidTimeformat() {
         String time = "12/34/2020:10:25:40";
         RuntimeException rte = Assertions
-                .assertThrows(RuntimeException.class, () -> new DefaultTimeFormat().getEpoch(time));
-
+                .assertThrows(RuntimeException.class, () -> new DefaultFormatAbsoluteTimestamp(time).zonedDateTime().toEpochSecond());
         Assertions
-                .assertEquals("TimeQualifier conversion error: <12/34/2020:10:25:40> can't be parsed.", rte.getMessage());
+                .assertEquals(
+                        "TimeQualifier conversion error: <12/34/2020:10:25:40> can't be parsed using default formats.",
+                        rte.getMessage()
+                );
     }
 }

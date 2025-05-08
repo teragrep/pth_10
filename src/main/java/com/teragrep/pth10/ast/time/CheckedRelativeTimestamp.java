@@ -43,25 +43,41 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.transformstatement.convert;
+package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 
-/**
- * UDF for convert command 'mktime'<br>
- * Human readable time to epoch using given timeformat<br>
- * 
- * @author eemhu
- */
-public class Mktime implements UDF2<String, String, String> {
+import java.sql.Timestamp;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
-    private static final long serialVersionUID = 1L;
+public final class CheckedRelativeTimestamp implements DPLTimestamp {
 
-    @Override
-    public String call(String hrt, String tf) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
-        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
+    private final String value;
+    private final ZoneId zoneId;
+
+    public CheckedRelativeTimestamp(final String value, final ZoneId zoneId) {
+        this.value = value;
+        this.zoneId = zoneId;
     }
 
+    @Override
+    public ZonedDateTime zonedDateTime() {
+        final String unquotedValue = new UnquotedText(new TextString(value)).read();
+        final RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(unquotedValue);
+        return relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis())).atZone(zoneId);
+    }
+
+    @Override
+    public boolean isStub() {
+        boolean isStub = false;
+        try {
+            zonedDateTime();
+        }
+        catch (NumberFormatException e) {
+            isStub = true;
+        }
+        return isStub;
+    }
 }

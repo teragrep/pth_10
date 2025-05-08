@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.DefaultTimeFormat;
+import com.teragrep.pth10.ast.time.DefaultFormatAbsoluteTimestamp;
 import com.teragrep.pth10.ast.time.RelativeTimeParser;
 import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import org.junit.jupiter.api.*;
@@ -56,42 +56,30 @@ import org.slf4j.LoggerFactory;
 import java.sql.Timestamp;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
-import java.util.TimeZone;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class relativeTimeTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(relativeTimeTest.class);
-    private TimeZone originalTimeZone = null;
-
     // use this file to initialize the streaming dataset
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
     private StreamingTestUtil streamingTestUtil;
+    private final ZoneId zoneId = ZoneId.of("Europe/Helsinki");
 
     @BeforeAll
     void setEnv() {
-        // set default timezone
-        originalTimeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
-
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
     @BeforeEach
     void setUp() {
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
         this.streamingTestUtil.setUp();
     }
 
     @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
-    }
-
-    @AfterAll
-    void recoverTimeZone() {
-        TimeZone.setDefault(originalTimeZone);
     }
 
     @Test
@@ -103,7 +91,9 @@ public class relativeTimeTest {
         // unix epoch format
         String q = "index=kafka_topic timeformat=%s earliest=1587032680 latest=1587021942";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
+            long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42", zoneId)
+                    .zonedDateTime()
+                    .toEpochSecond();
 
             String regex = "^.*_time >= from_unixtime\\(1587032680.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -121,7 +111,9 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=%m/%d/%Y:%H:%M:%S earliest=\"04/16/2020:10:24:40\" latest=\"04/16/2020:10:25:42\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
+            long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42", zoneId)
+                    .zonedDateTime()
+                    .toEpochSecond();
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             LOGGER.info("Complex timeformat<{}>", q);
@@ -140,7 +132,9 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=\"%S-%M-%H %Y-%d-%m\" earliest=\"40-24-10 2020-16-04\" latest=\"42-25-10 2020-16-04\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
+            long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42", zoneId)
+                    .zonedDateTime()
+                    .toEpochSecond();
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -158,7 +152,9 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=\"%F %T\" earliest=\"2020-04-16 10:24:40\" latest=\"2020-04-16 10:25:42\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
+            long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42", zoneId)
+                    .zonedDateTime()
+                    .toEpochSecond();
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             LOGGER.info("Complex timeformat<{}>", q);
@@ -177,7 +173,9 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=\"%d %b %Y %I.%M.%S %p\" earliest=\"16 Apr 2020 10.24.40 AM\" latest=\"16 Apr 2020 10.25.42 AM\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
+            long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42", zoneId)
+                    .zonedDateTime()
+                    .toEpochSecond();
 
             String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -534,7 +532,7 @@ public class relativeTimeTest {
         String q;
         // earliest
         q = "index=cinnamon earliest=\"04/16/2020:10:25:40\"";
-        long earliestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
+        long earliestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:40").zonedDateTime().toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -552,7 +550,7 @@ public class relativeTimeTest {
         String q;
         // latest
         q = "index=cinnamon latest=\"04/16/2020:10:25:40\"";
-        long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
+        long latestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:40").zonedDateTime().toEpochSecond();
         String regex = ".*_time < from_unixtime\\(" + latestEpoch + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -570,8 +568,8 @@ public class relativeTimeTest {
         String q;
         // earliest, latest
         q = "index=cinnamon earliest=\"04/16/2020:10:25:40\" latest=\"04/16/2020:10:25:42\"";
-        long earliestEpoch2 = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
-        long latestEpoch2 = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
+        long earliestEpoch2 = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:40").zonedDateTime().toEpochSecond();
+        long latestEpoch2 = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42").zonedDateTime().toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2
                 + ".*$";
 
@@ -589,8 +587,12 @@ public class relativeTimeTest {
     public void parseTimestampIndexEarliestLatestTest() {
         // _index_earliest, _index_latest
         String q = "index=cinnamon _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\"";
-        long indexEarliestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
-        long indexLatestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
+        long indexEarliestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:40")
+                .zonedDateTime()
+                .toEpochSecond();
+        long indexLatestEpoch = new DefaultFormatAbsoluteTimestamp("04/16/2020:10:25:42")
+                .zonedDateTime()
+                .toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + indexEarliestEpoch + ".*_time < from_unixtime\\("
                 + indexLatestEpoch + ".*$";
 
@@ -607,8 +609,8 @@ public class relativeTimeTest {
     )
     public void streamListTest() {
         String q = "index = memory earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
-        long earliestEpoch = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
-        long latestEpoch = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
+        long earliestEpoch = new DefaultFormatAbsoluteTimestamp("05/08/2019:09:10:40").zonedDateTime().toEpochSecond();
+        long latestEpoch = new DefaultFormatAbsoluteTimestamp("05/10/2022:09:11:40").zonedDateTime().toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
                 + ".*$";
 
@@ -625,8 +627,8 @@ public class relativeTimeTest {
     )
     public void streamList1Test() {
         String q = "index = memory-test earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
-        long earliestEpoch2 = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
-        long latestEpoch2 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
+        long earliestEpoch2 = new DefaultFormatAbsoluteTimestamp("05/08/2019:09:10:40").zonedDateTime().toEpochSecond();
+        long latestEpoch2 = new DefaultFormatAbsoluteTimestamp("05/10/2022:09:11:40").zonedDateTime().toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2
                 + ".*$";
 
@@ -643,8 +645,8 @@ public class relativeTimeTest {
     )
     public void streamList2Test() {
         String q = "index = memory-test/yyy earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
-        long earliestEpoch3 = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
-        long latestEpoch3 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
+        long earliestEpoch3 = new DefaultFormatAbsoluteTimestamp("05/08/2019:09:10:40").zonedDateTime().toEpochSecond();
+        long latestEpoch3 = new DefaultFormatAbsoluteTimestamp("05/10/2022:09:11:40").zonedDateTime().toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch3 + ".*_time < from_unixtime\\(" + latestEpoch3
                 + ".*$";
 

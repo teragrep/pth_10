@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth10.ast;
 
+import com.teragrep.pth10.ast.time.DefaultFormatAbsoluteTimestamp;
 import com.teragrep.pth10.ast.time.RelativeTimeParser;
 import com.teragrep.pth10.ast.time.RelativeTimestamp;
 import org.slf4j.Logger;
@@ -115,7 +116,7 @@ public class DPLParserConfig {
         }
         catch (NumberFormatException ne) {
             // absolute time
-            earliestEpoch = new DefaultTimeFormat().getEpoch(earliest);
+            earliestEpoch = new DefaultFormatAbsoluteTimestamp(earliest).zonedDateTime().toEpochSecond();
         }
 
         config.put("earliest", earliest);
@@ -149,7 +150,7 @@ public class DPLParserConfig {
         }
         catch (NumberFormatException ne) {
             // absolute time
-            latestEpoch = new DefaultTimeFormat().getEpoch(latest);
+            latestEpoch = new DefaultFormatAbsoluteTimestamp(latest).zonedDateTime().toEpochSecond();
         }
 
         config.put("latest", latest);
