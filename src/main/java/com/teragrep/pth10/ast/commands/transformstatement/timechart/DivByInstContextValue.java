@@ -43,72 +43,32 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.timechart;
+package com.teragrep.pth10.ast.commands.transformstatement.timechart;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.steps.AbstractStep;
-import org.apache.spark.sql.Column;
+import com.teragrep.pth10.ast.ContextValue;
+import com.teragrep.pth_03.antlr.DPLParser;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public abstract class AbstractTimechartStep extends AbstractStep {
+/**
+ * Parses the divideByInstruction in "| timechart".
+ */
+public final class DivByInstContextValue implements ContextValue<List<String>> {
 
-    protected List<Column> aggCols = null;
-    protected List<String> divByInsts = null;
-    protected Column span = null;
-    protected String aggregateField = null;
-    protected DPLParserCatalystContext catCtx = null;
-    protected String hdfsPath = null;
+    private final List<DPLParser.T_timechart_divideByInstructionContext> ctx;
 
-    public AbstractTimechartStep() {
-        super();
+    public DivByInstContextValue(List<DPLParser.T_timechart_divideByInstructionContext> ctx) {
+        this.ctx = ctx;
     }
 
-    public void setAggCols(List<Column> aggCols) {
-        this.aggCols = aggCols;
-    }
+    @Override
+    public List<String> value() {
+        final List<String> divByFields = new ArrayList<>();
+        for (DPLParser.T_timechart_divideByInstructionContext divByInstruction : ctx) {
+            divByFields.add(divByInstruction.fieldType().getChild(0).toString());
+        }
 
-    public List<Column> getAggCols() {
-        return aggCols;
-    }
-
-    public void setDivByInsts(List<String> divByInsts) {
-        this.divByInsts = divByInsts;
-    }
-
-    public List<String> getDivByInsts() {
-        return divByInsts;
-    }
-
-    public void setAggregateField(String field) {
-        this.aggregateField = field;
-    }
-
-    public String getAggregateField() {
-        return this.aggregateField;
-    }
-
-    public void setSpan(Column span) {
-        this.span = span;
-    }
-
-    public Column getSpan() {
-        return this.span;
-    }
-
-    public void setCatCtx(DPLParserCatalystContext catCtx) {
-        this.catCtx = catCtx;
-    }
-
-    public DPLParserCatalystContext getCatCtx() {
-        return catCtx;
-    }
-
-    public void setHdfsPath(String hdfsPath) {
-        this.hdfsPath = hdfsPath;
-    }
-
-    public String getHdfsPath() {
-        return hdfsPath;
+        return divByFields;
     }
 }

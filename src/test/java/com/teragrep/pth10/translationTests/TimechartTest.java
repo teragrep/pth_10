@@ -46,8 +46,11 @@
 package com.teragrep.pth10.translationTests;
 
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.ast.DPLParserCatalystVisitor;
+import com.teragrep.pth10.ast.bo.ColumnNode;
+import com.teragrep.pth10.ast.bo.StepNode;
+import com.teragrep.pth10.ast.commands.aggregate.AggregateFunction;
 import com.teragrep.pth10.ast.commands.transformstatement.TimechartTransformation;
+import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.timechart.TimechartStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
@@ -55,95 +58,147 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CharStreams;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.CommonTokenStream;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.functions;
+import org.apache.spark.unsafe.types.CalendarInterval;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TimechartTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTest.class);
-
     @Test
     void testTimeChartTranslation() {
-        String query = "| timechart span=5min sum(sales) as sales by product";
+        String rename = "sales";
+        String byField = "product";
+        String query = "| timechart span=5min sum(sales) as " + rename + " by " + byField;
+
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+
+        // create parse tree with PTH-03
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
-        LOGGER.debug(tree.toStringTree(parser));
+        DPLParser.AggregateMethodSumContext aggContext = (DPLParser.AggregateMethodSumContext) tree
+                .getChild(1)
+                .getChild(0)
+                .getChild(2)
+                .getChild(0);
+        DPLParser.TimechartTransformationContext timechartContext = (DPLParser.TimechartTransformationContext) tree
+                .getChild(1)
+                .getChild(0);
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        // Use this file for  dataset initialization
-        String testFile = "src/test/resources/timechartTestData.jsonl";
         ctx.setEarliest("-1w");
 
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
+        // traverse the tree in PTH-10 and create TimechartStep
+        TimechartTransformation tct = new TimechartTransformation(ctx);
+        StepNode timechartNode = (StepNode) tct.visitTimechartTransformation(timechartContext);
+        AbstractStep tcs = timechartNode.get();
 
-        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
-        tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
-        TimechartStep tcs = tct.timechartStep;
+        // expected BY clause
+        List<String> divByInsts = new ArrayList<>();
+        divByInsts.add(byField);
 
-        Assertions.assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
-        Assertions
-                .assertEquals(
-                        "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
-                        tcs.getAggCols().get(0).toString()
-                );
-        Assertions.assertEquals("product", tcs.getDivByInsts().get(0));
+        // expected aggregations
+        AggregateFunction aggregateFunction = new AggregateFunction(ctx);
+        ColumnNode aggColNode = (ColumnNode) aggregateFunction.visitAggregateMethodSum(aggContext); // "sum(sales)" aggregation
+        Column aggCol = aggColNode.getColumn().as(rename); // "as sales"
+        List<Column> aggCols = new ArrayList<>();
+        aggCols.add(aggCol);
+
+        // expected span
+        CalendarInterval ival = new CalendarInterval(0, 0, 5 * 60 * 1000 * 1000);
+        Column span = functions.window(new Column("_time"), String.valueOf(ival), "5 minutes", "0 minutes");
+
+        TimechartStep expected = new TimechartStep(aggCols, divByInsts, span);
+
+        Assertions.assertEquals(expected, tcs);
     }
 
     @Test
     void testTimeChartTranslation_NoByClause() {
-        String query = "| timechart span=5min sum(sales) as sales";
+        String rename = "sales";
+        String query = "| timechart span=5min sum(sales) as " + rename;
+
+        // create parse tree with PTH-03
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
-        LOGGER.debug(tree.toStringTree(parser));
+
+        DPLParser.AggregateMethodSumContext aggContext = (DPLParser.AggregateMethodSumContext) tree
+                .getChild(1)
+                .getChild(0)
+                .getChild(2)
+                .getChild(0);
+        DPLParser.TimechartTransformationContext timechartContext = (DPLParser.TimechartTransformationContext) tree
+                .getChild(1)
+                .getChild(0);
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
-        tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
-        TimechartStep tcs = tct.timechartStep;
+        // traverse the tree in PTH-10 and create TimechartStep
+        TimechartTransformation tct = new TimechartTransformation(ctx);
+        StepNode timechartNode = (StepNode) tct.visitTimechartTransformation(timechartContext);
+        AbstractStep tcs = timechartNode.get();
 
-        Assertions.assertEquals("window(_time, 300000000, 300000000, 0) AS window", tcs.getSpan().toString());
-        Assertions
-                .assertEquals(
-                        "sumaggregator(encodeusingserializer(input[0, java.lang.Object, true], false) AS value, decodeusingserializer(input[0, binary, true], com.teragrep.pth10.ast.commands.aggregate.UDAFs.BufferClasses.SumBuffer, false), staticinvoke(class org.apache.spark.unsafe.types.UTF8String, StringType, fromString, input[0, java.lang.String, true], true, false, true)) AS `sum(sales)` AS sales",
-                        tcs.getAggCols().get(0).toString()
-                );
-        Assertions.assertEquals(0, tcs.getDivByInsts().size());
+        // expected aggregations
+        AggregateFunction aggregateFunction = new AggregateFunction(ctx);
+        ColumnNode aggColNode = (ColumnNode) aggregateFunction.visitAggregateMethodSum(aggContext); // "sum(sales)" aggregation
+        Column aggCol = aggColNode.getColumn().as(rename); // "as sales"
+        List<Column> aggCols = new ArrayList<>();
+        aggCols.add(aggCol);
+
+        // expected span
+        CalendarInterval ival = new CalendarInterval(0, 0, 5 * 60 * 1000 * 1000);
+        Column span = functions.window(new Column("_time"), String.valueOf(ival), "5 minutes", "0 minutes");
+
+        TimechartStep expected = new TimechartStep(aggCols, new ArrayList<>(), span);
+
+        Assertions.assertEquals(expected, tcs);
     }
 
     @Test
     void testTimeChartTranslationBasic() {
         String query = "| timechart count";
+
+        // create parse tree with PTH-03
         CharStream inputStream = CharStreams.fromString(query);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
-        LOGGER.debug(tree.toStringTree(parser));
+        DPLParser.AggregateFunctionContext aggContext = (DPLParser.AggregateFunctionContext) tree
+                .getChild(1)
+                .getChild(0)
+                .getChild(1);
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-        DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
-        TimechartTransformation tct = new TimechartTransformation(ctx, visitor);
-        tct.visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
-        TimechartStep tcs = tct.timechartStep;
+        // traverse the tree in PTH-10 and create TimechartStep
+        TimechartTransformation tct = new TimechartTransformation(ctx);
+        StepNode timechartNode = (StepNode) tct
+                .visitTimechartTransformation((DPLParser.TimechartTransformationContext) tree.getChild(1).getChild(0));
+        AbstractStep tcs = timechartNode.get();
 
-        Assertions.assertEquals("window(_time, 86400000000, 86400000000, 0) AS window", tcs.getSpan().toString());
-        Assertions
-                .assertEquals(
-                        "countaggregator(input[0, java.lang.Long, true].longValue AS value, staticinvoke(class java.lang.Long, ObjectType(class java.lang.Long), valueOf, input[0, bigint, true], true, false, true), input[0, java.lang.Long, true].longValue) AS count",
-                        tcs.getAggCols().get(0).toString()
-                );
-        Assertions.assertEquals(0, tcs.getDivByInsts().size());
+        // expected aggregations
+        AggregateFunction aggregateFunction = new AggregateFunction(ctx);
+        ColumnNode aggColNode = (ColumnNode) aggregateFunction.visitAggregateFunction(aggContext); // "count" aggregation
+        List<Column> aggCols = new ArrayList<>();
+        aggCols.add(aggColNode.getColumn());
+
+        // expected default span of 1 day when "span=" parameter is not specified
+        CalendarInterval ival = new CalendarInterval(0, 1, 0);
+        Column span = functions.window(new Column("_time"), String.valueOf(ival), "1 day", "0 minutes");
+
+        TimechartStep expected = new TimechartStep(aggCols, new ArrayList<>(), span);
+
+        Assertions.assertEquals(expected, tcs);
     }
 }

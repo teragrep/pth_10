@@ -43,8 +43,37 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast;
+package com.teragrep.pth10.ast.commands.transformstatement.timechart.span;
 
-public enum TimeRange {
-    TEN_SECONDS, ONE_MINUTE, FIVE_MINUTES, THIRTY_MINUTES, ONE_HOUR, ONE_DAY, ONE_MONTH
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.functions;
+import org.apache.spark.unsafe.types.CalendarInterval;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+public class SpanParameterTest {
+
+    @Test
+    public void testEqualsVerifier() {
+        // equalsVerifier flags Spark's Column as a recursive data structure, have to use prefabs
+        EqualsVerifier
+                .forClass(SpanParameter.class)
+                .withNonnullFields("column", "ival")
+                .withPrefabValues(Column.class, new Column("_time"), functions.lit(""))
+                .verify();
+    }
+
+    @Test
+    public void testAsColumn() {
+        TimeRange timeRange = new TimeRange("5 minutes");
+        SpanParameter spanParameter = new SpanParameter(timeRange);
+
+        long microSeconds = timeRange.asSeconds() * 1000 * 1000;
+        Column expectedColumn = functions
+                .window(new Column("_time"), String.valueOf(new CalendarInterval(0, 0, microSeconds)));
+
+        // Spark's Columns seem to be equal only with same reference. Using String representation instead.
+        Assertions.assertEquals(expectedColumn.toString(), spanParameter.asColumn().toString());
+    }
 }
