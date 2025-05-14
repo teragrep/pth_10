@@ -116,6 +116,7 @@ public class ConvertTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
+            Assertions.assertEquals(12, listOfResults.size());
             for (String s : listOfResults) {
                 Matcher matcher = iso8601pattern.matcher(s);
                 Assertions.assertTrue(matcher.find());
@@ -149,6 +150,7 @@ public class ConvertTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
+            Assertions.assertEquals(12, listOfResults.size());
             List<String> expectedResults = Arrays
                     .asList(
                             "1970-01-01T00:00:11Z", "1970-01-01T00:00:11Z", "1970-01-01T00:00:10Z",
