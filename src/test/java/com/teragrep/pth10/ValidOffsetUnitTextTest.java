@@ -45,23 +45,51 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.time.DPLTimestamp;
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.time.ValidOffsetUnitText;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public final class RoundedUpTimestampTest {
+public class ValidOffsetUnitTextTest {
 
     @Test
-    void testWithoutNanosecond() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00+00:00", ""));
-        Assertions.assertEquals(1704067200L, timestamp.zonedDateTime().toInstant().getEpochSecond());
+    public void testFullTimestamp() {
+        final ValidOffsetUnitText validOffsetUnitText = new ValidOffsetUnitText(new TextString("-10d@hour-3d"));
+        final String read = validOffsetUnitText.read();
+        Assertions.assertEquals("d", read);
     }
 
     @Test
-    void testWithNanoseconds() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00.240+00:00", ""));
-        Assertions.assertEquals(1704067200L + 1L, timestamp.zonedDateTime().toInstant().getEpochSecond());
+    public void testValidInput() {
+        final ValidOffsetUnitText validOffsetUnitText = new ValidOffsetUnitText(new TextString("1d"));
+        final String read = validOffsetUnitText.read();
+        Assertions.assertEquals("d", read);
+    }
+
+    @Test
+    public void testNegativeInput() {
+        final ValidOffsetUnitText validOffsetUnitText = new ValidOffsetUnitText(new TextString("-1d"));
+        final String read = validOffsetUnitText.read();
+        Assertions.assertEquals("d", read);
+    }
+
+    @Test
+    public void testNow() {
+        final ValidOffsetUnitText validOffsetUnitText1 = new ValidOffsetUnitText(new TextString("NOW"));
+        final ValidOffsetUnitText validOffsetUnitText2 = new ValidOffsetUnitText(new TextString("now"));
+        final ValidOffsetUnitText validOffsetUnitText3 = new ValidOffsetUnitText(new TextString("nOw"));
+        final ValidOffsetUnitText validOffsetUnitText4 = new ValidOffsetUnitText(new TextString("nOw@d-10hours"));
+        Assertions.assertEquals("now", validOffsetUnitText1.read());
+        Assertions.assertEquals("now", validOffsetUnitText2.read());
+        Assertions.assertEquals("now", validOffsetUnitText3.read());
+        Assertions.assertEquals("now", validOffsetUnitText4.read());
+    }
+
+    @Test
+    public void testInvalidNow() {
+        final ValidOffsetUnitText invalidNowTimestamp = new ValidOffsetUnitText(new TextString("-NOW"));
+        final RuntimeException exception = Assertions.assertThrows(RuntimeException.class, invalidNowTimestamp::read);
+        final String expectedMessage = "timestamp 'now' should not have any values before it";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 }

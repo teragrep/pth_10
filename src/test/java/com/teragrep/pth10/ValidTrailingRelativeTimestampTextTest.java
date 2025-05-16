@@ -43,25 +43,35 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.transformstatement.convert;
+package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.time.ValidTrailingRelativeTimestampText;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-/**
- * UDF for convert command 'mktime'<br>
- * Human readable time to epoch using given timeformat<br>
- * 
- * @author eemhu
- */
-public class Mktime implements UDF2<String, String, String> {
+public class ValidTrailingRelativeTimestampTextTest {
 
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public String call(String hrt, String tf) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
-        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
+    @Test
+    public void testValidTrailText() {
+        String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@d+3h")).read();
+        String expected = "+3h";
+        Assertions.assertEquals(expected, read);
     }
 
+    @Test
+    public void testNoAtSymbol() {
+        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+                new TextString("+10hours")
+        );
+        Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
+    }
+
+    @Test
+    public void testInvalidTrailText() {
+        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+                new TextString("@d")
+        );
+        Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
+    }
 }

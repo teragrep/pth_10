@@ -43,25 +43,49 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.transformstatement.convert;
+package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth10.ast.Text;
+import org.apache.hadoop.shaded.com.google.re2j.Matcher;
+import org.apache.hadoop.shaded.com.google.re2j.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * UDF for convert command 'mktime'<br>
- * Human readable time to epoch using given timeformat<br>
- * 
- * @author eemhu
- */
-public class Mktime implements UDF2<String, String, String> {
+public class ValidTrailingRelativeTimestampText implements Text {
 
-    private static final long serialVersionUID = 1L;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ValidTrailingRelativeTimestampText.class);
+    private final Text origin;
+    private final Pattern validPattern = Pattern.compile(".*@([a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$");
 
-    @Override
-    public String call(String hrt, String tf) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
-        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
+    public ValidTrailingRelativeTimestampText(final Text origin) {
+        this.origin = origin;
     }
 
+    public boolean isStub() {
+        boolean isStub = false;
+        try {
+            read();
+        }
+        catch (final RuntimeException e) {
+            isStub = true;
+        }
+        return isStub;
+    }
+
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        LOGGER.debug("origin string <{}>", originString);
+        final String updatedString;
+        final Matcher matcher = validPattern.matcher(originString);
+        if (matcher.find() && matcher.groupCount() > 1 && !matcher.group(2).isEmpty()) {
+            // The second group contains the valid trailing offset (e.g., +3h, -10m)
+            updatedString = matcher.group(2);
+        }
+        else {
+            throw new RuntimeException("Could not find a valid trailing offset after '@'");
+        }
+        LOGGER.debug("trailing timestamp from trail <{}>", updatedString);
+        return updatedString;
+    }
 }

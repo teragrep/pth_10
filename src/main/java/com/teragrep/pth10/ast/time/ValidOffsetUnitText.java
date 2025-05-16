@@ -43,25 +43,44 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.transformstatement.convert;
+package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth10.ast.Text;
 
-/**
- * UDF for convert command 'mktime'<br>
- * Human readable time to epoch using given timeformat<br>
- * 
- * @author eemhu
- */
-public class Mktime implements UDF2<String, String, String> {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    private static final long serialVersionUID = 1L;
+public final class ValidOffsetUnitText implements Text {
 
-    @Override
-    public String call(String hrt, String tf) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
-        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
+    private final Text origin;
+    private final Pattern pattern;
+
+    public ValidOffsetUnitText(final Text origin) {
+        this(origin, Pattern.compile("([a-zA-Z]+)"));
     }
 
+    private ValidOffsetUnitText(final Text origin, final Pattern pattern) {
+        this.origin = origin;
+        this.pattern = pattern;
+    }
+
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        final Matcher matcher = pattern.matcher(originString);
+        final String updatedString;
+        if (originString.toLowerCase().startsWith("now")) {
+            updatedString = "now";
+        }
+        else if (originString.toLowerCase().contains("now")) {
+            throw new RuntimeException("timestamp 'now' should not have any values before it");
+        }
+        else {
+            if (!matcher.find()) {
+                throw new RuntimeException("Text did not contain a valid offset unit");
+            }
+            updatedString = matcher.group(); // next group of alphabetical characters
+        }
+        return updatedString;
+    }
 }

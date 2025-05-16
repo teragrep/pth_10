@@ -45,74 +45,75 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.DPLTimeFormat;
-import com.teragrep.pth10.ast.DefaultTimeFormat;
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.TimeZone;
 
-public final class InstantTimestamp implements DPLTimestamp {
+/**
+ * Determines a point for time from input string, timeformat and a timezone id. Supports relative and absolute
+ * timestamps, relative is used if possible to determine the offset
+ */
+public final class DPLTimestampImpl implements DPLTimestamp {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DPLTimestampImpl.class);
     private final String value;
     private final String timeformat;
+    private final ZoneId zoneId;
 
-    public InstantTimestamp(final String value, final String timeformat) {
+    public DPLTimestampImpl(final String value) {
+        this(value, "", TimeZone.getDefault().toZoneId());
+    }
+
+    public DPLTimestampImpl(final String value, final String timeformat) {
+        this(value, timeformat, TimeZone.getDefault().toZoneId());
+    }
+
+    public DPLTimestampImpl(final String value, final String timeformat, final ZoneId zoneId) {
         this.value = value;
         this.timeformat = timeformat;
+        this.zoneId = zoneId;
     }
 
-    public Instant instant() {
-        Instant rv;
-        try {
-            RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(value);
-            rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
-        }
-        catch (NumberFormatException ne) {
-            rv = instantFromString(value, timeformat);
-        }
-
-        return rv;
-    }
-
-    // Uses defaultTimeFormat if timeformat is null and DPLTimeFormat if timeformat isn't null (which means that the
-    // timeformat= option was used).
-    private Instant instantFromString(final String value, final String timeFormatString) {
-        final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
-        final Instant timevalue;
-        if (timeFormatString == null || timeFormatString.isEmpty()) {
-            timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
+    public ZonedDateTime zonedDateTime() {
+        LOGGER.info("Incoming value <{}> to timestamp", value);
+        final DPLTimestamp timestamp;
+        final RelativeTimestamp relativeTimestamp = new RelativeTimestamp(value, zoneId);
+        if (!relativeTimestamp.isStub()) {
+            timestamp = relativeTimestamp;
         }
         else {
-            // TODO: should be included in DPLTimeFormat
-            if (timeFormatString.equals("%s")) {
-                return Instant.ofEpochSecond(Long.parseLong(unquotedValue));
-            }
-            try {
-                timevalue = new DPLTimeFormat(timeFormatString).instantOf(unquotedValue);
-            }
-            catch (ParseException e) {
-                throw new RuntimeException("TimeQualifier conversion error: <" + unquotedValue + "> can't be parsed.");
-            }
+            timestamp = new AbsoluteTimestamp(value, timeformat, zoneId);
         }
-        return timevalue;
+        return timestamp.zonedDateTime();
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean isStub() {
+        return false;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null) {
             return false;
-        InstantTimestamp that = (InstantTimestamp) o;
-        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat);
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final DPLTimestampImpl that = (DPLTimestampImpl) o;
+        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat)
+                && Objects.equals(zoneId, that.zoneId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, timeformat);
+        return Objects.hash(value, timeformat, zoneId);
     }
 }

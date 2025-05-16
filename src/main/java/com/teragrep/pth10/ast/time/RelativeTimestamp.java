@@ -45,41 +45,61 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.sql.Timestamp;
-import java.time.Instant;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.UnquotedText;
 
-public class RelativeTimestamp {
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
-    private final RelativeOffset offset;
-    private final SnapToTime snapToTime;
+public final class RelativeTimestamp implements DPLTimestamp {
 
-    public RelativeTimestamp(RelativeOffset offset, SnapToTime snapToTime) {
-        this.offset = offset;
-        this.snapToTime = snapToTime;
+    private final ValidRelativeTimestampText offsetString;
+    private final ZonedDateTime baseTime;
+
+    public RelativeTimestamp(final String offsetString) {
+        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now());
     }
 
-    /**
-     * Calculate epoch time from relative time modifier. IE. now()- time range
-     * 
-     * @param timestamp A moment in time, usually the current time
-     * @return Calculated time as epoch milliseconds
-     */
-    public Instant calculate(Timestamp timestamp) {
-        Instant time = timestamp.toInstant();
+    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
+        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    }
 
-        // if both are null, "now" option is left. Therefore, returns current time.
-        if (offset == null && snapToTime == null) {
-            time = new Timestamp(System.currentTimeMillis()).toInstant();
+    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
+        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
+    }
+
+    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
+        this.offsetString = offsetString;
+        this.baseTime = baseTime;
+    }
+
+    @Override
+    public ZonedDateTime zonedDateTime() {
+        if (isStub()) {
+            throw new RuntimeException("Object is stub, zonedDateTime() not supported");
         }
-
-        if (offset != null) {
-            time = offset.addOffset(time);
+        final String validOffset = offsetString.read();
+        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
+        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
+        final ZonedDateTime updatedTime;
+        if (snappedTimestamp.isStub()) {
+            updatedTime = offsetTimestamp.zonedDateTime();
         }
-
-        if (snapToTime != null) {
-            time = snapToTime.snap(time);
+        else {
+            updatedTime = snappedTimestamp.zonedDateTime();
         }
+        return updatedTime;
+    }
 
-        return time;
+    @Override
+    public boolean isStub() {
+        boolean isStub = false;
+        try {
+            offsetString.read();
+        }
+        catch (final NumberFormatException e) {
+            isStub = true;
+        }
+        return isStub;
     }
 }

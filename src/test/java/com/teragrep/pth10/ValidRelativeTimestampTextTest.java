@@ -43,25 +43,51 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.commands.transformstatement.convert;
+package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth10.ast.Text;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.time.ValidRelativeTimestampText;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-/**
- * UDF for convert command 'mktime'<br>
- * Human readable time to epoch using given timeformat<br>
- * 
- * @author eemhu
- */
-public class Mktime implements UDF2<String, String, String> {
+public final class ValidRelativeTimestampTextTest {
 
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public String call(String hrt, String tf) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
-        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
+    @Test
+    public void testPlainValue() {
+        final Text input = new TextString("+5d");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("+5d", offset.read());
     }
 
+    @Test
+    public void testWithSnapValue() {
+        final Text input = new TextString("+5d@hours+3");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("+5d@hours+3", offset.read());
+    }
+
+    @Test
+    public void testOnlySnapValue() {
+        final Text input = new TextString("@hours+3");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("@hours+3", offset.read());
+    }
+
+    @Test
+    public void testNow() {
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(new TextString("now"));
+        final ValidRelativeTimestampText offset2 = new ValidRelativeTimestampText(new TextString("NOW"));
+        Assertions.assertEquals("now", offset.read());
+        Assertions.assertEquals("NOW", offset2.read());
+    }
+
+    @Test
+    public void testInvalidInput() {
+        final Text input = new TextString("invalid");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        final RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, offset::read);
+        final String expectedMessage = "Unknown relative time modifier string <invalid>";
+        Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
+    }
 }

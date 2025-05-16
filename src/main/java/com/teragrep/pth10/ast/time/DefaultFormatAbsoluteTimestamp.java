@@ -43,66 +43,68 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast;
+package com.teragrep.pth10.ast.time;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.TimeZone;
 
 /**
  * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
  * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
  * uses the system default
  */
-public class DefaultTimeFormat {
+public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultFormatAbsoluteTimestamp.class);
 
     private final String[] formats;
+    private final String value;
+    private final ZoneId zoneId;
 
-    public DefaultTimeFormat() {
-        this(new String[] {
+    public DefaultFormatAbsoluteTimestamp(final String value) {
+        this(value, TimeZone.getDefault().toZoneId());
+    }
+
+    public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
+        this(value, new String[] {
                 "MM/dd/yyyy:HH:mm:ss",
                 "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
                 "yyyy-MM-dd'T'HH:mm:ss.SSS",
                 "yyyy-MM-dd'T'HH:mm:ssXXX",
                 "yyyy-MM-dd'T'HH:mm:ss"
-        });
+        }, zoneId);
     }
 
-    public DefaultTimeFormat(String[] formats) {
+    public DefaultFormatAbsoluteTimestamp(String value, String[] formats, ZoneId zoneId) {
+        this.value = value;
         this.formats = formats;
+        this.zoneId = zoneId;
     }
 
-    /**
-     * Calculate the epoch from given string.
-     * 
-     * @param time The human-readable time
-     * @return epoch as long
-     */
-    public long getEpoch(String time) {
-        return this.parse(time).getTime() / 1000L;
-    }
-
-    /**
-     * Parses the given human-readable time to a Date object.
-     * 
-     * @param time The human-readable time
-     * @return Date parsed from the given string
-     */
-    public Date parse(String time) {
-        // Try parsing all provided time formats in order
+    public ZonedDateTime zonedDateTime() {
+        LOGGER.debug("Parsing value <{}> using default formats", value);
         for (final String format : formats) {
+            LOGGER.debug("Trying format <{}>", format);
+            final AbsoluteTimestamp absoluteTimestamp = new AbsoluteTimestamp(value, format, zoneId);
             try {
-                return parseDate(time, format);
+                return absoluteTimestamp.zonedDateTime();
             }
-            catch (ParseException ignored) {
+            catch (final RuntimeException ex) {
+                LOGGER.debug("Couldn't parse value, exception <{}>", ex.getMessage());
+                // passthrough
             }
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        throw new RuntimeException(
+                "TimeQualifier conversion error: <" + value + "> can't be parsed using default formats."
+        );
     }
 
-    private Date parseDate(String time, String timeFormat) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
-        sdf.setLenient(false);
-        return sdf.parse(time);
+    @Override
+    public boolean isStub() {
+        return false;
     }
 }
