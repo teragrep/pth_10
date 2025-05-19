@@ -76,7 +76,7 @@ public final class TimeQualifierImpl implements TimeQualifier {
                 throw new IllegalArgumentException("Invalid unix epoch: <[" + value + "]>", e);
             }
         }
-        return new EpochTimestamp(value, timeformat).epoch();
+        return new InstantTimestamp(value, timeformat).instant().getEpochSecond();
     }
 
     public Column column() {
