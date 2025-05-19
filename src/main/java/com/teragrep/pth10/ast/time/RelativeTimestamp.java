@@ -56,10 +56,6 @@ public final class RelativeTimestamp implements DPLTimestamp {
     private final ValidRelativeTimestampText offsetString;
     private final ZonedDateTime baseTime;
 
-    public RelativeTimestamp(final String offsetString) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now());
-    }
-
     public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
         this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
     }
@@ -97,7 +93,7 @@ public final class RelativeTimestamp implements DPLTimestamp {
         try {
             offsetString.read();
         }
-        catch (final NumberFormatException e) {
+        catch (final IllegalArgumentException e) {
             isStub = true;
         }
         return isStub;

@@ -66,7 +66,7 @@ public class ValidTrailingRelativeTimestampText implements Text {
         try {
             read();
         }
-        catch (final RuntimeException e) {
+        catch (final IllegalArgumentException e) {
             isStub = true;
         }
         return isStub;
@@ -78,12 +78,12 @@ public class ValidTrailingRelativeTimestampText implements Text {
         LOGGER.debug("origin string <{}>", originString);
         final String updatedString;
         final Matcher matcher = validPattern.matcher(originString);
-        if (matcher.find() && matcher.groupCount() > 1 && !matcher.group(2).isEmpty()) {
-            // The second group contains the valid trailing offset (e.g., +3h, -10m)
+        // check if the second capture group contains the valid trailing offset (e.g., +3h, -10m)
+        if (matcher.find() && matcher.groupCount() > 1 && matcher.group(2) != null && !matcher.group(2).isEmpty()) {
             updatedString = matcher.group(2);
         }
         else {
-            throw new RuntimeException("Could not find a valid trailing offset after '@'");
+            throw new IllegalArgumentException("Could not find a valid trailing offset after '@'");
         }
         LOGGER.debug("trailing timestamp from trail <{}>", updatedString);
         return updatedString;

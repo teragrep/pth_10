@@ -122,7 +122,7 @@ public final class OffsetTimestamp implements DPLTimestamp {
             updatedTimeWithYearBetweenRange = updatedTime.withYear(1000);
         }
         else {
-            updatedTimeWithYearBetweenRange = updatedTime.plusYears(amount);
+            updatedTimeWithYearBetweenRange = updatedTime;
         }
 
         LOGGER.debug("offset time <{}>", updatedTimeWithYearBetweenRange);
