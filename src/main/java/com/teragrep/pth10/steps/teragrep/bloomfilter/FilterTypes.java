@@ -87,7 +87,7 @@ public final class FilterTypes implements Serializable {
             }.getType());
         }
         catch (final JsonIOException | JsonSyntaxException e) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                     "Error parsing 'dpl.pth_06.bloom.db.fields' option to JSON. ensure that filter size options are formated as an JSON array and that there are no duplicate values. "
                             + "example '[{expected: 1000, fpp: 0.01},{expected: 2000, fpp: 0.01}]'. message: "
                             + e.getMessage()
@@ -102,7 +102,7 @@ public final class FilterTypes implements Serializable {
 
         final boolean hasDuplicates = new HashSet<>(filterConfigurationList).size() != filterConfigurationList.size();
         if (hasDuplicates) {
-            throw new RuntimeException("Found duplicate values in 'dpl.pth_06.bloom.db.fields'");
+            throw new IllegalArgumentException("Found duplicate values in 'dpl.pth_06.bloom.db.fields'");
         }
         return sizesMapFromJson;
     }
