@@ -46,7 +46,8 @@
 package com.teragrep.pth10.steps.teragrep.bloomfilter;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import com.typesafe.config.Config;
 import org.apache.spark.util.sketch.BloomFilter;
 import org.slf4j.Logger;
@@ -78,22 +79,30 @@ public final class FilterTypes implements Serializable {
      */
     public SortedMap<Long, Double> sortedMap() {
         final SortedMap<Long, Double> sizesMapFromJson = new TreeMap<>();
-        final Gson gson = new Gson();
-        final List<JsonObject> jsonArray = gson.fromJson(sizesJsonString(), new TypeToken<List<JsonObject>>() {
-        }.getType());
-        for (final JsonObject object : jsonArray) {
-            if (object.has("expected") && object.has("fpp")) {
-                final Long expectedNumOfItems = Long.parseLong(object.get("expected").toString());
-                final Double fpp = Double.parseDouble(object.get("fpp").toString());
-                if (sizesMapFromJson.containsKey(expectedNumOfItems)) {
-                    LOGGER.error("Duplicate value of expected number of items value: <[{}]>", expectedNumOfItems);
-                    throw new RuntimeException("Duplicate entry expected num of items");
-                }
-                sizesMapFromJson.put(expectedNumOfItems, fpp);
-            }
-            else {
-                throw new RuntimeException("JSON did not have expected values of 'expected' or 'fpp'");
-            }
+        final List<BloomFilterConfiguration> filterConfigurationList;
+
+        try {
+            final Gson gson = new Gson();
+            filterConfigurationList = gson.fromJson(sizesJsonString(), new TypeToken<List<BloomFilterConfiguration>>() {
+            }.getType());
+        }
+        catch (final JsonIOException | JsonSyntaxException e) {
+            throw new RuntimeException(
+                    "Error parsing 'dpl.pth_06.bloom.db.fields' option to JSON. ensure that filter size options are formated as an JSON array and that there are no duplicate values. "
+                            + "example '[{expected: 1000, fpp: 0.01},{expected: 2000, fpp: 0.01}]'. message: "
+                            + e.getMessage()
+            );
+        }
+
+        for (final BloomFilterConfiguration configuration : filterConfigurationList) {
+            final Long expectedNumOfItems = configuration.expectedNumOfItems();
+            final Double falsePositiveProbability = configuration.falsePositiveProbability();
+            sizesMapFromJson.put(expectedNumOfItems, falsePositiveProbability);
+        }
+
+        final boolean hasDuplicates = new HashSet<>(filterConfigurationList).size() != filterConfigurationList.size();
+        if (hasDuplicates) {
+            throw new RuntimeException("Found duplicate values in 'dpl.pth_06.bloom.db.fields'");
         }
         return sizesMapFromJson;
     }
