@@ -89,7 +89,8 @@ public final class BloomFilterConfiguration implements Comparable<BloomFilterCon
             return 0;
         }
         if (expected.equals(other.expected)) {
-            if (fpp > other.fpp) {
+            // larger fpp results in a smaller filter bit size
+            if (fpp < other.fpp) {
                 return 1;
             }
             else {

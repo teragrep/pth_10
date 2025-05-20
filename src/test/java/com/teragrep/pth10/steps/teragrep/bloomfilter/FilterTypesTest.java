@@ -153,7 +153,7 @@ public final class FilterTypesTest {
                 );
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
-        final RuntimeException exception = assertThrows(RuntimeException.class, filterTypes::sortedMap);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
         final String expectedMessage = "Error parsing 'dpl.pth_06.bloom.db.fields' option to JSON. ensure that filter size options are formated as an JSON array and that there are no duplicate values. example '[{expected: 1000, fpp: 0.01},{expected: 2000, fpp: 0.01}]'. message:";
         Assertions.assertTrue(exception.getMessage().startsWith(expectedMessage));
     }
@@ -168,7 +168,7 @@ public final class FilterTypesTest {
                 );
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
-        final RuntimeException exception = assertThrows(RuntimeException.class, filterTypes::sortedMap);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
         final String expectedMessage = "Found duplicate values in 'dpl.pth_06.bloom.db.fields'";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
