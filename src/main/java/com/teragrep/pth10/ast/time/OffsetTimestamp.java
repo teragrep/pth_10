@@ -50,6 +50,8 @@ import com.teragrep.pth10.ast.TextString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.DateTimeException;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 
 /**
@@ -81,57 +83,85 @@ public final class OffsetTimestamp implements DPLTimestamp {
         LOGGER.debug("start time <{}>", startTime);
         final OffsetUnit unit = offsetUnit();
         final long amount = offsetAmount();
-        final ZonedDateTime updatedTime;
-        // used "plus" methods also accept negative values
-        switch (unit) {
-            case NOW:
-                updatedTime = ZonedDateTime.now(startTime.getZone());
-                break;
-            case SECONDS:
-                updatedTime = startTime.plusSeconds(amount);
-                break;
-            case MINUTES:
-                updatedTime = startTime.plusMinutes(amount);
-                break;
-            case HOURS:
-                updatedTime = startTime.plusHours(amount);
-                break;
-            case DAYS:
-                updatedTime = startTime.plusDays(amount);
-                break;
-            case WEEKS:
-                updatedTime = startTime.plusWeeks(amount);
-                break;
-            case MONTHS:
-                updatedTime = startTime.plusMonths(amount);
-                break;
-            case YEARS:
-                updatedTime = startTime.plusYears(amount);
-                break;
-            default:
-                throw new RuntimeException("Unsupported unit");
+        ZonedDateTime updatedTime;
+        try {
+            // used "plus" methods also accept negative values
+            switch (unit) {
+                case NOW:
+                    updatedTime = ZonedDateTime.now(startTime.getZone());
+                    break;
+                case SECONDS:
+                    updatedTime = startTime.plusSeconds(amount);
+                    break;
+                case MINUTES:
+                    updatedTime = startTime.plusMinutes(amount);
+                    break;
+                case HOURS:
+                    updatedTime = startTime.plusHours(amount);
+                    break;
+                case DAYS:
+                    updatedTime = startTime.plusDays(amount);
+                    break;
+                case WEEKS:
+                    updatedTime = startTime.plusWeeks(amount);
+                    break;
+                case MONTHS:
+                    updatedTime = startTime.plusMonths(amount);
+                    break;
+                case YEARS:
+                    final long resultingYear = startTime.getYear() + amount;
+                    if (resultingYear > 9999) {
+                        updatedTime = startTime.withYear(9999);
+                    }
+                    else if (resultingYear < 1000) {
+                        updatedTime = startTime.withYear(1000);
+                    }
+                    else {
+                        updatedTime = startTime.plusYears(amount);
+                    }
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported unit <" + unit + ">");
+            }
+        }
+        catch (final DateTimeException | ArithmeticException exception) {
+            LOGGER.info("Overflow exception when calculating offset <{}>", exception.getMessage());
+            if (amount > 0) {
+                LOGGER.info("Positive amount overflow, clamping to min accepted value");
+                updatedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.MAX_VALUE), startTime.getZone());
+            }
+            else {
+                LOGGER.info("Negative amount overflow, clamping to min accepted value");
+                updatedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.MIN_VALUE), startTime.getZone());
+            }
         }
 
-        // ensure that year is between 1000-9999
+        // ensure that the updated year is between 1000-9999
+        // archiver only accepts years with 4 digits
         final long updatedYear = updatedTime.getYear();
-        final ZonedDateTime updatedTimeWithYearBetweenRange;
         if (updatedYear > 9999) {
-            updatedTimeWithYearBetweenRange = updatedTime.withYear(9999);
+            LOGGER.debug("Year more than 4 digits, setting year to <{}>", 9999);
+            updatedTime = updatedTime.withYear(9999);
         }
         else if (updatedYear < 1000) {
-            updatedTimeWithYearBetweenRange = updatedTime.withYear(1000);
-        }
-        else {
-            updatedTimeWithYearBetweenRange = updatedTime;
+            LOGGER.debug("Year had less than 4 digits, setting year to <{}>", 1000);
+            updatedTime = updatedTime.withYear(1000);
         }
 
-        LOGGER.debug("offset time <{}>", updatedTimeWithYearBetweenRange);
-        return updatedTimeWithYearBetweenRange;
+        LOGGER.debug("offset time <{}>", updatedTime);
+        return updatedTime;
     }
 
     @Override
-    public boolean isStub() {
-        return false;
+    public boolean isValid() {
+        boolean isValid = true;
+        try {
+            zonedDateTime();
+        }
+        catch (final IllegalArgumentException exception) {
+            isValid = false;
+        }
+        return isValid;
     }
 
     private long offsetAmount() {
@@ -180,7 +210,9 @@ public final class OffsetTimestamp implements DPLTimestamp {
             case "years":
                 return OffsetUnit.YEARS;
             default:
-                throw new RuntimeException("Unsupported offset unit <" + validUnitString + "> used");
+                throw new IllegalArgumentException(
+                        "Could not find offset time unit for string <" + validUnitString + "> used"
+                );
         }
     }
 }

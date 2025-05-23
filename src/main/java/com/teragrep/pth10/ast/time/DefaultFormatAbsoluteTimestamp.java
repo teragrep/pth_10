@@ -45,66 +45,49 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.TimeZone;
 
 /**
- * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
- * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
+ * Parser for the three default time formats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
+ * e.g., 2011-12-03T10:15:30+01:00 3 ISO 8601 without offset, e.g., 2011-12-03T10:15:30 When timezone is not specified,
  * uses the system default
  */
 public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultFormatAbsoluteTimestamp.class);
-
-    private final String[] formats;
-    private final String value;
-    private final ZoneId zoneId;
+    private final AbsoluteTimestamp[] timestamps;
 
     public DefaultFormatAbsoluteTimestamp(final String value) {
         this(value, TimeZone.getDefault().toZoneId());
     }
 
     public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
-        this(value, new String[] {
-                "MM/dd/yyyy:HH:mm:ss",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
-                "yyyy-MM-dd'T'HH:mm:ss"
-        }, zoneId);
+        this(new AbsoluteTimestamp[] {
+                new AbsoluteTimestamp(value, "MM/dd/yyyy:HH:mm:ss", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSS", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ssXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss", zoneId)
+        });
     }
 
-    public DefaultFormatAbsoluteTimestamp(String value, String[] formats, ZoneId zoneId) {
-        this.value = value;
-        this.formats = formats;
-        this.zoneId = zoneId;
+    public DefaultFormatAbsoluteTimestamp(final AbsoluteTimestamp[] timestamps) {
+        this.timestamps = timestamps;
     }
 
     public ZonedDateTime zonedDateTime() {
-        LOGGER.debug("Parsing value <{}> using default formats", value);
-        for (final String format : formats) {
-            LOGGER.debug("Trying format <{}>", format);
-            final AbsoluteTimestamp absoluteTimestamp = new AbsoluteTimestamp(value, format, zoneId);
-            try {
-                return absoluteTimestamp.zonedDateTime();
-            }
-            catch (final RuntimeException ex) {
-                LOGGER.debug("Couldn't parse value, exception <{}>", ex.getMessage());
-                // passthrough
+        for (final DPLTimestamp timestamp : timestamps) {
+            if (timestamp.isValid()) {
+                return timestamp.zonedDateTime();
             }
         }
-        throw new RuntimeException(
-                "TimeQualifier conversion error: <" + value + "> can't be parsed using default formats."
-        );
+        throw new RuntimeException("TimeQualifier conversion error: can't be parsed using default formats.");
     }
 
     @Override
-    public boolean isStub() {
-        return false;
+    public boolean isValid() {
+        return Arrays.stream(timestamps).anyMatch(AbsoluteTimestamp::isValid);
     }
 }

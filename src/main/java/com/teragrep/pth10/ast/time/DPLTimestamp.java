@@ -51,6 +51,6 @@ public interface DPLTimestamp {
 
     public abstract ZonedDateTime zonedDateTime();
 
-    public abstract boolean isStub();
+    public abstract boolean isValid();
 
 }

@@ -59,7 +59,7 @@ public final class ValidOffsetUnitText implements Text {
         this(origin, Pattern.compile("([a-zA-Z]+)"));
     }
 
-    private ValidOffsetUnitText(final Text origin, final Pattern pattern) {
+    public ValidOffsetUnitText(final Text origin, final Pattern pattern) {
         this.origin = origin;
         this.pattern = pattern;
     }

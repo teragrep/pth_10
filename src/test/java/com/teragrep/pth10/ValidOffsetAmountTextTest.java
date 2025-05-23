@@ -135,7 +135,7 @@ public final class ValidOffsetAmountTextTest {
     }
 
     @Test
-    public void testMaxValue() {
+    public void testMaxOverflowFromInputValue() {
         final ValidOffsetAmountText offset1 = new ValidOffsetAmountText(
                 new TextString("+" + Long.MAX_VALUE + "y@hours+3h")
         );
@@ -143,7 +143,7 @@ public final class ValidOffsetAmountTextTest {
     }
 
     @Test
-    public void testMinValue() {
+    public void testMinValueOverflow() {
         final ValidOffsetAmountText offset1 = new ValidOffsetAmountText(new TextString(Long.MIN_VALUE + "y@hours+3h"));
         Assertions.assertEquals("-999999999", offset1.read());
     }

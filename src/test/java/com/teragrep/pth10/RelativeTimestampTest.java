@@ -61,41 +61,81 @@ public class RelativeTimestampTest {
     public void testOffset() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("+5s", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        // changed value
         Assertions.assertEquals(20, zonedDateTime.getSecond());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNegativeOffset() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("-5s", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(10, zonedDateTime.getSecond());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testOffsetWithSnap() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("+5month@d", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(10, zonedDateTime.getMonthValue());
-        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
         Assertions.assertEquals(0, zonedDateTime.getHour());
+        Assertions.assertEquals(0, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
     }
 
     @Test
     public void testOffsetWithSnapAndTrailOffset() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("+5month@d+3h", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(10, zonedDateTime.getMonthValue());
-        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
         Assertions.assertEquals(3, zonedDateTime.getHour());
+        Assertions.assertEquals(0, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
     }
 
     @Test
     public void testOffsetWithSnapAndNegativeTrailOffset() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("+5month@d-3months", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(7, zonedDateTime.getMonthValue());
         Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
         Assertions.assertEquals(0, zonedDateTime.getHour());
+        Assertions.assertEquals(0, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
     }
 
     @Test
@@ -115,7 +155,7 @@ public class RelativeTimestampTest {
     public void testNowWithTrailValue() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("now@h", originTimestamp);
         RuntimeException exception = Assertions.assertThrows(RuntimeException.class, snappedTimestamp::zonedDateTime);
-        String expectedMessage = "Object is stub, zonedDateTime() not supported";
+        String expectedMessage = "Timestamp did not contain a valid relative timestamp information";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -127,14 +167,14 @@ public class RelativeTimestampTest {
     }
 
     @Test
-    public void testMaxYears() {
+    public void testMaxYearLimitedToFourDigits() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("+99999year", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
         Assertions.assertEquals(9999, zonedDateTime.getYear());
     }
 
     @Test
-    public void testMinYears() {
+    public void testMinYearLimitedToFourDigits() {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("-99999year", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
         Assertions.assertEquals(1000, zonedDateTime.getYear());

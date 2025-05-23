@@ -55,8 +55,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Given a unit of time to snap to what is the resulting time from a start time, for example:
@@ -85,24 +83,37 @@ public final class SnappedTimestamp implements DPLTimestamp {
         YEARS
     }
 
-    private final String timeStampString;
+    private final ValidSnapToTimeText validSnapToTimeText;
+    private final ValidTrailingRelativeTimestampText validTrailingText;
     private final ZonedDateTime startTime;
-    private final Pattern subStringPattern = Pattern.compile("@([a-zA-Z])([+-]\\d+[a-zA-Z]+)");
 
     public SnappedTimestamp(final String snapUnitString, final DPLTimestamp dplTimestamp) {
         this(snapUnitString, dplTimestamp.zonedDateTime());
     }
 
     public SnappedTimestamp(final String timeStampString, final ZonedDateTime startTime) {
-        this.timeStampString = timeStampString;
+        this(
+                new ValidSnapToTimeText(new TextString(timeStampString)),
+                new ValidTrailingRelativeTimestampText(new TextString(timeStampString)),
+                startTime
+        );
+    }
+
+    public SnappedTimestamp(
+            final ValidSnapToTimeText validSnapToTimeText,
+            final ValidTrailingRelativeTimestampText validTrailingText,
+            ZonedDateTime startTime
+    ) {
+        this.validTrailingText = validTrailingText;
+        this.validSnapToTimeText = validSnapToTimeText;
         this.startTime = startTime;
     }
 
     public ZonedDateTime zonedDateTime() {
-        if (isStub()) {
-            throw new UnsupportedOperationException("Object was stub, ZonedDateTime() method not supported");
+        if (!isValid()) {
+            throw new UnsupportedOperationException("Timestamp does not have valid snap to time information");
         }
-        LOGGER.info("Snap timestamp from input <{}>", timeStampString);
+        LOGGER.info("Snap timestamp from input <{}>", validSnapToTimeText);
         final SnapUnit unit = snapUnit();
         final ZonedDateTime updatedTime;
         switch (unit) {
@@ -172,15 +183,9 @@ public final class SnappedTimestamp implements DPLTimestamp {
 
         // apply timestamp from value trail
         final ZonedDateTime trailTimestampIncluded;
-        final ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
-                new TextString(timeStampString)
-        );
-        if (!validTrailingRelativeTimestampText.isStub()) {
-            LOGGER.info("Has valid trailing timestamp");
-            final OffsetTimestamp trailOffsetTimestamp = new OffsetTimestamp(
-                    validTrailingRelativeTimestampText.read(),
-                    updatedTime
-            );
+        if (validTrailingText.isValid()) {
+            LOGGER.info("Has valid trailing timestamp, adjusting time");
+            final OffsetTimestamp trailOffsetTimestamp = new OffsetTimestamp(validTrailingText.read(), updatedTime);
             trailTimestampIncluded = trailOffsetTimestamp.zonedDateTime();
         }
         else {
@@ -190,19 +195,20 @@ public final class SnappedTimestamp implements DPLTimestamp {
     }
 
     @Override
-    public boolean isStub() {
-        return !timeStampString.contains("@");
+    public boolean isValid() {
+        boolean isValid = true;
+        try {
+            validSnapToTimeText.read();
+        }
+        catch (final IllegalArgumentException exception) {
+            LOGGER.info("Exception reading snap to time text <{}>", exception.getMessage());
+            isValid = false;
+        }
+        return isValid;
     }
 
     private SnapUnit snapUnit() {
-        final String snapUnitSubstring;
-        final Matcher matcher = subStringPattern.matcher(timeStampString);
-        if (matcher.find()) {
-            snapUnitSubstring = matcher.group(1);
-        }
-        else {
-            snapUnitSubstring = timeStampString.substring(timeStampString.indexOf('@') + 1);
-        }
+        final String snapUnitSubstring = validSnapToTimeText.read();
         LOGGER.info("Snap unit string <{}>", snapUnitSubstring);
         final SnapUnit snapUnit;
         switch (snapUnitSubstring.toLowerCase()) {
@@ -276,9 +282,7 @@ public final class SnappedTimestamp implements DPLTimestamp {
                 snapUnit = SnapUnit.YEARS;
                 break;
             default:
-                throw new RuntimeException(
-                        "Unsupported snap-to-time unit string <" + timeStampString.toLowerCase() + ">"
-                );
+                throw new RuntimeException("Unsupported snap-to-time unit <" + snapUnitSubstring + ">");
         }
         LOGGER.info("Snapping to unit <{}>", snapUnit);
         return snapUnit;

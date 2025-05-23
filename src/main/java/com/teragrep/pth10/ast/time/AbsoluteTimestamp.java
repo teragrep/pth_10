@@ -46,6 +46,7 @@
 package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.DPLTimeFormatText;
+import com.teragrep.pth10.ast.Text;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import org.slf4j.Logger;
@@ -66,11 +67,15 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbsoluteTimestamp.class);
 
-    private final String value;
+    private final Text value;
     private final String timeformat;
     private final ZoneId zoneId;
 
     public AbsoluteTimestamp(final String value, final String timeformat, final ZoneId zoneId) {
+        this(new UnquotedText(new TextString(value)), timeformat, zoneId);
+    }
+
+    public AbsoluteTimestamp(final Text value, final String timeformat, final ZoneId zoneId) {
         this.value = value;
         this.timeformat = timeformat;
         this.zoneId = zoneId;
@@ -79,7 +84,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
     @Override
     public ZonedDateTime zonedDateTime() {
         final ZonedDateTime zonedDateTime;
-        final String unquotedValue = new UnquotedText(new TextString(value)).read();
+        final String unquotedValue = value.read();
         // default formats
         if (timeformat == null || timeformat.isEmpty()) {
             LOGGER.info("No timeformat provided for value <{}> using default formats", unquotedValue);
@@ -104,6 +109,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
                 final TemporalAccessor parseResult = dateTimeFormatter.parse(unquotedValue);
                 // use zone from value if available
                 if (parseResult.query(TemporalQueries.zone()) != null) {
+                    LOGGER.debug("Using time zone from parsed value");
                     if (parseResult.isSupported(ChronoField.HOUR_OF_DAY)) {
                         zonedDateTime = ZonedDateTime.from(parseResult);
                     }
@@ -129,7 +135,19 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
     }
 
     @Override
-    public boolean isStub() {
-        return false;
+    public boolean isValid() {
+        boolean isValid = true;
+        try {
+            zonedDateTime();
+        }
+        catch (final RuntimeException exception) {
+            isValid = false;
+        }
+        return isValid;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("AbsoluteTimestamp value<%s> timeformat<%s>", value, timeformat);
     }
 }

@@ -46,46 +46,30 @@
 package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.Text;
-import org.apache.hadoop.shaded.com.google.re2j.Matcher;
-import org.apache.hadoop.shaded.com.google.re2j.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class ValidTrailingRelativeTimestampText implements Text {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ValidTrailingRelativeTimestampText.class);
+public class ValidSnapToTimeText implements Text {
+
+    private static final Pattern snapPattern = Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])");
     private final Text origin;
-    private final Pattern validPattern = Pattern.compile(".*@((?:w[0-7])|[a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$");
 
-    public ValidTrailingRelativeTimestampText(final Text origin) {
+    public ValidSnapToTimeText(Text origin) {
         this.origin = origin;
-    }
-
-    public boolean isValid() {
-        boolean isValid = true;
-        try {
-            read();
-        }
-        catch (final IllegalArgumentException e) {
-            isValid = false;
-        }
-        return isValid;
     }
 
     @Override
     public String read() {
-        final String originString = origin.read();
-        LOGGER.debug("origin string <{}>", originString);
-        final String updatedString;
-        final Matcher matcher = validPattern.matcher(originString);
-        // check if the second capture group contains the valid trailing offset (e.g., +3h, -10m)
-        if (matcher.find() && matcher.groupCount() > 1 && matcher.group(2) != null && !matcher.group(2).isEmpty()) {
-            updatedString = matcher.group(2);
+        final String timeStampString = origin.read();
+        final String snapUnitSubstring;
+        final Matcher matcher = snapPattern.matcher(timeStampString);
+        if (matcher.find()) {
+            snapUnitSubstring = matcher.group(1);
         }
         else {
-            throw new IllegalArgumentException("Could not find a valid trailing offset after '@'");
+            throw new IllegalArgumentException("Invalid snap to time text <" + timeStampString + ">");
         }
-        LOGGER.debug("trailing timestamp from trail <{}>", updatedString);
-        return updatedString;
+        return snapUnitSubstring;
     }
 }

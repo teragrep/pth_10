@@ -57,15 +57,10 @@ public final class ValidOffsetAmountText implements Text {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidOffsetAmountText.class);
 
     private final Text origin;
-    private final Pattern pattern;
+    private final Pattern pattern = Pattern.compile("^([+-]?\\d+)");
 
     public ValidOffsetAmountText(final Text origin) {
-        this(origin, Pattern.compile("^([+-]?\\d+)"));
-    }
-
-    private ValidOffsetAmountText(final Text origin, final Pattern pattern) {
         this.origin = origin;
-        this.pattern = pattern;
     }
 
     @Override
@@ -106,7 +101,8 @@ public final class ValidOffsetAmountText implements Text {
                 updatedString = "1";
             }
         }
-        // check that values are between (valid values -999,999,999 - +999,999,999)
+        // as ZonedDateTime supports epoch seconds range of (-999,999,999 - 999,999,999),
+        // we ensure that the resulting epoch seconds remains inside that range*/
         return betweenMinMax(updatedString);
     }
 
@@ -119,15 +115,16 @@ public final class ValidOffsetAmountText implements Text {
         catch (final NumberFormatException e) {
             throw new RuntimeException("could not parse <" + input + "> to long. " + e.getMessage());
         }
-        final long maxValue = 999999999L;
-        final long minValue = -999999999L;
-        if (value > maxValue) {
+        final long maxEpochSeconds = 999999999L;
+        final long minEpochSeconds = -999999999L;
+        LOGGER.info("Parsed value <{}>", value);
+        if (value > maxEpochSeconds) {
             LOGGER.info("value over max value");
-            betweenMinMaxString = String.format("%s", maxValue);
+            betweenMinMaxString = String.format("%s", maxEpochSeconds);
         }
-        else if (value < minValue) {
+        else if (value < minEpochSeconds) {
             LOGGER.info("value under min value");
-            betweenMinMaxString = String.format("%s", minValue);
+            betweenMinMaxString = String.format("%s", minEpochSeconds);
         }
         else {
             betweenMinMaxString = input;

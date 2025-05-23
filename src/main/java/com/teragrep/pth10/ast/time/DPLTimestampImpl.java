@@ -45,12 +45,8 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.TimeZone;
 
 /**
@@ -59,10 +55,8 @@ import java.util.TimeZone;
  */
 public final class DPLTimestampImpl implements DPLTimestamp {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DPLTimestampImpl.class);
-    private final String value;
-    private final String timeformat;
-    private final ZoneId zoneId;
+    private final AbsoluteTimestamp absoluteTimestamp;
+    private final RelativeTimestamp relativeTimestamp;
 
     public DPLTimestampImpl(final String value) {
         this(value, "", TimeZone.getDefault().toZoneId());
@@ -73,47 +67,34 @@ public final class DPLTimestampImpl implements DPLTimestamp {
     }
 
     public DPLTimestampImpl(final String value, final String timeformat, final ZoneId zoneId) {
-        this.value = value;
-        this.timeformat = timeformat;
-        this.zoneId = zoneId;
+        this(new AbsoluteTimestamp(value, timeformat, zoneId), new RelativeTimestamp(value, zoneId));
+    }
+
+    public DPLTimestampImpl(final AbsoluteTimestamp absoluteTimestamp, final RelativeTimestamp relativeTimestamp) {
+        this.absoluteTimestamp = absoluteTimestamp;
+        this.relativeTimestamp = relativeTimestamp;
     }
 
     public ZonedDateTime zonedDateTime() {
-        LOGGER.info("Incoming value <{}> to timestamp", value);
         final DPLTimestamp timestamp;
-        final RelativeTimestamp relativeTimestamp = new RelativeTimestamp(value, zoneId);
-        if (!relativeTimestamp.isStub()) {
+        if (relativeTimestamp.isValid()) {
             timestamp = relativeTimestamp;
         }
         else {
-            timestamp = new AbsoluteTimestamp(value, timeformat, zoneId);
+            timestamp = absoluteTimestamp;
         }
         return timestamp.zonedDateTime();
     }
 
     @Override
-    public boolean isStub() {
-        return false;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
+    public boolean isValid() {
+        final boolean isValid;
+        if (relativeTimestamp.isValid()) {
+            isValid = true;
         }
-        if (o == null) {
-            return false;
+        else {
+            isValid = absoluteTimestamp.isValid();
         }
-        if (getClass() != o.getClass()) {
-            return false;
-        }
-        final DPLTimestampImpl that = (DPLTimestampImpl) o;
-        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat)
-                && Objects.equals(zoneId, that.zoneId);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(value, timeformat, zoneId);
+        return isValid;
     }
 }

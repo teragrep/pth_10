@@ -47,7 +47,6 @@ package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.DPLTimestampImpl;
 import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
-import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -122,25 +121,5 @@ public class DPLTimestampImplTest {
                 .assertThrows(RuntimeException.class, () -> new DPLTimestampImpl(value, timeformat).zonedDateTime());
         final String expectedMessage = "TimeQualifier conversion error <{Text 'xyz' could not be parsed at index 0}>";
         Assertions.assertEquals(expectedMessage, e.getMessage());
-    }
-
-    @Test
-    public void testEquals() {
-        final String value = "2024-10-31T10:10:10z";
-        final String timeformat = "%Y-%d-%m";
-        Assertions.assertEquals(new DPLTimestampImpl(value, timeformat), new DPLTimestampImpl(value, timeformat));
-    }
-
-    @Test
-    public void testNotEquals() {
-        final String value = "2024-10-31T10:10:10z";
-        final String value2 = "2024-10-30T10:10:10z";
-        final String timeformat = "%Y-%d-%m";
-        Assertions.assertNotEquals(new DPLTimestampImpl(value, timeformat), new DPLTimestampImpl(value2, timeformat));
-    }
-
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(DPLTimestampImpl.class).withNonnullFields("value", "timeformat", "zoneId").verify();
     }
 }

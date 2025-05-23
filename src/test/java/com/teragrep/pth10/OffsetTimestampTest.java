@@ -58,100 +58,201 @@ public class OffsetTimestampTest {
     private final ZonedDateTime originTimestamp = ZonedDateTime.of(2025, 5, 15, 14, 45, 15, 790, utcZone);
 
     @Test
-    public void testZone() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("+5s", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
-    }
-
-    @Test
     public void testSeconds() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("+5s", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("+5s", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(20, zonedDateTime.getSecond());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNegativeSeconds() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("-5s", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("-5s", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(10, zonedDateTime.getSecond());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testMinutes() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("+5m", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("+5m", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(50, zonedDateTime.getMinute());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNegativeMinutes() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("-5m", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("-5m", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(40, zonedDateTime.getMinute());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testHours() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("+5h", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("+5h", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(19, zonedDateTime.getHour());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNegativeHours() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("-5h", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("-5h", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(9, zonedDateTime.getHour());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testDays() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("+5d", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("+5d", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(20, zonedDateTime.getDayOfMonth());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNegativeDays() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("-5d", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("-5d", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testMonths() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("+1month", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("+1month", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(6, zonedDateTime.getMonthValue());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNegativeMonths() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("-1month", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("-1month", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(4, zonedDateTime.getMonthValue());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testYears() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("+5year", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("+5year", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(2030, zonedDateTime.getYear());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNegativeYears() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("-5year", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("-5year", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // changed
         Assertions.assertEquals(2020, zonedDateTime.getYear());
+        // unchanged
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(14, zonedDateTime.getHour());
+        Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(15, zonedDateTime.getSecond());
+        Assertions.assertEquals(790, zonedDateTime.getNano());
     }
 
     @Test
     public void testNow() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("now", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("now", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         final ZonedDateTime now = ZonedDateTime.now(utcZone);
         Assertions.assertEquals(now.getZone(), zonedDateTime.getZone());
         Assertions.assertEquals(now.getYear(), zonedDateTime.getYear());
@@ -159,19 +260,20 @@ public class OffsetTimestampTest {
         Assertions.assertEquals(now.getDayOfMonth(), zonedDateTime.getDayOfMonth());
         Assertions.assertEquals(now.getHour(), zonedDateTime.getHour());
         Assertions.assertEquals(now.getMinute(), zonedDateTime.getMinute());
+        Assertions.assertEquals(now.getSecond(), zonedDateTime.getSecond());
     }
 
     @Test
     public void testMaxYears() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("99999year", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("99999year", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         Assertions.assertEquals(9999, zonedDateTime.getYear());
     }
 
     @Test
     public void testMinYears() {
-        final OffsetTimestamp snappedTimestamp = new OffsetTimestamp("-99999year", originTimestamp);
-        final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
+        final OffsetTimestamp timestamp = new OffsetTimestamp("-99999year", originTimestamp);
+        final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         Assertions.assertEquals(1000, zonedDateTime.getYear());
     }
 }

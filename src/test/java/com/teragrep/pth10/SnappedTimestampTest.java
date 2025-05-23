@@ -52,6 +52,7 @@ import org.junit.jupiter.api.Test;
 import java.time.DayOfWeek;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -175,7 +176,6 @@ public class SnappedTimestampTest {
     public void testWeekSnapToSunday() {
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@weeks", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        ;
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
         Assertions.assertEquals(2025, zonedDateTime.getYear());
         Assertions.assertEquals(5, zonedDateTime.getMonthValue());
@@ -201,23 +201,32 @@ public class SnappedTimestampTest {
     @Test
     public void testWeekDays() {
         final List<String> weekDays = Collections
-                .unmodifiableList(Arrays.asList("@w1", "@w2", "@w3", "@w4", "@w5", "@w6"));
-        int loops = 1;
+                .unmodifiableList(Arrays.asList("@w0", "@w1", "@w2", "@w3", "@w4", "@w5", "@w6", "@w7"));
+        final List<DayOfWeek> timestampDaysOfWeek = new ArrayList<>();
+        int loops = 0;
         for (final String weekDayString : weekDays) {
             final SnappedTimestamp snappedTimestamp = new SnappedTimestamp(weekDayString, originTimestamp);
             final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
             Assertions.assertEquals(utcZone, zonedDateTime.getZone());
-            Assertions.assertEquals(DayOfWeek.of(loops), zonedDateTime.getDayOfWeek()); // 1 = Monday, 2 = Tuesday etc.
+            timestampDaysOfWeek.add(zonedDateTime.getDayOfWeek());
             loops++;
         }
-        Assertions.assertEquals(7, loops);
+        Assertions.assertEquals(8, loops);
+        final List<DayOfWeek> expectedDaysOfWeek = Collections
+                .unmodifiableList(
+                        Arrays
+                                .asList(
+                                        DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+                                        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
+                                )
+                );
+        Assertions.assertEquals(expectedDaysOfWeek, timestampDaysOfWeek);
     }
 
     @Test
     public void testMonth() {
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@months", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        ;
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
         Assertions.assertEquals(2025, zonedDateTime.getYear());
         Assertions.assertEquals(5, zonedDateTime.getMonthValue());
@@ -239,7 +248,6 @@ public class SnappedTimestampTest {
     public void testYear() {
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@years", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        ;
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
         Assertions.assertEquals(2025, zonedDateTime.getYear());
         Assertions.assertEquals(1, zonedDateTime.getMonthValue());
@@ -266,7 +274,6 @@ public class SnappedTimestampTest {
         final ZonedDateTime firstQuarterTimestamp = ZonedDateTime.of(2025, 2, 15, 14, 45, 15, 790, utcZone);
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@quarters", firstQuarterTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        ;
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
         Assertions.assertEquals(2025, zonedDateTime.getYear());
         Assertions.assertEquals(1, zonedDateTime.getMonthValue());
@@ -293,7 +300,6 @@ public class SnappedTimestampTest {
         final ZonedDateTime secondQuarterTimestamp = ZonedDateTime.of(2025, 5, 15, 14, 45, 15, 790, utcZone);
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@quarters", secondQuarterTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        ;
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
         Assertions.assertEquals(2025, zonedDateTime.getYear());
         Assertions.assertEquals(4, zonedDateTime.getMonthValue());
@@ -320,7 +326,6 @@ public class SnappedTimestampTest {
         final ZonedDateTime thirdQuarterTimestamp = ZonedDateTime.of(2025, 8, 15, 14, 45, 15, 790, utcZone);
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@quarters", thirdQuarterTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        ;
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
         Assertions.assertEquals(2025, zonedDateTime.getYear());
         Assertions.assertEquals(7, zonedDateTime.getMonthValue());
@@ -347,7 +352,6 @@ public class SnappedTimestampTest {
         final ZonedDateTime fourthQuarterTimestamp = ZonedDateTime.of(2025, 11, 15, 14, 45, 15, 790, utcZone);
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@quarters", fourthQuarterTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
-        ;
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
         Assertions.assertEquals(2025, zonedDateTime.getYear());
         Assertions.assertEquals(10, zonedDateTime.getMonthValue());
@@ -374,7 +378,7 @@ public class SnappedTimestampTest {
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@test", originTimestamp);
         RuntimeException runtimeException = Assertions
                 .assertThrows(RuntimeException.class, snappedTimestamp::zonedDateTime);
-        String expectedMessage = "Unsupported snap-to-time unit string <@test>";
+        String expectedMessage = "Unsupported snap-to-time unit <test>";
         Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
     }
 
@@ -388,10 +392,10 @@ public class SnappedTimestampTest {
     }
 
     @Test
-    public void testIsStub() {
-        final SnappedTimestamp nonStubTimestamp = new SnappedTimestamp("@days", originTimestamp);
-        final SnappedTimestamp stubTimestamp = new SnappedTimestamp("days", originTimestamp);
-        Assertions.assertFalse(nonStubTimestamp.isStub());
-        Assertions.assertTrue(stubTimestamp.isStub());
+    public void testisValid() {
+        final SnappedTimestamp validTimestamp = new SnappedTimestamp("@days", originTimestamp);
+        final SnappedTimestamp invalidTimestamp = new SnappedTimestamp("days", originTimestamp);
+        Assertions.assertTrue(validTimestamp.isValid());
+        Assertions.assertFalse(invalidTimestamp.isValid());
     }
 }

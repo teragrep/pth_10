@@ -71,7 +71,7 @@ public final class RoundedUpTimestamp implements DPLTimestamp {
     }
 
     @Override
-    public boolean isStub() {
-        return origin.isStub();
+    public boolean isValid() {
+        return origin.isValid();
     }
 }

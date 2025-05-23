@@ -60,7 +60,14 @@ public class ValidTrailingRelativeTimestampTextTest {
     }
 
     @Test
-    public void testNoAtSymbol() {
+    public void testValidTrailAfterWeekWithDigit() {
+        String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@w0+3h")).read();
+        String expected = "+3h";
+        Assertions.assertEquals(expected, read);
+    }
+
+    @Test
+    public void testNoSnapToTime() {
         ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
                 new TextString("+10hours")
         );

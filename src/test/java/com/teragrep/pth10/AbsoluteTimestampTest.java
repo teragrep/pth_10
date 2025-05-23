@@ -67,6 +67,8 @@ public class AbsoluteTimestampTest {
         Assertions.assertEquals(15, zonedDateTime.getDayOfMonth());
         Assertions.assertEquals(14, zonedDateTime.getHour());
         Assertions.assertEquals(45, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
         Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
@@ -81,6 +83,8 @@ public class AbsoluteTimestampTest {
         Assertions.assertEquals(15, result.getDayOfMonth());
         Assertions.assertEquals(0, result.getHour());
         Assertions.assertEquals(0, result.getMinute());
+        Assertions.assertEquals(0, result.getSecond());
+        Assertions.assertEquals(0, result.getNano());
         Assertions.assertEquals(utcZone, result.getZone());
     }
 
@@ -100,6 +104,12 @@ public class AbsoluteTimestampTest {
         final String timeformat = "yyyy-MM-dd'T'HH:mm:ssXXX";
         final AbsoluteTimestamp timestamp = new AbsoluteTimestamp(value, timeformat, utcZone);
         final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2024, zonedDateTime.getYear());
+        Assertions.assertEquals(5, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(6, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(15, zonedDateTime.getHour());
+        Assertions.assertEquals(30, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
         Assertions.assertEquals(ZoneId.of("+02:00"), zonedDateTime.getZone());
     }
 
@@ -114,6 +124,8 @@ public class AbsoluteTimestampTest {
         Assertions.assertEquals(6, zonedDateTime.getDayOfMonth());
         Assertions.assertEquals(0, zonedDateTime.getHour());
         Assertions.assertEquals(0, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
         Assertions.assertEquals(ZoneId.of("+02:00"), zonedDateTime.getZone());
     }
 
@@ -139,7 +151,7 @@ public class AbsoluteTimestampTest {
         final AbsoluteTimestamp timestamp = new AbsoluteTimestamp("2000-10-20", "", utcZone);
         final RuntimeException runtimeException = Assertions
                 .assertThrows(RuntimeException.class, timestamp::zonedDateTime);
-        final String expected = "TimeQualifier conversion error: <2000-10-20> can't be parsed using default formats.";
+        final String expected = "TimeQualifier conversion error: can't be parsed using default formats.";
         Assertions.assertEquals(expected, runtimeException.getMessage());
     }
 
@@ -148,13 +160,15 @@ public class AbsoluteTimestampTest {
         final AbsoluteTimestamp timestamp = new AbsoluteTimestamp("2000-10-20", null, utcZone);
         final RuntimeException runtimeException = Assertions
                 .assertThrows(RuntimeException.class, timestamp::zonedDateTime);
-        final String expected = "TimeQualifier conversion error: <2000-10-20> can't be parsed using default formats.";
+        final String expected = "TimeQualifier conversion error: can't be parsed using default formats.";
         Assertions.assertEquals(expected, runtimeException.getMessage());
     }
 
     @Test
-    public void testIsStub() {
+    public void testIsValid() {
         final AbsoluteTimestamp absoluteTimestamp = new AbsoluteTimestamp("2000-10-20", "yyyy-MM-dd", utcZone);
-        Assertions.assertFalse(absoluteTimestamp.isStub());
+        final AbsoluteTimestamp invalidTimestamp = new AbsoluteTimestamp("2000-10-20", "123456", utcZone);
+        Assertions.assertTrue(absoluteTimestamp.isValid());
+        Assertions.assertFalse(invalidTimestamp.isValid());
     }
 }

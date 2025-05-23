@@ -71,30 +71,30 @@ public final class RelativeTimestamp implements DPLTimestamp {
 
     @Override
     public ZonedDateTime zonedDateTime() {
-        if (isStub()) {
-            throw new RuntimeException("Object is stub, zonedDateTime() not supported");
+        if (!isValid()) {
+            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
         }
         final String validOffset = offsetString.read();
         final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
         final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
         final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isStub()) {
-            updatedTime = offsetTimestamp.zonedDateTime();
+        if (snappedTimestamp.isValid()) {
+            updatedTime = snappedTimestamp.zonedDateTime();
         }
         else {
-            updatedTime = snappedTimestamp.zonedDateTime();
+            updatedTime = offsetTimestamp.zonedDateTime();
         }
         return updatedTime;
     }
 
     @Override
-    public boolean isStub() {
-        boolean isStub = false;
+    public boolean isValid() {
+        boolean isStub = true;
         try {
             offsetString.read();
         }
         catch (final IllegalArgumentException e) {
-            isStub = true;
+            isStub = false;
         }
         return isStub;
     }
