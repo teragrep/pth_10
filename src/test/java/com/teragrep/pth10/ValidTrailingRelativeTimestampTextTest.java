@@ -43,14 +43,42 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.time;
+package com.teragrep.pth10;
 
-import java.time.ZonedDateTime;
+import com.teragrep.pth10.ast.TextString;
+import com.teragrep.pth10.ast.time.ValidTrailingRelativeTimestampText;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public interface DPLTimestamp {
+public class ValidTrailingRelativeTimestampTextTest {
 
-    public abstract ZonedDateTime zonedDateTime();
+    @Test
+    public void testValidTrailText() {
+        String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@d+3h")).read();
+        String expected = "+3h";
+        Assertions.assertEquals(expected, read);
+    }
 
-    public abstract boolean isValid();
+    @Test
+    public void testValidTrailAfterWeekWithDigit() {
+        String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@w0+3h")).read();
+        String expected = "+3h";
+        Assertions.assertEquals(expected, read);
+    }
 
+    @Test
+    public void testNoSnapToTime() {
+        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+                new TextString("+10hours")
+        );
+        Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
+    }
+
+    @Test
+    public void testInvalidTrailText() {
+        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+                new TextString("@d")
+        );
+        Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
+    }
 }

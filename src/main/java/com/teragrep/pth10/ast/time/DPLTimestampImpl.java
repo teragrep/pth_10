@@ -45,12 +45,56 @@
  */
 package com.teragrep.pth10.ast.time;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.TimeZone;
 
-public interface DPLTimestamp {
+/**
+ * Determines a point for time from input string, timeformat and a timezone id. Supports relative and absolute
+ * timestamps, relative is used if possible to determine the offset
+ */
+public final class DPLTimestampImpl implements DPLTimestamp {
 
-    public abstract ZonedDateTime zonedDateTime();
+    private final AbsoluteTimestamp absoluteTimestamp;
+    private final RelativeTimestamp relativeTimestamp;
 
-    public abstract boolean isValid();
+    public DPLTimestampImpl(final String value) {
+        this(value, "", TimeZone.getDefault().toZoneId());
+    }
 
+    public DPLTimestampImpl(final String value, final String timeformat) {
+        this(value, timeformat, TimeZone.getDefault().toZoneId());
+    }
+
+    public DPLTimestampImpl(final String value, final String timeformat, final ZoneId zoneId) {
+        this(new AbsoluteTimestamp(value, timeformat, zoneId), new RelativeTimestamp(value, zoneId));
+    }
+
+    public DPLTimestampImpl(final AbsoluteTimestamp absoluteTimestamp, final RelativeTimestamp relativeTimestamp) {
+        this.absoluteTimestamp = absoluteTimestamp;
+        this.relativeTimestamp = relativeTimestamp;
+    }
+
+    public ZonedDateTime zonedDateTime() {
+        final DPLTimestamp timestamp;
+        if (relativeTimestamp.isValid()) {
+            timestamp = relativeTimestamp;
+        }
+        else {
+            timestamp = absoluteTimestamp;
+        }
+        return timestamp.zonedDateTime();
+    }
+
+    @Override
+    public boolean isValid() {
+        final boolean isValid;
+        if (relativeTimestamp.isValid()) {
+            isValid = true;
+        }
+        else {
+            isValid = absoluteTimestamp.isValid();
+        }
+        return isValid;
+    }
 }

@@ -45,12 +45,49 @@
  */
 package com.teragrep.pth10.ast.time;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.TimeZone;
 
-public interface DPLTimestamp {
+/**
+ * Parser for the three default time formats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
+ * e.g., 2011-12-03T10:15:30+01:00 3 ISO 8601 without offset, e.g., 2011-12-03T10:15:30 When timezone is not specified,
+ * uses the system default
+ */
+public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
 
-    public abstract ZonedDateTime zonedDateTime();
+    private final AbsoluteTimestamp[] timestamps;
 
-    public abstract boolean isValid();
+    public DefaultFormatAbsoluteTimestamp(final String value) {
+        this(value, TimeZone.getDefault().toZoneId());
+    }
 
+    public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
+        this(new AbsoluteTimestamp[] {
+                new AbsoluteTimestamp(value, "MM/dd/yyyy:HH:mm:ss", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSS", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ssXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss", zoneId)
+        });
+    }
+
+    public DefaultFormatAbsoluteTimestamp(final AbsoluteTimestamp[] timestamps) {
+        this.timestamps = timestamps;
+    }
+
+    public ZonedDateTime zonedDateTime() {
+        for (final DPLTimestamp timestamp : timestamps) {
+            if (timestamp.isValid()) {
+                return timestamp.zonedDateTime();
+            }
+        }
+        throw new RuntimeException("TimeQualifier conversion error: can't be parsed using default formats.");
+    }
+
+    @Override
+    public boolean isValid() {
+        return Arrays.stream(timestamps).anyMatch(AbsoluteTimestamp::isValid);
+    }
 }

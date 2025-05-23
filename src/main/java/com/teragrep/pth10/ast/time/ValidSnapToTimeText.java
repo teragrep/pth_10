@@ -45,12 +45,31 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.time.ZonedDateTime;
+import com.teragrep.pth10.ast.Text;
 
-public interface DPLTimestamp {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    public abstract ZonedDateTime zonedDateTime();
+public class ValidSnapToTimeText implements Text {
 
-    public abstract boolean isValid();
+    private static final Pattern snapPattern = Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])");
+    private final Text origin;
 
+    public ValidSnapToTimeText(Text origin) {
+        this.origin = origin;
+    }
+
+    @Override
+    public String read() {
+        final String timeStampString = origin.read();
+        final String snapUnitSubstring;
+        final Matcher matcher = snapPattern.matcher(timeStampString);
+        if (matcher.find()) {
+            snapUnitSubstring = matcher.group(1);
+        }
+        else {
+            throw new IllegalArgumentException("Invalid snap to time text <" + timeStampString + ">");
+        }
+        return snapUnitSubstring;
+    }
 }

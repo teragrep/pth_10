@@ -45,12 +45,37 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.time.ZonedDateTime;
+import com.teragrep.pth10.ast.Text;
 
-public interface DPLTimestamp {
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    public abstract ZonedDateTime zonedDateTime();
+public final class ValidRelativeTimestampText implements Text {
 
-    public abstract boolean isValid();
+    private final Text origin;
+    private final Pattern pattern;
 
+    public ValidRelativeTimestampText(final Text origin) {
+        this(origin, Pattern.compile("^(([-+])(\\d*[A-Za-z]+))?(@[A-Za-z]+([-+])?[\\dA-Za-z]*)?"));
+    }
+
+    private ValidRelativeTimestampText(final Text origin, final Pattern pattern) {
+        this.origin = origin;
+        this.pattern = pattern;
+    }
+
+    private void validate() {
+        final String originString = origin.read();
+        final Matcher relativeTimeMatcher = pattern.matcher(originString);
+
+        if (!relativeTimeMatcher.matches() && !originString.equalsIgnoreCase("now")) {
+            throw new NumberFormatException("Unknown relative time modifier string <" + originString + ">");
+        }
+    }
+
+    @Override
+    public String read() {
+        validate();
+        return origin.read();
+    }
 }
