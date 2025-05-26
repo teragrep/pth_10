@@ -476,9 +476,9 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.plusSeconds(100).toEpochSecond();
         int loops = 0;
-        for (String unit : units) {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
             Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
             loops++;
         }
@@ -496,9 +496,9 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.plusMinutes(100).toEpochSecond();
         int loops = 0;
-        for (String unit : units) {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
             Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
             loops++;
         }
@@ -516,9 +516,9 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.plusHours(100).toEpochSecond();
         int loops = 0;
-        for (String unit : units) {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
             Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
             loops++;
         }
@@ -536,9 +536,9 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.plusDays(100).toEpochSecond();
         int loops = 0;
-        for (String unit : units) {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
             Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
             loops++;
         }
@@ -556,9 +556,9 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.plusWeeks(100).toEpochSecond();
         int loops = 0;
-        for (String unit : units) {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
             Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
             loops++;
         }
@@ -576,9 +576,9 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.plusMonths(100).toEpochSecond();
         int loops = 0;
-        for (String unit : units) {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
             Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
             loops++;
         }
@@ -596,9 +596,9 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.plusYears(100).toEpochSecond();
         int loops = 0;
-        for (String unit : units) {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
             Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
             loops++;
         }
@@ -614,7 +614,7 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.withYear(9999).toEpochSecond();
 
-        ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
         Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
     }
 
@@ -627,7 +627,7 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.withYear(1000).toEpochSecond();
 
-        ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
         Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
     }
 
@@ -652,7 +652,7 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.withYear(9999).toEpochSecond();
 
-        ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
         Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
     }
 
@@ -665,7 +665,7 @@ public class EarliestLatestTest {
         // Expected result
         final long expected = startTime.withYear(1000).toEpochSecond();
 
-        ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
         Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
     }
 

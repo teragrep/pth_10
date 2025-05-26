@@ -82,7 +82,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
     }
 
     @Override
-    public ZonedDateTime zonedDateTime() {
+    public ZonedDateTime zonedDateTime() throws DateTimeParseException {
         final ZonedDateTime zonedDateTime;
         final String unquotedValue = value.read();
         // default formats
@@ -104,31 +104,24 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
             final String javaAcceptedTimeFormat = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat)))
                     .read();
             final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(javaAcceptedTimeFormat);
-            try {
-                LOGGER.info("Parsing value <{}> with format <{}>", unquotedValue, javaAcceptedTimeFormat);
-                final TemporalAccessor parseResult = dateTimeFormatter.parse(unquotedValue);
-                // use zone from value if available
-                if (parseResult.query(TemporalQueries.zone()) != null) {
-                    LOGGER.debug("Using time zone from parsed value");
-                    if (parseResult.isSupported(ChronoField.HOUR_OF_DAY)) {
-                        zonedDateTime = ZonedDateTime.from(parseResult);
-                    }
-                    else {
-                        zonedDateTime = LocalDate
-                                .from(parseResult)
-                                .atStartOfDay(parseResult.query(TemporalQueries.zone()));
-                    }
-                }
-                // if no zone information uses class default
-                else if (parseResult.isSupported(ChronoField.HOUR_OF_DAY)) {
-                    zonedDateTime = LocalDateTime.from(parseResult).atZone(zoneId);
+            LOGGER.info("Parsing value <{}> with format <{}>", unquotedValue, javaAcceptedTimeFormat);
+            final TemporalAccessor parseResult = dateTimeFormatter.parse(unquotedValue);
+            // use zone from value if available
+            if (parseResult.query(TemporalQueries.zone()) != null) {
+                LOGGER.debug("Using time zone from parsed value");
+                if (parseResult.isSupported(ChronoField.HOUR_OF_DAY)) {
+                    zonedDateTime = ZonedDateTime.from(parseResult);
                 }
                 else {
-                    zonedDateTime = LocalDate.from(parseResult).atStartOfDay(zoneId);
+                    zonedDateTime = LocalDate.from(parseResult).atStartOfDay(parseResult.query(TemporalQueries.zone()));
                 }
             }
-            catch (final DateTimeParseException ex) {
-                throw new RuntimeException("TimeQualifier conversion error <{" + ex.getMessage() + "}>");
+            // if no zone information uses class default
+            else if (parseResult.isSupported(ChronoField.HOUR_OF_DAY)) {
+                zonedDateTime = LocalDateTime.from(parseResult).atZone(zoneId);
+            }
+            else {
+                zonedDateTime = LocalDate.from(parseResult).atStartOfDay(zoneId);
             }
         }
         return zonedDateTime;
@@ -140,7 +133,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
         try {
             zonedDateTime();
         }
-        catch (final RuntimeException exception) {
+        catch (final DateTimeParseException exception) {
             isValid = false;
         }
         return isValid;

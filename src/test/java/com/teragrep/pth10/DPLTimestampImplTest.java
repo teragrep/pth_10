@@ -119,7 +119,7 @@ public class DPLTimestampImplTest {
         final String timeformat = "%Y-%d-%m";
         final RuntimeException e = Assertions
                 .assertThrows(RuntimeException.class, () -> new DPLTimestampImpl(value, timeformat).zonedDateTime());
-        final String expectedMessage = "TimeQualifier conversion error <{Text 'xyz' could not be parsed at index 0}>";
+        final String expectedMessage = "Text 'xyz' could not be parsed at index 0";
         Assertions.assertEquals(expectedMessage, e.getMessage());
     }
 }

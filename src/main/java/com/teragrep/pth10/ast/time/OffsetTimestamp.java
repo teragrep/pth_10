@@ -131,8 +131,8 @@ public final class OffsetTimestamp implements DPLTimestamp {
                 updatedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.MAX_VALUE), startTime.getZone());
             }
             else {
-                LOGGER.info("Negative amount overflow, clamping to min accepted value");
-                updatedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.MIN_VALUE), startTime.getZone());
+                LOGGER.info("Negative amount overflow, clamping to zero epoch value");
+                updatedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), startTime.getZone());
             }
         }
 

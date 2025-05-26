@@ -115,6 +115,7 @@ public final class ValidOffsetAmountText implements Text {
         catch (final NumberFormatException e) {
             throw new RuntimeException("could not parse <" + input + "> to long. " + e.getMessage());
         }
+        // epoch seconds range supported by ZonedDateTime
         final long maxEpochSeconds = 999999999L;
         final long minEpochSeconds = -999999999L;
         LOGGER.info("Parsed value <{}>", value);

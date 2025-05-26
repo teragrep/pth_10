@@ -94,7 +94,7 @@ public class AbsoluteTimestampTest {
         final String format = "yyyy-dd-MM";
         final AbsoluteTimestamp timestamp = new AbsoluteTimestamp(value, format, utcZone);
         RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, timestamp::zonedDateTime);
-        String expectedMessage = "TimeQualifier conversion error <{Text '2025-05-15' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 15}>";
+        String expectedMessage = "Text '2025-05-15' could not be parsed: Invalid value for MonthOfYear (valid values 1 - 12): 15";
         Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
     }
 
