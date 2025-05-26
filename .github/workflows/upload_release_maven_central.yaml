@@ -1,0 +1,50 @@
+name: Upload Release to Maven Central
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  upload:
+    name: Upload
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Local Maven Repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name: Setup Signing
+        uses: actions/setup-java@v4
+        with:
+          java-version: 8.0.292+10
+          distribution: 'adopt'
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Setup Maven Central
+        uses: actions/setup-java@v4
+        with:
+          java-version: 8.0.292+10
+          distribution: 'adopt'
+
+          server-id: central-sonatype-org
+          server-username: CENTRAL_SONATYPE_ORG_USERNAME
+          server-password: CENTRAL_SONATYPE_ORG_PASSWORD
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+
+      - name: Install test dependencies
+        run: cd / && sudo apt-get update && sudo apt-get install wget rpm2cpio && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-city-20180605-1.el8.noarch.rpm && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-country-20180605-1.el8.noarch.rpm && rpm2cpio geolite2-city-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories && rpm2cpio geolite2-country-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories
+
+      - name: Publish to Maven Central
+        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean deploy -Ppublish-maven-central
+        env:
+          CENTRAL_SONATYPE_ORG_USERNAME: ${{ secrets.CENTRAL_SONATYPE_ORG_USERNAME }}
+          CENTRAL_SONATYPE_ORG_PASSWORD: ${{ secrets.CENTRAL_SONATYPE_ORG_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
