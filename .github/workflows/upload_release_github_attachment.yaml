@@ -1,4 +1,4 @@
-name: Upload Artifact as Release Attachment
+name: Upload Artifact as GitHub Release Attachment
 
 on:
   release:
