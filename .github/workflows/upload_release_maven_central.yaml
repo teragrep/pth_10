@@ -8,6 +8,7 @@ jobs:
   upload:
     name: Upload
     runs-on: ubuntu-latest
+    if: ${{ startsWith(github.repository, 'teragrep/') }}
 
     steps:
       - uses: actions/checkout@v4
