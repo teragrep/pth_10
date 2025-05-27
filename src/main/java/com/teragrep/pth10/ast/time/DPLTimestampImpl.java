@@ -45,6 +45,9 @@
  */
 package com.teragrep.pth10.ast.time;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.TimeZone;
@@ -55,6 +58,7 @@ import java.util.TimeZone;
  */
 public final class DPLTimestampImpl implements DPLTimestamp {
 
+    private final Logger LOGGER = LoggerFactory.getLogger(DPLTimestampImpl.class);
     private final AbsoluteTimestamp absoluteTimestamp;
     private final RelativeTimestamp relativeTimestamp;
 
@@ -78,12 +82,22 @@ public final class DPLTimestampImpl implements DPLTimestamp {
     public ZonedDateTime zonedDateTime() {
         final DPLTimestamp timestamp;
         if (relativeTimestamp.isValid()) {
+            LOGGER.info("Found valid relative timestamp");
             timestamp = relativeTimestamp;
         }
         else {
+            LOGGER.info("There was no valid relative timestamp, using absolute timestamp");
             timestamp = absoluteTimestamp;
         }
-        return timestamp.zonedDateTime();
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER
+                    .info(
+                            "Resulting time was <{}> with epoch seconds <{}>", zonedDateTime,
+                            zonedDateTime.toEpochSecond()
+                    );
+        }
+        return zonedDateTime;
     }
 
     @Override

@@ -73,7 +73,7 @@ public final class ValidOffsetAmountText implements Text {
         else {
             amountString = originString;
         }
-        LOGGER.info("Getting amount value from <{}>", amountString);
+        LOGGER.debug("Getting amount value from <{}>", amountString);
         final String updatedString;
         if (amountString.isEmpty() || "now".equalsIgnoreCase(amountString)) {
             updatedString = "0";

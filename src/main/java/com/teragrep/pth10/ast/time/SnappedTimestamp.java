@@ -201,7 +201,7 @@ public final class SnappedTimestamp implements DPLTimestamp {
             validSnapToTimeText.read();
         }
         catch (final IllegalArgumentException exception) {
-            LOGGER.info("Exception reading snap to time text <{}>", exception.getMessage());
+            LOGGER.debug("Exception reading snap to time text <{}>", exception.getMessage());
             isValid = false;
         }
         return isValid;
@@ -209,7 +209,6 @@ public final class SnappedTimestamp implements DPLTimestamp {
 
     private SnapUnit snapUnit() {
         final String snapUnitSubstring = validSnapToTimeText.read();
-        LOGGER.info("Snap unit string <{}>", snapUnitSubstring);
         final SnapUnit snapUnit;
         switch (snapUnitSubstring.toLowerCase()) {
             case "s":
@@ -284,7 +283,7 @@ public final class SnappedTimestamp implements DPLTimestamp {
             default:
                 throw new RuntimeException("Unsupported snap-to-time unit <" + snapUnitSubstring + ">");
         }
-        LOGGER.info("Snapping to unit <{}>", snapUnit);
+        LOGGER.debug("Snapping to unit <{}>", snapUnit);
         return snapUnit;
     }
 }
