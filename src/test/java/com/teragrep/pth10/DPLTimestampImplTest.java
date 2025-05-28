@@ -53,6 +53,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class DPLTimestampImplTest {
@@ -111,6 +113,58 @@ public class DPLTimestampImplTest {
         final Long expected = 1730369410 + 1L;
         final DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl(value, timeformat, expectedZoneId));
         Assertions.assertEquals(expected, timestamp.zonedDateTime().toEpochSecond());
+    }
+
+    @Test
+    public void testRelativeTimestamp() {
+        final String value = "-10days";
+        final String timeformat = "";
+        final Long expected = ZonedDateTime.now(expectedZoneId).plusDays(-10).toEpochSecond();
+        final Long result = new DPLTimestampImpl(value, timeformat, expectedZoneId).zonedDateTime().toEpochSecond();
+        // test results are within 10 seconds, closer tests can be found in the RelativeTimestampTest
+        final boolean withinTenSeconds = Math.abs(expected - result) < 10;
+        Assertions.assertTrue(withinTenSeconds);
+    }
+
+    @Test
+    public void testRelativeTimestampWithSnapToTime() {
+        final String value = "-10days@minutes";
+        final String timeformat = "";
+        final Long expected = ZonedDateTime
+                .now(expectedZoneId)
+                .plusDays(-10)
+                .truncatedTo(ChronoUnit.MINUTES)
+                .toEpochSecond();
+        final Long result = new DPLTimestampImpl(value, timeformat, expectedZoneId).zonedDateTime().toEpochSecond();
+        // test results are within 10 seconds, closer tests can be found in the RelativeTimestampTest
+        final boolean withinTenSeconds = Math.abs(expected - result) < 10;
+        Assertions.assertTrue(withinTenSeconds);
+    }
+
+    @Test
+    public void testRelativeTimestampWithSnapToTimeWithTrail() {
+        final String value = "-10days@minutes+1hour";
+        final String timeformat = "";
+        final Long expected = ZonedDateTime
+                .now(expectedZoneId)
+                .plusDays(-10)
+                .truncatedTo(ChronoUnit.MINUTES)
+                .plusHours(1)
+                .toEpochSecond();
+        final Long result = new DPLTimestampImpl(value, timeformat, expectedZoneId).zonedDateTime().toEpochSecond();
+        // test results are within 10 seconds, closer tests can be found in the RelativeTimestampTest
+        final boolean withinTenSeconds = Math.abs(expected - result) < 10;
+        Assertions.assertTrue(withinTenSeconds);
+    }
+
+    @Test
+    public void testRelativeTimestampWithInvalidSnap() {
+        final String value = "-10days@w8";
+        final DPLTimestamp timestamp = new DPLTimestampImpl(value, "", expectedZoneId);
+        final IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, timestamp::zonedDateTime);
+        final String expectedMessage = "Invalid snap to time text <-10days@w8>";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
     @Test

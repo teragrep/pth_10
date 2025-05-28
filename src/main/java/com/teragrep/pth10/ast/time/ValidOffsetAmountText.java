@@ -118,7 +118,6 @@ public final class ValidOffsetAmountText implements Text {
         // epoch seconds range supported by ZonedDateTime
         final long maxEpochSeconds = 999999999L;
         final long minEpochSeconds = -999999999L;
-        LOGGER.info("Parsed value <{}>", value);
         if (value > maxEpochSeconds) {
             LOGGER.info("value over max value");
             betweenMinMaxString = String.format("%s", maxEpochSeconds);

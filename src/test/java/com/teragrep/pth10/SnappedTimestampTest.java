@@ -224,6 +224,15 @@ public class SnappedTimestampTest {
     }
 
     @Test
+    public void testInvalidWeek() {
+        final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("-10hours@w8", originTimestamp);
+        final IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, snappedTimestamp::zonedDateTime);
+        final String expectedMessage = "Invalid snap to time text <-10hours@w8>";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
     public void testMonth() {
         final SnappedTimestamp snappedTimestamp = new SnappedTimestamp("@months", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();

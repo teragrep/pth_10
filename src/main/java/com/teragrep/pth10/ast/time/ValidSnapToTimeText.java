@@ -72,4 +72,9 @@ public class ValidSnapToTimeText implements Text {
         }
         return snapUnitSubstring;
     }
+
+    public boolean containsSnapCharacter() {
+        final String timeStampString = origin.read();
+        return timeStampString.contains("@");
+    }
 }

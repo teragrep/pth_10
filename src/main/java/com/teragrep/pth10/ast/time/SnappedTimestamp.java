@@ -111,9 +111,8 @@ public final class SnappedTimestamp implements DPLTimestamp {
 
     public ZonedDateTime zonedDateTime() {
         if (!isValid()) {
-            throw new UnsupportedOperationException("Timestamp does not have valid snap to time information");
+            throw new UnsupportedOperationException("Timestamp did not contain '@' for a snap to time value");
         }
-        LOGGER.info("Snap timestamp from input <{}>", validSnapToTimeText);
         final SnapUnit unit = snapUnit();
         final ZonedDateTime updatedTime;
         switch (unit) {
@@ -181,11 +180,13 @@ public final class SnappedTimestamp implements DPLTimestamp {
                 throw new RuntimeException("Unsupported snap unit <" + unit + ">");
         }
 
+        LOGGER.info("Valid snap to time timestamp, snapping to <{}>", unit);
         // apply timestamp from value trail
         final ZonedDateTime trailTimestampIncluded;
         if (validTrailingText.isValid()) {
-            LOGGER.info("Has valid trailing timestamp, adjusting time");
-            final OffsetTimestamp trailOffsetTimestamp = new OffsetTimestamp(validTrailingText.read(), updatedTime);
+            final String trailingTimestampString = validTrailingText.read();
+            LOGGER.info("Adjusting snapped time with a valid trailing timestamp <{}>", trailingTimestampString);
+            final OffsetTimestamp trailOffsetTimestamp = new OffsetTimestamp(trailingTimestampString, updatedTime);
             trailTimestampIncluded = trailOffsetTimestamp.zonedDateTime();
         }
         else {
@@ -196,15 +197,7 @@ public final class SnappedTimestamp implements DPLTimestamp {
 
     @Override
     public boolean isValid() {
-        boolean isValid = true;
-        try {
-            validSnapToTimeText.read();
-        }
-        catch (final IllegalArgumentException exception) {
-            LOGGER.debug("Exception reading snap to time text <{}>", exception.getMessage());
-            isValid = false;
-        }
-        return isValid;
+        return validSnapToTimeText.containsSnapCharacter();
     }
 
     private SnapUnit snapUnit() {
