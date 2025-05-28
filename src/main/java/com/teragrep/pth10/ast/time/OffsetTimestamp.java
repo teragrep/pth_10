@@ -171,48 +171,58 @@ public final class OffsetTimestamp implements DPLTimestamp {
 
     private OffsetUnit offsetUnit() {
         final String validUnitString = new ValidOffsetUnitText(offsetText).read();
+        final OffsetUnit offsetUnit;
         switch (validUnitString.toLowerCase()) {
             case "now":
-                return OffsetUnit.NOW;
+                offsetUnit = OffsetUnit.NOW;
+                break;
             case "s":
             case "sec":
             case "secs":
             case "second":
             case "seconds":
-                return OffsetUnit.SECONDS;
+                offsetUnit = OffsetUnit.SECONDS;
+                break;
             case "m":
             case "min":
             case "minute":
             case "minutes":
-                return OffsetUnit.MINUTES;
+                offsetUnit = OffsetUnit.MINUTES;
+                break;
             case "h":
             case "hr":
             case "hrs":
             case "hour":
             case "hours":
-                return OffsetUnit.HOURS;
+                offsetUnit = OffsetUnit.HOURS;
+                break;
             case "d":
             case "day":
             case "days":
-                return OffsetUnit.DAYS;
+                offsetUnit = OffsetUnit.DAYS;
+                break;
             case "w":
             case "week":
             case "weeks":
-                return OffsetUnit.WEEKS;
+                offsetUnit = OffsetUnit.WEEKS;
+                break;
             case "mon":
             case "month":
             case "months":
-                return OffsetUnit.MONTHS;
+                offsetUnit = OffsetUnit.MONTHS;
+                break;
             case "y":
             case "yr":
             case "yrs":
             case "year":
             case "years":
-                return OffsetUnit.YEARS;
+                offsetUnit = OffsetUnit.YEARS;
+                break;
             default:
                 throw new IllegalArgumentException(
                         "Could not find offset time unit for string <" + validUnitString + "> used"
                 );
         }
+        return offsetUnit;
     }
 }

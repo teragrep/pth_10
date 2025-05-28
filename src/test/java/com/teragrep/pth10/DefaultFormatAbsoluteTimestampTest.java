@@ -118,6 +118,9 @@ public class DefaultFormatAbsoluteTimestampTest {
         RuntimeException rte = Assertions
                 .assertThrows(RuntimeException.class, () -> new DefaultFormatAbsoluteTimestamp(time).zonedDateTime().toEpochSecond());
         Assertions
-                .assertEquals("TimeQualifier conversion error: can't be parsed using default formats.", rte.getMessage());
+                .assertEquals(
+                        "TimeQualifier conversion error: value <12/34/2020:10:25:40> couldn't be parsed using default formats.",
+                        rte.getMessage()
+                );
     }
 }
