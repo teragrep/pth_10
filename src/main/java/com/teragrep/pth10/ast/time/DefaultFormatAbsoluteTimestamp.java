@@ -57,6 +57,7 @@ import java.util.TimeZone;
  */
 public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
 
+    private final String value;
     private final AbsoluteTimestamp[] timestamps;
 
     public DefaultFormatAbsoluteTimestamp(final String value) {
@@ -64,7 +65,7 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
     }
 
     public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
-        this(new AbsoluteTimestamp[] {
+        this(value, new AbsoluteTimestamp[] {
                 new AbsoluteTimestamp(value, "MM/dd/yyyy:HH:mm:ss", zoneId),
                 new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", zoneId),
                 new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSS", zoneId),
@@ -73,7 +74,8 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
         });
     }
 
-    public DefaultFormatAbsoluteTimestamp(final AbsoluteTimestamp[] timestamps) {
+    public DefaultFormatAbsoluteTimestamp(String value, final AbsoluteTimestamp[] timestamps) {
+        this.value = value;
         this.timestamps = timestamps;
     }
 
@@ -83,7 +85,9 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
                 return timestamp.zonedDateTime();
             }
         }
-        throw new RuntimeException("TimeQualifier conversion error: can't be parsed using default formats.");
+        throw new RuntimeException(
+                "TimeQualifier conversion error: value <" + value + "> couldn't be parsed using default formats."
+        );
     }
 
     @Override
