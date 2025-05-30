@@ -45,74 +45,66 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import com.teragrep.pth10.ast.DPLTimeFormat;
-import com.teragrep.pth10.ast.DefaultTimeFormat;
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
+import com.teragrep.pth10.ast.Text;
+import org.apache.hadoop.shaded.com.google.re2j.Matcher;
+import org.apache.hadoop.shaded.com.google.re2j.Pattern;
 
-import java.sql.Timestamp;
-import java.text.ParseException;
-import java.time.Instant;
 import java.util.Objects;
 
-public final class InstantTimestamp implements DPLTimestamp {
+public final class ValidTrailingRelativeTimestampText implements Text {
 
-    private final String value;
-    private final String timeformat;
+    private final Text origin;
+    private final Pattern validPattern;
 
-    public InstantTimestamp(final String value, final String timeformat) {
-        this.value = value;
-        this.timeformat = timeformat;
+    public ValidTrailingRelativeTimestampText(final Text origin) {
+        this(origin, Pattern.compile(".*@((?:w[0-7])|[a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$"));
     }
 
-    public Instant instant() {
-        Instant rv;
-        try {
-            RelativeTimestamp relativeTimestamp = new RelativeTimeParser().parse(value);
-            rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
-        }
-        catch (NumberFormatException ne) {
-            rv = instantFromString(value, timeformat);
-        }
-
-        return rv;
+    public ValidTrailingRelativeTimestampText(final Text origin, final Pattern validPattern) {
+        this.origin = origin;
+        this.validPattern = validPattern;
     }
 
-    // Uses defaultTimeFormat if timeformat is null and DPLTimeFormat if timeformat isn't null (which means that the
-    // timeformat= option was used).
-    private Instant instantFromString(final String value, final String timeFormatString) {
-        final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
-        final Instant timevalue;
-        if (timeFormatString == null || timeFormatString.isEmpty()) {
-            timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
+    public boolean isValid() {
+        final String originString = origin.read();
+        final Matcher matcher = validPattern.matcher(originString);
+        return matcher.find() && matcher.groupCount() > 1 && matcher.group(2) != null && !matcher.group(2).isEmpty();
+    }
+
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        final String updatedString;
+        final Matcher matcher = validPattern.matcher(originString);
+        // check if the second capture group contains the valid trailing offset (e.g., +3h, -10m)
+        if (isValid() && matcher.find()) {
+            updatedString = matcher.group(2);
         }
         else {
-            // TODO: should be included in DPLTimeFormat
-            if (timeFormatString.equals("%s")) {
-                return Instant.ofEpochSecond(Long.parseLong(unquotedValue));
-            }
-            try {
-                timevalue = new DPLTimeFormat(timeFormatString).instantOf(unquotedValue);
-            }
-            catch (ParseException e) {
-                throw new RuntimeException("TimeQualifier conversion error: <" + unquotedValue + "> can't be parsed.");
-            }
+            throw new IllegalArgumentException(
+                    "Could not find a valid trailing offset after '@' for value <" + originString + ">"
+            );
         }
-        return timevalue;
+        return updatedString;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (o == null || getClass() != o.getClass())
+        }
+        if (o == null) {
             return false;
-        InstantTimestamp that = (InstantTimestamp) o;
-        return Objects.equals(value, that.value) && Objects.equals(timeformat, that.timeformat);
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidTrailingRelativeTimestampText other = (ValidTrailingRelativeTimestampText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(validPattern, other.validPattern);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(value, timeformat);
+        return Objects.hash(origin, validPattern);
     }
 }
