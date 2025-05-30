@@ -47,6 +47,7 @@ package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.Text;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -77,5 +78,25 @@ public final class ValidRelativeTimestampText implements Text {
     public String read() {
         validate();
         return origin.read();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidRelativeTimestampText other = (ValidRelativeTimestampText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(pattern, other.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, pattern);
     }
 }

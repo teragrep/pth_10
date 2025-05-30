@@ -47,6 +47,7 @@ package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.Text;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -73,14 +74,34 @@ public final class ValidOffsetUnitText implements Text {
             updatedString = "now";
         }
         else if (originString.toLowerCase().contains("now")) {
-            throw new RuntimeException("timestamp 'now' should not have any values before it");
+            throw new IllegalArgumentException("timestamp 'now' should not have any values before it");
         }
         else {
             if (!matcher.find()) {
-                throw new RuntimeException("Text did not contain a valid offset unit");
+                throw new IllegalArgumentException("Text <" + originString + "> did not contain a valid offset unit");
             }
             updatedString = matcher.group(); // next group of alphabetical characters
         }
         return updatedString;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidOffsetUnitText other = (ValidOffsetUnitText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(pattern, other.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, pattern);
     }
 }

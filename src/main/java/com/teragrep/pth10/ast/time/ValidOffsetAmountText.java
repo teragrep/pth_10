@@ -49,6 +49,7 @@ import com.teragrep.pth10.ast.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,8 +85,8 @@ public final class ValidOffsetAmountText implements Text {
         else if ("-".equals(amountString)) {
             updatedString = "-1";
         }
-        else if (amountString.matches(".*\\d.*")) {
-            Matcher matcher = pattern.matcher(amountString);
+        else if (amountString.chars().anyMatch(Character::isDigit)) {
+            final Matcher matcher = pattern.matcher(amountString);
             if (matcher.find()) {
                 updatedString = matcher.group();
             }
@@ -119,16 +120,34 @@ public final class ValidOffsetAmountText implements Text {
         final long maxEpochSeconds = 999999999L;
         final long minEpochSeconds = -999999999L;
         if (value > maxEpochSeconds) {
-            LOGGER.info("value over max value");
             betweenMinMaxString = String.format("%s", maxEpochSeconds);
         }
         else if (value < minEpochSeconds) {
-            LOGGER.info("value under min value");
             betweenMinMaxString = String.format("%s", minEpochSeconds);
         }
         else {
             betweenMinMaxString = input;
         }
         return betweenMinMaxString;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidOffsetAmountText other = (ValidOffsetAmountText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(pattern, other.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, pattern);
     }
 }

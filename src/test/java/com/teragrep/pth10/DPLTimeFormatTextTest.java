@@ -45,29 +45,14 @@
  */
 package com.teragrep.pth10;
 
-import com.teragrep.pth10.ast.time.DPLTimestamp;
-import com.teragrep.pth10.ast.time.DPLTimestampImpl;
-import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
+import com.teragrep.pth10.ast.DPLTimeFormatText;
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public final class RoundedUpTimestampTest {
-
-    @Test
-    void testWithoutNanosecond() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00+00:00", ""));
-        Assertions.assertEquals(1704067200L, timestamp.zonedDateTime().toInstant().getEpochSecond());
-    }
-
-    @Test
-    void testWithNanoseconds() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00.240+00:00", ""));
-        Assertions.assertEquals(1704067200L + 1L, timestamp.zonedDateTime().toInstant().getEpochSecond());
-    }
+public class DPLTimeFormatTextTest {
 
     @Test
     public void testContract() {
-        EqualsVerifier.forClass(RoundedUpTimestamp.class).withNonnullFields("origin").verify();
+        EqualsVerifier.forClass(DPLTimeFormatText.class).withNonnullFields("origin").verify();
     }
 }

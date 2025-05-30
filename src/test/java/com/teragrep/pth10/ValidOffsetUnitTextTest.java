@@ -47,6 +47,7 @@ package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.time.ValidOffsetUnitText;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -88,8 +89,23 @@ public class ValidOffsetUnitTextTest {
     @Test
     public void testInvalidNow() {
         final ValidOffsetUnitText invalidNowTimestamp = new ValidOffsetUnitText(new TextString("-NOW"));
-        final RuntimeException exception = Assertions.assertThrows(RuntimeException.class, invalidNowTimestamp::read);
+        final IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, invalidNowTimestamp::read);
         final String expectedMessage = "timestamp 'now' should not have any values before it";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testInvalidInput() {
+        final ValidOffsetUnitText invalidNowTimestamp = new ValidOffsetUnitText(new TextString("1234"));
+        final IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, invalidNowTimestamp::read);
+        final String expectedMessage = "Text <1234> did not contain a valid offset unit";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(ValidOffsetUnitText.class).withNonnullFields("origin", "pattern").verify();
     }
 }

@@ -46,6 +46,7 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.RelativeTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -178,5 +179,10 @@ public class RelativeTimestampTest {
         final RelativeTimestamp snappedTimestamp = new RelativeTimestamp("-99999year", originTimestamp);
         final ZonedDateTime zonedDateTime = snappedTimestamp.zonedDateTime();
         Assertions.assertEquals(1000, zonedDateTime.getYear());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(RelativeTimestamp.class).withNonnullFields("offsetString", "baseTime").verify();
     }
 }

@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 /**
  * Calculates an offset from a start time using a given number of time units, the number of units is extracted from a
@@ -224,5 +225,25 @@ public final class OffsetTimestamp implements DPLTimestamp {
                 );
         }
         return offsetUnit;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final OffsetTimestamp that = (OffsetTimestamp) o;
+        return Objects.equals(offsetText, that.offsetText) && Objects.equals(startTime, that.startTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(offsetText, startTime);
     }
 }

@@ -282,7 +282,7 @@ public class relativeTimeTest {
     )
     public void parseTimestampLatestRelativeTestWithoutSign() {
         String q = "index=cinnamon latest=3h ";
-        String expected = "TimeQualifier conversion error: can't be parsed using default formats.";
+        String expected = "TimeQualifier conversion error: value <3h> couldn't be parsed using default formats.";
 
         RuntimeException exception = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
@@ -411,7 +411,7 @@ public class relativeTimeTest {
     public void parseTimestampRelativeInvalidSnapToTimeUnitTest() {
         // pth10 ticket #66 query: 'index=... sourcetype=... earliest=@-5h latest=@-3h'
         String query = "index=cinnamon earliest=\"@-5h\" latest=\"@-3h\"";
-        String expected = "TimeQualifier conversion error: can't be parsed using default formats.";
+        String expected = "TimeQualifier conversion error: value <@-5h> couldn't be parsed using default formats.";
 
         RuntimeException exception = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {

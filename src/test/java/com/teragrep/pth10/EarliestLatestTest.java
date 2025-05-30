@@ -355,7 +355,10 @@ public class EarliestLatestTest {
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
                 });
         Assertions
-                .assertEquals("TimeQualifier conversion error: can't be parsed using default formats.", sqe.getMessage());
+                .assertEquals(
+                        "TimeQualifier conversion error: value <31/31/2014:00:00:00> couldn't be parsed using default formats.",
+                        sqe.getMessage()
+                );
     }
 
     @Test

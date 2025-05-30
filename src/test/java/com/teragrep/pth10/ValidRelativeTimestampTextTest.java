@@ -48,6 +48,7 @@ package com.teragrep.pth10;
 import com.teragrep.pth10.ast.Text;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.time.ValidRelativeTimestampText;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -89,5 +90,10 @@ public final class ValidRelativeTimestampTextTest {
         final RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, offset::read);
         final String expectedMessage = "Unknown relative time modifier string <invalid>";
         Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(ValidRelativeTimestampText.class).withNonnullFields("origin").verify();
     }
 }

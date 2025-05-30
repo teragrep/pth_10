@@ -62,6 +62,7 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
+import java.util.Objects;
 
 public final class AbsoluteTimestamp implements DPLTimestamp {
 
@@ -142,5 +143,26 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
     @Override
     public String toString() {
         return String.format("AbsoluteTimestamp value<%s> timeformat<%s>", value, timeformat);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final AbsoluteTimestamp other = (AbsoluteTimestamp) o;
+        return Objects.equals(value, other.value) && Objects.equals(timeformat, other.timeformat)
+                && Objects.equals(zoneId, other.zoneId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value, timeformat, zoneId);
     }
 }

@@ -48,6 +48,7 @@ package com.teragrep.pth10;
 import com.teragrep.pth10.ast.Text;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.time.ValidOffsetAmountText;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +59,13 @@ public final class ValidOffsetAmountTextTest {
         final Text input = new TextString("5d@hours+3h");
         final ValidOffsetAmountText offset = new ValidOffsetAmountText(input);
         Assertions.assertEquals("5", offset.read());
+    }
+
+    @Test
+    public void testNegativeFullTimestamp() {
+        final Text input = new TextString("-5d@hours+3h");
+        final ValidOffsetAmountText offset = new ValidOffsetAmountText(input);
+        Assertions.assertEquals("-5", offset.read());
     }
 
     @Test
@@ -146,5 +154,14 @@ public final class ValidOffsetAmountTextTest {
     public void testMinValueOverflow() {
         final ValidOffsetAmountText offset1 = new ValidOffsetAmountText(new TextString(Long.MIN_VALUE + "y@hours+3h"));
         Assertions.assertEquals("-999999999", offset1.read());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(ValidOffsetAmountText.class)
+                .withIgnoredFields("LOGGER")
+                .withNonnullFields("origin", "pattern")
+                .verify();
     }
 }

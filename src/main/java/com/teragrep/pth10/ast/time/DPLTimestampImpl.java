@@ -50,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 import java.util.TimeZone;
 
 /**
@@ -110,5 +111,26 @@ public final class DPLTimestampImpl implements DPLTimestamp {
             isValid = absoluteTimestamp.isValid();
         }
         return isValid;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final DPLTimestampImpl other = (DPLTimestampImpl) o;
+        return Objects.equals(absoluteTimestamp, other.absoluteTimestamp)
+                && Objects.equals(relativeTimestamp, other.relativeTimestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(absoluteTimestamp, relativeTimestamp);
     }
 }

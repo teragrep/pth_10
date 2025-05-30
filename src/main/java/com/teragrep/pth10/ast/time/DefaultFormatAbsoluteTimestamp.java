@@ -48,6 +48,7 @@ package com.teragrep.pth10.ast.time;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.TimeZone;
 
 /**
@@ -93,5 +94,25 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
     @Override
     public boolean isValid() {
         return Arrays.stream(timestamps).anyMatch(AbsoluteTimestamp::isValid);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final DefaultFormatAbsoluteTimestamp other = (DefaultFormatAbsoluteTimestamp) o;
+        return Objects.equals(value, other.value) && Objects.deepEquals(timestamps, other.timestamps);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value, Arrays.hashCode(timestamps));
     }
 }

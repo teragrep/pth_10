@@ -47,16 +47,22 @@ package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.Text;
 
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ValidSnapToTimeText implements Text {
+public final class ValidSnapToTimeText implements Text {
 
-    private static final Pattern snapPattern = Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])");
+    private final Pattern snapPattern;
     private final Text origin;
 
-    public ValidSnapToTimeText(Text origin) {
+    public ValidSnapToTimeText(final Text origin) {
+        this(origin, Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])"));
+    }
+
+    public ValidSnapToTimeText(final Text origin, Pattern snapPattern) {
         this.origin = origin;
+        this.snapPattern = snapPattern;
     }
 
     @Override
@@ -76,5 +82,25 @@ public class ValidSnapToTimeText implements Text {
     public boolean containsSnapCharacter() {
         final String timeStampString = origin.read();
         return timeStampString.contains("@");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidSnapToTimeText other = (ValidSnapToTimeText) o;
+        return Objects.equals(snapPattern, other.snapPattern) && Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(snapPattern, origin);
     }
 }
