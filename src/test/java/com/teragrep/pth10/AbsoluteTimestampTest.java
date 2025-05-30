@@ -46,6 +46,7 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.AbsoluteTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -170,5 +171,10 @@ public class AbsoluteTimestampTest {
         final AbsoluteTimestamp invalidTimestamp = new AbsoluteTimestamp("2000-10-20", "123456", utcZone);
         Assertions.assertTrue(absoluteTimestamp.isValid());
         Assertions.assertFalse(invalidTimestamp.isValid());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(AbsoluteTimestamp.class).withNonnullFields("value", "timeformat", "zoneId").verify();
     }
 }

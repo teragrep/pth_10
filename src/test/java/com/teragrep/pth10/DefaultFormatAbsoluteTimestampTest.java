@@ -46,6 +46,7 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.DefaultFormatAbsoluteTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -122,5 +123,10 @@ public class DefaultFormatAbsoluteTimestampTest {
                         "TimeQualifier conversion error: value <12/34/2020:10:25:40> couldn't be parsed using default formats.",
                         rte.getMessage()
                 );
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(DefaultFormatAbsoluteTimestamp.class).withNonnullFields("value", "timestamps").verify();
     }
 }

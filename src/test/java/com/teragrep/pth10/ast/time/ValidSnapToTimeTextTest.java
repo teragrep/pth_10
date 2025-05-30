@@ -46,6 +46,7 @@
 package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.TextString;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -110,5 +111,10 @@ public class ValidSnapToTimeTextTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, validSnapToTimeText::read);
         String expectedMessage = "Invalid snap to time text <+10hours@w8>";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(ValidSnapToTimeText.class).withNonnullFields("snapPattern", "origin").verify();
     }
 }

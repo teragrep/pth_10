@@ -48,44 +48,63 @@ package com.teragrep.pth10.ast.time;
 import com.teragrep.pth10.ast.Text;
 import org.apache.hadoop.shaded.com.google.re2j.Matcher;
 import org.apache.hadoop.shaded.com.google.re2j.Pattern;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class ValidTrailingRelativeTimestampText implements Text {
+import java.util.Objects;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ValidTrailingRelativeTimestampText.class);
+public final class ValidTrailingRelativeTimestampText implements Text {
+
     private final Text origin;
-    private final Pattern validPattern = Pattern.compile(".*@((?:w[0-7])|[a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$");
+    private final Pattern validPattern;
 
     public ValidTrailingRelativeTimestampText(final Text origin) {
+        this(origin, Pattern.compile(".*@((?:w[0-7])|[a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$"));
+    }
+
+    public ValidTrailingRelativeTimestampText(final Text origin, final Pattern validPattern) {
         this.origin = origin;
+        this.validPattern = validPattern;
     }
 
     public boolean isValid() {
-        boolean isValid = true;
-        try {
-            read();
-        }
-        catch (final IllegalArgumentException e) {
-            isValid = false;
-        }
-        return isValid;
+        final String originString = origin.read();
+        final Matcher matcher = validPattern.matcher(originString);
+        return matcher.find() && matcher.groupCount() > 1 && matcher.group(2) != null && !matcher.group(2).isEmpty();
     }
 
     @Override
     public String read() {
         final String originString = origin.read();
-        LOGGER.debug("origin string <{}>", originString);
         final String updatedString;
         final Matcher matcher = validPattern.matcher(originString);
         // check if the second capture group contains the valid trailing offset (e.g., +3h, -10m)
-        if (matcher.find() && matcher.groupCount() > 1 && matcher.group(2) != null && !matcher.group(2).isEmpty()) {
+        if (isValid() && matcher.find()) {
             updatedString = matcher.group(2);
         }
         else {
-            throw new IllegalArgumentException("Could not find a valid trailing offset after '@'");
+            throw new IllegalArgumentException(
+                    "Could not find a valid trailing offset after '@' for value <" + originString + ">"
+            );
         }
-        LOGGER.debug("trailing timestamp from trail <{}>", updatedString);
         return updatedString;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidTrailingRelativeTimestampText other = (ValidTrailingRelativeTimestampText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(validPattern, other.validPattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, validPattern);
     }
 }

@@ -46,6 +46,7 @@
 package com.teragrep.pth10.ast.time;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 /** Adds a second when the timestamp nanosecond is greater than 0 */
 public final class RoundedUpTimestamp implements DPLTimestamp {
@@ -73,5 +74,25 @@ public final class RoundedUpTimestamp implements DPLTimestamp {
     @Override
     public boolean isValid() {
         return origin.isValid();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
+        return Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(origin);
     }
 }

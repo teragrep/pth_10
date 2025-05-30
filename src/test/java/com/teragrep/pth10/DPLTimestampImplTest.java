@@ -48,6 +48,7 @@ package com.teragrep.pth10;
 import com.teragrep.pth10.ast.time.DPLTimestamp;
 import com.teragrep.pth10.ast.time.DPLTimestampImpl;
 import com.teragrep.pth10.ast.time.RoundedUpTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -175,5 +176,14 @@ public class DPLTimestampImplTest {
                 .assertThrows(RuntimeException.class, () -> new DPLTimestampImpl(value, timeformat).zonedDateTime());
         final String expectedMessage = "Text 'xyz' could not be parsed at index 0";
         Assertions.assertEquals(expectedMessage, e.getMessage());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(DPLTimestampImpl.class)
+                .withIgnoredFields("LOGGER")
+                .withNonnullFields("absoluteTimestamp", "relativeTimestamp")
+                .verify();
     }
 }

@@ -45,8 +45,10 @@
  */
 package com.teragrep.pth10.ast;
 
+import java.util.Objects;
+
 /** replaces dpl time units with java-compatible time units */
-public class DPLTimeFormatText implements Text {
+public final class DPLTimeFormatText implements Text {
 
     private final Text origin;
 
@@ -89,5 +91,25 @@ public class DPLTimeFormatText implements Text {
                 // remove unsupported
                 .replaceAll("%c", "")
                 .replaceAll("%x", "");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final DPLTimeFormatText other = (DPLTimeFormatText) o;
+        return Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(origin);
     }
 }

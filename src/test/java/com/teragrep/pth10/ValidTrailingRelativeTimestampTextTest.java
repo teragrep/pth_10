@@ -47,28 +47,32 @@ package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.time.ValidTrailingRelativeTimestampText;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+
+import java.util.regex.Pattern;
 
 public class ValidTrailingRelativeTimestampTextTest {
 
     @Test
     public void testValidTrailText() {
-        String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@d+3h")).read();
-        String expected = "+3h";
+        final String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@d+3h")).read();
+        final String expected = "+3h";
         Assertions.assertEquals(expected, read);
     }
 
     @Test
     public void testValidTrailAfterWeekWithDigit() {
-        String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@w0+3h")).read();
-        String expected = "+3h";
+        final String read = new ValidTrailingRelativeTimestampText(new TextString("+10hours@w0+3h")).read();
+        final String expected = "+3h";
         Assertions.assertEquals(expected, read);
     }
 
     @Test
     public void testNoSnapToTime() {
-        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+        final ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
                 new TextString("+10hours")
         );
         Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
@@ -76,9 +80,27 @@ public class ValidTrailingRelativeTimestampTextTest {
 
     @Test
     public void testInvalidTrailText() {
-        ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
+        final ValidTrailingRelativeTimestampText validTrailingRelativeTimestampText = new ValidTrailingRelativeTimestampText(
                 new TextString("@d")
         );
-        Assertions.assertThrows(RuntimeException.class, validTrailingRelativeTimestampText::read);
+        final IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, validTrailingRelativeTimestampText::read);
+        final String expectedMessage = "Could not find a valid trailing offset after '@' for value <@d>";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    @Disabled("EqualsVerifier verify gets stuck in a Recursive datastructure even with suggested prefab values")
+    public void testContract() {
+        final Pattern prefabPattern1 = Pattern.compile("pattern1");
+        final Pattern prefabPattern2 = Pattern.compile("pattern2");
+        Assertions.assertNotEquals(prefabPattern1, prefabPattern2);
+        // this happens even if the Pattern class was not included in the equals and hashcode methods.
+        // the only working was to make the pattern a static final field.
+        EqualsVerifier
+                .forClass(ValidTrailingRelativeTimestampText.class)
+                .withPrefabValues(Pattern.class, prefabPattern1, prefabPattern2)
+                .withNonnullFields("origin", "validPattern")
+                .verify();
     }
 }

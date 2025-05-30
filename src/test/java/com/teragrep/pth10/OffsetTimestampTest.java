@@ -46,6 +46,7 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.OffsetTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -275,5 +276,14 @@ public class OffsetTimestampTest {
         final OffsetTimestamp timestamp = new OffsetTimestamp("-99999year", originTimestamp);
         final ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         Assertions.assertEquals(1000, zonedDateTime.getYear());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(OffsetTimestamp.class)
+                .withIgnoredFields("LOGGER")
+                .withNonnullFields("offsetText", "startTime")
+                .verify();
     }
 }

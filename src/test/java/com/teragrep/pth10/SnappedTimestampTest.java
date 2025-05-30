@@ -45,7 +45,10 @@
  */
 package com.teragrep.pth10;
 
+import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.time.SnappedTimestamp;
+import com.teragrep.pth10.ast.time.ValidTrailingRelativeTimestampText;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -406,5 +409,22 @@ public class SnappedTimestampTest {
         final SnappedTimestamp invalidTimestamp = new SnappedTimestamp("days", originTimestamp);
         Assertions.assertTrue(validTimestamp.isValid());
         Assertions.assertFalse(invalidTimestamp.isValid());
+    }
+
+    @Test
+    public void testContract() {
+        // prefabricated values are for the verifier to use to avoid recursive class building
+        final ValidTrailingRelativeTimestampText prefab1 = new ValidTrailingRelativeTimestampText(
+                new TextString("prefab1")
+        );
+        final ValidTrailingRelativeTimestampText prefab2 = new ValidTrailingRelativeTimestampText(
+                new TextString("prefab1")
+        );
+        EqualsVerifier
+                .forClass(SnappedTimestamp.class)
+                .withPrefabValues(ValidTrailingRelativeTimestampText.class, prefab1, prefab2)
+                .withIgnoredFields("LOGGER")
+                .withNonnullFields("validSnapToTimeText", "validTrailingText", "startTime")
+                .verify();
     }
 }

@@ -55,6 +55,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Objects;
 
 /**
  * Given a unit of time to snap to what is the resulting time from a start time, for example:
@@ -180,12 +181,12 @@ public final class SnappedTimestamp implements DPLTimestamp {
                 throw new RuntimeException("Unsupported snap unit <" + unit + ">");
         }
 
-        LOGGER.info("Valid snap to time timestamp, snapping to <{}>", unit);
+        LOGGER.debug("Valid snap to time timestamp, snapping to <{}>", unit);
         // apply timestamp from value trail
         final ZonedDateTime trailTimestampIncluded;
         if (validTrailingText.isValid()) {
             final String trailingTimestampString = validTrailingText.read();
-            LOGGER.info("Adjusting snapped time with a valid trailing timestamp <{}>", trailingTimestampString);
+            LOGGER.debug("Adjusting snapped time with a valid trailing timestamp <{}>", trailingTimestampString);
             final OffsetTimestamp trailOffsetTimestamp = new OffsetTimestamp(trailingTimestampString, updatedTime);
             trailTimestampIncluded = trailOffsetTimestamp.zonedDateTime();
         }
@@ -278,5 +279,26 @@ public final class SnappedTimestamp implements DPLTimestamp {
         }
         LOGGER.debug("Snapping to unit <{}>", snapUnit);
         return snapUnit;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final SnappedTimestamp other = (SnappedTimestamp) o;
+        return Objects.equals(validSnapToTimeText, other.validSnapToTimeText) && Objects
+                .equals(validTrailingText, other.validTrailingText) && Objects.equals(startTime, other.startTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(validSnapToTimeText, validTrailingText, startTime);
     }
 }
