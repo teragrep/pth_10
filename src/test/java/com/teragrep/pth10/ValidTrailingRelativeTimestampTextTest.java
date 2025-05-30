@@ -96,7 +96,7 @@ public class ValidTrailingRelativeTimestampTextTest {
         final Pattern prefabPattern2 = Pattern.compile("pattern2");
         Assertions.assertNotEquals(prefabPattern1, prefabPattern2);
         // this happens even if the Pattern class was not included in the equals and hashcode methods.
-        // the only working was to make the pattern a static final field.
+        // the only working solution was to make the pattern a static final field.
         EqualsVerifier
                 .forClass(ValidTrailingRelativeTimestampText.class)
                 .withPrefabValues(Pattern.class, prefabPattern1, prefabPattern2)
