@@ -53,12 +53,12 @@ public final class BloomFilterConfiguration implements Comparable<BloomFilterCon
     private final Long expected;
     private final Double fpp;
 
-    public BloomFilterConfiguration(final long expected, final Double fpp) {
+    public BloomFilterConfiguration(final Long expected, final Double fpp) {
         this.expected = expected;
         this.fpp = fpp;
     }
 
-    public long expectedNumOfItems() {
+    public Long expectedNumOfItems() {
         return expected;
     }
 

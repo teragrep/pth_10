@@ -96,7 +96,7 @@ public final class BloomFilterConfigurationTest {
     public void testComparable() {
         final BloomFilterConfiguration base = new BloomFilterConfiguration(1000L, 0.02);
         final BloomFilterConfiguration equals = new BloomFilterConfiguration(1000L, 0.02);
-        final BloomFilterConfiguration smaller = new BloomFilterConfiguration(500, 0.02);
+        final BloomFilterConfiguration smaller = new BloomFilterConfiguration(500L, 0.02);
         final BloomFilterConfiguration larger = new BloomFilterConfiguration(2000L, 0.02);
         final BloomFilterConfiguration smallerFpp = new BloomFilterConfiguration(1000L, 0.01);
         final BloomFilterConfiguration largerFpp = new BloomFilterConfiguration(1000L, 0.03);
