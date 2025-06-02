@@ -51,8 +51,6 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.regex.Pattern;
-
 public class ValidTrailingRelativeTimestampTextTest {
 
     @Test
@@ -90,12 +88,8 @@ public class ValidTrailingRelativeTimestampTextTest {
 
     @Test
     public void testContract() {
-        final Pattern prefabPattern1 = Pattern.compile("pattern1");
-        final Pattern prefabPattern2 = Pattern.compile("pattern2");
-        Assertions.assertNotEquals(prefabPattern1, prefabPattern2);
         EqualsVerifier
                 .forClass(ValidTrailingRelativeTimestampText.class)
-                .withPrefabValues(Pattern.class, prefabPattern1, prefabPattern2)
                 .withNonnullFields("origin", "validPattern")
                 .verify();
     }
