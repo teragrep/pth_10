@@ -65,7 +65,7 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FilterTypesTest {
+public final class FilterTypesTest {
 
     private final String username = "sa";
     private final String password = "";
@@ -77,9 +77,6 @@ class FilterTypesTest {
     public void setup() {
         Assertions.assertDoesNotThrow(() -> {
             conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
-        });
-        Assertions.assertDoesNotThrow(() -> {
-            Class.forName("org.h2.Driver");
         });
         String createFilterType = "CREATE TABLE `filtertype` ("
                 + "`id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,"
@@ -144,6 +141,36 @@ class FilterTypesTest {
             Assertions.assertEquals(Arrays.asList(0.01, 0.02, 0.03), fppList);
             result.close();
         });
+    }
+
+    @Test
+    public void testMalformattedFieldsOption() {
+        final Properties properties = new Properties();
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "{expected: 1000, fpp: 0.01},{expected: 2000, fpp: 0.01},{expected: 3000, fpp: 0.01}"
+                );
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "Error parsing 'dpl.pth_06.bloom.db.fields' option to JSON. ensure that filter size options are formated as an JSON array and that there are no duplicate values. example '[{expected: 1000, fpp: 0.01},{expected: 2000, fpp: 0.01}]'. message:";
+        Assertions.assertTrue(exception.getMessage().startsWith(expectedMessage));
+    }
+
+    @Test
+    public void testDuplicateValues() {
+        final Properties properties = new Properties();
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[{expected: 1000, fpp: 0.01},{expected: 1000, fpp: 0.01},{expected: 3000, fpp: 0.01}]"
+                );
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "Found duplicate values in 'dpl.pth_06.bloom.db.fields'";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
     @Test
