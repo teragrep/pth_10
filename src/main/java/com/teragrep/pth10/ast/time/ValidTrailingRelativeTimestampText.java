@@ -46,10 +46,10 @@
 package com.teragrep.pth10.ast.time;
 
 import com.teragrep.pth10.ast.Text;
-import org.apache.hadoop.shaded.com.google.re2j.Matcher;
-import org.apache.hadoop.shaded.com.google.re2j.Pattern;
 
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class ValidTrailingRelativeTimestampText implements Text {
 
@@ -89,7 +89,7 @@ public final class ValidTrailingRelativeTimestampText implements Text {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }

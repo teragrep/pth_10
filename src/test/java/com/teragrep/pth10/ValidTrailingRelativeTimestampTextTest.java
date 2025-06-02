@@ -49,7 +49,6 @@ import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.time.ValidTrailingRelativeTimestampText;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.regex.Pattern;
@@ -90,13 +89,10 @@ public class ValidTrailingRelativeTimestampTextTest {
     }
 
     @Test
-    @Disabled("EqualsVerifier verify gets stuck in a Recursive datastructure even with suggested prefab values")
     public void testContract() {
         final Pattern prefabPattern1 = Pattern.compile("pattern1");
         final Pattern prefabPattern2 = Pattern.compile("pattern2");
         Assertions.assertNotEquals(prefabPattern1, prefabPattern2);
-        // this happens even if the Pattern class was not included in the equals and hashcode methods.
-        // the only working solution was to make the pattern a static final field.
         EqualsVerifier
                 .forClass(ValidTrailingRelativeTimestampText.class)
                 .withPrefabValues(Pattern.class, prefabPattern1, prefabPattern2)
