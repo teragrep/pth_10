@@ -43,66 +43,64 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast;
+package com.teragrep.pth10.ast.time;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.teragrep.pth10.ast.Text;
 
-/**
- * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
- * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
- * uses the system default
- */
-public class DefaultTimeFormat {
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    private final String[] formats;
+public final class ValidSnapToTimeText implements Text {
 
-    public DefaultTimeFormat() {
-        this(new String[] {
-                "MM/dd/yyyy:HH:mm:ss",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
-                "yyyy-MM-dd'T'HH:mm:ss"
-        });
+    private final Pattern snapPattern;
+    private final Text origin;
+
+    public ValidSnapToTimeText(final Text origin) {
+        this(origin, Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])"));
     }
 
-    public DefaultTimeFormat(String[] formats) {
-        this.formats = formats;
+    public ValidSnapToTimeText(final Text origin, Pattern snapPattern) {
+        this.origin = origin;
+        this.snapPattern = snapPattern;
     }
 
-    /**
-     * Calculate the epoch from given string.
-     * 
-     * @param time The human-readable time
-     * @return epoch as long
-     */
-    public long getEpoch(String time) {
-        return this.parse(time).getTime() / 1000L;
-    }
-
-    /**
-     * Parses the given human-readable time to a Date object.
-     * 
-     * @param time The human-readable time
-     * @return Date parsed from the given string
-     */
-    public Date parse(String time) {
-        // Try parsing all provided time formats in order
-        for (final String format : formats) {
-            try {
-                return parseDate(time, format);
-            }
-            catch (ParseException ignored) {
-            }
+    @Override
+    public String read() {
+        final String timeStampString = origin.read();
+        final String snapUnitSubstring;
+        final Matcher matcher = snapPattern.matcher(timeStampString);
+        if (matcher.find()) {
+            snapUnitSubstring = matcher.group(1);
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        else {
+            throw new IllegalArgumentException("Invalid snap to time text <" + timeStampString + ">");
+        }
+        return snapUnitSubstring;
     }
 
-    private Date parseDate(String time, String timeFormat) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
-        sdf.setLenient(false);
-        return sdf.parse(time);
+    public boolean containsSnapCharacter() {
+        final String timeStampString = origin.read();
+        return timeStampString.contains("@");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidSnapToTimeText other = (ValidSnapToTimeText) o;
+        return Objects.equals(snapPattern, other.snapPattern) && Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(snapPattern, origin);
     }
 }
