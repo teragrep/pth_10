@@ -108,18 +108,18 @@ public class ConvertTransformationTest {
                     new StructField("new", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema());
-
+            // match yyyy-MM-dd'T'HH:mm:ssZ ISO 8601 with zone
+            Pattern iso8601pattern = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$");
             List<String> listOfResults = ds
                     .select("new")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
+            Assertions.assertEquals(12, listOfResults.size());
             for (String s : listOfResults) {
-                // match 00/00/0000 00:00:00
-                Matcher m = Pattern.compile("\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}:\\d{2}").matcher(s);
-
-                Assertions.assertTrue(m.find());
+                Matcher matcher = iso8601pattern.matcher(s);
+                Assertions.assertTrue(matcher.find());
             }
         });
     }
@@ -150,11 +150,13 @@ public class ConvertTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
+            Assertions.assertEquals(12, listOfResults.size());
             List<String> expectedResults = Arrays
                     .asList(
-                            "01/01/1970 00:00:11", "01/01/1970 00:00:11", "01/01/1970 00:00:10", "01/01/1970 00:00:09",
-                            "01/01/1970 00:00:08", "01/01/1970 00:00:07", "01/01/1970 00:00:06", "01/01/1970 00:00:05",
-                            "01/01/1970 00:00:04", "01/01/1970 00:00:03", "01/01/1970 00:00:02", "01/01/1970 00:00:01"
+                            "1970-01-01T00:00:11Z", "1970-01-01T00:00:11Z", "1970-01-01T00:00:10Z",
+                            "1970-01-01T00:00:09Z", "1970-01-01T00:00:08Z", "1970-01-01T00:00:07Z",
+                            "1970-01-01T00:00:06Z", "1970-01-01T00:00:05Z", "1970-01-01T00:00:04Z",
+                            "1970-01-01T00:00:03Z", "1970-01-01T00:00:02Z", "1970-01-01T00:00:01Z"
                     );
 
             for (int i = 0; i < listOfResults.size(); i++) {
