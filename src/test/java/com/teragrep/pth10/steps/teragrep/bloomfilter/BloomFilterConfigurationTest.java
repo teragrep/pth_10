@@ -102,6 +102,8 @@ public final class BloomFilterConfigurationTest {
         final BloomFilterConfiguration largerFpp = new BloomFilterConfiguration(1000L, 0.03);
         final BloomFilterConfiguration bothLarger = new BloomFilterConfiguration(2000L, 0.03);
         final BloomFilterConfiguration bothSmaller = new BloomFilterConfiguration(500L, 0.01);
+        final BloomFilterConfiguration smallerExpectedLargerFpp = new BloomFilterConfiguration(500L, 0.03);
+        final BloomFilterConfiguration largerExpectedSmallerFpp = new BloomFilterConfiguration(2000L, 0.01);
         Assertions.assertEquals(0, base.compareTo(equals));
         Assertions.assertEquals(1, base.compareTo(smaller));
         Assertions.assertEquals(-1, base.compareTo(larger));
@@ -109,5 +111,7 @@ public final class BloomFilterConfigurationTest {
         Assertions.assertEquals(1, base.compareTo(largerFpp));
         Assertions.assertEquals(-1, base.compareTo(bothLarger));
         Assertions.assertEquals(1, base.compareTo(bothSmaller));
+        Assertions.assertEquals(1, base.compareTo(smallerExpectedLargerFpp));
+        Assertions.assertEquals(-1, base.compareTo(largerExpectedSmallerFpp));
     }
 }
