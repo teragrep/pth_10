@@ -122,7 +122,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
             cmd = aggregateFunctionContext.getChild(0);
         }
         else {
-            throw new IllegalArgumentException("Expected evenstats aggregation instruction was not provided");
+            throw new IllegalArgumentException("Expected eventstats aggregation instruction was not provided");
         }
 
         final AggregateFunction aggFunction = new AggregateFunction(catCtx);
