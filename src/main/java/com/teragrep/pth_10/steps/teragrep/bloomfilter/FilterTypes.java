@@ -95,6 +95,9 @@ public final class FilterTypes implements Serializable {
         }
 
         for (final BloomFilterConfiguration configuration : filterConfigurationList) {
+            if (configuration == null) {
+                throw new IllegalArgumentException("Option 'dpl.pth_06.bloom.db.fields' contained a null filter type");
+            }
             final Long expectedNumOfItems = configuration.expectedNumOfItems();
             final Double falsePositiveProbability = configuration.falsePositiveProbability();
             sizesMapFromJson.put(expectedNumOfItems, falsePositiveProbability);
@@ -125,6 +128,9 @@ public final class FilterTypes implements Serializable {
             jsonString = config.getString(BLOOM_NUMBER_OF_FIELDS_CONFIG_ITEM);
             if (jsonString == null || jsonString.isEmpty() || "null".equals(jsonString)) {
                 throw new RuntimeException("Bloom filter size fields was not configured.");
+            }
+            if ("null".equals(jsonString)) {
+                throw new IllegalArgumentException("Option 'dpl.pth_06.bloom.db.fields' was given a null JSON");
             }
         }
         else {
