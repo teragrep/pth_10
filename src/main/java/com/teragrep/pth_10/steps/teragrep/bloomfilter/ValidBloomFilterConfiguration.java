@@ -82,10 +82,14 @@ public final class ValidBloomFilterConfiguration {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass())
+    public boolean equals(final Object o) {
+        if (o == null) {
             return false;
-        ValidBloomFilterConfiguration that = (ValidBloomFilterConfiguration) o;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidBloomFilterConfiguration that = (ValidBloomFilterConfiguration) o;
         return Objects.equals(configuration, that.configuration);
     }
 
