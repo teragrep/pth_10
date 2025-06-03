@@ -200,7 +200,7 @@ public final class FilterTypesTest {
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
-        final String expectedMessage = "Expected number of items was null, Option 'dpl.pth_06.bloom.db.fields' should not have any null values";
+        final String expectedMessage = "Expected number of items in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -211,7 +211,7 @@ public final class FilterTypesTest {
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
-        final String expectedMessage = "False positive probability was null, Option 'dpl.pth_06.bloom.db.fields' should not have any null values";
+        final String expectedMessage = "False positive probability in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -222,7 +222,7 @@ public final class FilterTypesTest {
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
-        final String expectedMessage = "Option 'dpl.pth_06.bloom.db.fields' contained a null filter type";
+        final String expectedMessage = "Option 'dpl.pth_06.bloom.db.fields' contains a 'null' filter configuration entry";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -233,7 +233,7 @@ public final class FilterTypesTest {
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
-        final String expectedMessage = "Option 'dpl.pth_06.bloom.db.fields' was given a null JSON";
+        final String expectedMessage = "Option 'dpl.pth_06.bloom.db.fields' expected an JSON object but was 'null'";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 

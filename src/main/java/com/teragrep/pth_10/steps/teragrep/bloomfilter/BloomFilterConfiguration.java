@@ -61,7 +61,7 @@ public final class BloomFilterConfiguration implements Comparable<BloomFilterCon
     public Long expectedNumOfItems() {
         if (expected == null) {
             throw new IllegalArgumentException(
-                    "Expected number of items was null, Option 'dpl.pth_06.bloom.db.fields' should not have any null values"
+                    "Expected number of items in 'dpl.pth_06.bloom.db.fields' should not be 'null'"
             );
         }
         return expected;
@@ -70,7 +70,7 @@ public final class BloomFilterConfiguration implements Comparable<BloomFilterCon
     public Double falsePositiveProbability() {
         if (fpp == null) {
             throw new IllegalArgumentException(
-                    "False positive probability was null, Option 'dpl.pth_06.bloom.db.fields' should not have any null values"
+                    "False positive probability in 'dpl.pth_06.bloom.db.fields' should not be 'null'"
             );
         }
         return fpp;
