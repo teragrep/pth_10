@@ -95,14 +95,8 @@ public final class FilterTypes implements Serializable {
         }
 
         for (final BloomFilterConfiguration configuration : filterConfigurationList) {
-            if (configuration == null) {
-                throw new IllegalArgumentException(
-                        "Option 'dpl.pth_06.bloom.db.fields' contains a 'null' filter configuration entry"
-                );
-            }
-            final Long expectedNumOfItems = configuration.expectedNumOfItems();
-            final Double falsePositiveProbability = configuration.falsePositiveProbability();
-            sizesMapFromJson.put(expectedNumOfItems, falsePositiveProbability);
+            final ValidBloomFilterConfiguration validConfiguration = new ValidBloomFilterConfiguration(configuration);
+            sizesMapFromJson.put(validConfiguration.expected(), validConfiguration.fpp());
         }
 
         final boolean hasDuplicates = new HashSet<>(filterConfigurationList).size() != filterConfigurationList.size();
