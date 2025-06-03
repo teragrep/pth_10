@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep.bloomfilter;
 
+import java.util.Comparator;
 import java.util.Objects;
 
 public final class BloomFilterConfiguration implements Comparable<BloomFilterConfiguration> {
@@ -95,23 +96,11 @@ public final class BloomFilterConfiguration implements Comparable<BloomFilterCon
 
     @Override
     public int compareTo(final BloomFilterConfiguration other) {
-        if (equals(other)) {
-            return 0;
+        if (other == null) {
+            throw new IllegalArgumentException("Cannot compare against null");
         }
-        if (expected.equals(other.expected)) {
-            // larger fpp results in a smaller filter bit size
-            if (fpp < other.fpp) {
-                return 1;
-            }
-            else {
-                return -1;
-            }
-        }
-        else if (expected > other.expected) {
-            return 1;
-        }
-        else {
-            return -1;
-        }
+        return Comparator
+                .comparing((BloomFilterConfiguration cnf) -> cnf.expected, Comparator.nullsLast(Long::compareTo))
+                .thenComparing((BloomFilterConfiguration cnf) -> cnf.fpp, Comparator.nullsLast(Comparator.reverseOrder())).compare(this, other);
     }
 }
