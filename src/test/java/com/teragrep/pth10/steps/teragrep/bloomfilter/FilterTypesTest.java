@@ -106,7 +106,9 @@ class FilterTypesTest {
     public void testSortedMapMethodWithEmptyStringJSON() {
         Config config = ConfigFactory.parseProperties(emptyStringProperties());
         FilterTypes filterTypes = new FilterTypes(config);
-        Exception exception = assertThrows(RuntimeException.class, () -> {filterTypes.sortedMap();});
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            filterTypes.sortedMap();
+        });
         Assertions.assertEquals("Bloom filter size fields was not configured.", exception.getMessage());
     }
 
@@ -114,7 +116,9 @@ class FilterTypesTest {
     public void testSortedMapMethodWithNullStringJSON() {
         Config config = ConfigFactory.parseProperties(nullStringProperties());
         FilterTypes filterTypes = new FilterTypes(config);
-        Exception exception = assertThrows(RuntimeException.class, () -> {filterTypes.sortedMap();});
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            filterTypes.sortedMap();
+        });
         Assertions.assertEquals("Bloom filter size fields was not configured.", exception.getMessage());
     }
 
@@ -157,7 +161,6 @@ class FilterTypesTest {
 
     @Test
     public void testEquals() {
-        ;
         Config config = ConfigFactory.parseProperties(defaultProperties());
         FilterTypes filterTypes1 = new FilterTypes(config);
         FilterTypes filterTypes2 = new FilterTypes(config);
@@ -192,7 +195,7 @@ class FilterTypesTest {
         EqualsVerifier.forClass(FilterTypes.class).withNonnullFields("config").verify();
     }
 
-    public Properties defaultProperties() {
+    private Properties defaultProperties() {
         Properties properties = new Properties();
         properties.put("dpl.pth_10.bloom.db.username", username);
         properties.put("dpl.pth_10.bloom.db.password", password);
@@ -206,29 +209,21 @@ class FilterTypesTest {
         return properties;
     }
 
-    public Properties emptyStringProperties() {
+    private Properties emptyStringProperties() {
         Properties properties = new Properties();
         properties.put("dpl.pth_10.bloom.db.username", username);
         properties.put("dpl.pth_10.bloom.db.password", password);
         properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
-        properties
-                .put(
-                        "dpl.pth_06.bloom.db.fields",
-                        ""
-                );
+        properties.put("dpl.pth_06.bloom.db.fields", "");
         return properties;
     }
 
-    public Properties nullStringProperties() {
+    private Properties nullStringProperties() {
         Properties properties = new Properties();
         properties.put("dpl.pth_10.bloom.db.username", username);
         properties.put("dpl.pth_10.bloom.db.password", password);
         properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
-        properties
-                .put(
-                        "dpl.pth_06.bloom.db.fields",
-                        "null"
-                );
+        properties.put("dpl.pth_06.bloom.db.fields", "null");
         return properties;
     }
 }
