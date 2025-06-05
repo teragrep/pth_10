@@ -276,8 +276,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitLogicalStatement(DPLParser.LogicalStatementContext ctx) {
         LOGGER.info("logicalStatement (XML) incoming: <{}>", ctx.getText());
-        Node rv = null;
-        Node left = null;
+        Node rv = new NullNode();
+        Node left = new NullNode();
         TerminalNode leftIsTerminal = null;
 
         // Visit leftmost child if it is not a terminal node
@@ -332,6 +332,12 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
             el.appendChild(((ElementNode) right).getElement());
 
             rv = new ElementNode(el);
+        }
+
+        else {
+            throw new IllegalStateException(
+                    "Unexpected number of children: " + ctx.getChildCount() + " in query: " + ctx.getText()
+            );
         }
 
         if (rv instanceof SubSearchNode) {

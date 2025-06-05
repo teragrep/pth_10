@@ -108,8 +108,8 @@ public class CatalystVisitorTest {
             matches = "true"
     )
     void searchQueryWithOrTest() {
-        final String query = "(index!=strawberry sourcetype=example:strawberry:strawberry host=loadbalancer.example.com) OR (index=* host=firewall.example.com earliest=2021-01-26T00:00:00z latest=2021-04-26T00:00:00z \"Denied\")";
-        final String expected = "(((NOT RLIKE(index, (?i)^strawberry$)) AND (RLIKE(sourcetype, (?i)^example:strawberry:strawberry) AND RLIKE(host, (?i)^loadbalancer.example.com))) OR (RLIKE(index, (?i)^.*$) AND (((RLIKE(host, (?i)^firewall.example.com) AND (_time >= from_unixtime(1611612000, yyyy-MM-dd HH:mm:ss))) AND (_time < from_unixtime(1619384400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QDenied\\E.*))))";
+        final String query = "(index!=strawberry sourcetype=example:strawberry:strawberry host=loadbalancer.example.com) OR (index=* host=firewall.example.com earliest=2021-01-26T00:00:00Z latest=2021-04-26T00:00:00Z \"Denied\")";
+        final String expected = "(((NOT RLIKE(index, (?i)^strawberry$)) AND (RLIKE(sourcetype, (?i)^example:strawberry:strawberry) AND RLIKE(host, (?i)^loadbalancer.example.com))) OR (RLIKE(index, (?i)^.*$) AND (((RLIKE(host, (?i)^firewall.example.com) AND (_time >= from_unixtime(1611619200, yyyy-MM-dd HH:mm:ss))) AND (_time < from_unixtime(1619395200, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QDenied\\E.*))))";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
             Assertions.assertEquals(expected, ctx.getSparkQuery());

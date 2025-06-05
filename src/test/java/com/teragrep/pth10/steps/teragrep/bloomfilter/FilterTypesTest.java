@@ -49,11 +49,13 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.util.sketch.BloomFilter;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,22 +65,18 @@ import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FilterTypesTest {
+public final class FilterTypesTest {
 
-    Connection conn;
-    final String username = "sa";
-    final String password = "";
-    final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final String username = "sa";
+    private final String password = "";
+    private final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final Connection conn = Assertions
+            .assertDoesNotThrow(() -> DriverManager.getConnection(connectionUrl, username, password));
 
     @BeforeEach
     public void setup() {
-        Config config = ConfigFactory.parseProperties(defaultProperties());
-        this.conn = new LazyConnection(config).get();
         Assertions.assertDoesNotThrow(() -> {
             conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
-        });
-        Assertions.assertDoesNotThrow(() -> {
-            Class.forName("org.h2.Driver");
         });
         String createFilterType = "CREATE TABLE `filtertype` ("
                 + "`id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,"
@@ -88,6 +86,11 @@ class FilterTypesTest {
             conn.prepareStatement(createFilterType).execute();
         });
 
+    }
+
+    @AfterEach
+    public void teardown() {
+        Assertions.assertDoesNotThrow(conn::close);
     }
 
     @Test
@@ -136,12 +139,42 @@ class FilterTypesTest {
             Assertions.assertEquals(3, fppList.size());
             Assertions.assertEquals(Arrays.asList(1000L, 2000L, 3000L), expectedSizeList);
             Assertions.assertEquals(Arrays.asList(0.01, 0.02, 0.03), fppList);
+            result.close();
         });
     }
 
     @Test
+    public void testMalformattedFieldsOption() {
+        final Properties properties = new Properties();
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "{expected: 1000, fpp: 0.01},{expected: 2000, fpp: 0.01},{expected: 3000, fpp: 0.01}"
+                );
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "Error parsing 'dpl.pth_06.bloom.db.fields' option to JSON. ensure that filter size options are formated as an JSON array and that there are no duplicate values. example '[{expected: 1000, fpp: 0.01},{expected: 2000, fpp: 0.01}]'. message:";
+        Assertions.assertTrue(exception.getMessage().startsWith(expectedMessage));
+    }
+
+    @Test
+    public void testDuplicateValues() {
+        final Properties properties = new Properties();
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[{expected: 1000, fpp: 0.01},{expected: 1000, fpp: 0.01},{expected: 3000, fpp: 0.01}]"
+                );
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "Found duplicate values in 'dpl.pth_06.bloom.db.fields'";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
     public void testEquals() {
-        ;
         Config config = ConfigFactory.parseProperties(defaultProperties());
         FilterTypes filterTypes1 = new FilterTypes(config);
         FilterTypes filterTypes2 = new FilterTypes(config);

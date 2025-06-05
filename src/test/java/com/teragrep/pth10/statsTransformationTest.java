@@ -883,4 +883,25 @@ public class statsTransformationTest {
                     Assertions.assertEquals(Collections.singletonList("1286709610"), destAsList);
                 });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testQueryWithoutDatasource() {
+        String query = "| stats count";
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            List<String> listOfRaw = res
+                    .select("count")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, res.count()); // 1 row of data
+            Assertions.assertEquals("0", listOfRaw.get(0));
+        });
+    }
 }

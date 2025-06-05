@@ -1,0 +1,42 @@
+name: Upload Artifact as GitHub Release Attachment
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  upload:
+    name: Upload
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Local Maven Repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 8.0.292+10
+          distribution: 'adopt'
+
+      - name: Install test dependencies
+        run: cd / && sudo apt-get update && sudo apt-get install wget rpm2cpio && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-city-20180605-1.el8.noarch.rpm && sudo wget -q https://download.rockylinux.org/pub/rocky/8/AppStream/x86_64/os/Packages/g/geolite2-country-20180605-1.el8.noarch.rpm && rpm2cpio geolite2-city-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories && rpm2cpio geolite2-country-20180605-1.el8.noarch.rpm | sudo cpio -i --make-directories
+
+      - name: Build a jar and rpm for release
+        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Attach rpm to release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
