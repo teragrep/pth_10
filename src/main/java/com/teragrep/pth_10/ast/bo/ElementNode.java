@@ -78,9 +78,11 @@ public class ElementNode extends Node {
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             transformer.transform(new DOMSource(element), new StreamResult(buffer));
         }
-        catch (TransformerConfigurationException tex) {
+        catch (final TransformerConfigurationException tex) {
+            throw new UnsupportedOperationException(tex.getMessage());
         }
-        catch (TransformerException ex) {
+        catch (final TransformerException ex) {
+            throw new UnsupportedOperationException(ex.getMessage());
         }
         return buffer.toString();
     }
