@@ -43,7 +43,7 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.teragrep.bloomfilter;
+package com.teragrep.pth_10.steps.teragrep.bloomfilter;
 
 import com.google.gson.Gson;
 import nl.jqno.equalsverifier.EqualsVerifier;
