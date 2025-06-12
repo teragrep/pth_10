@@ -261,7 +261,10 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         final boolean hasDecreaseStartTimeEnabled;
         final Config zplConfig = catCtx.getConfig();
         final String decreaseStartTimeKey = "dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime";
-        if (zplConfig.hasPath(decreaseStartTimeKey)) {
+        if (
+            zplConfig != null && zplConfig.hasPath(decreaseStartTimeKey)
+                    && "".equals(zplConfig.getString(decreaseStartTimeKey))
+        ) {
             hasDecreaseStartTimeEnabled = zplConfig.getBoolean(decreaseStartTimeKey);
         }
         else {
