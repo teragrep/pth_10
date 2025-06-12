@@ -54,7 +54,7 @@ public abstract class AbstractConvertStep extends AbstractStep {
 
     protected List<ConvertCommand> listOfCommands = new ArrayList<>();
     protected List<String> listOfFieldsToOmit = new ArrayList<>();
-    protected String timeformat = "%m/%d/%Y %H:%M:%S";
+    protected String timeformat = "yyyy-MM-dd'T'HH:mm:ssX";
 
     public AbstractConvertStep() {
         super();
