@@ -146,7 +146,7 @@ public class TimeQualifierImplTest {
         final Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
         final Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
-        el.setAttribute("value", Long.toString(1730325600L +1L));
+        el.setAttribute("value", Long.toString(1730325600L + 1L));
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }

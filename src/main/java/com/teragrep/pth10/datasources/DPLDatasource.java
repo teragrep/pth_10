@@ -164,8 +164,12 @@ public class DPLDatasource {
         }
 
         // xml decrease timestatement start time by 3 hours
-        if(config.hasPath("dpl.pth_10.logicalstatement") && config.hasPath("dpl.pth_10.logicalstatement.TimeStatement") && config.hasPath("dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime")) {
-            boolean decreaseStartTime = config.getBoolean("dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime");
+        if (
+            config.hasPath("dpl.pth_10.logicalstatement") && config.hasPath("dpl.pth_10.logicalstatement.TimeStatement")
+                    && config.hasPath("dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime")
+        ) {
+            boolean decreaseStartTime = config
+                    .getBoolean("dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime");
             reader = reader.option("dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime", decreaseStartTime);
         }
 

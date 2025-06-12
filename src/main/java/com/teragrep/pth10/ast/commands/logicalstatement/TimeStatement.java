@@ -55,6 +55,7 @@ import com.teragrep.pth10.ast.time.TimeQualifierImpl;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -198,7 +199,17 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         );
         final ElementNode returnValue;
         if (timeQualifier.isStartTime()) {
-            final long decreaseValue = 3 * 60 * 60 * 1000; // decrease 3 hours from earliest
+            final long decreaseValue;
+            if (hasDecreaseStartTimeEnabled()) {
+                LOGGER
+                        .info(
+                                "<dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime=true> decreasing start time by 3 hours"
+                        );
+                decreaseValue = 3 * 60 * 60 * 1000; // decrease 3 hours from earliest
+            }
+            else {
+                decreaseValue = 0;
+            }
             final TimeQualifier decreasedQualifier = new DecreasedEpochXmlElementValue(timeQualifier, decreaseValue);
             startTime = decreasedQualifier.epoch();
             returnValue = new ElementNode(decreasedQualifier.xmlElement());
@@ -244,5 +255,18 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         }
 
         return new ColumnNode(tq.column());
+    }
+
+    private boolean hasDecreaseStartTimeEnabled() {
+        final boolean hasDecreaseStartTimeEnabled;
+        final Config zplConfig = catCtx.getConfig();
+        final String decreaseStartTimeKey = "dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime";
+        if (zplConfig.hasPath(decreaseStartTimeKey)) {
+            hasDecreaseStartTimeEnabled = zplConfig.getBoolean(decreaseStartTimeKey);
+        }
+        else {
+            hasDecreaseStartTimeEnabled = false;
+        }
+        return hasDecreaseStartTimeEnabled;
     }
 }
