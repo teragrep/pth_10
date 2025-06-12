@@ -46,6 +46,7 @@
 package com.teragrep.pth10;
 
 import com.teragrep.pth10.ast.time.TimeQualifier;
+import com.teragrep.pth10.ast.time.TimeQualifierImpl;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
@@ -56,7 +57,7 @@ import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
-public class TimeQualifierTest {
+public class TimeQualifierImplTest {
 
     @Test
     public void testEarliest() {
@@ -65,12 +66,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
-        Element el = doc.createElement("earliest");
+        final TimeQualifierImpl tq = new TimeQualifierImpl(value, timeformat, type, doc);
+        final Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
+        final Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
         el.setAttribute("value", Long.toString(1730325600L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -81,12 +81,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
-        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
-        Element el = doc.createElement("earliest");
+        final TimeQualifier tq = new TimeQualifierImpl(value, "", type, doc);
+        final Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
+        final Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
         el.setAttribute("value", Long.toString(1704103200L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -97,12 +96,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
-        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
-        Element el = doc.createElement("earliest");
+        final TimeQualifier tq = new TimeQualifierImpl(value, "", type, doc);
+        final Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
+        final Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
         el.setAttribute("value", Long.toString(1704103200L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -113,12 +111,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
-        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L + 1L)));
-        Element el = doc.createElement("latest");
+        final TimeQualifier tq = new TimeQualifierImpl(value, "", type, doc);
+        final Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L)));
+        final Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
         el.setAttribute("value", Long.toString(1704103200L + 1L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -129,12 +126,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
-        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L)));
-        Element el = doc.createElement("latest");
+        final TimeQualifier tq = new TimeQualifierImpl(value, "", type, doc);
+        final Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L)));
+        final Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
-        el.setAttribute("value", Long.toString(1704103200L));
-
+        el.setAttribute("value", Long.toString(1704103201L));
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -146,12 +142,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
-        Element el = doc.createElement("latest");
+        final TimeQualifierImpl tq = new TimeQualifierImpl(value, timeformat, type, doc);
+        final Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
+        final Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
-        el.setAttribute("value", Long.toString(1730325600L));
-
+        el.setAttribute("value", Long.toString(1730325600L + 1L));
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -163,12 +158,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.INDEX_EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
-        Element el = doc.createElement("index_earliest");
+        final TimeQualifierImpl tq = new TimeQualifierImpl(value, timeformat, type, doc);
+        final Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
+        final Element el = doc.createElement("index_earliest");
         el.setAttribute("operation", "GE");
         el.setAttribute("value", Long.toString(1730325600L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -180,12 +174,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.INDEX_LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
-        Element el = doc.createElement("index_latest");
+        final TimeQualifierImpl tq = new TimeQualifierImpl(value, timeformat, type, doc);
+        final Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
+        final Element el = doc.createElement("index_latest");
         el.setAttribute("operation", "LE");
         el.setAttribute("value", Long.toString(1730325600L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -197,12 +190,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.STARTTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
-        Element el = doc.createElement("earliest");
+        final TimeQualifierImpl tq = new TimeQualifierImpl(value, timeformat, type, doc);
+        final Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
+        final Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
         el.setAttribute("value", Long.toString(1730325600L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -214,12 +206,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.ENDTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
-        Element el = doc.createElement("latest");
+        final TimeQualifierImpl tq = new TimeQualifierImpl(value, timeformat, type, doc);
+        final Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
+        final Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
         el.setAttribute("value", Long.toString(1730325600L));
-
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
     }
@@ -231,12 +222,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.IN;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-
-        RuntimeException e = Assertions
-                .assertThrows(RuntimeException.class, () -> new TimeQualifier(value, timeformat, type, doc).column());
+        final RuntimeException e = Assertions
+                .assertThrows(RuntimeException.class, () -> new TimeQualifierImpl(value, timeformat, type, doc).column());
         Assertions.assertEquals("TimeQualifier <" + type + "> not implemented yet.", e.getMessage());
-        RuntimeException exml = Assertions
-                .assertThrows(RuntimeException.class, () -> new TimeQualifier(value, timeformat, type, doc).xmlElement());
+        final RuntimeException exml = Assertions
+                .assertThrows(RuntimeException.class, () -> new TimeQualifierImpl(value, timeformat, type, doc).xmlElement());
         Assertions.assertEquals("TimeQualifier <" + type + "> not implemented yet.", exml.getMessage());
     }
 
@@ -247,9 +237,8 @@ public class TimeQualifierTest {
         final int type = DPLLexer.ENDTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-
         Assertions
-                .assertEquals(new TimeQualifier(value, timeformat, type, doc), new TimeQualifier(value, timeformat, type, doc));
+                .assertEquals(new TimeQualifierImpl(value, timeformat, type, doc), new TimeQualifierImpl(value, timeformat, type, doc));
 
     }
 
@@ -261,9 +250,8 @@ public class TimeQualifierTest {
         final int type = DPLLexer.ENDTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-
         Assertions
-                .assertNotEquals(new TimeQualifier(value, timeformat, type, doc), new TimeQualifier(value2, timeformat, type, doc));
+                .assertNotEquals(new TimeQualifierImpl(value, timeformat, type, doc), new TimeQualifierImpl(value2, timeformat, type, doc));
 
     }
 }

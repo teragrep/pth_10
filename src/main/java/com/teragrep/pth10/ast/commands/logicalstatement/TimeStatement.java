@@ -49,10 +49,13 @@ import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.EmitMode;
+import com.teragrep.pth10.ast.time.DecreasedEpochXmlElementValue;
 import com.teragrep.pth10.ast.time.TimeQualifier;
+import com.teragrep.pth10.ast.time.TimeQualifierImpl;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -188,19 +191,38 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
 
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
-
-        if (tq.isStartTime()) {
-            startTime = tq.epoch();
+        final TimeQualifier timeQualifier = new TimeQualifierImpl(
+                value,
+                catCtx.getTimeFormatString(),
+                node.getSymbol().getType(),
+                doc
+        );
+        final ElementNode returnValue;
+        if (timeQualifier.isStartTime()) {
+            final long decreaseValue;
+            if (hasDecreaseStartTimeEnabled()) {
+                LOGGER
+                        .info(
+                                "<dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime=true> decreasing start time by 3 hours"
+                        );
+                decreaseValue = 3 * 60 * 60 * 1000; // decrease 3 hours from earliest
+            }
+            else {
+                decreaseValue = 0;
+            }
+            final TimeQualifier decreasedQualifier = new DecreasedEpochXmlElementValue(timeQualifier, decreaseValue);
+            startTime = decreasedQualifier.epoch();
+            returnValue = new ElementNode(decreasedQualifier.xmlElement());
         }
-        else if (tq.isEndTime()) {
-            endTime = tq.epoch();
+        else if (timeQualifier.isEndTime()) {
+            endTime = timeQualifier.epoch();
+            returnValue = new ElementNode(timeQualifier.xmlElement());
         }
         else {
             throw new UnsupportedOperationException("Unexpected token: " + node.getSymbol().getText());
         }
 
-        return new ElementNode(tq.xmlElement());
+        return returnValue;
     }
 
     /**
@@ -215,7 +237,12 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
 
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
+        TimeQualifierImpl tq = new TimeQualifierImpl(
+                value,
+                catCtx.getTimeFormatString(),
+                node.getSymbol().getType(),
+                doc
+        );
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();
@@ -228,5 +255,21 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         }
 
         return new ColumnNode(tq.column());
+    }
+
+    private boolean hasDecreaseStartTimeEnabled() {
+        final boolean hasDecreaseStartTimeEnabled;
+        final Config zplConfig = catCtx.getConfig();
+        final String decreaseStartTimeKey = "dpl.pth_10.logicalstatement.TimeStatement.xmlDecreaseStartTime";
+        if (
+            zplConfig != null && zplConfig.hasPath(decreaseStartTimeKey)
+                    && "".equals(zplConfig.getString(decreaseStartTimeKey))
+        ) {
+            hasDecreaseStartTimeEnabled = zplConfig.getBoolean(decreaseStartTimeKey);
+        }
+        else {
+            hasDecreaseStartTimeEnabled = false;
+        }
+        return hasDecreaseStartTimeEnabled;
     }
 }

@@ -48,17 +48,66 @@ package com.teragrep.pth10.ast.time;
 import org.apache.spark.sql.Column;
 import org.w3c.dom.Element;
 
-public interface TimeQualifier {
+import java.util.Objects;
 
-    Element xmlElement();
+/**
+ * Decreases set amount from xmlElement() Element value tag that contains an epoch value. Used as a temporary workaround
+ * for pth_06 database schema.
+ */
+public final class DecreasedEpochXmlElementValue implements TimeQualifier {
 
-    boolean isStartTime();
+    private final TimeQualifier origin;
+    private final long decreaseAmount;
 
-    boolean isEndTime();
+    public DecreasedEpochXmlElementValue(final TimeQualifier origin, final long decreaseAmount) {
+        this.origin = origin;
+        this.decreaseAmount = decreaseAmount;
+    }
 
-    long epoch();
+    @Override
+    public Element xmlElement() {
+        final long decreasedValue = origin.epoch() - decreaseAmount;
+        final Element element = origin.xmlElement();
+        // set decreased value
+        element.setAttribute("value", Long.toString(decreasedValue));
+        return element;
+    }
 
-    Column column();
+    @Override
+    public boolean isStartTime() {
+        return origin.isStartTime();
+    }
 
-    boolean isUnixEpoch();
+    @Override
+    public boolean isEndTime() {
+        return origin.isEndTime();
+    }
+
+    @Override
+    public long epoch() {
+        return origin.epoch();
+    }
+
+    @Override
+    public Column column() {
+        return origin.column();
+    }
+
+    @Override
+    public boolean isUnixEpoch() {
+        return origin.isUnixEpoch();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (o == null || getClass() != o.getClass())
+            return false;
+        final DecreasedEpochXmlElementValue cast = (DecreasedEpochXmlElementValue) o;
+        return decreaseAmount == cast.decreaseAmount && Objects.equals(origin, cast.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, decreaseAmount);
+    }
 }
