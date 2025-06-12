@@ -231,9 +231,11 @@ public final class ConvertStep extends AbstractConvertStep {
      * @return Input dataset with added result column
      */
     private Dataset<Row> ctime(Dataset<Row> dataset, String field, String renameField) {
-        final String iso8601Format = "yyyy-MM-dd'T'HH:mm:ssX";
-        final Column result = functions.from_unixtime(functions.col(field), iso8601Format);
-        return dataset.withColumn(renameField == null ? field : renameField, result);
+        final Ctime ctime = new Ctime(timeformat);
+        final UserDefinedFunction cTimeUDF = functions.udf(ctime, DataTypes.StringType);
+        sparkSession.udf().register("UDF_Ctime", cTimeUDF);
+        final Column udfResult = functions.callUDF("UDF_Ctime", functions.col(field).cast(DataTypes.StringType));
+        return dataset.withColumn(renameField == null ? field : renameField, udfResult);
     }
 
     /**

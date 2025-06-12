@@ -45,12 +45,12 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement.convert;
 
-import com.teragrep.pth10.ast.DPLTimeFormat;
-import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.api.java.UDF1;
 
-import java.text.DateFormat;
-import java.util.Date;
-import java.util.TimeZone;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * UDF for convert command 'ctime'<br>
@@ -58,20 +58,31 @@ import java.util.TimeZone;
  * 
  * @author eemhu
  */
-public class Ctime implements UDF2<String, String, String> {
+public class Ctime implements UDF1<String, String> {
 
     private static final long serialVersionUID = 1L;
+    private final DateTimeFormatter formatter;
 
-    @Override
-    public String call(String epoch, String tf) throws Exception {
-        Long e = Long.valueOf(epoch);
-
-        Date date = new Date(e * 1000L);
-        DateFormat format = new DPLTimeFormat(tf).createSimpleDateFormat();
-        format.setTimeZone(TimeZone.getTimeZone("Etc/UTC"));
-        String formatted = format.format(date);
-
-        return formatted;
+    public Ctime(final String format) {
+        this(DateTimeFormatter.ofPattern(format).withZone(ZoneId.of("UTC")));
     }
 
+    public Ctime(final DateTimeFormatter formatter) {
+        this.formatter = formatter;
+    }
+
+    @Override
+    public String call(String epoch) throws Exception {
+        String result;
+        try {
+            Instant instant = Instant.from(formatter.parse(epoch));
+            result = instant.toString();
+        }
+        catch (DateTimeParseException e) {
+            throw new IllegalArgumentException(
+                    "Could not parse value <" + epoch + "> with set time formatter <" + formatter + ">"
+            );
+        }
+        return result;
+    }
 }
