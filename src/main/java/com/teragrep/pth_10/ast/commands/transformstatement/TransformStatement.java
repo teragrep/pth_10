@@ -100,21 +100,10 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
 
         // Proceed leaves
         Node left;
-        ParseTree leftTree = ctx.getChild(0);
-        ParseTree rightTree = ctx.getChild(2);
+        final ParseTree leftTree = ctx.getChild(0);
+        final ParseTree rightTree = ctx.getChild(2);
 
         // Logging
-        if (leftTree != null) {
-            LOGGER.info("-> Left tree: text=<{}>", leftTree.getText());
-        }
-        else {
-            LOGGER.error("-> Left tree is NULL");
-            throw new IllegalArgumentException(
-                    "Transformation command was not given or the given command is not yet implemented, TransformStatement: <"
-                            + ctx.getText() + ">"
-            );
-        }
-
         if (rightTree != null) {
             LOGGER.info("-> Right tree: text=<{}>", rightTree.getText());
         }
@@ -122,47 +111,59 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
             LOGGER.info("-> Right tree NULL");
         }
 
-        // Visit command transformations
-        left = visit(leftTree);
-
-        if (left != null) {
-            if (left instanceof StepNode) {
-                LOGGER.debug("Add step to list");
-                this.catVisitor.getStepList().add(((StepNode) left).get());
-            }
-            else if (left instanceof StepListNode) {
-                LOGGER.debug("Add multiple steps to list");
-                ((StepListNode) left).asList().forEach(step -> this.catVisitor.getStepList().add(step));
-            }
-            else {
-                LOGGER
-                        .error(
-                                "visit of leftTree did not return Step(List)Node, instead got: class=<{}>",
-                                left.getClass().getName()
-                        );
-            }
-            // Add right branch
-            if (rightTree != null) {
-                Node right = visit(rightTree);
-                if (right != null) {
-                    LOGGER.debug("Right side was not null: <{}>", right);
-                    left = right;
+        if (leftTree != null) {
+            LOGGER.info("-> Left tree: text=<{}>", leftTree.getText());
+            // Visit command transformations
+            left = visit(leftTree);
+            if (left != null) {
+                if (left instanceof StepNode) {
+                    LOGGER.debug("Add step to list");
+                    this.catVisitor.getStepList().add(((StepNode) left).get());
+                }
+                else if (left instanceof StepListNode) {
+                    LOGGER.debug("Add multiple steps to list");
+                    ((StepListNode) left).asList().forEach(step -> this.catVisitor.getStepList().add(step));
                 }
                 else {
-                    LOGGER.debug("transformStatement <EOF>");
+                    LOGGER
+                            .error(
+                                    "visit of leftTree did not return Step(List)Node, instead got: class=<{}>",
+                                    left.getClass().getName()
+                            );
                 }
-            }
-            else { // EOF, return only left
-                LOGGER.debug("transformStatement <EOF> return only left transformation");
-            }
+                // Add right branch
+                if (rightTree != null) {
+                    final Node right = visit(rightTree);
+                    if (right != null) {
+                        LOGGER.debug("Right side was not null: <{}>", right);
+                        left = right;
+                    }
+                    else {
+                        LOGGER.debug("transformStatement <EOF>");
+                    }
+                }
+                else { // EOF, return only left
+                    LOGGER.debug("transformStatement <EOF> return only left transformation");
+                }
 
-            return left;
+                return left;
+            }
+            else {
+                // If null is returned, the command is not implemented.
+                // All implemented commands return a StepNode or a StepListNode.
+                LOGGER.error("-> Visit of LeftTree returned NULL");
+                throw new IllegalArgumentException(
+                        "The provided transformation command '" + ctx.getText() + "' is not yet implemented."
+                );
+            }
         }
         else {
-            // If null is returned, the command is not implemented.
-            // All implemented commands return a StepNode or a StepListNode.
-            throw new IllegalArgumentException("The provided command '" + ctx.getText() + "' is not yet implemented.");
+            LOGGER.error("-> Left tree is NULL");
+            throw new IllegalArgumentException(
+                    "The provided transformation command '" + ctx.getText() + "' is not yet implemented."
+            );
         }
+
     }
 
     @Override
