@@ -123,6 +123,9 @@ public class DefaultTimeFormatTest {
                 .assertThrows(RuntimeException.class, () -> new DefaultTimeFormat().getEpoch(time));
 
         Assertions
-                .assertEquals("TimeQualifier conversion error: <12/34/2020:10:25:40> can't be parsed.", rte.getMessage());
+                .assertEquals(
+                        "Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats: [MM/dd/yyyy:HH:mm:ss, yyyy-MM-dd'T'HH:mm:ss.SSSXXX, yyyy-MM-dd'T'HH:mm:ss.SSS, yyyy-MM-dd'T'HH:mm:ssXXX, yyyy-MM-dd'T'HH:mm:ss])",
+                        rte.getMessage()
+                );
     }
 }

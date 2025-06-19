@@ -47,6 +47,8 @@ package com.teragrep.pth10.ast;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DateTimeException;
+import java.util.Arrays;
 import java.util.Date;
 
 /**
@@ -88,7 +90,7 @@ public class DefaultTimeFormat {
      * @param time The human-readable time
      * @return Date parsed from the given string
      */
-    public Date parse(String time) {
+    public Date parse(String time) throws DateTimeException {
         // Try parsing all provided time formats in order
         for (final String format : formats) {
             try {
@@ -97,7 +99,10 @@ public class DefaultTimeFormat {
             catch (ParseException ignored) {
             }
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        throw new DateTimeException(
+                "Check that the timestamp or the relative time value is in the correct format (Supported timestamp formats: "
+                        + Arrays.toString(formats) + ")"
+        );
     }
 
     private Date parseDate(String time, String timeFormat) throws ParseException {
