@@ -66,7 +66,7 @@ public class Memk implements UDF1<String, String> {
         Matcher m = Pattern.compile("\\d+(.\\d+)?").matcher(input);
 
         if (!m.find()) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                     "Invalid value given for function memk(). Expected: Positive integer or float, with an optional unit k, m or g. Instead got: "
                             + input
             );
