@@ -111,7 +111,7 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
             // try json
             final Gson gson = new Gson();
             final JsonElement jsonElem = gson.fromJson(input, JsonElement.class);
-            if (jsonElem == null) {
+            if (jsonElem == null || jsonElem.isJsonNull()) {
                 LOGGER.warn("Json input was 'null', returning empty result");
                 return result;
             }

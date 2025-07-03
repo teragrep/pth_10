@@ -114,4 +114,11 @@ public class SpathTest {
         Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call(null, "test", "test", "test"));
         Assertions.assertTrue(result.isEmpty());
     }
+
+    @Test
+    void testSpathNullStringJsonInput() {
+        final Spath spath = new Spath(null);
+        Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call("null", "test", "test", "test"));
+        Assertions.assertTrue(result.isEmpty());
+    }
 }
