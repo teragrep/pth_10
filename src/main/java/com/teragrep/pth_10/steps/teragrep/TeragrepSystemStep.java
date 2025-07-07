@@ -126,6 +126,9 @@ public final class TeragrepSystemStep extends AbstractStep {
         }
 
         try (final InputStream is = TeragrepSystemStep.class.getClassLoader().getResourceAsStream("maven.properties")) {
+            if (is == null) {
+                throw new IllegalStateException("Problem fetching package properties");
+            }
             final Properties p = new Properties();
             p.load(is);
             LOGGER.debug("package properties: <{}>", p);
@@ -140,7 +143,7 @@ public final class TeragrepSystemStep extends AbstractStep {
                 }
             });
         }
-        catch (IOException | NullPointerException e) {
+        catch (IOException e) {
             e.printStackTrace();
         }
         return rv;
