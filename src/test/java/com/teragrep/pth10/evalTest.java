@@ -4696,4 +4696,86 @@ public class evalTest {
             Assertions.assertEquals("string", r.getAs(0));
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalMatchNullsOnlySubject() {
+        String q = "index=index_A  | eval a=null() | eval b=if(match(a,\"3\"),1,0)";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            Dataset<Row> resA = res.select("b").orderBy("offset");
+            List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getList(0).get(0).toString())
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(3, lst.size());
+            // Compare values to expected
+            List<String> expectedLst = Arrays.asList("0", "0", "0");
+
+            Assertions.assertEquals(expectedLst, lst);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalMatchSubjectWithSomeNUlls() {
+        String q = "index=index_A | eval a=if(match(sourcetype,\"X\"),1,0)";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("ip", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            Dataset<Row> resA = res.select("a").orderBy("offset");
+            List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getList(0).get(0).toString())
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(3, lst.size());
+            // Compare values to expected
+            List<String> expectedLst = Arrays.asList("1", "1", "0");
+
+            Assertions.assertEquals(expectedLst, lst);
+        });
+    }
+
 }
