@@ -72,7 +72,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
     private static final long serialVersionUID = 1L;
     private final boolean isMultiValue;
     private final NullValue nullValue;
-    private static final Logger LOGGER = LoggerFactory.getLogger(Spath.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegexMatch.class);
 
     public RegexMatch(NullValue nullValue) {
         super();
