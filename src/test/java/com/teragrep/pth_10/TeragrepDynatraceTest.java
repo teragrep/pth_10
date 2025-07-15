@@ -132,6 +132,9 @@ public class TeragrepDynatraceTest {
 
         // two lines received
         mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.exactly(2));
+
+        mockServer.clear(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8"));
+
     }
 
     @Test
@@ -156,6 +159,9 @@ public class TeragrepDynatraceTest {
 
         // 0 lines received
         mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.never());
+
+        mockServer.clear(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8"));
+
     }
 
     @Test
@@ -182,5 +188,39 @@ public class TeragrepDynatraceTest {
 
         // 0 lines received
         mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.never());
+
+        mockServer.clear(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8"));
+
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgDynatraceNullResponseTest() {
+        // respond to metrics ingest
+        mockServer
+                .when(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8"))
+                .respond(HttpClassCallback.callback(DynatraceNullAPICallback.class));
+
+
+        // send post
+        Throwable th = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        IllegalArgumentException.class, "| makeresults count=10 " + "| eval _raw = 1"
+                                + "| stats sum(_raw)" + "| teragrep exec dynatrace metric write",
+                        testFile, ds -> {
+                        }
+                );
+
+        // should not work with null response
+        Assertions.assertEquals("Unexpected null JSON response", th.getMessage());
+
+        // 1 lines received before null response
+        mockServer.verify(request().withPath("/metrics/ingest"), VerificationTimes.once());
+
+        mockServer.clear(request().withPath("/metrics/ingest").withMethod("POST").withHeader("Content-Type", "text/plain; charset=utf-8"));
+
     }
 }
