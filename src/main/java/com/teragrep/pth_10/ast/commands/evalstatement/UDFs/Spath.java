@@ -112,6 +112,12 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
             final Gson gson = new Gson();
             final JsonElement jsonElem = gson.fromJson(input, JsonElement.class);
 
+            if (!jsonElem.isJsonObject()) {
+                throw new IllegalArgumentException(
+                        "spath command expected a valid JSON Object as input but was given: < " + input + " >"
+                );
+            }
+
             // Auto-extraction (JSON)
             if (spathExpr == null) {
                 // expect topmost element to be an object
