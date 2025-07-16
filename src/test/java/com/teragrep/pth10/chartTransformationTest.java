@@ -406,4 +406,48 @@ public class chartTransformationTest {
             Assertions.assertArrayEquals(expectedCount, count.stream().map(r -> r.getAs(0).toString()).toArray());
         });
     }
+
+    @Test
+    public void testChartCountWithoutColumn() {
+        String query = "index = index_A | chart count";
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); // check that the schema is correct
+
+            List<String> resultList = res
+                    .select("count")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, resultList.size()); // only one row of data
+            Assertions.assertEquals("5", resultList.get(0)); // the one row has the value 5
+        });
+    }
+
+    @Test
+    public void testChartCountWithEmptyDataset() {
+        String query = "index = index_A earliest = 2011-10-10T10:10:10.100+03:00 | chart count";
+
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("count", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); // check that the schema is correct
+
+            List<String> resultList = res
+                    .select("count")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, resultList.size()); // only one row of data
+            Assertions.assertEquals("0", resultList.get(0)); // the one row has the value 0
+        });
+    }
 }
