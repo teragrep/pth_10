@@ -138,9 +138,9 @@ public class CatalystVisitorTest {
                 DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
                 String result = ctx.getSparkQuery();
-                LOGGER.info("Query=" + q);
-                LOGGER.info("Expected=" + e);
-                LOGGER.info("Result=" + result);
+                LOGGER.info("Query= <{}>", q);
+                LOGGER.info("Expected= <{}>", e);
+                LOGGER.info("Result= <{}>", result);
                 Assertions.assertEquals(e, result);
             }
             catch (ParseException e) {
