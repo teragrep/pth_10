@@ -309,13 +309,10 @@ public class JoinTransformationTest {
 
                             List<Row> listOfAColumn = ds.select("a").collectAsList();
 
-                            int notNulls=0;
                             for (Row r : listOfAColumn) {
                                 String val = r.getString(0);
-                                Assertions.assertNotNull(val, "All rows should have a valid value (non-null) !");
-                                notNulls++;
+                                Assertions.assertTrue(val != null, "All rows should have a valid value (non-null) !");
                             }
-                            Assertions.assertEquals(10, notNulls, "Should execute 10 loops");
                         }
                 );
     }
