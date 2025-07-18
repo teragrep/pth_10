@@ -198,9 +198,7 @@ public class TeragrepTransformationTest {
     )
     public void tgHdfsLoadCustomCsvTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
-        if (!Files.exists(Paths.get(dir))) {
-            Assertions.fail("Expected file does not exist: " + dir);
-        }
+        Assertions.assertTrue(Files.exists(Paths.get(dir)), "Expected file does not exist: " + dir);
 
         streamingTestUtil
                 .performDPLTest("| teragrep exec hdfs load " + dir + " format=CSV header=FALSE", testFile, ds -> {
@@ -233,9 +231,7 @@ public class TeragrepTransformationTest {
     )
     public void tgHdfsLoadCustomCsvWithHeaderTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
-        if (!Files.exists(Paths.get(dir))) {
-            Assertions.fail("Expected file does not exist: " + dir);
-        }
+        Assertions.assertTrue(Files.exists(Paths.get(dir)), "Expected file does not exist: " + dir);
 
         streamingTestUtil
                 .performDPLTest("| teragrep exec hdfs load " + dir + " format=CSV header=TRUE", testFile, ds -> {
@@ -268,9 +264,7 @@ public class TeragrepTransformationTest {
     )
     public void tgHdfsLoadCustomCsvWithProvidedSchemaTest() {
         String dir = testResourcesPath.concat("/csv/hdfs.csv");
-        if (!Files.exists(Paths.get(dir))) {
-            Assertions.fail("Expected file does not exist: " + dir);
-        }
+        Assertions.assertTrue(Files.exists(Paths.get(dir)), "Expected file does not exist: " + dir);
 
         streamingTestUtil
                 .performDPLTest(
