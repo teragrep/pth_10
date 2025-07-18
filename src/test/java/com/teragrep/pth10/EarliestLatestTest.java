@@ -960,9 +960,7 @@ public class EarliestLatestTest {
         // test issue 382
         // case: index=* earliest=x latest=y abcdef and index=*abc* earliest=x latest=y abcdef match differently (data/no data)
         this.streamingTestUtil.performDPLTest("index=*g*", this.testFile, res -> {
-            if (res.count() == 0) {
-                Assertions.fail("(index=*g*) Expected result rows, instead got 0");
-            }
+            Assertions.assertNotEquals(0, res.count(), "(index=*g*) Expects result rows, should not get 0");
         });
     }
 
@@ -975,9 +973,7 @@ public class EarliestLatestTest {
         // test issue 382
         // index=* case
         this.streamingTestUtil.performDPLTest("index=*", this.testFile, res -> {
-            if (res.count() == 0) {
-                Assertions.fail("(index=*) Expected result rows, instead got 0");
-            }
+            Assertions.assertNotEquals(0, res.count(), "(index=*) Expects result rows, should not get 0");
         });
     }
 

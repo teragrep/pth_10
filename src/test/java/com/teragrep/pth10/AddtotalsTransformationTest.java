@@ -110,11 +110,12 @@ public class AddtotalsTransformationTest {
             Assertions.assertEquals(5, res.size());
             Assertions.assertEquals(5, expected.size());
 
+            int expectedLoops = 0;
             for (String r : res) {
-                if (!expected.contains(r)) {
-                    Assertions.fail("Value <" + r + "> was not one of the expected values!");
-                }
+                Assertions.assertTrue(expected.contains(r), "Value <" + r + "> was not one of the expected values!");
+                expectedLoops++;
             }
+            Assertions.assertEquals(5, expectedLoops, "Should execute 5 loops");
         });
     }
 
@@ -136,11 +137,12 @@ public class AddtotalsTransformationTest {
             Assertions.assertEquals(6, res.size());
             Assertions.assertEquals(6, expected.size());
 
+            int expectedLoops = 0;
             for (Double r : res) {
-                if (!expected.contains(r)) {
-                    Assertions.fail("Value <" + r + "> was not one of the expected values!");
-                }
+                Assertions.assertTrue(expected.contains(r), "Value <" + r + "> was not one of the expected values!");
+                expectedLoops++;
             }
+            Assertions.assertEquals(6, expectedLoops, "Should execute 6 loops");
         });
     }
 
