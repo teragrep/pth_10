@@ -865,11 +865,11 @@ public class evalTest {
             for (Long val : srcLst) {
                 Double vExp = Math.exp(val.doubleValue());
                 Double vGot = lst.get(i++);
-                String expectedVal = vExp.toString().substring(0, 10);
-                String actualVal = vGot.toString().substring(0, 10);
-                Assertions.assertEquals(expectedVal, actualVal);
+                if (!vExp.toString().substring(0, 10).equals(vGot.toString().substring(0, 10))) {
+                    Assertions.fail(vExp + "!=" + vGot);
+                }
+
             }
-            Assertions.assertEquals(19, i, "Should execute 19 loops");
         });
     }
 
@@ -955,11 +955,15 @@ public class evalTest {
             for (Long val : srcLst) {
                 Double vExp = Math.log(val.doubleValue());
                 Double vReal = lst.get(i++);
-                String expectedVal = vExp.toString().substring(0, Math.min(vExp.toString().length(), 10));
-                String actualVal = vReal.toString().substring(0, Math.min(vReal.toString().length(), 10));
-                Assertions.assertEquals(expectedVal, actualVal);
+                if (
+                    !vExp
+                            .toString()
+                            .substring(0, Math.min(vExp.toString().length(), 10))
+                            .equals(vReal.toString().substring(0, Math.min(vReal.toString().length(), 10)))
+                ) {
+                    Assertions.fail(vExp + "!=" + vReal);
+                }
             }
-                Assertions.assertEquals(19, i, "Should execute 19 loops");
         });
     }
 

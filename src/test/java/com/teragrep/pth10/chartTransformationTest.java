@@ -122,23 +122,17 @@ public class chartTransformationTest {
 
             Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
+            // 3 first rows are earlier than where _index_earliest is set to
+            List<String> expectedValues = new ArrayList<>();
+            for (int i = 4; i < 11; i++) {
+                expectedValues.add(i + ",1");
+            }
+
             List<String> resultList = res
                     .collectAsList()
                     .stream()
                     .map(r -> r.mkString(","))
                     .collect(Collectors.toList());
-
-            // 3 first rows are earlier than where _index_earliest is set to
-            List<String> expectedValues = new ArrayList<>();
-            int loopCount = 0;
-            for (int i = 4; i < 11; i++) {
-                Assertions.assertTrue(resultList.contains(i + ",1"));
-                expectedValues.add(i + ",1");
-                loopCount++;
-            }
-
-            Assertions.assertEquals(7, loopCount);
-            Assertions.assertEquals(7, expectedValues.size());
 
             // sort the lists, as the order of rows doesn't matter with this aggregation
             Collections.sort(expectedValues);
