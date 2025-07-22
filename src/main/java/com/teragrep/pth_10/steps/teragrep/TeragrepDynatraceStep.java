@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
@@ -172,24 +172,32 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
 
             try (final InputStream respStream = entity.getContent()) {
                 final InputStreamReader inputStreamReader = new InputStreamReader(respStream, StandardCharsets.UTF_8);
-                final JsonObject jsonResp = new Gson().fromJson(inputStreamReader, JsonObject.class);
-                if (jsonResp == null || jsonResp.isJsonNull()) {
-                    throw new IllegalStateException("Unexpected null JSON response");
+                try {
+                    final JsonObject jsonResp = new Gson().fromJson(inputStreamReader, JsonObject.class);
+                    if (jsonResp == null || jsonResp.isJsonNull()) {
+                        throw new IllegalStateException("Unexpected null JSON response");
+                    }
+                    JsonElement errorElem = jsonResp.get("error");
+                    if (!(errorElem instanceof JsonNull)) {
+                        throw new RuntimeException("Error from server response: " + errorElem.toString());
+                    }
+                    JsonElement validElem = jsonResp.get("linesValid");
+                    if (validElem == null) {
+                        throw new RuntimeException("Unexpected JSON: Could not find linesValid element.");
+                    }
+                    LOGGER.info("Valid lines: <[{}]>", validElem);
+                    JsonElement invalidElem = jsonResp.get("linesInvalid");
+                    if (invalidElem == null) {
+                        throw new RuntimeException("Unexpected JSON: Could not find linesInvalid element.");
+                    }
+                    LOGGER.warn("Invalid lines: <[{}]>", invalidElem);
                 }
-                JsonElement errorElem = jsonResp.get("error");
-                if (!(errorElem instanceof JsonNull)) {
-                    throw new RuntimeException("Error from server response: " + errorElem.toString());
+                catch (final JsonIOException | JsonSyntaxException je) {
+                    throw new IllegalArgumentException("Error parsing JSON response, message: " + je.getMessage());
                 }
-                JsonElement validElem = jsonResp.get("linesValid");
-                if (validElem == null) {
-                    throw new RuntimeException("Unexpected JSON: Could not find linesValid element.");
-                }
-                LOGGER.info("Valid lines: <[{}]>", validElem);
-                JsonElement invalidElem = jsonResp.get("linesInvalid");
-                if (invalidElem == null) {
-                    throw new RuntimeException("Unexpected JSON: Could not find linesInvalid element.");
-                }
-                LOGGER.warn("Invalid lines: <[{}]>", invalidElem);
+            }
+            catch (final IOException | UnsupportedOperationException e) {
+                throw new IllegalStateException("Error getting response stream, message: " + e.getMessage());
             }
 
             if (statusCode != 202 && statusCode != 400) {
