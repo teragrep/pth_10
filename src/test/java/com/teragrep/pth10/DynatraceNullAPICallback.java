@@ -45,13 +45,9 @@
  */
 package com.teragrep.pth10;
 
-import org.junit.jupiter.api.Assertions;
 import org.mockserver.mock.action.ExpectationResponseCallback;
 import org.mockserver.model.HttpRequest;
 import org.mockserver.model.HttpResponse;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class DynatraceNullAPICallback implements ExpectationResponseCallback {
 
@@ -61,8 +57,6 @@ public class DynatraceNullAPICallback implements ExpectationResponseCallback {
 
     @Override
     public HttpResponse handle(HttpRequest httpRequest) {
-        return HttpResponse
-                .response()
-                .withStatusCode(202);
+        return HttpResponse.response().withStatusCode(202);
     }
 }
