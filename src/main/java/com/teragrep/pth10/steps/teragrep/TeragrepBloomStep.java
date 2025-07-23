@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.teragrep;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.teragrep.aggregate.ColumnBinaryListingDataset;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterForeachPartitionFunction;
 import com.teragrep.pth10.steps.teragrep.bloomfilter.BloomFilterTable;

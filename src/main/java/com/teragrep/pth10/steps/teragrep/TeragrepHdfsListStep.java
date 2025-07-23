@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.teragrep;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;

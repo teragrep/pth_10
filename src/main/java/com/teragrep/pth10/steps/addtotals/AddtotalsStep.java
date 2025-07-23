@@ -45,10 +45,10 @@
  */
 package com.teragrep.pth10.steps.addtotals;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.commands.transformstatement.addtotals.AddtotalsUDF;
-import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.streaming.StreamingQueryException;

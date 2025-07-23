@@ -46,9 +46,9 @@
 package com.teragrep.pth10.steps.teragrep;
 
 import com.google.gson.Gson;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.datasources.S3CredentialWallet;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.Flushable;
 import com.typesafe.config.Config;
 import org.apache.spark.SparkContext;

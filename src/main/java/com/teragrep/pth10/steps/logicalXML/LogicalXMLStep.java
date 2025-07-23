@@ -45,11 +45,11 @@
  */
 package com.teragrep.pth10.steps.logicalXML;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.datasources.ArchiveQuery;
 import com.teragrep.pth10.datasources.DPLDatasource;
 import com.teragrep.pth10.datasources.GeneratedDatasource;
-import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.streaming.StreamingQueryException;

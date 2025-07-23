@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.ast;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.steps.Flushable;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;

@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth10.steps.dedup;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -75,8 +74,7 @@ public final class DedupStep extends AbstractDedupStep {
             boolean completeOutputMode
     ) {
         super();
-        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
-        this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
+        this.properties.add(CommandProperty.POST_BATCHCOLLECT);
 
         this.listOfFields = listOfFields;
         this.maxDuplicates = maxDuplicates;
@@ -85,8 +83,6 @@ public final class DedupStep extends AbstractDedupStep {
         this.consecutive = consecutive;
         this.catCtx = catCtx;
         this.completeOutputMode = completeOutputMode;
-
-        this.intBc = new BatchCollect(null, catCtx.getDplRecallSize());
     }
 
     @Override
@@ -95,7 +91,6 @@ public final class DedupStep extends AbstractDedupStep {
             return null;
         }
 
-        dataset = intBc.call(dataset, 1L, true);
 
         this.fieldsProcessed = new ConcurrentHashMap<>();
 

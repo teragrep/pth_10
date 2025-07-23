@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth10.ast.commands.logicalstatement;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.jue_01.GlobToRegEx;
 import com.teragrep.pth10.ast.*;
 import com.teragrep.pth10.ast.bo.*;
@@ -53,7 +54,6 @@ import com.teragrep.pth10.ast.commands.evalstatement.EvalStatement;
 import com.teragrep.pth10.ast.commands.logicalstatement.UDFs.SearchComparison;
 import com.teragrep.pth10.ast.commands.transformstatement.ChartTransformation;
 import com.teragrep.pth10.ast.commands.transformstatement.FieldsTransformation;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.NullStep;
 import com.teragrep.pth10.steps.logicalCatalyst.LogicalCatalystStep;
 import com.teragrep.pth10.steps.subsearch.SubsearchStep;
