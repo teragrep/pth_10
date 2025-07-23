@@ -174,18 +174,16 @@ public class commandTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
-            for (Row r : sourcetypeCol) {
-                Assertions.assertTrue(r.getString(0).contains("teragrep version"));
-            }
+            Assertions.assertTrue(sourcetypeCol.get(0).get(0).toString().contains("teragrep version"));
 
             List<Row> rawCol = res.select("_raw").collectAsList();
 
-            for (Row r : rawCol) {
-                // _ raw should contain TG version information
-                // teragrep.XXX_XX.version: X.X.X
-                // Teragrep version: X.X.X
-                Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
-            }
+            // _ raw should contain TG version information
+            // teragrep.XXX_XX.version: X.X.X
+            // Teragrep version: X.X.X
+
+            Assertions.assertTrue(rawCol.get(0).get(0).toString().contains("version:"));
+
         });
     }
 
@@ -199,18 +197,15 @@ public class commandTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
-            for (Row r : sourcetypeCol) {
-                Assertions.assertTrue(r.getString(0).contains("teragrep version"));
-            }
+            Assertions.assertTrue(sourcetypeCol.get(0).get(0).toString().contains("teragrep version"));
 
             List<Row> rawCol = res.select("_raw").collectAsList();
 
-            for (Row r : rawCol) {
-                // _ raw should contain TG version information
-                // teragrep.XXX_XX.version: X.X.X
-                // Teragrep version: X.X.X
-                Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
-            }
+            // _ raw should contain TG version information
+            // teragrep.XXX_XX.version: X.X.X
+            // Teragrep version: X.X.X
+            Assertions.assertTrue(rawCol.get(0).get(0).toString().contains("version:"));
+
         });
     }
 

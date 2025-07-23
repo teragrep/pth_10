@@ -115,12 +115,16 @@ public class ConvertTransformationTest {
                     .stream()
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
+
+            int loopCount = 0;
             for (String s : listOfResults) {
                 // match 00/00/0000 00:00:00
                 Matcher m = Pattern.compile("\\d{2}/\\d{2}/\\d{4} \\d{2}:\\d{2}:\\d{2}").matcher(s);
+                loopCount++;
 
                 Assertions.assertTrue(m.find());
             }
+            Assertions.assertEquals(12, loopCount);
         });
     }
 
@@ -157,9 +161,12 @@ public class ConvertTransformationTest {
                             "01/01/1970 00:00:04", "01/01/1970 00:00:03", "01/01/1970 00:00:02", "01/01/1970 00:00:01"
                     );
 
+            int loopCount = 0;
             for (int i = 0; i < listOfResults.size(); i++) {
+                loopCount++;
                 Assertions.assertEquals(expectedResults.get(i), listOfResults.get(i));
             }
+            Assertions.assertEquals(12, loopCount);
         });
     }
 
