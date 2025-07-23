@@ -100,6 +100,8 @@ public class fieldTransformationTest {
             final StructType expectedSchema = new StructType(new StructField[] {
                     new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build())
             });
+            Assertions.assertEquals(expectedSchema, ds.schema());
+
             List<String> expectedValues = new ArrayList<>();
             expectedValues.add("2006-06-06T06:06:06.060+03:00");
             expectedValues.add("2007-07-07T07:07:07.070+03:00");
@@ -116,11 +118,13 @@ public class fieldTransformationTest {
             Collections.sort(expectedValues);
 
             Assertions.assertEquals(5, dsAsList.size());
+            int loopCount = 0;
             for (int i = 0; i < expectedValues.size(); i++) {
+                loopCount++;
                 Assertions.assertEquals(expectedValues.get(i), dsAsList.get(i));
             }
 
-            Assertions.assertEquals(expectedSchema, ds.schema());
+            Assertions.assertEquals(5, loopCount);
         });
     }
 

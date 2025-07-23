@@ -156,9 +156,11 @@ public class SortTest {
         expected.add(sbc3);
         expected.add(sbc4);
 
+        int expectedLoops = 0;
         for (int i = 0; i < cs.getListOfSortByClauses().size(); i++) {
             SortByClause fromRun = cs.getListOfSortByClauses().get(i);
             SortByClause fromExpected = expected.get(i);
+            expectedLoops++;
 
             // check contents rather than objects
             Assertions.assertEquals(fromExpected.getSortAsType(), fromRun.getSortAsType());
@@ -167,5 +169,6 @@ public class SortTest {
         }
 
         Assertions.assertEquals(1234, cs.getLimit());
+        Assertions.assertEquals(4, expectedLoops);
     }
 }

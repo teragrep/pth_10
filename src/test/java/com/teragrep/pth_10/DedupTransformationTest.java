@@ -152,10 +152,14 @@ public class DedupTransformationTest {
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
             Assertions.assertEquals(10, listOfRaw.size());
+
+            int loopCount = 0;
             for (int i = 0; i < listOfRaw.size(); i = i + 2) {
+                loopCount++;
                 Assertions.assertEquals("1", listOfRaw.get(i).get(0).toString());
                 Assertions.assertEquals("2", listOfRaw.get(i + 1).get(0).toString());
             }
+            Assertions.assertEquals(5, loopCount);
         });
     }
 
