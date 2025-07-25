@@ -215,7 +215,8 @@ public class JoinTransformationTest {
                                     );
 
                             // 3 rows should be not null, since only three subsearch matches are requested using max=3
-                            List<Row> listOfRows = ds.select("R_a")
+                            List<Row> listOfRows = ds
+                                    .select("R_a")
                                     .orderBy("offset")
                                     .collectAsList()
                                     .stream()
@@ -312,7 +313,7 @@ public class JoinTransformationTest {
 
                             List<Row> listOfAColumn = ds.select("a").collectAsList();
 
-                            int notNulls=0;
+                            int notNulls = 0;
                             for (Row r : listOfAColumn) {
                                 String val = r.getString(0);
                                 Assertions.assertNotNull(val, "All rows should have a valid value (non-null) !");

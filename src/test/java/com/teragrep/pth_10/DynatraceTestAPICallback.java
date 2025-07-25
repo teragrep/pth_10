@@ -81,7 +81,7 @@ public class DynatraceTestAPICallback implements ExpectationResponseCallback {
             invalidCount++;
         }
 
-        Assertions.assertFalse(invalidCount > 0, "Received invalid message: " + reqString);
+        Assertions.assertEquals(0, invalidCount, "Received invalid message: " + reqString);
 
         statusCode = 202;
 
