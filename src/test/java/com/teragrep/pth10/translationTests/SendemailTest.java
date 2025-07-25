@@ -86,13 +86,16 @@ public class SendemailTest {
         }.getClass().getEnclosingMethod().getName());
         Assertions.assertEquals(expected.size(), params.size());
 
+        int loopCount = 0;
         for (Map.Entry<String, String> ent : params.entrySet()) {
             String currentKey = ent.getKey();
             String currentValue = ent.getValue();
 
             String expectedValue = expected.get(currentKey);
             Assertions.assertEquals(expectedValue, currentValue);
+            loopCount++;
         }
+        Assertions.assertEquals(24, loopCount);
     }
 
     @Test
@@ -117,13 +120,16 @@ public class SendemailTest {
         }.getClass().getEnclosingMethod().getName());
         Assertions.assertEquals(expected.size(), params.size());
 
+        int loopCount = 0;
         for (Map.Entry<String, String> ent : params.entrySet()) {
             String currentKey = ent.getKey();
             String currentValue = ent.getValue();
 
             String expectedValue = expected.get(currentKey);
             Assertions.assertEquals(expectedValue, currentValue);
+            loopCount++;
         }
+        Assertions.assertEquals(24, loopCount);
     }
 
     /**

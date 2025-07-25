@@ -56,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -213,17 +214,20 @@ public class JoinTransformationTest {
                                             "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
-                            List<Row> listOfRows = ds.collectAsList();
-
                             // 3 rows should be not null, since only three subsearch matches are requested using max=3
-                            int notNulls = 0;
-                            for (Row r : listOfRows) {
-                                if (r.getAs("R_a") != null) {
-                                    notNulls++;
-                                }
-                            }
+                            List<Row> listOfRows = ds
+                                    .select("R_a")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .filter(r -> r.get(0) != null)
+                                    .collect(Collectors.toList());
 
-                            Assertions.assertEquals(3, notNulls, "subsearch limit 3, so 3 should be not null");
+                            Assertions.assertEquals(3, listOfRows.size());
+                            Assertions.assertEquals("1", listOfRows.get(0).get(0));
+                            Assertions.assertEquals("2", listOfRows.get(1).get(0));
+                            Assertions.assertEquals("1", listOfRows.get(2).get(0));
+
                         }
                 );
     }
@@ -309,10 +313,13 @@ public class JoinTransformationTest {
 
                             List<Row> listOfAColumn = ds.select("a").collectAsList();
 
+                            int notNulls = 0;
                             for (Row r : listOfAColumn) {
                                 String val = r.getString(0);
-                                Assertions.assertTrue(val != null, "All rows should have a valid value (non-null) !");
+                                Assertions.assertNotNull(val, "All rows should have a valid value (non-null) !");
+                                notNulls++;
                             }
+                            Assertions.assertEquals(10, notNulls, "Should execute 10 loops");
                         }
                 );
     }
