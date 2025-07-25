@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10;
 
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -53,6 +54,8 @@ import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Tests for RegexTransformation Uses streaming datasets
@@ -117,8 +120,9 @@ public class RegexTransformationTest {
     )
     public void testRegexFieldEqual() {
         streamingTestUtil.performDPLTest("index=index_A | regex _raw = \"data data\"", testFile, ds -> {
-            int size = ds.collectAsList().size();
-            Assertions.assertTrue(size > 1);
+            List<Row> resList = ds.select("_raw").distinct().collectAsList();
+            Assertions.assertEquals(1, resList.size());
+            Assertions.assertTrue(resList.get(0).toString().contains("data data"));
         });
     }
 
@@ -129,8 +133,9 @@ public class RegexTransformationTest {
     )
     public void testRegexWithString() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"data data\"", testFile, ds -> {
-            int size = ds.collectAsList().size();
-            Assertions.assertTrue(size > 1);
+            List<Row> resList = ds.select("_raw").distinct().collectAsList();
+            Assertions.assertEquals(1, resList.size());
+            Assertions.assertTrue(resList.get(0).toString().contains("data data"));
         });
     }
 
@@ -141,8 +146,9 @@ public class RegexTransformationTest {
     )
     public void testRegexMatchedPattern() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][a|B]\\s.{4}$\"", testFile, ds -> {
-            int size = ds.collectAsList().size();
-            Assertions.assertTrue(size > 1);
+            List<Row> resList = ds.select("_raw").distinct().collectAsList();
+            Assertions.assertEquals(1, resList.size());
+            Assertions.assertTrue(resList.get(0).toString().contains("data data"));
         });
     }
 
