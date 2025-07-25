@@ -45,58 +45,24 @@
  */
 package com.teragrep.pth10.steps.dedup;
 
-import com.teragrep.functions.dpf_02.AbstractStep;
-import com.teragrep.functions.dpf_02.BatchCollect;
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-
-import java.util.List;
+import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
-public abstract class AbstractDedupStep extends AbstractStep {
+public final class DedupState implements Serializable {
 
-    protected List<String> listOfFields;
-    protected Map<String, Map<String, Long>> fieldsProcessed;
-    protected int maxDuplicates;
-    protected boolean keepEmpty;
-    protected boolean keepEvents;
-    protected boolean consecutive;
-    protected boolean completeOutputMode;
-    protected DPLParserCatalystContext catCtx;
-    protected BatchCollect intBc;
+    private static final long serialVersionUID = 1L;
+    private final Map<String, Integer> amountOfHashes;
 
-    public AbstractDedupStep() {
-        super();
+    public DedupState() {
+        this.amountOfHashes = new HashMap<>();
     }
 
-    public List<String> getListOfFields() {
-        return listOfFields;
+    public void accumulate(final String hash) {
+        amountOfHashes.compute(hash, (k, v) -> v == null ? 1 : v + 1);
     }
 
-    public Map<String, Map<String, Long>> getFieldsProcessed() {
-        return fieldsProcessed;
-    }
-
-    public int getMaxDuplicates() {
-        return maxDuplicates;
-    }
-
-    public boolean getKeepEmpty() {
-        return this.keepEmpty;
-    }
-
-    public boolean getKeepEvents() {
-        return this.keepEvents;
-    }
-
-    public boolean getConsecutive() {
-        return this.consecutive;
-    }
-
-    public DPLParserCatalystContext getCatCtx() {
-        return catCtx;
-    }
-
-    public boolean isCompleteOutputMode() {
-        return completeOutputMode;
+    public int amountOf(final String hash) {
+        return amountOfHashes.getOrDefault(hash, 0);
     }
 }

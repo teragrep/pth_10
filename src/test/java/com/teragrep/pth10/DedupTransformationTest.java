@@ -213,9 +213,12 @@ public class DedupTransformationTest {
             Assertions.assertEquals(10, listOfRaw.size());
             Assertions.assertEquals("1", listOfRaw.get(0).get(0));
             Assertions.assertEquals("2", listOfRaw.get(1).get(0));
+            int loops = 0;
             for (int i = 2; i < 10; i++) {
                 Assertions.assertNull(listOfRaw.get(i).get(0));
+                loops++;
             }
+            Assertions.assertEquals(8, loops);
         });
     }
 
@@ -275,8 +278,9 @@ public class DedupTransformationTest {
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
-            Assertions.assertEquals(1, listOfRaw.size());
+            Assertions.assertEquals(2, listOfRaw.size());
             Assertions.assertEquals("1", listOfRaw.get(0).get(0));
+            Assertions.assertEquals("2", listOfRaw.get(1).get(0));
         });
     }
 

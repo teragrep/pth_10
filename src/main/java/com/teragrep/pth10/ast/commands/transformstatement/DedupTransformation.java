@@ -78,7 +78,7 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitDedupTransformation(DPLParser.DedupTransformationContext ctx) {
         SortStep sortStep = null;
 
-        int maxDuplicates = 0;
+        int maxDuplicates = 1;
         boolean keepEmpty = false;
         boolean keepEvents = false;
         boolean consecutive = false;
@@ -175,7 +175,7 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
                 keepEmpty,
                 keepEvents,
                 consecutive,
-                catCtx,
+                catCtx.nullValue,
                 sortStep != null
         );
 

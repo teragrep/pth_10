@@ -45,24 +45,32 @@
  */
 package com.teragrep.pth10.steps.dedup;
 
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SparkSession;
+import com.teragrep.functions.dpf_02.AbstractStep;
+import com.teragrep.pth10.ast.NullValue;
+import org.apache.spark.api.java.function.MapFunction;
+import org.apache.spark.sql.*;
+import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.streaming.GroupState;
+import org.apache.spark.sql.streaming.GroupStateTimeout;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Serializable;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
-public final class DedupStep extends AbstractDedupStep {
+public final class DedupStep extends AbstractStep implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DedupStep.class);
+    private final List<String> listOfFields;
+    private final int maxDuplicates;
+    private final boolean keepEmpty;
+    private final boolean keepEvents;
+    private final boolean consecutive;
+    private final boolean completeOutputMode;
+    private final NullValue nullValue;
 
     public DedupStep(
             List<String> listOfFields,
@@ -70,209 +78,126 @@ public final class DedupStep extends AbstractDedupStep {
             boolean keepEmpty,
             boolean keepEvents,
             boolean consecutive,
-            DPLParserCatalystContext catCtx,
+            NullValue nullValue,
             boolean completeOutputMode
     ) {
-        super();
-        this.properties.add(CommandProperty.POST_BATCHCOLLECT);
+        this.properties.add(AbstractStep.CommandProperty.POST_BATCHCOLLECT);
 
         this.listOfFields = listOfFields;
         this.maxDuplicates = maxDuplicates;
         this.keepEmpty = keepEmpty;
         this.keepEvents = keepEvents;
         this.consecutive = consecutive;
-        this.catCtx = catCtx;
+        this.nullValue = nullValue;
         this.completeOutputMode = completeOutputMode;
     }
 
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) {
-        if (dataset == null) {
-            return null;
+
+        final List<String> dedupHashFields = new ArrayList<>();
+        for (final String field : listOfFields) {
+            final String dedupHashField = "dedupHash-" + field;
+            dataset = dataset
+                    .withColumn(dedupHashField, functions.sha2(functions.col(field).cast(DataTypes.BinaryType), 256));
+            dedupHashFields.add(dedupHashField);
         }
 
-
-        this.fieldsProcessed = new ConcurrentHashMap<>();
-
-        final List<Row> listOfRows = dataset.collectAsList();
-        final int origSize = listOfRows.size();
-        final AtomicReference<Row> previousRow = new AtomicReference<>();
-
-        // TODO bring out the spaghetti mop and clean this mess
-        final List<Row> output;
-        if (keepEvents) {
-            output = listOfRows;
-            final StructType schema = dataset.schema();
-            // keepEvents
-            for (int i = 0; i < output.size(); i++) {
-                for (final String fieldName : listOfFields) {
-                    Row r = output.get(i);
-                    // keepEmpty processing
-                    final Object fieldValueObject = r.get(schema.fieldIndex(fieldName));
-                    final String fieldValue;
-                    if (fieldValueObject == null && !keepEmpty) {
-                        output.set(i, nullifyRowField(r, schema, fieldName));
-                        continue;// filter out
-                    }
-                    else if (fieldValueObject == null) {
-                        fieldValue = "null";
-                    }
-                    else {
-                        fieldValue = fieldValueObject.toString();
-                    }
-
-                    // consecutive=true
-                    // return at end of if clause, because consecutive=true ignores
-                    // maxDuplicates
-                    if (consecutive) {
-                        //LOGGER.debug(r.mkString(" "));
-                        if (previousRow.get() == null) {
-                            //LOGGER.debug("-> Applying row as previous row");
-                            previousRow.set(r);
-                        }
-                        else {
-                            final String prevValue = previousRow
-                                    .get()
-                                    .get(previousRow.get().fieldIndex(fieldName))
-                                    .toString();
-                            if (prevValue.equals(fieldValue)) {
-                                //LOGGER.debug("-> Filtering");
-                                output.set(i, nullifyRowField(r, schema, fieldName));
-                                continue;
-                            }
-                            previousRow.set(r);
-                        }
-                    }
-
-                    // consecutive=false
-                    if (fieldsProcessed.containsKey(fieldName)) {
-                        if (!fieldsProcessed.get(fieldName).containsKey(fieldValue)) {
-                            // specific field value was not encountered yet, add to map
-                            fieldsProcessed.get(fieldName).put(fieldValue, 1L);
-                        }
-                        else {
-                            // field:value present in map, check if amount of duplicates is too high
-                            long newValue = fieldsProcessed.get(fieldName).get(fieldValue) + 1L;
-                            if (newValue > maxDuplicates) {
-                                // too many duplicates, filter out
-                                output.set(i, nullifyRowField(r, schema, fieldName));
-                                continue;
-                            }
-                            else {
-                                // duplicates within given max value, ok to be present
-                                fieldsProcessed.get(fieldName).put(fieldValue, newValue);
-                            }
-                        }
-                    }
-                    else {
-                        // the field was not encountered yet, add to map
-                        final Map<String, Long> newMap = new ConcurrentHashMap<>();
-                        newMap.put(fieldValue, 1L);
-                        fieldsProcessed.put(fieldName, newMap);
-                    }
-                }
+        KeyValueGroupedDataset<String, Row> groupedDs = dataset.groupByKey((MapFunction<Row, String>) (r) -> {
+            final StringBuilder groupId = new StringBuilder();
+            for (final String hashField : dedupHashFields) {
+                groupId.append(r.getString(r.fieldIndex(hashField)));
             }
-        }
-        else {
-            // non-keepEvents
-            output = listOfRows.stream().filter(r -> {
-                boolean doNotFilter = true;
-                for (final String fieldName : listOfFields) {
-                    // keepEmpty processing
-                    final Object fieldValueObject = r.get(r.fieldIndex(fieldName));
-                    final String fieldValue;
-                    if (fieldValueObject == null && !keepEmpty) {
-                        return false; // filter out
-                    }
-                    else if (fieldValueObject == null) {
-                        fieldValue = "null";
-                    }
-                    else {
-                        fieldValue = fieldValueObject.toString();
-                    }
 
-                    // consecutive=true
-                    // return at end of if clause, because consecutive=true ignores
-                    // maxDuplicates
-                    if (consecutive) {
-                        //LOGGER.debug(r.mkString(" "));
-                        if (previousRow.get() == null) {
-                            //LOGGER.debug("-> Applying row as previous row");
-                            previousRow.set(r);
-                        }
-                        else {
-                            final String prevValue = previousRow
-                                    .get()
-                                    .get(previousRow.get().fieldIndex(fieldName))
-                                    .toString();
-                            if (prevValue.equals(fieldValue)) {
-                                //LOGGER.debug("-> Filtering");
-                                doNotFilter = false;
-                            }
-                            previousRow.set(r);
-                        }
+            return groupId.toString();
+        }, Encoders.STRING());
 
-                        return doNotFilter; //ignore rest of the processing
-                    }
+        Dataset<Row> rv = groupedDs
+                .flatMapGroupsWithState(
+                        this::flatMapGroupsWithStateFunc, OutputMode
+                                .Append(),
+                        Encoders.javaSerialization(DedupState.class), RowEncoder.apply(dataset.schema()), GroupStateTimeout.NoTimeout()
+                );
 
-                    // consecutive=false
-                    if (fieldsProcessed.containsKey(fieldName)) {
-                        if (!fieldsProcessed.get(fieldName).containsKey(fieldValue)) {
-                            // specific field value was not encountered yet, add to map
-                            fieldsProcessed.get(fieldName).put(fieldValue, 1L);
-                        }
-                        else {
-                            // field:value present in map, check if amount of duplicates is too high
-                            long newValue = fieldsProcessed.get(fieldName).get(fieldValue) + 1L;
-                            if (newValue > maxDuplicates) {
-                                // too many duplicates, filter out
-                                doNotFilter = false;
-                            }
-                            else {
-                                // duplicates within given max value, ok to be present
-                                fieldsProcessed.get(fieldName).put(fieldValue, newValue);
-                            }
-                        }
-                    }
-                    else {
-                        // the field was not encountered yet, add to map
-                        final Map<String, Long> newMap = Collections.synchronizedMap(new ConcurrentHashMap<>());
-                        newMap.put(fieldValue, 1L);
-                        fieldsProcessed.put(fieldName, newMap);
-                    }
-                }
-                return doNotFilter;
-            }).collect(Collectors.toList());
-        }
-
-        LOGGER.info("Output contains <{}> out of <{}> row(s)", output.size(), origSize);
-        return SparkSession.getActiveSession().get().createDataFrame(output, dataset.schema());
+        return rv.drop(dedupHashFields.toArray(new String[0]));
     }
 
-    /**
-     * Takes the row and generates a new one with the given field nullified
-     * 
-     * @param r         row
-     * @param fieldName field to nullify
-     * @return row with the field nullified
-     */
-    private Row nullifyRowField(final Row r, final StructType schema, String fieldName) {
-        final List<Object> newRowValues = new ArrayList<>();
-
-        for (final StructField field : schema.fields()) {
-            if (!field.name().equals(fieldName)) {
-                newRowValues.add(r.get(schema.fieldIndex(field.name())));
-            }
-            else {
-                if (field.nullable()) {
-                    newRowValues.add(catCtx.nullValue.value());
-                }
-                else {
-                    throw new IllegalStateException("Field was not nullable! field=<" + field.name() + ">");
-                }
-
-            }
+    private Iterator<Row> flatMapGroupsWithStateFunc(
+            final String group,
+            final Iterator<Row> events,
+            final GroupState<DedupState> state
+    ) {
+        final DedupState ds;
+        if (state.exists()) {
+            ds = state.get();
         }
-        return RowFactory.create(newRowValues.toArray());
+        else {
+            ds = new DedupState();
+        }
+
+        List<Row> rv = new ArrayList<>();
+        events.forEachRemaining(event -> {
+            ds.accumulate(group);
+
+            boolean dropFullRow = false;
+
+            if (!keepEmpty) {
+                for (int i = 0; i < event.length(); i++) {
+                    final StructField field = event.schema().fields()[i];
+                    if (listOfFields.contains(field.name())) {
+                        final Object fieldValue = event.get(i);
+                        if (fieldValue == nullValue.value()) {
+                            // drop row, one of the fields is null
+                            dropFullRow = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!dropFullRow && ds.amountOf(group) <= maxDuplicates) {
+                rv.add(event);
+            }
+            else if (!dropFullRow && keepEvents) {
+                Object[] newRow = new Object[event.length()];
+                for (int i = 0; i < event.length(); i++) {
+                    final StructField field = event.schema().fields()[i];
+                    if (listOfFields.contains(field.name())) {
+                        newRow[i] = nullValue.value();
+                    }
+                    else {
+                        newRow[i] = event.get(i);
+                    }
+                }
+                rv.add(RowFactory.create(newRow));
+            }
+        });
+
+        state.update(ds);
+        return rv.iterator();
+    }
+
+    public List<String> getListOfFields() {
+        return listOfFields;
+    }
+
+    public int getMaxDuplicates() {
+        return maxDuplicates;
+    }
+
+    public boolean getKeepEmpty() {
+        return this.keepEmpty;
+    }
+
+    public boolean getKeepEvents() {
+        return this.keepEvents;
+    }
+
+    public boolean getConsecutive() {
+        return this.consecutive;
+    }
+
+    public boolean isCompleteOutputMode() {
+        return completeOutputMode;
     }
 }
