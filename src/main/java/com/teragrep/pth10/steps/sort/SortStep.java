@@ -61,8 +61,9 @@ public final class SortStep extends AbstractSortStep {
 
     public SortStep(DPLParserCatalystContext catCtx, List<SortByClause> listOfSortByClauses, int limit, boolean desc) {
         super();
-        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
-        this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
+        //this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
+        //this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
+        this.properties.add(CommandProperty.POST_BATCHCOLLECT);
 
         this.catCtx = catCtx;
         this.listOfSortByClauses = listOfSortByClauses;
@@ -77,14 +78,14 @@ public final class SortStep extends AbstractSortStep {
             return null;
         }
 
-        if (this.aggregatesUsedBefore) {
-            LOGGER.info("Aggregates used: using regular sorting");
-            return aggregatedSort(dataset);
-        }
-        else {
-            LOGGER.info("Aggregates not used: using BatchCollect to sort");
-            return sort(dataset);
-        }
+        //  if (this.aggregatesUsedBefore) {
+        //      LOGGER.info("Aggregates used: using regular sorting");
+        return aggregatedSort(dataset);
+        //  }
+        //  else {
+        //      LOGGER.info("Aggregates not used: using BatchCollect to sort");
+        //     return sort(dataset);
+        // }
     }
 
     /**

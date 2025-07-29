@@ -94,6 +94,10 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         this.batchHandler = batchHandler;
     }
 
+    public BatchCollect batchCollect() {
+        return this.batchCollect;
+    }
+
     @Deprecated
     public Consumer<Dataset<Row>> getBatchHandler() {
         return batchHandler;
@@ -228,11 +232,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             LOGGER.info("Analyzing step: <{}>", step.toString());
             step.setAggregatesUsedBefore(aggregateCount > 0);
 
-            /* if (step.hasProperty(AbstractStep.CommandProperty.USES_INTERNAL_BATCHCOLLECT)) {
+            if (step.hasProperty(AbstractStep.CommandProperty.USES_INTERNAL_BATCHCOLLECT)) {
                 LOGGER.info("[Analyze] Step uses internal batch collect: <{}>", step);
                 this.useInternalBatchCollect = true;
                 this.batchCollect = null;
-            } */
+            }
 
             if (step.hasProperty(AbstractStep.CommandProperty.IGNORE_DEFAULT_SORTING)) {
                 LOGGER.info("[Analyze] Ignore default sorting: <{}>", step);
