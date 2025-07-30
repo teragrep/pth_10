@@ -52,11 +52,11 @@ import org.apache.spark.sql.Row;
 
 import java.util.List;
 
-public class AggregatedSort extends SortOperation {
+public class SortCommandOperation extends SortOperation {
 
-    private int limit;
+    private final int limit;
 
-    public AggregatedSort(int limit, List<SortByClause> listOfSortByClauses) {
+    public SortCommandOperation(int limit, List<SortByClause> listOfSortByClauses) {
         super(listOfSortByClauses);
 
         this.limit = limit;
