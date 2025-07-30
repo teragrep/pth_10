@@ -67,7 +67,6 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
     public final String label;
     public final List<String> fieldList;
     private Dataset<Row> lastRow;
-    // private final BatchCollect bc;
     private final NumericColumnSum numericColumnSum;
 
     public AddtotalsStep(
@@ -92,9 +91,6 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
         this.label = label; // for labelField content, before fieldName or as last if row=false/col=true
         // row
         this.fieldName = fieldName; // for row=true fieldName
-
-        // batchCollect
-        // this.bc = new BatchCollect(null, catCtx.getDplRecallSize());
 
         // column sum
         this.numericColumnSum = new NumericColumnSum();
