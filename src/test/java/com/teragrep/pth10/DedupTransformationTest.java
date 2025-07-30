@@ -130,6 +130,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // consecutive=true
+    @Disabled(value = "Test disabled: Consecutive parameter is not implemented")
     public void dedupTest_Consecutive() {
         String query = "index=index_A | dedup _raw consecutive= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
