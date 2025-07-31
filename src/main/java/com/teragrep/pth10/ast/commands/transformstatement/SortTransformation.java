@@ -149,7 +149,7 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
 
         // at least one sortByClause needs to be present
         // otherwise throw exception with details
-        if (this.listOfSortByClauses.size() < 1) {
+        if (this.listOfSortByClauses.isEmpty()) {
             throw new IllegalArgumentException(
                     "Sort command should contain at least one sortByInstruction. Example: 'sort -_time'"
             );
@@ -161,9 +161,9 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
                 .info(
                         String
                                 .format(
-                                        "Set sortStep params to: sbc=%s, desc=%s, bc=%s, limit=%s", Arrays
+                                        "Set sortStep params to: sbc=%s, desc=%s, limit=%s", Arrays
                                                 .toString(this.sortStep.getListOfSortByClauses().toArray()),
-                                        this.sortStep.isDesc(), this.sortStep.getSortingBatchCollect(),
+                                        this.sortStep.isDesc(),
                                         this.sortStep.getLimit()
                                 )
                 );

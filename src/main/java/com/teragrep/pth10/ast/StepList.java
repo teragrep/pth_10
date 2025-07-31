@@ -83,7 +83,6 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     private OutputMode outputMode = OutputMode.Append();
     private Consumer<Dataset<Row>> batchHandler = null; // for UI
     private BatchCollect batchCollect; // standard batchCollect, used before sending batch event
-    private BatchCollect sequentialModeBatchCollect; // used if in append mode and in sequential, to allow aggregates in sequential mode
     private DPLParserCatalystVisitor catVisitor;
 
     public void setBatchCollect(BatchCollect batchCollect) {
@@ -111,7 +110,6 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         this.list = new ArrayList<>();
         this.catVisitor = catVisitor;
         this.batchCollect = new BatchCollect("_time", catVisitor.getCatalystContext().getDplRecallSize());
-        this.sequentialModeBatchCollect = new BatchCollect(null, catVisitor.getCatalystContext().getDplRecallSize());
         this.breakpoints = new HashMap<>();
     }
 

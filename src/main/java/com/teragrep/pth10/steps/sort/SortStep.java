@@ -57,8 +57,6 @@ import java.util.List;
 
 public final class SortStep extends AbstractSortStep {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SortStep.class);
-
     public SortStep(DPLParserCatalystContext catCtx, List<SortByClause> listOfSortByClauses, int limit, boolean desc) {
         super();
         this.properties.add(CommandProperty.POST_BATCHCOLLECT);
@@ -67,7 +65,6 @@ public final class SortStep extends AbstractSortStep {
         this.listOfSortByClauses = listOfSortByClauses;
         this.limit = limit;
         this.desc = desc;
-        this.sortingBatchCollect = new BatchCollect(null, limit, listOfSortByClauses);
     }
 
     @Override
