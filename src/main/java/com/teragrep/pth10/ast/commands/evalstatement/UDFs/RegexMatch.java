@@ -128,7 +128,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
         regexString = new UnquotedText(new TextString(regexString)).read();
         boolean isMatch = false;
         if (subjectStr == null) {
-            LOGGER.info("Subject string contains null values");
+            LOGGER.debug("Subject string contains null values");
             return isMatch;
         }
 
