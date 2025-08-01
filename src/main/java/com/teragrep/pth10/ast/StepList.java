@@ -109,7 +109,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     public StepList(DPLParserCatalystVisitor catVisitor) {
         this.list = new ArrayList<>();
         this.catVisitor = catVisitor;
-        this.batchCollect = new BatchCollect("_time", catVisitor.getCatalystContext().getDplRecallSize());
+        this.batchCollect = new BatchCollect("_time", catVisitor.getCatalystContext().getDplRecallSize(), catVisitor.getCatalystContext().postBcLimitSize());
         this.breakpoints = new HashMap<>();
     }
 
@@ -239,7 +239,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             if (step.hasProperty(AbstractStep.CommandProperty.IGNORE_DEFAULT_SORTING)) {
                 LOGGER.info("[Analyze] Ignore default sorting: <{}>", step);
                 this.ignoreDefaultSorting = true;
-                this.batchCollect = new BatchCollect(null, catVisitor.getDPLRecallSize());
+                this.batchCollect = new BatchCollect(null, catVisitor.getDPLRecallSize(), catVisitor.getCatalystContext().postBcLimitSize());
             }
 
             if (step.hasProperty(AbstractStep.CommandProperty.REQUIRE_PRECEDING_AGGREGATE)) {
