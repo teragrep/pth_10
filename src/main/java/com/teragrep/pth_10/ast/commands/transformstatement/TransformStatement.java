@@ -107,14 +107,6 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         final ParseTree leftTree = ctx.getChild(0);
         final ParseTree rightTree = ctx.getChild(2);
 
-        // Logging
-        if (rightTree != null) {
-            LOGGER.info("queryId <{}> -> Right tree: text=<{}>", catCtx.getQueryName(), rightTree.getText());
-        }
-        else {
-            LOGGER.info("queryId <{}> -> Right tree NULL", catCtx.getQueryName());
-        }
-
         if (leftTree != null) {
             LOGGER.info("-> Left tree: text=<{}>", leftTree.getText());
             // Visit command transformations
@@ -137,6 +129,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
                 }
                 // Add right branch
                 if (rightTree != null) {
+                    LOGGER.info("queryId <{}> -> Right tree: text=<{}>", catCtx.getQueryName(), rightTree.getText());
                     final Node right = visit(rightTree);
                     if (right != null) {
                         LOGGER.debug("Right side was not null: <{}>", right);
@@ -147,6 +140,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
                     }
                 }
                 else { // EOF, return only left
+                    LOGGER.info("queryId <{}> -> Right tree NULL", catCtx.getQueryName());
                     LOGGER.debug("transformStatement <EOF> return only left transformation");
                 }
 
