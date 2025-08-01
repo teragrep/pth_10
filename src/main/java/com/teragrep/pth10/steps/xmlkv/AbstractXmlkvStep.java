@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.xmlkv;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.steps.AbstractStep;
 
 public abstract class AbstractXmlkvStep extends AbstractStep {
 

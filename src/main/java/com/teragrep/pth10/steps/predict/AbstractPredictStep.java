@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.steps.predict;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.sql.Column;
 
 import java.util.List;

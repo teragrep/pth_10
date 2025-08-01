@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.steps.format;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 
 public abstract class AbstractFormatStep extends AbstractStep {
 

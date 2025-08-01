@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.steps.teragrep;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.ml.feature.RegexTokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;

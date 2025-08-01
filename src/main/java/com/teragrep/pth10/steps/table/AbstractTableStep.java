@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.steps.table;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 
 import java.util.ArrayList;
 import java.util.List;

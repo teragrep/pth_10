@@ -45,12 +45,12 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.functions.dpf_02.SortByClause;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.ast.commands.aggregate.AggregateFunction;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.chart.ChartStep;
 import com.teragrep.pth10.steps.sort.SortStep;
 import com.teragrep.pth_03.antlr.DPLParser;

@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.teragrep;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigValue;
 import com.typesafe.config.ConfigValueFactory;

@@ -45,30 +45,23 @@
  */
 package com.teragrep.pth10.steps.sort;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
 import com.teragrep.functions.dpf_02.SortByClause;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public final class SortStep extends AbstractSortStep {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SortStep.class);
-
     public SortStep(DPLParserCatalystContext catCtx, List<SortByClause> listOfSortByClauses, int limit, boolean desc) {
         super();
-        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
-        this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
+        this.properties.add(CommandProperty.POST_BATCHCOLLECT);
 
         this.catCtx = catCtx;
         this.listOfSortByClauses = listOfSortByClauses;
         this.limit = limit;
         this.desc = desc;
-        this.sortingBatchCollect = new BatchCollect(null, limit, listOfSortByClauses);
     }
 
     @Override
@@ -77,33 +70,11 @@ public final class SortStep extends AbstractSortStep {
             return null;
         }
 
-        if (this.aggregatesUsedBefore) {
-            LOGGER.info("Aggregates used: using regular sorting");
-            return aggregatedSort(dataset);
-        }
-        else {
-            LOGGER.info("Aggregates not used: using BatchCollect to sort");
-            return sort(dataset);
-        }
+        return sort(dataset);
     }
 
-    /**
-     * Performs a sort on a unsorted dataframe, using a RowComparator.<br>
-     * Collects all rows of the current batch to the driver.
-     * 
-     * @param unsortedDs dataframe to sort
-     * @return sorted dataframe
-     */
     private Dataset<Row> sort(Dataset<Row> unsortedDs) {
-        // sort command sorting for streaming dataset
-        if (this.listOfSortByClauses != null && !this.listOfSortByClauses.isEmpty()) {
-            return this.sortingBatchCollect.call(unsortedDs, 0L, false);
-        }
-        throw new RuntimeException("SortBy clauses were empty! Cannot perform sorting");
-    }
-
-    private Dataset<Row> aggregatedSort(Dataset<Row> unsortedDs) {
-        AggregatedSort aggSort = new AggregatedSort(this.limit, this.listOfSortByClauses);
-        return aggSort.sort(unsortedDs);
+        SortCommandOperation sortCmdOp = new SortCommandOperation(this.limit, this.listOfSortByClauses);
+        return sortCmdOp.sort(unsortedDs);
     }
 }

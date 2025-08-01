@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.join;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.subsearch.SubsearchStep;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;

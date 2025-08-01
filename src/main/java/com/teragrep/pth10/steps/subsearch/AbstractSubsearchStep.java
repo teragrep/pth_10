@@ -45,9 +45,9 @@
  */
 package com.teragrep.pth10.steps.subsearch;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLInternalStreamingQueryListener;
 import com.teragrep.pth10.ast.StepList;
-import com.teragrep.pth10.steps.AbstractStep;
 
 public abstract class AbstractSubsearchStep extends AbstractStep {
 

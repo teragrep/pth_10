@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.steps.where;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.sql.Column;
 
 public abstract class AbstractWhereStep extends AbstractStep {

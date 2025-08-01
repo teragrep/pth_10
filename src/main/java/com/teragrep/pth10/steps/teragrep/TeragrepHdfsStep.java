@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.teragrep;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.commands.transformstatement.teragrep.HdfsSaveMetadata;
-import com.teragrep.pth10.steps.AbstractStep;
 
 import java.io.*;
 

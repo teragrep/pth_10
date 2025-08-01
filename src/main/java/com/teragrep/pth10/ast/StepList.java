@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.ast;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.functions.dpf_02.BatchCollect;
-import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -69,9 +69,13 @@ import java.util.function.Consumer;
 
 public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
+    private enum BreakpointType {
+        SEQUENTIAL, POST_BC
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StepList.class);
     private final List<AbstractStep> list;
-    private int breakpoint = -1;
+    private final Map<BreakpointType, Integer> breakpoints;
     private int aggregateCount = 0;
     private boolean useInternalBatchCollect = false;
     private boolean ignoreDefaultSorting = false;
@@ -79,7 +83,6 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     private OutputMode outputMode = OutputMode.Append();
     private Consumer<Dataset<Row>> batchHandler = null; // for UI
     private BatchCollect batchCollect; // standard batchCollect, used before sending batch event
-    private BatchCollect sequentialModeBatchCollect; // used if in append mode and in sequential, to allow aggregates in sequential mode
     private DPLParserCatalystVisitor catVisitor;
 
     public void setBatchCollect(BatchCollect batchCollect) {
@@ -88,6 +91,10 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
     public void setBatchHandler(Consumer<Dataset<Row>> batchHandler) {
         this.batchHandler = batchHandler;
+    }
+
+    public BatchCollect batchCollect() {
+        return this.batchCollect;
     }
 
     @Deprecated
@@ -102,8 +109,12 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     public StepList(DPLParserCatalystVisitor catVisitor) {
         this.list = new ArrayList<>();
         this.catVisitor = catVisitor;
-        this.batchCollect = new BatchCollect("_time", catVisitor.getCatalystContext().getDplRecallSize());
-        this.sequentialModeBatchCollect = new BatchCollect(null, catVisitor.getCatalystContext().getDplRecallSize());
+        this.batchCollect = new BatchCollect(
+                "_time",
+                catVisitor.getCatalystContext().getDplRecallSize(),
+                catVisitor.getCatalystContext().postBcLimitSize()
+        );
+        this.breakpoints = new HashMap<>();
     }
 
     /**
@@ -180,7 +191,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     private DataStreamWriter<Row> executeFromStep(int fromStepIndex, Dataset<Row> ds) throws StreamingQueryException {
         for (int i = fromStepIndex; i < this.list.size(); i++) {
             AbstractStep step = this.list.get(i);
-            if (i == breakpoint) {
+            if (
+                (breakpoints.containsKey(BreakpointType.SEQUENTIAL) && breakpoints
+                        .get(BreakpointType.SEQUENTIAL) == i) || (breakpoints.containsKey(BreakpointType.POST_BC)
+                                && breakpoints.get(BreakpointType.POST_BC) == i)
+            ) {
                 // Switch to sequential; aka run the step inside forEachBatch
                 LOGGER.debug("breakpoint encountered at index <{}>", i);
 
@@ -193,12 +208,12 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     }
 
     private Dataset<Row> executeInBatch(Dataset<Row> ds) throws StreamingQueryException {
-        if (breakpoint == -1) { // no sequential ops
+        if (!breakpoints.containsKey(BreakpointType.SEQUENTIAL)) { // no sequential ops
             return ds;
         }
 
         // sequential ops found
-        for (int i = breakpoint; i < this.list.size(); i++) {
+        for (int i = breakpoints.get(BreakpointType.SEQUENTIAL); i < this.list.size(); i++) {
             AbstractStep step = this.list.get(i);
             LOGGER.info("Executing seq ops in batch: <{}>", step.toString());
             ds = step.get(ds);
@@ -216,7 +231,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
         for (int i = 0; i < this.list.size(); i++) {
             AbstractStep step = this.list.get(i);
-
+            LOGGER.info("Analyzing step: <{}>", step.toString());
             step.setAggregatesUsedBefore(aggregateCount > 0);
 
             if (step.hasProperty(AbstractStep.CommandProperty.USES_INTERNAL_BATCHCOLLECT)) {
@@ -228,7 +243,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             if (step.hasProperty(AbstractStep.CommandProperty.IGNORE_DEFAULT_SORTING)) {
                 LOGGER.info("[Analyze] Ignore default sorting: <{}>", step);
                 this.ignoreDefaultSorting = true;
-                this.batchCollect = new BatchCollect(null, catVisitor.getDPLRecallSize());
+                this.batchCollect = new BatchCollect(
+                        null,
+                        catVisitor.getDPLRecallSize(),
+                        catVisitor.getCatalystContext().postBcLimitSize()
+                );
             }
 
             if (step.hasProperty(AbstractStep.CommandProperty.REQUIRE_PRECEDING_AGGREGATE)) {
@@ -246,8 +265,8 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             if (step.hasProperty(AbstractStep.CommandProperty.SEQUENTIAL_ONLY)) {
                 LOGGER.info("[Analyze] Sequential only command: <{}>", step);
                 // set the breakpoint just once
-                if (breakpoint == -1) {
-                    breakpoint = i;
+                if (!breakpoints.containsKey(BreakpointType.SEQUENTIAL)) {
+                    breakpoints.put(BreakpointType.SEQUENTIAL, i);
                 }
             }
             else if (step.hasProperty(AbstractStep.CommandProperty.AGGREGATE)) {
@@ -255,9 +274,18 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
                 aggregateCount++;
 
                 // set the breakpoint just once
-                if (aggregateCount > 0 && breakpoint == -1) {
-                    breakpoint = i + 1;
+                if (
+                    aggregateCount > 0 && !breakpoints.containsKey(BreakpointType.SEQUENTIAL)
+                            && !breakpoints.containsKey(BreakpointType.POST_BC)
+                ) {
+                    breakpoints.put(BreakpointType.SEQUENTIAL, i + 1);
                     outputMode = OutputMode.Complete();
+                }
+            }
+            else if (step.hasProperty(AbstractStep.CommandProperty.POST_BATCHCOLLECT)) {
+                if (!breakpoints.containsKey(BreakpointType.POST_BC)) {
+                    LOGGER.info("[Analyze] Post batch collect command: <{}>", step);
+                    breakpoints.put(BreakpointType.POST_BC, i);
                 }
             }
         }
@@ -282,7 +310,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             }
             else {
                 LOGGER.info("------------------ Aggregates NOT USED (before seq. switch), using batchCollect!");
-                this.batchCollect.collect(ds, id);
+                int index = this.list.size();
+                if (breakpoints.containsKey(BreakpointType.POST_BC)) {
+                    index = breakpoints.get(BreakpointType.POST_BC);
+                }
+                this.batchCollect.collect(ds, id, this.list.subList(index, this.list.size()), false);
                 this.batchHandler.accept(batchCollect.getCollectedAsDataframe());
             }
         }
@@ -292,7 +324,10 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         LOGGER.info("StepList batch processing received a new batch <{}>", batchId);
 
         // timechart empty buckets
-        if (catVisitor.getCatalystContext().getTimeChartSpanSeconds() != null) {
+        if (
+            catVisitor.getCatalystContext().getTimeChartSpanSeconds() != null
+                    && !breakpoints.containsKey(BreakpointType.POST_BC)
+        ) {
             // create spans
             final long min = catVisitor.getCatalystContext().getDplMinimumEarliest();
             final long max = catVisitor.getCatalystContext().getDplMaximumLatest();
@@ -346,11 +381,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
         // Continue sub list of steps execution, if necessary
         if (!this.list.isEmpty()) {
-            LOGGER
-                    .info(
-                            "StepList batch processing - Continuing execution to next ops after breakpoint index: <{}>",
-                            breakpoint
-                    );
+            LOGGER.info("StepList batch processing - Continuing execution to next ops after breakpoint index");
 
             Dataset<Row> ret = this.executeInBatch(batchDF);
 

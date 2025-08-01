@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.sendemail;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.commands.transformstatement.sendemail.SendemailResultsProcessor;
-import com.teragrep.pth10.steps.AbstractStep;
 
 public abstract class AbstractSendemailStep extends AbstractStep {
 
