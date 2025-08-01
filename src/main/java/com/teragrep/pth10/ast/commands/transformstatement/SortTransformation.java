@@ -163,8 +163,7 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
                                 .format(
                                         "Set sortStep params to: sbc=%s, desc=%s, limit=%s", Arrays
                                                 .toString(this.sortStep.getListOfSortByClauses().toArray()),
-                                        this.sortStep.isDesc(),
-                                        this.sortStep.getLimit()
+                                        this.sortStep.isDesc(), this.sortStep.getLimit()
                                 )
                 );
 

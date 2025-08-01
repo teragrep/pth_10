@@ -212,7 +212,8 @@ public class DPLParserCatalystContext implements Cloneable {
     public Integer postBcLimitSize() {
         if (config != null && config.hasPath("dpl.pth_10.postbc.limit.size")) {
             return config.getInt("dpl.pth_10.postbc.limit.size");
-        } else {
+        }
+        else {
             // default to no limit if no config available
             return 0;
         }
