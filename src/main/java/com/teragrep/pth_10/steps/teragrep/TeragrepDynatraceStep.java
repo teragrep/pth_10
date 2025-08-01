@@ -187,7 +187,7 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
                 throw new IllegalStateException("Unexpected null JSON response");
             }
             JsonElement errorElem = jsonResp.get("error");
-            if (!(errorElem instanceof JsonNull)) {
+            if (!errorElem.isJsonNull()) {
                 throw new RuntimeException("Error from server response: " + errorElem.toString());
             }
             JsonElement validElem = jsonResp.get("linesValid");
