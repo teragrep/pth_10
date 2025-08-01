@@ -316,7 +316,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         LOGGER.info("StepList batch processing received a new batch <{}>", batchId);
 
         // timechart empty buckets
-        if (catVisitor.getCatalystContext().getTimeChartSpanSeconds() != null) {
+        if (catVisitor.getCatalystContext().getTimeChartSpanSeconds() != null && !breakpoints.containsKey(BreakpointType.POST_BC)) {
             // create spans
             final long min = catVisitor.getCatalystContext().getDplMinimumEarliest();
             final long max = catVisitor.getCatalystContext().getDplMaximumLatest();

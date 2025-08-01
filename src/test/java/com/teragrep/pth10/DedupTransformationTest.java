@@ -303,7 +303,7 @@ public class DedupTransformationTest {
 
             List<Row> listOfRaw = res.select("count(_raw)").collectAsList();
             Assertions.assertEquals(1, listOfRaw.size());
-            Assertions.assertEquals(1L, listOfRaw.get(0).get(0));
+            Assertions.assertEquals(2L, listOfRaw.get(0).get(0));
         });
     }
 }
