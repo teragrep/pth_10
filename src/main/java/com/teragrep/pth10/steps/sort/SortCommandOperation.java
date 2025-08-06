@@ -43,50 +43,27 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps;
+package com.teragrep.pth10.steps.sort;
 
+import com.teragrep.functions.dpf_02.SortByClause;
+import com.teragrep.functions.dpf_02.SortOperation;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
-public abstract class AbstractStep {
+public class SortCommandOperation extends SortOperation {
 
-    public enum CommandProperty {
-        USES_INTERNAL_BATCHCOLLECT, // Command has an internal batch collect, e.g. sort
-        IGNORE_DEFAULT_SORTING, // Command applies a certain order to the rows
-        SEQUENTIAL_ONLY, // Works only in Sequential mode (forEachBatch)
-        AGGREGATE, // If there are multiple aggregate commands, switch to sequential mode is necessary
-        REQUIRE_PRECEDING_AGGREGATE, // this command requires an aggregate command before it
-        NO_PRECEDING_AGGREGATE // command does not allow an aggregate command before it
+    private final int limit;
+
+    public SortCommandOperation(int limit, List<SortByClause> listOfSortByClauses) {
+        super(listOfSortByClauses);
+
+        this.limit = limit;
     }
 
-    protected final Set<CommandProperty> properties = new HashSet<>();
-    protected boolean aggregatesUsedBefore = false;
-
-    public boolean hasProperty(CommandProperty prop) {
-        return properties.contains(prop);
+    public Dataset<Row> sort(Dataset<Row> ds) {
+        return this.orderDatasetByGivenColumns(ds).limit(this.limit);
     }
 
-    private boolean addProperty(CommandProperty prop) {
-        return properties.add(prop);
-    }
-
-    public void setAggregatesUsedBefore(boolean aggregatesUsedBefore) {
-        this.aggregatesUsedBefore = aggregatesUsedBefore;
-    }
-
-    public AbstractStep() {
-
-    }
-
-    /**
-     * Perform the necessary dataframe operations for the implemented command
-     * 
-     * @param dataset Dataset to operate on
-     * @return Dataframe, which has the operations applied
-     */
-    public abstract Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException;
 }

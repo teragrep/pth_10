@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth10.steps;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 

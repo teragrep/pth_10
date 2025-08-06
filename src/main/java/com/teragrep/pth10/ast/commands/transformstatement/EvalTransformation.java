@@ -45,12 +45,12 @@
  */
 package com.teragrep.pth10.ast.commands.transformstatement;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.bo.Node;
 import com.teragrep.pth10.ast.bo.StepListNode;
 import com.teragrep.pth10.ast.bo.StepNode;
 import com.teragrep.pth10.ast.commands.evalstatement.EvalStatement;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import org.slf4j.Logger;

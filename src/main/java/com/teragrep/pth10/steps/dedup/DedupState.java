@@ -43,27 +43,26 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.sort;
+package com.teragrep.pth10.steps.dedup;
 
-import com.teragrep.functions.dpf_02.SortByClause;
-import com.teragrep.functions.dpf_02.SortOperation;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.List;
+public final class DedupState implements Serializable {
 
-public class AggregatedSort extends SortOperation {
+    private static final long serialVersionUID = 1L;
+    private final Map<String, Integer> amountOfHashes;
 
-    private int limit;
-
-    public AggregatedSort(int limit, List<SortByClause> listOfSortByClauses) {
-        super(listOfSortByClauses);
-
-        this.limit = limit;
+    public DedupState() {
+        this.amountOfHashes = new HashMap<>();
     }
 
-    public Dataset<Row> sort(Dataset<Row> ds) {
-        return this.orderDatasetByGivenColumns(ds).limit(this.limit);
+    public void accumulate(final String hash) {
+        amountOfHashes.compute(hash, (k, v) -> v == null ? 1 : v + 1);
     }
 
+    public int amountOf(final String hash) {
+        return amountOfHashes.getOrDefault(hash, 0);
+    }
 }

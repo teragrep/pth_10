@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth10.ast;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.steps.Flushable;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
@@ -207,6 +207,16 @@ public class DPLParserCatalystContext implements Cloneable {
 
     public Integer getDplRecallSize() {
         return dplRecallSize;
+    }
+
+    public Integer postBcLimitSize() {
+        if (config != null && config.hasPath("dpl.pth_10.postbc.limit.size")) {
+            return config.getInt("dpl.pth_10.postbc.limit.size");
+        }
+        else {
+            // default to no limit if no config available
+            return 0;
+        }
     }
 
     private String baseUrl = null;

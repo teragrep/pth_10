@@ -45,10 +45,9 @@
  */
 package com.teragrep.pth10.steps.sort;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.functions.dpf_02.SortByClause;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
-import com.teragrep.pth10.steps.AbstractStep;
 
 import java.util.List;
 
@@ -57,7 +56,6 @@ public abstract class AbstractSortStep extends AbstractStep {
     protected int limit;
     protected boolean desc = false;
     protected List<SortByClause> listOfSortByClauses = null;
-    protected BatchCollect sortingBatchCollect = null;
     protected boolean aggregatesUsed = false;
     protected DPLParserCatalystContext catCtx = null;
 
@@ -75,10 +73,6 @@ public abstract class AbstractSortStep extends AbstractStep {
 
     public boolean isDesc() {
         return desc;
-    }
-
-    public BatchCollect getSortingBatchCollect() {
-        return sortingBatchCollect;
     }
 
     public boolean isAggregatesUsed() {

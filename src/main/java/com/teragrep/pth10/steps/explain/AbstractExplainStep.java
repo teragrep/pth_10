@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.explain;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.datasources.GeneratedDatasource;
-import com.teragrep.pth10.steps.AbstractStep;
 
 public abstract class AbstractExplainStep extends AbstractStep {
 

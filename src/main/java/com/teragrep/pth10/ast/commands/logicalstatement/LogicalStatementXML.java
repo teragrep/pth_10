@@ -45,13 +45,13 @@
  */
 package com.teragrep.pth10.ast.commands.logicalstatement;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
 import com.teragrep.pth10.ast.bo.*;
 import com.teragrep.pth10.ast.bo.Token.Type;
 import com.teragrep.pth10.datasources.ArchiveQuery;
-import com.teragrep.pth10.steps.AbstractStep;
 import com.teragrep.pth10.steps.logicalXML.LogicalXMLStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;

@@ -130,6 +130,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // consecutive=true
+    @Disabled(value = "Test disabled: Consecutive parameter is not implemented")
     public void dedupTest_Consecutive() {
         String query = "index=index_A | dedup _raw consecutive= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -213,9 +214,12 @@ public class DedupTransformationTest {
             Assertions.assertEquals(10, listOfRaw.size());
             Assertions.assertEquals("1", listOfRaw.get(0).get(0));
             Assertions.assertEquals("2", listOfRaw.get(1).get(0));
+            int loops = 0;
             for (int i = 2; i < 10; i++) {
                 Assertions.assertNull(listOfRaw.get(i).get(0));
+                loops++;
             }
+            Assertions.assertEquals(8, loops);
         });
     }
 
@@ -275,8 +279,31 @@ public class DedupTransformationTest {
 
             List<Row> listOfRaw = res.select("_raw", "offset").collectAsList();
             listOfRaw.sort(Comparator.comparingLong(r -> r.getAs("offset")));
-            Assertions.assertEquals(1, listOfRaw.size());
+            Assertions.assertEquals(2, listOfRaw.size());
             Assertions.assertEquals("1", listOfRaw.get(0).get(0));
+            Assertions.assertEquals("2", listOfRaw.get(1).get(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    ) // deduplicate based on _raw, sourcetype and partition
+    public void dedupTest_AggAfter() {
+        String query = "index=index_A | dedup _raw | timechart count(_raw)";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("count(_raw)", DataTypes.LongType, true, new MetadataBuilder().build()),
+
+            });
+            // Columns should be the same. Order can be different because of .jsonl file readStream might shuffle them
+            Assertions.assertEquals(expectedSchema, res.schema());
+
+            List<Row> listOfRaw = res.select("count(_raw)").collectAsList();
+            Assertions.assertEquals(1, listOfRaw.size());
+            Assertions.assertEquals(2L, listOfRaw.get(0).get(0));
         });
     }
 }

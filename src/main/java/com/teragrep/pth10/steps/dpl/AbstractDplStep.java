@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth10.steps.dpl;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.datasources.GeneratedDatasource;
-import com.teragrep.pth10.steps.AbstractStep;
 
 import java.util.List;
 

@@ -86,7 +86,7 @@ public class DedupTest {
         DedupStep ds = dt.dedupStep;
 
         Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertEquals(1, ds.getMaxDuplicates());
     }
 
     @Test
@@ -131,7 +131,7 @@ public class DedupTest {
         DedupStep ds = dt.dedupStep;
 
         Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertEquals(1, ds.getMaxDuplicates());
         Assertions.assertTrue(ds.getConsecutive());
     }
 
@@ -154,7 +154,7 @@ public class DedupTest {
         DedupStep ds = dt.dedupStep;
 
         Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertEquals(1, ds.getMaxDuplicates());
         Assertions.assertTrue(ds.getKeepEmpty());
 
     }
@@ -178,7 +178,7 @@ public class DedupTest {
         DedupStep ds = dt.dedupStep;
 
         Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertEquals(1, ds.getMaxDuplicates());
         Assertions.assertTrue(ds.getKeepEvents());
     }
 
@@ -201,7 +201,7 @@ public class DedupTest {
         DedupStep ds = dt.dedupStep;
 
         Assertions.assertEquals("[fieldOne, fieldTwo]", Arrays.toString(ds.getListOfFields().toArray()));
-        Assertions.assertEquals(0, ds.getMaxDuplicates());
+        Assertions.assertEquals(1, ds.getMaxDuplicates());
         // TODO add assertion for sort by clause
     }
 }

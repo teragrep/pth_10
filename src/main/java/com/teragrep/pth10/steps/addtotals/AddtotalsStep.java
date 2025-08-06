@@ -45,10 +45,9 @@
  */
 package com.teragrep.pth10.steps.addtotals;
 
-import com.teragrep.functions.dpf_02.BatchCollect;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.DPLParserCatalystContext;
 import com.teragrep.pth10.ast.commands.transformstatement.addtotals.AddtotalsUDF;
-import com.teragrep.pth10.steps.AbstractStep;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.streaming.StreamingQueryException;
@@ -60,6 +59,7 @@ import java.util.List;
 
 public class AddtotalsStep extends AbstractStep implements Serializable {
 
+    private final DPLParserCatalystContext catCtx;
     public final boolean row;
     public final boolean col;
     public final String fieldName;
@@ -67,7 +67,6 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
     public final String label;
     public final List<String> fieldList;
     private Dataset<Row> lastRow;
-    private final BatchCollect bc;
     private final NumericColumnSum numericColumnSum;
 
     public AddtotalsStep(
@@ -81,7 +80,8 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
     ) {
         super();
         this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
-        this.properties.add(CommandProperty.USES_INTERNAL_BATCHCOLLECT);
+        this.properties.add(CommandProperty.POST_BATCHCOLLECT);
+        this.catCtx = catCtx;
         // basic params
         this.row = row; // display row total of all numeric columns
         this.col = col; // display column total of all numeric rows
@@ -91,9 +91,6 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
         this.label = label; // for labelField content, before fieldName or as last if row=false/col=true
         // row
         this.fieldName = fieldName; // for row=true fieldName
-
-        // batchCollect
-        this.bc = new BatchCollect(null, catCtx.getDplRecallSize());
 
         // column sum
         this.numericColumnSum = new NumericColumnSum();
@@ -156,7 +153,7 @@ public class AddtotalsStep extends AbstractStep implements Serializable {
             }
         }
 
-        bc.updateLastRow(lastRow);
-        return bc.call(dataset, 0L, true);
+        catCtx.getStepList().batchCollect().updateLastRow(lastRow);
+        return dataset;
     }
 }
