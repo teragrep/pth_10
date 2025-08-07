@@ -74,7 +74,7 @@ public final class DedupStep extends AbstractStep implements Serializable {
             NullValue nullValue,
             boolean completeOutputMode
     ) {
-        this.properties.add(AbstractStep.CommandProperty.POST_BATCHCOLLECT);
+        //this.properties.add(AbstractStep.CommandProperty.POST_BATCHCOLLECT);
 
         this.listOfFields = listOfFields;
         this.maxDuplicates = maxDuplicates;
@@ -87,7 +87,7 @@ public final class DedupStep extends AbstractStep implements Serializable {
 
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) {
-        return dataset.dropDuplicates(listOfFields.toArray(new String[0]));
+        return dataset.withWatermark("_time", "1 hour").dropDuplicates(listOfFields.toArray(new String[0]));
     }
 
     public List<String> getListOfFields() {
