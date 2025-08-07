@@ -47,14 +47,7 @@ package com.teragrep.pth10.steps.dedup;
 
 import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.NullValue;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.streaming.GroupState;
-import org.apache.spark.sql.streaming.GroupStateTimeout;
-import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +74,7 @@ public final class DedupStep extends AbstractStep implements Serializable {
             NullValue nullValue,
             boolean completeOutputMode
     ) {
-        this.properties.add(AbstractStep.CommandProperty.POST_BATCHCOLLECT);
+        //this.properties.add(AbstractStep.CommandProperty.POST_BATCHCOLLECT);
 
         this.listOfFields = listOfFields;
         this.maxDuplicates = maxDuplicates;
@@ -94,87 +87,7 @@ public final class DedupStep extends AbstractStep implements Serializable {
 
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) {
-
-        final List<String> dedupHashFields = new ArrayList<>();
-        for (final String field : listOfFields) {
-            final String dedupHashField = "dedupHash-" + field;
-            dataset = dataset
-                    .withColumn(dedupHashField, functions.sha2(functions.col(field).cast(DataTypes.BinaryType), 256));
-            dedupHashFields.add(dedupHashField);
-        }
-
-        KeyValueGroupedDataset<String, Row> groupedDs = dataset.groupByKey((MapFunction<Row, String>) (r) -> {
-            final StringBuilder groupId = new StringBuilder();
-            for (final String hashField : dedupHashFields) {
-                groupId.append(r.getString(r.fieldIndex(hashField)));
-            }
-
-            return groupId.toString();
-        }, Encoders.STRING());
-
-        Dataset<Row> rv = groupedDs
-                .flatMapGroupsWithState(
-                        this::flatMapGroupsWithStateFunc, OutputMode
-                                .Append(),
-                        Encoders.javaSerialization(DedupState.class), RowEncoder.apply(dataset.schema()), GroupStateTimeout.NoTimeout()
-                );
-
-        return rv.drop(dedupHashFields.toArray(new String[0]));
-    }
-
-    private Iterator<Row> flatMapGroupsWithStateFunc(
-            final String group,
-            final Iterator<Row> events,
-            final GroupState<DedupState> state
-    ) {
-        final DedupState ds;
-        if (state.exists()) {
-            ds = state.get();
-        }
-        else {
-            ds = new DedupState();
-        }
-
-        List<Row> rv = new ArrayList<>();
-        events.forEachRemaining(event -> {
-            ds.accumulate(group);
-
-            boolean dropFullRow = false;
-
-            if (!keepEmpty) {
-                for (int i = 0; i < event.length(); i++) {
-                    final StructField field = event.schema().fields()[i];
-                    if (listOfFields.contains(field.name())) {
-                        final Object fieldValue = event.get(i);
-                        if (fieldValue == nullValue.value()) {
-                            // drop row, one of the fields is null
-                            dropFullRow = true;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            if (!dropFullRow && ds.amountOf(group) <= maxDuplicates) {
-                rv.add(event);
-            }
-            else if (!dropFullRow && keepEvents) {
-                Object[] newRow = new Object[event.length()];
-                for (int i = 0; i < event.length(); i++) {
-                    final StructField field = event.schema().fields()[i];
-                    if (listOfFields.contains(field.name())) {
-                        newRow[i] = nullValue.value();
-                    }
-                    else {
-                        newRow[i] = event.get(i);
-                    }
-                }
-                rv.add(RowFactory.create(newRow));
-            }
-        });
-
-        state.update(ds);
-        return rv.iterator();
+        return dataset.withWatermark("_time", "1 hour").dropDuplicates(listOfFields.toArray(new String[0]));
     }
 
     public List<String> getListOfFields() {
