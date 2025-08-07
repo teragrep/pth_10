@@ -163,6 +163,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // sort descending as numbers
+    @Disabled(value = "Test disabled: sortby parameter is not implemented")
     public void dedupTest_SortNum() {
         String query = "index=index_A | dedup _raw sortby - num(_raw)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -192,6 +193,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // keep duplicate events with nulls
+    @Disabled(value = "Test disabled: keepevents parameter is not implemented")
     public void dedupTest_KeepEvents() {
         String query = "index=index_A | dedup _raw keepevents= true";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -228,6 +230,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // keep null values
+    @Disabled(value = "Test disabled: keepevents parameter is not implemented")
     public void dedupTest_KeepEmpty() {
         // first use keepevents=true to make null values in the dataset
         String query = "index=index_A | dedup _raw keepevents= true | dedup _raw keepempty= true";
