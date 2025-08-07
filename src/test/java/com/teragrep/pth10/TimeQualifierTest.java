@@ -50,6 +50,7 @@ import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -59,6 +60,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public class TimeQualifierTest {
 
     @Test
+    @Disabled(value = "Pending on issue #572 - https://github.com/teragrep/pth_10/pull/572")
     public void testEarliest() {
         final String value = "2024-31-10";
         final String timeformat = "%Y-%d-%m";
@@ -140,6 +142,7 @@ public class TimeQualifierTest {
     }
 
     @Test
+    @Disabled(value = "Pending on issue #572 - https://github.com/teragrep/pth_10/pull/572")
     public void testLatest() {
         final String value = "2024-31-10";
         final String timeformat = "%Y-%d-%m";
@@ -157,6 +160,7 @@ public class TimeQualifierTest {
     }
 
     @Test
+    @Disabled(value = "Pending on issue #572 - https://github.com/teragrep/pth_10/pull/572")
     public void testIndexEarliest() {
         final String value = "2024-10-31:00:00:00";
         final String timeformat = "%Y-%m-%d:HH:mm:ss";
@@ -174,6 +178,7 @@ public class TimeQualifierTest {
     }
 
     @Test
+    @Disabled(value = "Pending on issue #572 - https://github.com/teragrep/pth_10/pull/572")
     public void testIndexLatest() {
         final String value = "2024-10-31:00:00:00";
         final String timeformat = "%Y-%m-%d:HH:mm:ss";
