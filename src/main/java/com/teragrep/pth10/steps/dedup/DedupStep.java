@@ -47,12 +47,7 @@ package com.teragrep.pth10.steps.dedup;
 
 import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth10.ast.NullValue;
-import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
-import org.apache.spark.sql.streaming.GroupStateTimeout;
-import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
