@@ -98,7 +98,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // basic dedup
-    @Disabled(value="Pending on issue #645 - https://github.com/teragrep/pth_10/issues/645")
+    @Disabled(value = "Pending on issue #645 - https://github.com/teragrep/pth_10/issues/645")
     public void dedupTest_NoParams() {
         this.streamingTestUtil.performDPLTest("index=index_A | dedup _raw", this.testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
@@ -264,7 +264,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // deduplicate based on _raw, sourcetype and partition
-    @Disabled(value="Pending on issue #645 - https://github.com/teragrep/pth_10/issues/645")
+    @Disabled(value = "Pending on issue #645 - https://github.com/teragrep/pth_10/issues/645")
     public void dedupTest_MultiColumn() {
         String query = "index=index_A | dedup _raw, sourcetype, partition";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
@@ -295,7 +295,7 @@ public class DedupTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     ) // deduplicate based on _raw, sourcetype and partition
-    @Disabled(value="Pending on issue #645 - https://github.com/teragrep/pth_10/issues/645")
+    @Disabled(value = "Pending on issue #645 - https://github.com/teragrep/pth_10/issues/645")
     public void dedupTest_AggAfter() {
         String query = "index=index_A | dedup _raw | timechart count(_raw)";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
