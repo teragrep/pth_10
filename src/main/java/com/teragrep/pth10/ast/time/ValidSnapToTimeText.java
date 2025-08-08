@@ -45,12 +45,62 @@
  */
 package com.teragrep.pth10.ast.time;
 
-import java.time.ZonedDateTime;
+import com.teragrep.pth10.ast.Text;
 
-public interface DPLTimestamp {
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    public abstract ZonedDateTime zonedDateTime();
+public final class ValidSnapToTimeText implements Text {
 
-    public abstract boolean isValid();
+    private final Pattern snapPattern;
+    private final Text origin;
 
+    public ValidSnapToTimeText(final Text origin) {
+        this(origin, Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])"));
+    }
+
+    public ValidSnapToTimeText(final Text origin, Pattern snapPattern) {
+        this.origin = origin;
+        this.snapPattern = snapPattern;
+    }
+
+    @Override
+    public String read() {
+        final String timeStampString = origin.read();
+        final String snapUnitSubstring;
+        final Matcher matcher = snapPattern.matcher(timeStampString);
+        if (matcher.find()) {
+            snapUnitSubstring = matcher.group(1);
+        }
+        else {
+            throw new IllegalArgumentException("Invalid snap to time text <" + timeStampString + ">");
+        }
+        return snapUnitSubstring;
+    }
+
+    public boolean containsSnapCharacter() {
+        final String timeStampString = origin.read();
+        return timeStampString.contains("@");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidSnapToTimeText other = (ValidSnapToTimeText) o;
+        return Objects.equals(snapPattern, other.snapPattern) && Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(snapPattern, origin);
+    }
 }

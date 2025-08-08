@@ -43,14 +43,16 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.ast.time;
+package com.teragrep.pth10;
 
-import java.time.ZonedDateTime;
+import com.teragrep.pth10.ast.DPLTimeFormatText;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Test;
 
-public interface DPLTimestamp {
+public class DPLTimeFormatTextTest {
 
-    public abstract ZonedDateTime zonedDateTime();
-
-    public abstract boolean isValid();
-
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(DPLTimeFormatText.class).withNonnullFields("origin").verify();
+    }
 }
