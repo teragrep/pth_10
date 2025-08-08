@@ -96,8 +96,8 @@ public final class BloomFilterConfigurationTest {
     public void testComparable() {
         final BloomFilterConfiguration base = new BloomFilterConfiguration(1000L, 0.02);
         final BloomFilterConfiguration equals = new BloomFilterConfiguration(1000L, 0.02);
-        final BloomFilterConfiguration smaller = new BloomFilterConfiguration(500L, 0.02);
-        final BloomFilterConfiguration larger = new BloomFilterConfiguration(2000L, 0.02);
+        final BloomFilterConfiguration smallerExpected = new BloomFilterConfiguration(500L, 0.02);
+        final BloomFilterConfiguration largerExpected = new BloomFilterConfiguration(2000L, 0.02);
         final BloomFilterConfiguration smallerFpp = new BloomFilterConfiguration(1000L, 0.01);
         final BloomFilterConfiguration largerFpp = new BloomFilterConfiguration(1000L, 0.03);
         final BloomFilterConfiguration bothLarger = new BloomFilterConfiguration(2000L, 0.03);
@@ -105,13 +105,35 @@ public final class BloomFilterConfigurationTest {
         final BloomFilterConfiguration smallerExpectedLargerFpp = new BloomFilterConfiguration(500L, 0.03);
         final BloomFilterConfiguration largerExpectedSmallerFpp = new BloomFilterConfiguration(2000L, 0.01);
         Assertions.assertEquals(0, base.compareTo(equals));
-        Assertions.assertEquals(1, base.compareTo(smaller));
-        Assertions.assertEquals(-1, base.compareTo(larger));
+        Assertions.assertEquals(1, base.compareTo(smallerExpected));
+        Assertions.assertEquals(-1, base.compareTo(largerExpected));
         Assertions.assertEquals(-1, base.compareTo(smallerFpp));
         Assertions.assertEquals(1, base.compareTo(largerFpp));
         Assertions.assertEquals(-1, base.compareTo(bothLarger));
         Assertions.assertEquals(1, base.compareTo(bothSmaller));
         Assertions.assertEquals(1, base.compareTo(smallerExpectedLargerFpp));
         Assertions.assertEquals(-1, base.compareTo(largerExpectedSmallerFpp));
+    }
+
+    @Test
+    public void testCompareNullValues() {
+        final BloomFilterConfiguration base = new BloomFilterConfiguration(1000L, 0.02);
+        final BloomFilterConfiguration expectedNull = new BloomFilterConfiguration(null, 0.02);
+        final BloomFilterConfiguration fppNull = new BloomFilterConfiguration(1000L, null);
+        final BloomFilterConfiguration bothNull = new BloomFilterConfiguration(null, null);
+        Assertions.assertEquals(-1, base.compareTo(expectedNull));
+        Assertions.assertEquals(-1, base.compareTo(fppNull));
+        Assertions.assertEquals(-1, base.compareTo(bothNull));
+        Assertions.assertEquals(-1, expectedNull.compareTo(bothNull));
+        Assertions.assertEquals(-1, fppNull.compareTo(bothNull));
+    }
+
+    @Test
+    public void testCompareAgainstNullException() {
+        final BloomFilterConfiguration base = new BloomFilterConfiguration(1000L, 0.02);
+        final IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, () -> base.compareTo(null));
+        final String expectedMessage = "Cannot compare against null";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 }
