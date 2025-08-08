@@ -380,8 +380,12 @@ public class SpathTransformationTest {
                         }
                 );
 
-        String causeStr = this.streamingTestUtil.getInternalCauseString(sqe.getCause(), IllegalStateException.class);
-        Assertions.assertEquals("Caused by: java.lang.IllegalStateException: Not a JSON Object: 12.34", causeStr);
+        String causeStr = this.streamingTestUtil.getInternalCauseString(sqe.getCause(), IllegalArgumentException.class);
+        Assertions
+                .assertEquals(
+                        "Caused by: java.lang.IllegalArgumentException: spath command expected a valid JSON Object as input but was given: < 12.34 >",
+                        causeStr
+                );
     }
 
     @Test
