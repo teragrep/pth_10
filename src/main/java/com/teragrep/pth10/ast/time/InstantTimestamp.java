@@ -49,14 +49,18 @@ import com.teragrep.pth10.ast.DPLTimeFormat;
 import com.teragrep.pth10.ast.DefaultTimeFormat;
 import com.teragrep.pth10.ast.TextString;
 import com.teragrep.pth10.ast.UnquotedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.text.ParseException;
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.util.Objects;
 
 public final class InstantTimestamp implements DPLTimestamp {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(InstantTimestamp.class);
     private final String value;
     private final String timeformat;
 
@@ -72,7 +76,8 @@ public final class InstantTimestamp implements DPLTimestamp {
             rv = relativeTimestamp.calculate(new Timestamp(System.currentTimeMillis()));
         }
         catch (NumberFormatException ne) {
-            rv = instantFromString(value, timeformat);
+            LOGGER.debug("Could not parse relative timestamp, trying default formats");
+            rv = instantFromString(value, timeformat, ne);
         }
 
         return rv;
@@ -80,11 +85,23 @@ public final class InstantTimestamp implements DPLTimestamp {
 
     // Uses defaultTimeFormat if timeformat is null and DPLTimeFormat if timeformat isn't null (which means that the
     // timeformat= option was used).
-    private Instant instantFromString(final String value, final String timeFormatString) {
+    private Instant instantFromString(
+            final String value,
+            final String timeFormatString,
+            final NumberFormatException cause
+    ) {
         final String unquotedValue = new UnquotedText(new TextString(value)).read(); // erase the possible outer quotes
         final Instant timevalue;
         if (timeFormatString == null || timeFormatString.isEmpty()) {
-            timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
+            try {
+                timevalue = new DefaultTimeFormat().parse(unquotedValue).toInstant();
+            }
+            catch (final DateTimeException ex) {
+                throw new DateTimeException(
+                        "Error parsing <" + unquotedValue + ">. " + ex.getMessage() + ". " + cause.getMessage() + ".",
+                        cause
+                );
+            }
         }
         else {
             // TODO: should be included in DPLTimeFormat
