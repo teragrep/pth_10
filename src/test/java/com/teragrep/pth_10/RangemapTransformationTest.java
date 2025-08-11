@@ -201,14 +201,9 @@ public class RangemapTransformationTest {
                             Assertions.assertEquals(1, result.size());
                             List<String> resultList = result.get(0).getList(0);
                             Assertions.assertEquals(2, resultList.size());
-                            List<String> expected = Arrays.asList("lo", "hi");
+                            List<String> expected = Arrays.asList("hi", "lo");
 
-                            int expectedLoops = 0;
-                            for (String res : resultList) {
-                                Assertions.assertTrue(expected.contains(res));
-                                expectedLoops++;
-                            }
-                            Assertions.assertEquals(2, expectedLoops, "Should execute 2 loops");
+                            Assertions.assertEquals(expected, resultList);
                         }
                 );
     }

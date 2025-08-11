@@ -55,7 +55,9 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -215,18 +217,19 @@ public class JoinTransformationTest {
                                     );
 
                             // 3 rows should be not null, since only three subsearch matches are requested using max=3
-                            List<Row> listOfRows = ds
+                            final List<String> listOfRows = ds
                                     .select("R_a")
                                     .orderBy("offset")
                                     .collectAsList()
                                     .stream()
-                                    .filter(r -> r.get(0) != null)
+                                    .map(r -> r.get(0))
+                                    .filter(Objects::nonNull)
+                                    .map(Object::toString)
                                     .collect(Collectors.toList());
 
                             Assertions.assertEquals(3, listOfRows.size());
-                            Assertions.assertEquals("1", listOfRows.get(0).get(0));
-                            Assertions.assertEquals("2", listOfRows.get(1).get(0));
-                            Assertions.assertEquals("1", listOfRows.get(2).get(0));
+                            final List<String> expected = Arrays.asList("1", "2", "1");
+                            Assertions.assertEquals(expected, listOfRows);
 
                         }
                 );

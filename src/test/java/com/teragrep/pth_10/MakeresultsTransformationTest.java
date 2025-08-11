@@ -122,12 +122,9 @@ public class MakeresultsTransformationTest {
             rows.forEach(row -> {
                 Assertions.assertEquals(6, row.length());
 
-                int loopCount = 0;
                 for (int i = 0; i < row.length(); i++) {
-                    loopCount++;
                     Assertions.assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
                 }
-                Assertions.assertEquals(6, loopCount);
             });
         });
     }
