@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth_10;
 
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -56,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Tests for RegexTransformation Uses streaming datasets
@@ -120,9 +120,18 @@ public class RegexTransformationTest {
     )
     public void testRegexFieldEqual() {
         streamingTestUtil.performDPLTest("index=index_A | regex _raw = \"data data\"", testFile, ds -> {
-            List<Row> resList = ds.select("_raw").distinct().collectAsList();
+            List<String> resList = ds
+                    .select("_raw")
+                    .distinct()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.get(0))
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+
             Assertions.assertEquals(1, resList.size());
-            Assertions.assertTrue(resList.get(0).toString().contains("data data"));
+            Assertions.assertEquals("data data", resList.get(0));
+
         });
     }
 
@@ -133,9 +142,17 @@ public class RegexTransformationTest {
     )
     public void testRegexWithString() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"data data\"", testFile, ds -> {
-            List<Row> resList = ds.select("_raw").distinct().collectAsList();
+            List<String> resList = ds
+                    .select("_raw")
+                    .distinct()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.get(0))
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+
             Assertions.assertEquals(1, resList.size());
-            Assertions.assertTrue(resList.get(0).toString().contains("data data"));
+            Assertions.assertEquals("data data", resList.get(0));
         });
     }
 
@@ -146,9 +163,17 @@ public class RegexTransformationTest {
     )
     public void testRegexMatchedPattern() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][a|B]\\s.{4}$\"", testFile, ds -> {
-            List<Row> resList = ds.select("_raw").distinct().collectAsList();
+            List<String> resList = ds
+                    .select("_raw")
+                    .distinct()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.get(0))
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+
             Assertions.assertEquals(1, resList.size());
-            Assertions.assertTrue(resList.get(0).toString().contains("data data"));
+            Assertions.assertEquals("data data", resList.get(0));
         });
     }
 
