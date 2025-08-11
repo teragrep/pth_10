@@ -959,7 +959,7 @@ public class evalTest {
                 String actualVal = vReal.toString().substring(0, Math.min(vReal.toString().length(), 10));
                 Assertions.assertEquals(expectedVal, actualVal);
             }
-                Assertions.assertEquals(19, i, "Should execute 19 loops");
+            Assertions.assertEquals(19, i, "Should execute 19 loops");
         });
     }
 
