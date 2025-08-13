@@ -112,7 +112,7 @@ public class RelativeTimeParser {
             // split the timestamp to offset (before @) and snap-to-time (after @)
             String offsetTimestamp = timestamp.substring(0, timestamp.indexOf("@"));
             String snapTimestamp = timestamp.substring(timestamp.indexOf('@') + 1);
-            LOGGER.info("Snaptime=" + snapTimestamp);
+            LOGGER.info("Snaptime= <{}>", snapTimestamp);
 
             offset = parseRelativeOffset(offsetTimestamp);
             snap = parseSnapToTime(snapTimestamp);
