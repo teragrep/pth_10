@@ -118,13 +118,8 @@ public class fieldTransformationTest {
             Collections.sort(expectedValues);
 
             Assertions.assertEquals(5, dsAsList.size());
-            int loopCount = 0;
-            for (int i = 0; i < expectedValues.size(); i++) {
-                loopCount++;
-                Assertions.assertEquals(expectedValues.get(i), dsAsList.get(i));
-            }
-
-            Assertions.assertEquals(5, loopCount);
+            Assertions.assertEquals(5, expectedValues.size());
+            Assertions.assertEquals(expectedValues, dsAsList);
         });
     }
 
