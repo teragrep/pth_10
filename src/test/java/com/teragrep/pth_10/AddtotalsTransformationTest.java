@@ -106,16 +106,10 @@ public class AddtotalsTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .sorted()
                     .collect(Collectors.toList());
-            List<String> expected = Arrays.asList("36.0", "11.0", "1.0", "-9.0", "48.2");
+            List<String> expected = Arrays.asList("-9.0", "1.0", "11.0", "36.0", "48.2");
             Assertions.assertEquals(5, res.size());
             Assertions.assertEquals(5, expected.size());
-
-            int expectedLoops = 0;
-            for (String r : res) {
-                Assertions.assertTrue(expected.contains(r), "Value <" + r + "> was not one of the expected values!");
-                expectedLoops++;
-            }
-            Assertions.assertEquals(5, expectedLoops, "Should execute 5 loops");
+            Assertions.assertEquals(expected, res);
         });
     }
 
@@ -136,13 +130,7 @@ public class AddtotalsTransformationTest {
             List<Double> expected = Arrays.asList(-10d, 0d, 10d, 35d, 47.2d, 82.2d);
             Assertions.assertEquals(6, res.size());
             Assertions.assertEquals(6, expected.size());
-
-            int expectedLoops = 0;
-            for (Double r : res) {
-                Assertions.assertTrue(expected.contains(r), "Value <" + r + "> was not one of the expected values!");
-                expectedLoops++;
-            }
-            Assertions.assertEquals(6, expectedLoops, "Should execute 6 loops");
+            Assertions.assertEquals(expected, res);
         });
     }
 
