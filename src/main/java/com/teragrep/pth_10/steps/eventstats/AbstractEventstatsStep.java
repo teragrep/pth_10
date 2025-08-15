@@ -46,7 +46,7 @@
 package com.teragrep.pth_10.steps.eventstats;
 
 import com.teragrep.functions.dpf_02.AbstractStep;
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
+import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import org.apache.spark.sql.Column;
 
 import java.util.List;

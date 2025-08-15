@@ -43,10 +43,10 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth10.steps.makeresults;
+package com.teragrep.pth_10.steps.makeresults;
 
 import com.teragrep.functions.dpf_02.AbstractStep;
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
+import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -46,7 +46,7 @@
 package com.teragrep.pth_10.steps.iplocation;
 
 import com.teragrep.functions.dpf_02.AbstractStep;
-import com.teragrep.pth10.ast.DPLParserCatalystContext;
+import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 
 import java.util.Arrays;
 import java.util.List;
