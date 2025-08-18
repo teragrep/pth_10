@@ -47,7 +47,6 @@ package com.teragrep.pth_10.steps.teragrep;
 
 import com.google.gson.*;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
