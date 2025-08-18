@@ -54,6 +54,7 @@ import com.teragrep.pth_10.ast.NumericText;
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.steps.Flushable;
 import com.teragrep.pth_10.steps.teragrep.dynatrace.DynatraceItem;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
