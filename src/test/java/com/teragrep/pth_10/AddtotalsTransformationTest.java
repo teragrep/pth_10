@@ -106,15 +106,10 @@ public class AddtotalsTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .sorted()
                     .collect(Collectors.toList());
-            List<String> expected = Arrays.asList("36.0", "11.0", "1.0", "-9.0", "48.2");
+            List<String> expected = Arrays.asList("-9.0", "1.0", "11.0", "36.0", "48.2");
             Assertions.assertEquals(5, res.size());
             Assertions.assertEquals(5, expected.size());
-
-            for (String r : res) {
-                if (!expected.contains(r)) {
-                    Assertions.fail("Value <" + r + "> was not one of the expected values!");
-                }
-            }
+            Assertions.assertEquals(expected, res);
         });
     }
 
@@ -135,12 +130,7 @@ public class AddtotalsTransformationTest {
             List<Double> expected = Arrays.asList(-10d, 0d, 10d, 35d, 47.2d, 82.2d);
             Assertions.assertEquals(6, res.size());
             Assertions.assertEquals(6, expected.size());
-
-            for (Double r : res) {
-                if (!expected.contains(r)) {
-                    Assertions.fail("Value <" + r + "> was not one of the expected values!");
-                }
-            }
+            Assertions.assertEquals(expected, res);
         });
     }
 
