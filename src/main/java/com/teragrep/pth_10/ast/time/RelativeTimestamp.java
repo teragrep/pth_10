@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
+import com.teragrep.pth_10.ast.TextString;
+import com.teragrep.pth_10.ast.UnquotedText;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;

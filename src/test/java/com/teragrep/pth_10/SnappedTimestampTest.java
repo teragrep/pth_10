@@ -47,7 +47,7 @@ package com.teragrep.pth_10;
 
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.time.SnappedTimestamp;
-import com.teragrep.pth10.ast.time.ValidTrailingRelativeTimestampText;
+import com.teragrep.pth_10.ast.time.ValidTrailingRelativeTimestampText;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
