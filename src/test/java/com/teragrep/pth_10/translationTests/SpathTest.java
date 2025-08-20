@@ -46,6 +46,7 @@
 package com.teragrep.pth_10.translationTests;
 
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
+import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.Spath;
 import com.teragrep.pth_10.ast.commands.transformstatement.SpathTransformation;
 import com.teragrep.pth_10.steps.spath.SpathStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
