@@ -353,39 +353,32 @@ public class SpathTransformationTest {
             matches = "true"
     )
     public void spathTestJsonInvalidInput() {
-        RuntimeException sqe = this.streamingTestUtil
-                .performThrowingDPLTest(
-                        RuntimeException.class, "index=index_A | eval a = \"12.34\" | spath input=a", JSON_DATA_1,
-                        ds -> {
-                            final StructType expectedSchema = new StructType(new StructField[] {
-                                    new StructField(
-                                            "_time",
-                                            DataTypes.TimestampType,
-                                            true,
-                                            new MetadataBuilder().build()
-                                    ),
-                                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
-                                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField(
-                                            "sourcetype",
-                                            DataTypes.StringType,
-                                            true,
-                                            new MetadataBuilder().build()
-                                    ),
-                                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
-                                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()), new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
-                            });
-                            Assertions.assertEquals(expectedSchema, ds.schema());
-                        }
-                );
+        streamingTestUtil.performDPLTest("index=index_A | eval a = \"12.34\" | spath input=a", JSON_DATA_1, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema());
 
-        String causeStr = this.streamingTestUtil.getInternalCauseString(sqe.getCause(), IllegalArgumentException.class);
-        Assertions
-                .assertEquals(
-                        "Caused by: java.lang.IllegalArgumentException: spath command expected a valid JSON Object as input but was given: < 12.34 >",
-                        causeStr
-                );
+            String result = ds
+                    .select("a")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            Assertions.assertEquals("", result);
+        });
+
     }
 
     @Test
