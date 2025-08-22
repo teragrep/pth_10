@@ -143,7 +143,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitSearchTransformationRoot(DPLParser.SearchTransformationRootContext ctx) {
         final Node rv;
-        if (LOGGER.isInfoEnabled()){
+        if (LOGGER.isInfoEnabled()) {
             LOGGER
                     .info(
                             "[SearchTransformationRoot CAT] Visiting: <{}> with <{}> children", ctx.getText(),
@@ -156,7 +156,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             final Node singleNode = visit(ctx.getChild(0));
             if (singleNode.isStub()) {
                 LOGGER.info("Child node was a NullNode");
-                rv = new NullNode();
+                rv = singleNode;
             }
             else {
                 rv = singleNode;
@@ -207,7 +207,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (rv instanceof ColumnNode) {
             final ColumnNode columnNode = (ColumnNode) rv;
             if (columnNode.getColumn() != null) {
-                if (LOGGER.isInfoEnabled()){
+                if (LOGGER.isInfoEnabled()) {
                     LOGGER.info("Spark column: <{}>", columnNode.getColumn().toString());
                 }
                 this.catCtx.setSparkQuery(columnNode.getColumn().toString());
