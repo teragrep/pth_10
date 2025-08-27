@@ -43,37 +43,63 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.commands.transformstatement.convert;
+package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth_10.ast.DPLTimeFormatText;
-import com.teragrep.pth_10.ast.TextString;
-import com.teragrep.pth_10.ast.UnquotedText;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth_10.ast.Text;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+public final class ValidSnapToTimeText implements Text {
 
-/**
- * UDF for convert command 'ctime'<br>
- * Converts epoch time into given timeformat<br>
- * 
- * @author eemhu
- */
-public class Ctime implements UDF2<String, String, String> {
+    private final Pattern snapPattern;
+    private final Text origin;
 
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public String call(String epoch, String timeformat) throws Exception {
-        final ZoneId utcZoneId = ZoneId.of("UTC");
-        final long seconds = Long.parseLong(epoch);
-        final Instant instant = Instant.ofEpochSecond(seconds);
-        final ZonedDateTime zonedDateTime = instant.atZone(utcZoneId);
-        final String dplTimeFormatString = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat))).read();
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dplTimeFormatString).withZone(utcZoneId);
-        return formatter.format(zonedDateTime);
+    public ValidSnapToTimeText(final Text origin) {
+        this(origin, Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])"));
     }
 
+    public ValidSnapToTimeText(final Text origin, Pattern snapPattern) {
+        this.origin = origin;
+        this.snapPattern = snapPattern;
+    }
+
+    @Override
+    public String read() {
+        final String timeStampString = origin.read();
+        final String snapUnitSubstring;
+        final Matcher matcher = snapPattern.matcher(timeStampString);
+        if (matcher.find()) {
+            snapUnitSubstring = matcher.group(1);
+        }
+        else {
+            throw new IllegalArgumentException("Invalid snap to time text <" + timeStampString + ">");
+        }
+        return snapUnitSubstring;
+    }
+
+    public boolean containsSnapCharacter() {
+        final String timeStampString = origin.read();
+        return timeStampString.contains("@");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidSnapToTimeText other = (ValidSnapToTimeText) o;
+        return Objects.equals(snapPattern, other.snapPattern) && Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(snapPattern, origin);
+    }
 }

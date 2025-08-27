@@ -43,66 +43,64 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast;
+package com.teragrep.pth_10.ast.time;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.teragrep.pth_10.ast.Text;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
- * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
- * uses the system default
- */
-public class DefaultTimeFormat {
+public final class ValidOffsetUnitText implements Text {
 
-    private final String[] formats;
+    private final Text origin;
+    private final Pattern pattern;
 
-    public DefaultTimeFormat() {
-        this(new String[] {
-                "MM/dd/yyyy:HH:mm:ss",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
-                "yyyy-MM-dd'T'HH:mm:ss"
-        });
+    public ValidOffsetUnitText(final Text origin) {
+        this(origin, Pattern.compile("([a-zA-Z]+)"));
     }
 
-    public DefaultTimeFormat(String[] formats) {
-        this.formats = formats;
+    public ValidOffsetUnitText(final Text origin, final Pattern pattern) {
+        this.origin = origin;
+        this.pattern = pattern;
     }
 
-    /**
-     * Calculate the epoch from given string.
-     * 
-     * @param time The human-readable time
-     * @return epoch as long
-     */
-    public long getEpoch(String time) {
-        return this.parse(time).getTime() / 1000L;
-    }
-
-    /**
-     * Parses the given human-readable time to a Date object.
-     * 
-     * @param time The human-readable time
-     * @return Date parsed from the given string
-     */
-    public Date parse(String time) {
-        // Try parsing all provided time formats in order
-        for (final String format : formats) {
-            try {
-                return parseDate(time, format);
-            }
-            catch (ParseException ignored) {
-            }
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        final Matcher matcher = pattern.matcher(originString);
+        final String updatedString;
+        if (originString.toLowerCase().startsWith("now")) {
+            updatedString = "now";
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        else if (originString.toLowerCase().contains("now")) {
+            throw new IllegalArgumentException("timestamp 'now' should not have any values before it");
+        }
+        else {
+            if (!matcher.find()) {
+                throw new IllegalArgumentException("Text <" + originString + "> did not contain a valid offset unit");
+            }
+            updatedString = matcher.group(); // next group of alphabetical characters
+        }
+        return updatedString;
     }
 
-    private Date parseDate(String time, String timeFormat) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
-        sdf.setLenient(false);
-        return sdf.parse(time);
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidOffsetUnitText other = (ValidOffsetUnitText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(pattern, other.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, pattern);
     }
 }

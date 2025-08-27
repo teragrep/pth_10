@@ -45,39 +45,59 @@
  */
 package com.teragrep.pth_10.ast.time;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.TimeZone;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+/**
+ * Parser for the three default time formats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
+ * e.g., 2011-12-03T10:15:30+01:00 3 ISO 8601 without offset, e.g., 2011-12-03T10:15:30 When timezone is not specified,
+ * uses the system default
+ */
+public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
 
-    private final DPLTimestamp origin;
+    private final String value;
+    private final AbsoluteTimestamp[] timestamps;
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
-        this.origin = origin;
+    public DefaultFormatAbsoluteTimestamp(final String value) {
+        this(value, TimeZone.getDefault().toZoneId());
+    }
+
+    public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
+        this(value, new AbsoluteTimestamp[] {
+                new AbsoluteTimestamp(value, "MM/dd/yyyy:HH:mm:ss", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSS", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ssXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss", zoneId)
+        });
+    }
+
+    public DefaultFormatAbsoluteTimestamp(String value, final AbsoluteTimestamp[] timestamps) {
+        this.value = value;
+        this.timestamps = timestamps;
     }
 
     public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
+        for (final DPLTimestamp timestamp : timestamps) {
+            if (timestamp.isValid()) {
+                return timestamp.zonedDateTime();
+            }
         }
-        else {
-            rv = originZoneDateTime;
-        }
-        return rv;
+        throw new RuntimeException(
+                "TimeQualifier conversion error: value <" + value + "> couldn't be parsed using default formats."
+        );
     }
 
     @Override
     public boolean isValid() {
-        return origin.isValid();
+        return Arrays.stream(timestamps).anyMatch(AbsoluteTimestamp::isValid);
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -87,12 +107,12 @@ public final class RoundedUpTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
-        return Objects.equals(origin, other.origin);
+        final DefaultFormatAbsoluteTimestamp other = (DefaultFormatAbsoluteTimestamp) o;
+        return Objects.equals(value, other.value) && Objects.deepEquals(timestamps, other.timestamps);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(origin);
+        return Objects.hash(value, Arrays.hashCode(timestamps));
     }
 }

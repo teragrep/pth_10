@@ -43,37 +43,60 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.commands.transformstatement.convert;
+package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth_10.ast.DPLTimeFormatText;
-import com.teragrep.pth_10.ast.TextString;
-import com.teragrep.pth_10.ast.UnquotedText;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth_10.ast.Text;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/**
- * UDF for convert command 'ctime'<br>
- * Converts epoch time into given timeformat<br>
- * 
- * @author eemhu
- */
-public class Ctime implements UDF2<String, String, String> {
+public final class ValidRelativeTimestampText implements Text {
 
-    private static final long serialVersionUID = 1L;
+    private final Text origin;
+    private final Pattern pattern;
 
-    @Override
-    public String call(String epoch, String timeformat) throws Exception {
-        final ZoneId utcZoneId = ZoneId.of("UTC");
-        final long seconds = Long.parseLong(epoch);
-        final Instant instant = Instant.ofEpochSecond(seconds);
-        final ZonedDateTime zonedDateTime = instant.atZone(utcZoneId);
-        final String dplTimeFormatString = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat))).read();
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dplTimeFormatString).withZone(utcZoneId);
-        return formatter.format(zonedDateTime);
+    public ValidRelativeTimestampText(final Text origin) {
+        this(origin, Pattern.compile("^(([-+])(\\d*[A-Za-z]+))?(@[A-Za-z]+([-+])?[\\dA-Za-z]*)?"));
     }
 
+    private ValidRelativeTimestampText(final Text origin, final Pattern pattern) {
+        this.origin = origin;
+        this.pattern = pattern;
+    }
+
+    private void validate() {
+        final String originString = origin.read();
+        final Matcher relativeTimeMatcher = pattern.matcher(originString);
+
+        if (!relativeTimeMatcher.matches() && !originString.equalsIgnoreCase("now")) {
+            throw new NumberFormatException("Unknown relative time modifier string <" + originString + ">");
+        }
+    }
+
+    @Override
+    public String read() {
+        validate();
+        return origin.read();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidRelativeTimestampText other = (ValidRelativeTimestampText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(pattern, other.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, pattern);
+    }
 }

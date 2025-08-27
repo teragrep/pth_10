@@ -45,39 +45,76 @@
  */
 package com.teragrep.pth_10.ast.time;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.TimeZone;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+/**
+ * Determines a point for time from input string, timeformat and a timezone id. Supports relative and absolute
+ * timestamps, relative is used if possible to determine the offset
+ */
+public final class DPLTimestampImpl implements DPLTimestamp {
 
-    private final DPLTimestamp origin;
+    private final Logger LOGGER = LoggerFactory.getLogger(DPLTimestampImpl.class);
+    private final AbsoluteTimestamp absoluteTimestamp;
+    private final RelativeTimestamp relativeTimestamp;
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
-        this.origin = origin;
+    public DPLTimestampImpl(final String value) {
+        this(value, "", TimeZone.getDefault().toZoneId());
+    }
+
+    public DPLTimestampImpl(final String value, final String timeformat) {
+        this(value, timeformat, TimeZone.getDefault().toZoneId());
+    }
+
+    public DPLTimestampImpl(final String value, final String timeformat, final ZoneId zoneId) {
+        this(new AbsoluteTimestamp(value, timeformat, zoneId), new RelativeTimestamp(value, zoneId));
+    }
+
+    public DPLTimestampImpl(final AbsoluteTimestamp absoluteTimestamp, final RelativeTimestamp relativeTimestamp) {
+        this.absoluteTimestamp = absoluteTimestamp;
+        this.relativeTimestamp = relativeTimestamp;
     }
 
     public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
+        final DPLTimestamp timestamp;
+        if (relativeTimestamp.isValid()) {
+            LOGGER.info("Found valid relative timestamp");
+            timestamp = relativeTimestamp;
         }
         else {
-            rv = originZoneDateTime;
+            LOGGER.info("There was no valid relative timestamp, using absolute timestamp");
+            timestamp = absoluteTimestamp;
         }
-        return rv;
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER
+                    .info(
+                            "Resulting time was <{}> with epoch seconds <{}>", zonedDateTime,
+                            zonedDateTime.toEpochSecond()
+                    );
+        }
+        return zonedDateTime;
     }
 
     @Override
     public boolean isValid() {
-        return origin.isValid();
+        final boolean isValid;
+        if (relativeTimestamp.isValid()) {
+            isValid = true;
+        }
+        else {
+            isValid = absoluteTimestamp.isValid();
+        }
+        return isValid;
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -87,12 +124,13 @@ public final class RoundedUpTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
-        return Objects.equals(origin, other.origin);
+        final DPLTimestampImpl other = (DPLTimestampImpl) o;
+        return Objects.equals(absoluteTimestamp, other.absoluteTimestamp)
+                && Objects.equals(relativeTimestamp, other.relativeTimestamp);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(origin);
+        return Objects.hash(absoluteTimestamp, relativeTimestamp);
     }
 }

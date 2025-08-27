@@ -43,41 +43,58 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.time;
+package com.teragrep.pth_10.ast;
 
-import java.time.ZonedDateTime;
 import java.util.Objects;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+/** replaces dpl time units with java-compatible time units */
+public final class DPLTimeFormatText implements Text {
 
-    private final DPLTimestamp origin;
+    private final Text origin;
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
+    public DPLTimeFormatText(final Text origin) {
         this.origin = origin;
     }
 
-    public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
+    @Override
+    public String read() {
+        String read = origin.read();
+        if ("%s".equals(read)) {
+            return read;
         }
-        else {
-            rv = originZoneDateTime;
-        }
-        return rv;
+        return read
+                .replaceAll("%F", "yyyy-MM-dd") // ISO 8601 %Y-%m-%d
+                .replaceAll("%y", "yy") // year without century (00-99)
+                .replaceAll("%Y", "yyyy") // full year
+                .replaceAll("%m", "MM") // month 1-12
+                .replaceAll("%d", "dd") // day 1-31
+                .replaceAll("%b", "MMM") // abbrv. month name
+                .replaceAll("%B", "MMMM") // full month name
+                .replaceAll("%A", "EEEE") // full weekday name, e.g. "sunday"
+                .replaceAll("%a", "E") // abbrv. weekday name, e.g. "Sun"
+                .replaceAll("%j", "D") // day of year, 001-366
+                .replaceAll("%w", "e") // weekday as decimal 0=sun 6=sat
+                // Time
+                .replaceAll("%H", "HH") // hour 0-23
+                .replaceAll("%k", "H") // hour without leading zeroes
+                .replaceAll("%M", "mm") // minute 0-59
+                .replaceAll("%S", "ss") // second 0-59
+                .replaceAll("%I", "hh") // hour 1-12
+                .replaceAll("%p", "a") // am/pm
+                .replaceAll("%T", "HH:mm:ss") // hour:min:sec
+                .replaceAll("%f", "SSS") // microsecs
+                // Time zone
+                .replaceAll("%Z", "zzz") // timezone abbreviation
+                .replaceAll("%z", "XXX") // timezone offset +00:00
+                // Other
+                .replaceAll("%%", "%") // percent sign
+                // remove unsupported
+                .replaceAll("%c", "")
+                .replaceAll("%x", "");
     }
 
     @Override
-    public boolean isValid() {
-        return origin.isValid();
-    }
-
-    @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -87,7 +104,7 @@ public final class RoundedUpTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
+        final DPLTimeFormatText other = (DPLTimeFormatText) o;
         return Objects.equals(origin, other.origin);
     }
 

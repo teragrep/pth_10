@@ -45,39 +45,51 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import java.time.ZonedDateTime;
+import com.teragrep.pth_10.ast.Text;
+
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+public final class ValidTrailingRelativeTimestampText implements Text {
 
-    private final DPLTimestamp origin;
+    private final Text origin;
+    private final Pattern validPattern;
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
-        this.origin = origin;
+    public ValidTrailingRelativeTimestampText(final Text origin) {
+        this(origin, Pattern.compile(".*@((?:w[0-7])|[a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$"));
     }
 
-    public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
+    public ValidTrailingRelativeTimestampText(final Text origin, final Pattern validPattern) {
+        this.origin = origin;
+        this.validPattern = validPattern;
+    }
+
+    public boolean isValid() {
+        final String originString = origin.read();
+        final Matcher matcher = validPattern.matcher(originString);
+        return matcher.find() && matcher.groupCount() > 1 && matcher.group(2) != null && !matcher.group(2).isEmpty();
+    }
+
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        final String updatedString;
+        final Matcher matcher = validPattern.matcher(originString);
+        // check if the second capture group contains the valid trailing offset (e.g., +3h, -10m)
+        if (isValid() && matcher.find()) {
+            updatedString = matcher.group(2);
         }
         else {
-            rv = originZoneDateTime;
+            throw new IllegalArgumentException(
+                    "Could not find a valid trailing offset after '@' for value <" + originString + ">"
+            );
         }
-        return rv;
+        return updatedString;
     }
 
     @Override
-    public boolean isValid() {
-        return origin.isValid();
-    }
-
-    @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) {
             return true;
         }
@@ -87,12 +99,12 @@ public final class RoundedUpTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
-        return Objects.equals(origin, other.origin);
+        final ValidTrailingRelativeTimestampText other = (ValidTrailingRelativeTimestampText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(validPattern, other.validPattern);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(origin);
+        return Objects.hash(origin, validPattern);
     }
 }
