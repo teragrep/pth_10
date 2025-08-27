@@ -58,10 +58,15 @@ public final class ValidOffsetAmountText implements Text {
     private static final Logger LOGGER = LoggerFactory.getLogger(ValidOffsetAmountText.class);
 
     private final Text origin;
-    private final Pattern pattern = Pattern.compile("^([+-]?\\d+)");
+    private final Pattern pattern;
 
     public ValidOffsetAmountText(final Text origin) {
+        this(origin, Pattern.compile("^([+-]?\\d+)"));
+    }
+
+    public ValidOffsetAmountText(final Text origin, final Pattern pattern) {
         this.origin = origin;
+        this.pattern = pattern;
     }
 
     @Override
@@ -75,7 +80,10 @@ public final class ValidOffsetAmountText implements Text {
             amountString = originString;
         }
         LOGGER.debug("Getting amount value from <{}>", amountString);
+        final Matcher matcher = pattern.matcher(amountString);
+        final boolean amountValueContainsDigits = amountString.chars().anyMatch(Character::isDigit);
         final String updatedString;
+
         if (amountString.isEmpty() || "now".equalsIgnoreCase(amountString)) {
             updatedString = "0";
         }
@@ -85,14 +93,11 @@ public final class ValidOffsetAmountText implements Text {
         else if ("-".equals(amountString)) {
             updatedString = "-1";
         }
-        else if (amountString.chars().anyMatch(Character::isDigit)) {
-            final Matcher matcher = pattern.matcher(amountString);
-            if (matcher.find()) {
-                updatedString = matcher.group();
-            }
-            else {
-                throw new RuntimeException("Matcher could not find a valid offset amount from <" + amountString + ">");
-            }
+        else if (amountValueContainsDigits && matcher.find()) {
+            updatedString = matcher.group();
+        }
+        else if (amountValueContainsDigits) {
+            throw new RuntimeException("Matcher could not find a valid offset amount from <" + amountString + ">");
         }
         else {
             if (amountString.startsWith("-")) {

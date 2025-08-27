@@ -104,8 +104,9 @@ public class Mvrange implements UDF3<Integer, Integer, Object, List<String>>, Se
             rv.add(String.valueOf(time));
 
             // Go until incremented past end
+            final ZoneId utcZoneId = ZoneId.of("UTC");
             while (time < end) {
-                final ZonedDateTime startTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(time), ZoneId.of("UTC"));
+                final ZonedDateTime startTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(time), utcZoneId);
                 final RelativeTimestamp relativeTimestamp = new RelativeTimestamp("+" + stepStr, startTime);
                 time = relativeTimestamp.zonedDateTime().toEpochSecond();
 

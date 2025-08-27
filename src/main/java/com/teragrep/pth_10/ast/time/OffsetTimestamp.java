@@ -128,7 +128,7 @@ public final class OffsetTimestamp implements DPLTimestamp {
         catch (final DateTimeException | ArithmeticException exception) {
             LOGGER.info("Overflow exception when calculating offset <{}>", exception.getMessage());
             if (amount > 0) {
-                LOGGER.info("Positive amount overflow, clamping to min accepted value");
+                LOGGER.info("Positive amount overflow, clamping to max accepted value");
                 updatedTime = ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.MAX_VALUE), startTime.getZone());
             }
             else {
