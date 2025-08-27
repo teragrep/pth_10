@@ -64,7 +64,7 @@ public final class ValidOffsetAmountText implements Text {
         this(origin, Pattern.compile("^([+-]?\\d+)"));
     }
 
-    public ValidOffsetAmountText(final Text origin, final Pattern pattern) {
+    private ValidOffsetAmountText(final Text origin, final Pattern pattern) {
         this.origin = origin;
         this.pattern = pattern;
     }
