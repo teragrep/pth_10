@@ -90,14 +90,14 @@ public final class RelativeTimestamp implements DPLTimestamp {
 
     @Override
     public boolean isValid() {
-        boolean isStub = true;
+        boolean isValid = true;
         try {
             offsetString.read();
         }
         catch (final IllegalArgumentException e) {
-            isStub = false;
+            isValid = false;
         }
-        return isStub;
+        return isValid;
     }
 
     @Override
