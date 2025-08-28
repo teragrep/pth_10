@@ -49,6 +49,8 @@ import com.teragrep.pth_10.ast.NullValue;
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.UnquotedText;
 import org.apache.spark.sql.api.java.UDF2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.Iterator;
 import scala.collection.mutable.WrappedArray;
 
@@ -70,6 +72,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
     private static final long serialVersionUID = 1L;
     private final boolean isMultiValue;
     private final NullValue nullValue;
+    private static final Logger LOGGER = LoggerFactory.getLogger(RegexMatch.class);
 
     public RegexMatch(NullValue nullValue) {
         super();
@@ -86,7 +89,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
     @Override
     public Object call(Object subject, String regexString) throws Exception {
 
-        String subjectStr = null;
+        String subjectStr = this.nullValue.toString();
 
         if (subject instanceof Long) {
             subjectStr = ((Long) subject).toString();
@@ -98,7 +101,7 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
             subjectStr = ((Double) subject).toString();
         }
         else if (subject instanceof Float) {
-            subjectStr = ((Double) subject).toString();
+            subjectStr = ((Float) subject).toString();
         }
         else if (subject instanceof String) {
             subjectStr = ((String) subject);
@@ -124,6 +127,10 @@ public class RegexMatch implements UDF2<Object, String, Object>, Serializable {
     private Boolean performForNormalField(String subjectStr, String regexString) {
         regexString = new UnquotedText(new TextString(regexString)).read();
         boolean isMatch = false;
+        if (subjectStr == null) {
+            LOGGER.debug("Subject string contains null values");
+            return isMatch;
+        }
 
         try {
             Pattern p = Pattern.compile(regexString);
