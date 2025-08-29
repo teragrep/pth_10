@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -126,6 +127,9 @@ public final class TeragrepSystemStep extends AbstractStep {
         }
 
         try (final InputStream is = TeragrepSystemStep.class.getClassLoader().getResourceAsStream("maven.properties")) {
+            if (is == null) {
+                throw new IllegalStateException("InputStream was Null, Problem fetching package properties");
+            }
             final Properties p = new Properties();
             p.load(is);
             LOGGER.debug("package properties: <{}>", p);
@@ -140,8 +144,9 @@ public final class TeragrepSystemStep extends AbstractStep {
                 }
             });
         }
-        catch (IOException | NullPointerException e) {
-            e.printStackTrace();
+        catch (IOException e) {
+            LOGGER.error("Failed to load InputStream: ", e);
+            throw new UncheckedIOException("Failed to load InputStream: ", e);
         }
         return rv;
     }
