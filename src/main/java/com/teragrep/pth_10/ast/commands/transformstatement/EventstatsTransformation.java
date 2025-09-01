@@ -119,7 +119,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
         final DPLParser.AggregateFunctionContext aggregateFunctionContext = ctx.aggregateFunction();
         if (aggregateFunctionContext != null) {
-            cmd = aggregateFunctionContext.getChild(0);
+            cmd = aggregateFunctionContext;
         }
         else {
             throw new IllegalArgumentException("Expected eventstats aggregation instruction was not provided");
