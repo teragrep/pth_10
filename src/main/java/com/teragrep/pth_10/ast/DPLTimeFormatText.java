@@ -43,61 +43,54 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.time;
+package com.teragrep.pth_10.ast;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
-
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Objects;
 
-public final class RelativeTimestamp implements DPLTimestamp {
+/** replaces dpl time units with java-compatible time units */
+public final class DPLTimeFormatText implements Text {
 
-    private final ValidRelativeTimestampText offsetString;
-    private final ZonedDateTime baseTime;
+    private final Text origin;
 
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
-    }
-
-    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
-    }
-
-    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
-        this.offsetString = offsetString;
-        this.baseTime = baseTime;
+    public DPLTimeFormatText(final Text origin) {
+        this.origin = origin;
     }
 
     @Override
-    public ZonedDateTime zonedDateTime() {
-        if (!isValid()) {
-            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
+    public String read() {
+        String read = origin.read();
+        if ("%s".equals(read)) {
+            return read;
         }
-        final String validOffset = offsetString.read();
-        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
-        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
-        final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isValid()) {
-            updatedTime = snappedTimestamp.zonedDateTime();
-        }
-        else {
-            updatedTime = offsetTimestamp.zonedDateTime();
-        }
-        return updatedTime;
-    }
-
-    @Override
-    public boolean isValid() {
-        boolean isStub = true;
-        try {
-            offsetString.read();
-        }
-        catch (final IllegalArgumentException e) {
-            isStub = false;
-        }
-        return isStub;
+        return read
+                .replaceAll("%F", "yyyy-MM-dd") // ISO 8601 %Y-%m-%d
+                .replaceAll("%y", "yy") // year without century (00-99)
+                .replaceAll("%Y", "yyyy") // full year
+                .replaceAll("%m", "MM") // month 1-12
+                .replaceAll("%d", "dd") // day 1-31
+                .replaceAll("%b", "MMM") // abbrv. month name
+                .replaceAll("%B", "MMMM") // full month name
+                .replaceAll("%A", "EEEE") // full weekday name, e.g. "sunday"
+                .replaceAll("%a", "E") // abbrv. weekday name, e.g. "Sun"
+                .replaceAll("%j", "D") // day of year, 001-366
+                .replaceAll("%w", "e") // weekday as decimal 0=sun 6=sat
+                // Time
+                .replaceAll("%H", "HH") // hour 0-23
+                .replaceAll("%k", "H") // hour without leading zeroes
+                .replaceAll("%M", "mm") // minute 0-59
+                .replaceAll("%S", "ss") // second 0-59
+                .replaceAll("%I", "hh") // hour 1-12
+                .replaceAll("%p", "a") // am/pm
+                .replaceAll("%T", "HH:mm:ss") // hour:min:sec
+                .replaceAll("%f", "SSS") // microsecs
+                // Time zone
+                .replaceAll("%Z", "zzz") // timezone abbreviation
+                .replaceAll("%z", "XXX") // timezone offset +00:00
+                // Other
+                .replaceAll("%%", "%") // percent sign
+                // remove unsupported
+                .replaceAll("%c", "")
+                .replaceAll("%x", "");
     }
 
     @Override
@@ -111,12 +104,12 @@ public final class RelativeTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RelativeTimestamp other = (RelativeTimestamp) o;
-        return Objects.equals(offsetString, other.offsetString) && Objects.equals(baseTime, other.baseTime);
+        final DPLTimeFormatText other = (DPLTimeFormatText) o;
+        return Objects.equals(origin, other.origin);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(offsetString, baseTime);
+        return Objects.hashCode(origin);
     }
 }
