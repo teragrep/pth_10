@@ -121,11 +121,10 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
                     ((StepListNode) left).asList().forEach(step -> this.catVisitor.getStepList().add(step));
                 }
                 else {
-                    LOGGER
-                            .error(
-                                    "queryId <{}> visit of leftTree did not return Step(List)Node, instead got: class=<{}>",
-                                    catCtx.getQueryName(), left.getClass().getName()
-                            );
+                    throw new IllegalStateException(
+                            "visit of leftTree did not return a StepNode or StepListNode, instead got: class= "
+                                    + left.getClass().getName()
+                    );
                 }
                 // Add right branch
                 if (rightTree != null) {
