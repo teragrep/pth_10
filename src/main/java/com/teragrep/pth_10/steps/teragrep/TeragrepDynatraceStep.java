@@ -186,20 +186,22 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
             if (jsonResp == null || jsonResp.isJsonNull()) {
                 throw new IllegalStateException("Unexpected null JSON response");
             }
-            JsonElement errorElem = jsonResp.get("error");
-            if (!errorElem.isJsonNull()) {
-                throw new RuntimeException("Error from server response: " + errorElem.toString());
+            
+            if (jsonResp.has("error") && !jsonResp.get("error").isJsonNull()) {
+                throw new RuntimeException("Error from server response: " + jsonResp.get("error").toString());
             }
-            JsonElement validElem = jsonResp.get("linesValid");
-            if (validElem == null) {
+            
+            final boolean hasValidElem = jsonResp.has("linesValid");
+            if (!hasValidElem) {
                 throw new RuntimeException("Unexpected JSON: Could not find linesValid element.");
             }
-            LOGGER.info("Valid lines: <[{}]>", validElem);
-            JsonElement invalidElem = jsonResp.get("linesInvalid");
-            if (invalidElem == null) {
+            LOGGER.info("Valid lines: <[{}]>", jsonResp.get("linesValid"));
+            
+            final boolean hasInvalidElem = jsonResp.has("linesInvalid");
+            if (!hasInvalidElem) {
                 throw new RuntimeException("Unexpected JSON: Could not find linesInvalid element.");
             }
-            LOGGER.warn("Invalid lines: <[{}]>", invalidElem);
+            LOGGER.warn("Invalid lines: <[{}]>", jsonResp.get("linesInvalid"));
 
             if (statusCode != 202 && statusCode != 400) {
                 throw new RuntimeException("Error! Response code: <[" + statusCode + "]>. Expected 202 or 400.");
