@@ -45,59 +45,55 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
-
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.TimeZone;
 
-public final class RelativeTimestamp implements DPLTimestamp {
+/**
+ * Parser for the three default time formats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
+ * e.g., 2011-12-03T10:15:30+01:00 3 ISO 8601 without offset, e.g., 2011-12-03T10:15:30 When timezone is not specified,
+ * uses the system default
+ */
+public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
 
-    private final ValidRelativeTimestampText offsetString;
-    private final ZonedDateTime baseTime;
+    private final String value;
+    private final AbsoluteTimestamp[] timestamps;
 
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    public DefaultFormatAbsoluteTimestamp(final String value) {
+        this(value, TimeZone.getDefault().toZoneId());
     }
 
-    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
+    public DefaultFormatAbsoluteTimestamp(final String value, final ZoneId zoneId) {
+        this(value, new AbsoluteTimestamp[] {
+                new AbsoluteTimestamp(value, "MM/dd/yyyy:HH:mm:ss", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss.SSS", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ssXXX", zoneId),
+                new AbsoluteTimestamp(value, "yyyy-MM-dd'T'HH:mm:ss", zoneId)
+        });
     }
 
-    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
-        this.offsetString = offsetString;
-        this.baseTime = baseTime;
+    public DefaultFormatAbsoluteTimestamp(String value, final AbsoluteTimestamp[] timestamps) {
+        this.value = value;
+        this.timestamps = timestamps;
     }
 
-    @Override
     public ZonedDateTime zonedDateTime() {
-        if (!isValid()) {
-            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
+        for (final DPLTimestamp timestamp : timestamps) {
+            if (timestamp.isValid()) {
+                return timestamp.zonedDateTime();
+            }
         }
-        final String validOffset = offsetString.read();
-        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
-        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
-        final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isValid()) {
-            updatedTime = snappedTimestamp.zonedDateTime();
-        }
-        else {
-            updatedTime = offsetTimestamp.zonedDateTime();
-        }
-        return updatedTime;
+        throw new RuntimeException(
+                "TimeQualifier conversion error: value <" + value + "> couldn't be parsed using default formats."
+        );
     }
 
     @Override
     public boolean isValid() {
-        boolean isStub = true;
-        try {
-            offsetString.read();
-        }
-        catch (final IllegalArgumentException e) {
-            isStub = false;
-        }
-        return isStub;
+        return Arrays.stream(timestamps).anyMatch(AbsoluteTimestamp::isValid);
     }
 
     @Override
@@ -111,12 +107,12 @@ public final class RelativeTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RelativeTimestamp other = (RelativeTimestamp) o;
-        return Objects.equals(offsetString, other.offsetString) && Objects.equals(baseTime, other.baseTime);
+        final DefaultFormatAbsoluteTimestamp other = (DefaultFormatAbsoluteTimestamp) o;
+        return Objects.equals(value, other.value) && Objects.deepEquals(timestamps, other.timestamps);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(offsetString, baseTime);
+        return Objects.hash(value, Arrays.hashCode(timestamps));
     }
 }

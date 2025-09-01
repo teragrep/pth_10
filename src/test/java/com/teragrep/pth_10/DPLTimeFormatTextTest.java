@@ -43,37 +43,16 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.commands.transformstatement.convert;
+package com.teragrep.pth_10;
 
 import com.teragrep.pth_10.ast.DPLTimeFormatText;
-import com.teragrep.pth_10.ast.TextString;
-import com.teragrep.pth_10.ast.UnquotedText;
-import org.apache.spark.sql.api.java.UDF2;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Test;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+public class DPLTimeFormatTextTest {
 
-/**
- * UDF for convert command 'ctime'<br>
- * Converts epoch time into given timeformat<br>
- * 
- * @author eemhu
- */
-public class Ctime implements UDF2<String, String, String> {
-
-    private static final long serialVersionUID = 1L;
-
-    @Override
-    public String call(String epoch, String timeformat) throws Exception {
-        final ZoneId utcZoneId = ZoneId.of("UTC");
-        final long seconds = Long.parseLong(epoch);
-        final Instant instant = Instant.ofEpochSecond(seconds);
-        final ZonedDateTime zonedDateTime = instant.atZone(utcZoneId);
-        final String dplTimeFormatString = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat))).read();
-        final DateTimeFormatter formatter = DateTimeFormatter.ofPattern(dplTimeFormatString).withZone(utcZoneId);
-        return formatter.format(zonedDateTime);
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(DPLTimeFormatText.class).withNonnullFields("origin").verify();
     }
-
 }

@@ -45,59 +45,39 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
+import com.teragrep.pth_10.ast.Text;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public final class RelativeTimestamp implements DPLTimestamp {
+public final class ValidRelativeTimestampText implements Text {
 
-    private final ValidRelativeTimestampText offsetString;
-    private final ZonedDateTime baseTime;
+    private final Text origin;
+    private final Pattern pattern;
 
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    public ValidRelativeTimestampText(final Text origin) {
+        this(origin, Pattern.compile("^(([-+])(\\d*[A-Za-z]+))?(@[A-Za-z]+([-+])?[\\dA-Za-z]*)?"));
     }
 
-    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
+    private ValidRelativeTimestampText(final Text origin, final Pattern pattern) {
+        this.origin = origin;
+        this.pattern = pattern;
     }
 
-    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
-        this.offsetString = offsetString;
-        this.baseTime = baseTime;
-    }
+    private void validate() {
+        final String originString = origin.read();
+        final Matcher relativeTimeMatcher = pattern.matcher(originString);
 
-    @Override
-    public ZonedDateTime zonedDateTime() {
-        if (!isValid()) {
-            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
+        if (!relativeTimeMatcher.matches() && !originString.equalsIgnoreCase("now")) {
+            throw new NumberFormatException("Unknown relative time modifier string <" + originString + ">");
         }
-        final String validOffset = offsetString.read();
-        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
-        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
-        final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isValid()) {
-            updatedTime = snappedTimestamp.zonedDateTime();
-        }
-        else {
-            updatedTime = offsetTimestamp.zonedDateTime();
-        }
-        return updatedTime;
     }
 
     @Override
-    public boolean isValid() {
-        boolean isStub = true;
-        try {
-            offsetString.read();
-        }
-        catch (final IllegalArgumentException e) {
-            isStub = false;
-        }
-        return isStub;
+    public String read() {
+        validate();
+        return origin.read();
     }
 
     @Override
@@ -111,12 +91,12 @@ public final class RelativeTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RelativeTimestamp other = (RelativeTimestamp) o;
-        return Objects.equals(offsetString, other.offsetString) && Objects.equals(baseTime, other.baseTime);
+        final ValidRelativeTimestampText other = (ValidRelativeTimestampText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(pattern, other.pattern);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(offsetString, baseTime);
+        return Objects.hash(origin, pattern);
     }
 }

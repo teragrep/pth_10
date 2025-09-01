@@ -45,12 +45,13 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth_10.ast.time.RelativeTimeParser;
 import com.teragrep.pth_10.ast.time.RelativeTimestamp;
 import org.apache.spark.sql.api.java.UDF3;
 
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -102,11 +103,11 @@ public class Mvrange implements UDF3<Integer, Integer, Object, List<String>>, Se
             long time = start;
             rv.add(String.valueOf(time));
 
-            RelativeTimeParser rtParser = new RelativeTimeParser();
-            RelativeTimestamp rtTimestamp = rtParser.parse("+" + stepStr);
             // Go until incremented past end
             while (time < end) {
-                time = rtTimestamp.calculate(new Timestamp(time * 1000L)).getEpochSecond();
+                final ZonedDateTime startTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(time), ZoneId.of("UTC"));
+                final RelativeTimestamp relativeTimestamp = new RelativeTimestamp("+" + stepStr, startTime);
+                time = relativeTimestamp.zonedDateTime().toEpochSecond();
 
                 // If time went past end, stop incrementing and don't add to mv field
                 if (time > end) {

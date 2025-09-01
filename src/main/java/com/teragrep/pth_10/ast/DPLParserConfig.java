@@ -45,12 +45,10 @@
  */
 package com.teragrep.pth_10.ast;
 
-import com.teragrep.pth_10.ast.time.RelativeTimeParser;
-import com.teragrep.pth_10.ast.time.RelativeTimestamp;
+import com.teragrep.pth_10.ast.time.DPLTimestampImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -104,20 +102,7 @@ public class DPLParserConfig {
      * @param earliest string value like -1h or actual timestamp
      */
     public void setEarliest(String earliest) {
-        long earliestEpoch = 0;
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-
-        // Try to check if it is relative and catch exception
-        try {
-            RelativeTimestamp rtTimestamp = rtParser.parse(earliest); // can throw error if not relative timestamp
-            earliestEpoch = rtTimestamp.calculate(now).getEpochSecond();
-        }
-        catch (NumberFormatException ne) {
-            // absolute time
-            earliestEpoch = new DefaultTimeFormat().getEpoch(earliest);
-        }
-
+        final long earliestEpoch = new DPLTimestampImpl(earliest).zonedDateTime().toEpochSecond();
         config.put("earliest", earliest);
         config.put("earliestEpoch", earliestEpoch);
     }
@@ -138,20 +123,7 @@ public class DPLParserConfig {
      * @param latest string value like -1h or actual timestamp
      */
     public void setLatest(String latest) {
-        long latestEpoch = 0;
-        Timestamp now = new Timestamp(System.currentTimeMillis());
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-
-        // Try to check if it is relative and catch exception
-        try {
-            RelativeTimestamp rtTimestamp = rtParser.parse(latest); // can throw exception if not relative timestamp
-            latestEpoch = rtTimestamp.calculate(now).getEpochSecond();
-        }
-        catch (NumberFormatException ne) {
-            // absolute time
-            latestEpoch = new DefaultTimeFormat().getEpoch(latest);
-        }
-
+        final long latestEpoch = new DPLTimestampImpl(latest).zonedDateTime().toEpochSecond();
         config.put("latest", latest);
         config.put("latestEpoch", latestEpoch);
     }

@@ -45,29 +45,55 @@
  */
 package com.teragrep.pth_10;
 
-import com.teragrep.pth_10.ast.time.DPLTimestamp;
-import com.teragrep.pth_10.ast.time.DPLTimestampImpl;
-import com.teragrep.pth_10.ast.time.RoundedUpTimestamp;
+import com.teragrep.pth_10.ast.Text;
+import com.teragrep.pth_10.ast.TextString;
+import com.teragrep.pth_10.ast.time.ValidRelativeTimestampText;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public final class RoundedUpTimestampTest {
+public final class ValidRelativeTimestampTextTest {
 
     @Test
-    void testWithoutNanosecond() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00+00:00", ""));
-        Assertions.assertEquals(1704067200L, timestamp.zonedDateTime().toInstant().getEpochSecond());
+    public void testPlainValue() {
+        final Text input = new TextString("+5d");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("+5d", offset.read());
     }
 
     @Test
-    void testWithNanoseconds() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00.240+00:00", ""));
-        Assertions.assertEquals(1704067200L + 1L, timestamp.zonedDateTime().toInstant().getEpochSecond());
+    public void testWithSnapValue() {
+        final Text input = new TextString("+5d@hours+3");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("+5d@hours+3", offset.read());
+    }
+
+    @Test
+    public void testOnlySnapValue() {
+        final Text input = new TextString("@hours+3");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        Assertions.assertEquals("@hours+3", offset.read());
+    }
+
+    @Test
+    public void testNow() {
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(new TextString("now"));
+        final ValidRelativeTimestampText offset2 = new ValidRelativeTimestampText(new TextString("NOW"));
+        Assertions.assertEquals("now", offset.read());
+        Assertions.assertEquals("NOW", offset2.read());
+    }
+
+    @Test
+    public void testInvalidInput() {
+        final Text input = new TextString("invalid");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        final RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, offset::read);
+        final String expectedMessage = "Unknown relative time modifier string <invalid>";
+        Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
     }
 
     @Test
     public void testContract() {
-        EqualsVerifier.forClass(RoundedUpTimestamp.class).withNonnullFields("origin").verify();
+        EqualsVerifier.forClass(ValidRelativeTimestampText.class).withNonnullFields("origin").verify();
     }
 }

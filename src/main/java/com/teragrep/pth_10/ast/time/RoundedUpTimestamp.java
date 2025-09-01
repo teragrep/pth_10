@@ -45,23 +45,54 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.util.Objects;
 
+/** Adds a second when the timestamp nanosecond is greater than 0 */
 public final class RoundedUpTimestamp implements DPLTimestamp {
 
-    private final DPLTimestamp dplTimestamp;
+    private final DPLTimestamp origin;
 
-    public RoundedUpTimestamp(final DPLTimestamp dplTimestamp) {
-        this.dplTimestamp = dplTimestamp;
+    public RoundedUpTimestamp(final DPLTimestamp origin) {
+        this.origin = origin;
     }
 
-    public Instant instant() {
-        Instant origin = dplTimestamp.instant();
+    public ZonedDateTime zonedDateTime() {
         // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
         // that are on the same second
-        if (origin.getNano() > 0) {
-            origin = origin.plusSeconds(1);
+        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
+        final ZonedDateTime rv;
+        if (originZoneDateTime.getNano() > 0) {
+            rv = originZoneDateTime.plusSeconds(1);
         }
-        return origin;
+        else {
+            rv = originZoneDateTime;
+        }
+        return rv;
+    }
+
+    @Override
+    public boolean isValid() {
+        return origin.isValid();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
+        return Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(origin);
     }
 }
