@@ -81,7 +81,6 @@ public final class ValidOffsetAmountText implements Text {
         }
         LOGGER.debug("Getting amount value from <{}>", amountString);
         final Matcher matcher = pattern.matcher(amountString);
-        final boolean amountValueContainsDigits = amountString.chars().anyMatch(Character::isDigit);
         final String updatedString;
 
         if (amountString.isEmpty() || "now".equalsIgnoreCase(amountString)) {
@@ -93,19 +92,17 @@ public final class ValidOffsetAmountText implements Text {
         else if ("-".equals(amountString)) {
             updatedString = "-1";
         }
-        else if (amountValueContainsDigits && matcher.find()) {
+        else if (matcher.lookingAt()) { // starts checking from start of string
             updatedString = matcher.group();
         }
-        else if (amountValueContainsDigits) {
-            throw new RuntimeException("Matcher could not find a valid offset amount from <" + amountString + ">");
+        else if (amountString.startsWith("-")) {
+            updatedString = "-1";
+        }
+        else if (amountString.startsWith("+")) {
+            updatedString = "1";
         }
         else {
-            if (amountString.startsWith("-")) {
-                updatedString = "-1";
-            }
-            else {
-                updatedString = "1";
-            }
+            throw new RuntimeException("Matcher could not find a valid offset amount from <" + amountString + ">");
         }
         // as ZonedDateTime supports epoch seconds range of (-999,999,999 - 999,999,999),
         // we ensure that the resulting epoch seconds remains inside that range*/
