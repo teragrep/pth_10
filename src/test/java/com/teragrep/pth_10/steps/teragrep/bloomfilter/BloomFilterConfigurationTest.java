@@ -72,30 +72,6 @@ public final class BloomFilterConfigurationTest {
     }
 
     @Test
-    public void testNullExpectedException() {
-        final BloomFilterConfiguration configuration = new BloomFilterConfiguration(null, 0.01);
-        final IllegalArgumentException exception = Assertions
-                .assertThrows(IllegalArgumentException.class, configuration::expectedNumOfItems);
-        Assertions
-                .assertEquals(
-                        "Expected number of items in 'dpl.pth_06.bloom.db.fields' should not be 'null'",
-                        exception.getMessage()
-                );
-    }
-
-    @Test
-    public void testNullFppException() {
-        final BloomFilterConfiguration configuration = new BloomFilterConfiguration(1000L, null);
-        final IllegalArgumentException exception = Assertions
-                .assertThrows(IllegalArgumentException.class, configuration::falsePositiveProbability);
-        Assertions
-                .assertEquals(
-                        "False positive probability in 'dpl.pth_06.bloom.db.fields' should not be 'null'",
-                        exception.getMessage()
-                );
-    }
-
-    @Test
     public void testContract() {
         EqualsVerifier.forClass(BloomFilterConfiguration.class).withNonnullFields("expected", "fpp").verify();
     }
@@ -157,7 +133,7 @@ public final class BloomFilterConfigurationTest {
         final BloomFilterConfiguration base = new BloomFilterConfiguration(1000L, 0.02);
         final IllegalArgumentException exception = Assertions
                 .assertThrows(IllegalArgumentException.class, () -> base.compareTo(null));
-        String expectedMessage = "Cannot compare against a null";
+        final String expectedMessage = "Cannot compare against null";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 }

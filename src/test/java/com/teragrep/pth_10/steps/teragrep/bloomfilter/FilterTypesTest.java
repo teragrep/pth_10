@@ -200,7 +200,7 @@ public final class FilterTypesTest {
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
-        final String expectedMessage = "Expected number of items in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
+        final String expectedMessage = "expected value in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -211,7 +211,7 @@ public final class FilterTypesTest {
         final Config config = ConfigFactory.parseProperties(properties);
         final FilterTypes filterTypes = new FilterTypes(config);
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
-        final String expectedMessage = "False positive probability in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
+        final String expectedMessage = "fpp value in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
