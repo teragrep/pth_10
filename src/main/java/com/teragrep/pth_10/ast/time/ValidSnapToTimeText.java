@@ -45,59 +45,42 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
-
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import com.teragrep.pth_10.ast.Text;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public final class RelativeTimestamp implements DPLTimestamp {
+public final class ValidSnapToTimeText implements Text {
 
-    private final ValidRelativeTimestampText offsetString;
-    private final ZonedDateTime baseTime;
+    private final Pattern snapPattern;
+    private final Text origin;
 
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    public ValidSnapToTimeText(final Text origin) {
+        this(origin, Pattern.compile("@((?:w[0-7])|[a-zA-Z]+)(?![a-zA-Z0-9])"));
     }
 
-    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
-    }
-
-    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
-        this.offsetString = offsetString;
-        this.baseTime = baseTime;
+    public ValidSnapToTimeText(final Text origin, Pattern snapPattern) {
+        this.origin = origin;
+        this.snapPattern = snapPattern;
     }
 
     @Override
-    public ZonedDateTime zonedDateTime() {
-        if (!isValid()) {
-            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
-        }
-        final String validOffset = offsetString.read();
-        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
-        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
-        final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isValid()) {
-            updatedTime = snappedTimestamp.zonedDateTime();
+    public String read() {
+        final String timeStampString = origin.read();
+        final String snapUnitSubstring;
+        final Matcher matcher = snapPattern.matcher(timeStampString);
+        if (matcher.find()) {
+            snapUnitSubstring = matcher.group(1);
         }
         else {
-            updatedTime = offsetTimestamp.zonedDateTime();
+            throw new IllegalArgumentException("Invalid snap to time text <" + timeStampString + ">");
         }
-        return updatedTime;
+        return snapUnitSubstring;
     }
 
-    @Override
-    public boolean isValid() {
-        boolean isStub = true;
-        try {
-            offsetString.read();
-        }
-        catch (final IllegalArgumentException e) {
-            isStub = false;
-        }
-        return isStub;
+    public boolean containsSnapCharacter() {
+        final String timeStampString = origin.read();
+        return timeStampString.contains("@");
     }
 
     @Override
@@ -111,12 +94,12 @@ public final class RelativeTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RelativeTimestamp other = (RelativeTimestamp) o;
-        return Objects.equals(offsetString, other.offsetString) && Objects.equals(baseTime, other.baseTime);
+        final ValidSnapToTimeText other = (ValidSnapToTimeText) o;
+        return Objects.equals(snapPattern, other.snapPattern) && Objects.equals(origin, other.origin);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(offsetString, baseTime);
+        return Objects.hash(snapPattern, origin);
     }
 }

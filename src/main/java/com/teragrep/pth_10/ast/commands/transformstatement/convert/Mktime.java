@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth_10.ast.commands.transformstatement.convert;
 
-import com.teragrep.pth_10.ast.DPLTimeFormat;
+import com.teragrep.pth_10.ast.time.DPLTimestampImpl;
 import org.apache.spark.sql.api.java.UDF2;
 
 /**
@@ -60,10 +60,8 @@ public class Mktime implements UDF2<String, String, String> {
 
     @Override
     public String call(String hrt, String tf) throws Exception {
-        DPLTimeFormat format = new DPLTimeFormat(tf);
-        Long rv = format.instantOf(hrt).getEpochSecond();
-
-        return rv.toString();
+        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
+        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
     }
 
 }

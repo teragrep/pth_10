@@ -45,59 +45,72 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.TimeZone;
 
-public final class RelativeTimestamp implements DPLTimestamp {
+/**
+ * Determines a point for time from input string, timeformat and a timezone id. Supports relative and absolute
+ * timestamps, relative is used if possible to determine the offset
+ */
+public final class DPLTimestampImpl implements DPLTimestamp {
 
-    private final ValidRelativeTimestampText offsetString;
-    private final ZonedDateTime baseTime;
+    private final Logger LOGGER = LoggerFactory.getLogger(DPLTimestampImpl.class);
+    private final AbsoluteTimestamp absoluteTimestamp;
+    private final RelativeTimestamp relativeTimestamp;
 
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    public DPLTimestampImpl(final String value) {
+        this(value, "", TimeZone.getDefault().toZoneId());
     }
 
-    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
+    public DPLTimestampImpl(final String value, final String timeformat) {
+        this(value, timeformat, TimeZone.getDefault().toZoneId());
     }
 
-    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
-        this.offsetString = offsetString;
-        this.baseTime = baseTime;
+    public DPLTimestampImpl(final String value, final String timeformat, final ZoneId zoneId) {
+        this(new AbsoluteTimestamp(value, timeformat, zoneId), new RelativeTimestamp(value, zoneId));
     }
 
-    @Override
+    public DPLTimestampImpl(final AbsoluteTimestamp absoluteTimestamp, final RelativeTimestamp relativeTimestamp) {
+        this.absoluteTimestamp = absoluteTimestamp;
+        this.relativeTimestamp = relativeTimestamp;
+    }
+
     public ZonedDateTime zonedDateTime() {
-        if (!isValid()) {
-            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
-        }
-        final String validOffset = offsetString.read();
-        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
-        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
-        final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isValid()) {
-            updatedTime = snappedTimestamp.zonedDateTime();
+        final DPLTimestamp timestamp;
+        if (relativeTimestamp.isValid()) {
+            LOGGER.info("Found valid relative timestamp");
+            timestamp = relativeTimestamp;
         }
         else {
-            updatedTime = offsetTimestamp.zonedDateTime();
+            LOGGER.info("There was no valid relative timestamp, using absolute timestamp");
+            timestamp = absoluteTimestamp;
         }
-        return updatedTime;
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER
+                    .info(
+                            "Resulting time was <{}> with epoch seconds <{}>", zonedDateTime,
+                            zonedDateTime.toEpochSecond()
+                    );
+        }
+        return zonedDateTime;
     }
 
     @Override
     public boolean isValid() {
-        boolean isStub = true;
-        try {
-            offsetString.read();
+        final boolean isValid;
+        if (relativeTimestamp.isValid()) {
+            isValid = true;
         }
-        catch (final IllegalArgumentException e) {
-            isStub = false;
+        else {
+            isValid = absoluteTimestamp.isValid();
         }
-        return isStub;
+        return isValid;
     }
 
     @Override
@@ -111,12 +124,13 @@ public final class RelativeTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RelativeTimestamp other = (RelativeTimestamp) o;
-        return Objects.equals(offsetString, other.offsetString) && Objects.equals(baseTime, other.baseTime);
+        final DPLTimestampImpl other = (DPLTimestampImpl) o;
+        return Objects.equals(absoluteTimestamp, other.absoluteTimestamp)
+                && Objects.equals(relativeTimestamp, other.relativeTimestamp);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(offsetString, baseTime);
+        return Objects.hash(absoluteTimestamp, relativeTimestamp);
     }
 }

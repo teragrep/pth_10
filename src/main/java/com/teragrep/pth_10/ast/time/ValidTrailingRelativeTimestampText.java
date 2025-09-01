@@ -45,59 +45,47 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth10.ast.TextString;
-import com.teragrep.pth10.ast.UnquotedText;
+import com.teragrep.pth_10.ast.Text;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-public final class RelativeTimestamp implements DPLTimestamp {
+public final class ValidTrailingRelativeTimestampText implements Text {
 
-    private final ValidRelativeTimestampText offsetString;
-    private final ZonedDateTime baseTime;
+    private final Text origin;
+    private final Pattern validPattern;
 
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    public ValidTrailingRelativeTimestampText(final Text origin) {
+        this(origin, Pattern.compile(".*@((?:w[0-7])|[a-zA-Z]+)([+-]?\\d+[a-zA-Z]+)?$"));
     }
 
-    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
+    public ValidTrailingRelativeTimestampText(final Text origin, final Pattern validPattern) {
+        this.origin = origin;
+        this.validPattern = validPattern;
     }
 
-    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
-        this.offsetString = offsetString;
-        this.baseTime = baseTime;
+    public boolean isValid() {
+        final String originString = origin.read();
+        final Matcher matcher = validPattern.matcher(originString);
+        return matcher.find() && matcher.groupCount() > 1 && matcher.group(2) != null && !matcher.group(2).isEmpty();
     }
 
     @Override
-    public ZonedDateTime zonedDateTime() {
-        if (!isValid()) {
-            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
-        }
-        final String validOffset = offsetString.read();
-        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
-        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
-        final ZonedDateTime updatedTime;
-        if (snappedTimestamp.isValid()) {
-            updatedTime = snappedTimestamp.zonedDateTime();
+    public String read() {
+        final String originString = origin.read();
+        final String updatedString;
+        final Matcher matcher = validPattern.matcher(originString);
+        // check if the second capture group contains the valid trailing offset (e.g., +3h, -10m)
+        if (isValid() && matcher.find()) {
+            updatedString = matcher.group(2);
         }
         else {
-            updatedTime = offsetTimestamp.zonedDateTime();
+            throw new IllegalArgumentException(
+                    "Could not find a valid trailing offset after '@' for value <" + originString + ">"
+            );
         }
-        return updatedTime;
-    }
-
-    @Override
-    public boolean isValid() {
-        boolean isStub = true;
-        try {
-            offsetString.read();
-        }
-        catch (final IllegalArgumentException e) {
-            isStub = false;
-        }
-        return isStub;
+        return updatedString;
     }
 
     @Override
@@ -111,12 +99,12 @@ public final class RelativeTimestamp implements DPLTimestamp {
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RelativeTimestamp other = (RelativeTimestamp) o;
-        return Objects.equals(offsetString, other.offsetString) && Objects.equals(baseTime, other.baseTime);
+        final ValidTrailingRelativeTimestampText other = (ValidTrailingRelativeTimestampText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(validPattern, other.validPattern);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(offsetString, baseTime);
+        return Objects.hash(origin, validPattern);
     }
 }
