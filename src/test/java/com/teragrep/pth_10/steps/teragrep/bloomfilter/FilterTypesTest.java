@@ -122,7 +122,11 @@ public final class FilterTypesTest {
         Exception exception = assertThrows(RuntimeException.class, () -> {
             filterTypes.sortedMap();
         });
-        Assertions.assertEquals("Bloom filter size fields was not configured.", exception.getMessage());
+        Assertions
+                .assertEquals(
+                        "Option 'dpl.pth_06.bloom.db.fields' expected an JSON object but was 'null'",
+                        exception.getMessage()
+                );
     }
 
     @Test
