@@ -79,10 +79,10 @@ public class ElementNode extends Node {
             transformer.transform(new DOMSource(element), new StreamResult(buffer));
         }
         catch (final TransformerConfigurationException tex) {
-            throw new UnsupportedOperationException(tex.getMessage());
+            throw new IllegalStateException(tex.getMessage());
         }
         catch (final TransformerException ex) {
-            throw new UnsupportedOperationException(ex.getMessage());
+            throw new IllegalStateException(ex.getMessage());
         }
         return buffer.toString();
     }
