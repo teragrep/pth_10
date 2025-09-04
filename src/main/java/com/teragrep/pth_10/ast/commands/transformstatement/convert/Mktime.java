@@ -51,7 +51,7 @@ import org.apache.spark.sql.api.java.UDF2;
 /**
  * UDF for convert command 'mktime'<br>
  * Human readable time to epoch using given timeformat<br>
- * 
+ *
  * @author eemhu
  */
 public class Mktime implements UDF2<String, String, String> {
@@ -59,8 +59,8 @@ public class Mktime implements UDF2<String, String, String> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String call(String hrt, String tf) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(hrt, tf);
+    public String call(final String value, final String timeFormat) throws Exception {
+        final DPLTimestampImpl timestamp = new DPLTimestampImpl(value, timeFormat);
         return Long.toString(timestamp.zonedDateTime().toEpochSecond());
     }
 
