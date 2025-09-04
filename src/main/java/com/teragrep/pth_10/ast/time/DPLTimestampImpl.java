@@ -75,7 +75,7 @@ public final class DPLTimestampImpl implements DPLTimestamp {
         this(new AbsoluteTimestamp(value, timeformat, zoneId), new RelativeTimestamp(value, zoneId));
     }
 
-    public DPLTimestampImpl(final AbsoluteTimestamp absoluteTimestamp, final RelativeTimestamp relativeTimestamp) {
+    private DPLTimestampImpl(final AbsoluteTimestamp absoluteTimestamp, final RelativeTimestamp relativeTimestamp) {
         this.absoluteTimestamp = absoluteTimestamp;
         this.relativeTimestamp = relativeTimestamp;
     }
