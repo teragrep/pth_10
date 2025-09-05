@@ -47,6 +47,7 @@ package com.teragrep.pth_10.ast.bo;
 
 import org.w3c.dom.Element;
 
+import javax.xml.XMLConstants;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -57,51 +58,32 @@ import java.io.StringWriter;
  */
 public class ElementNode extends Node {
 
-    Element val = null;
-
-    public ElementNode(Token token) {
-        super(token);
-    }
+    private final Element element;
 
     public ElementNode(Element element) {
-        this.val = element;
+        this.element = element;
     }
 
     public Element getElement() {
-        return val;
+        return element;
     }
 
+    @Override
     public String toString() {
-        String str = null;
+        final StringWriter buffer = new StringWriter();
         try {
-            TransformerFactory transFactory = TransformerFactory.newInstance();
-            Transformer transformer = transFactory.newTransformer();
-            StringWriter buffer = new StringWriter();
+            final TransformerFactory transFactory = TransformerFactory.newInstance();
+            transFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            final Transformer transformer = transFactory.newTransformer();
             transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            transformer.transform(new DOMSource(val), new StreamResult(buffer));
-            str = buffer.toString();
+            transformer.transform(new DOMSource(element), new StreamResult(buffer));
         }
-        catch (TransformerConfigurationException tex) {
+        catch (final TransformerConfigurationException tex) {
+            throw new IllegalStateException(tex.getMessage());
         }
-        catch (TransformerException ex) {
+        catch (final TransformerException ex) {
+            throw new IllegalStateException(ex.getMessage());
         }
-        return str;
-    }
-
-    public static String toString(Element val) {
-        String str = null;
-        try {
-            TransformerFactory transFactory = TransformerFactory.newInstance();
-            Transformer transformer = transFactory.newTransformer();
-            StringWriter buffer = new StringWriter();
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            transformer.transform(new DOMSource(val), new StreamResult(buffer));
-            str = buffer.toString();
-        }
-        catch (TransformerConfigurationException tex) {
-        }
-        catch (TransformerException ex) {
-        }
-        return str;
+        return buffer.toString();
     }
 }
