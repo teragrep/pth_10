@@ -174,7 +174,7 @@ public class commandTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
-            Assertions.assertTrue(sourcetypeCol.get(0).get(0).toString().contains("teragrep version"));
+            Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
             List<Row> rawCol = res.select("_raw").collectAsList();
 
@@ -197,7 +197,7 @@ public class commandTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
-            Assertions.assertTrue(sourcetypeCol.get(0).get(0).toString().contains("teragrep version"));
+            Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
             List<Row> rawCol = res.select("_raw").collectAsList();
 
