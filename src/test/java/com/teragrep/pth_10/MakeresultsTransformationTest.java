@@ -121,6 +121,7 @@ public class MakeresultsTransformationTest {
             // assert all of them to be null
             rows.forEach(row -> {
                 Assertions.assertEquals(6, row.length());
+
                 for (int i = 0; i < row.length(); i++) {
                     Assertions.assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
                 }
