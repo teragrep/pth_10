@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth_10.steps.chart;
 
-import com.teragrep.pth10.steps.AbstractStep;
+import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -59,7 +59,7 @@ public final class ChartStep extends AbstractStep {
     private final List<Column> listOfAggrExpressions;
     private final List<Column> groupByList;
 
-    public ChartStep(final List<Column> listOfAggrExpressions,final List<Column> groupByList) {
+    public ChartStep(final List<Column> listOfAggrExpressions, final List<Column> groupByList) {
         this.listOfAggrExpressions = listOfAggrExpressions;
         this.groupByList = groupByList;
         this.properties.add(CommandProperty.AGGREGATE);
@@ -78,7 +78,8 @@ public final class ChartStep extends AbstractStep {
         final Column mainExpr = listOfAggrExpressions.get(0);
 
         // skip first one as .agg has strange arguments
-        final Seq<Column> seqOfExpr = JavaConversions.asScalaBuffer(listOfAggrExpressions.subList(1, listOfAggrExpressions.size()));
+        final Seq<Column> seqOfExpr = JavaConversions
+                .asScalaBuffer(listOfAggrExpressions.subList(1, listOfAggrExpressions.size()));
         final Seq<Column> seqOfGroupBy = JavaConversions.asScalaBuffer(groupByList);
 
         return dataset.groupBy(seqOfGroupBy).agg(mainExpr, seqOfExpr);
