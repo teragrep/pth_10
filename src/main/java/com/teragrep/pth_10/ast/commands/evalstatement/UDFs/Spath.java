@@ -112,6 +112,18 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
             final Gson gson = new Gson();
             final JsonElement jsonElem = gson.fromJson(input, JsonElement.class);
 
+            if (jsonElem == null || jsonElem.isJsonNull()) {
+                LOGGER.warn("Json input was 'null', returning empty result");
+                return result;
+            }
+
+            if (!jsonElem.isJsonObject()) {
+                LOGGER.warn("spath command expected a valid JSON Object as input but was given: <{}>", input);
+                // return empty result
+                result.put(new QuotedText(new TextString(nameOfInputCol), "`").read(), nullValue.value());
+                return result;
+            }
+
             // Auto-extraction (JSON)
             if (spathExpr == null) {
                 // expect topmost element to be an object
