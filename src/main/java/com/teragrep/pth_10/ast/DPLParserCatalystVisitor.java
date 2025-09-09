@@ -69,6 +69,7 @@ import org.w3c.dom.Document;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -124,7 +125,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     }
 
     @Deprecated
-    public Consumer<Dataset<Row>> getConsumer() {
+    public BiConsumer<Dataset<Row>, Boolean> getConsumer() {
         return this.stepList.getBatchHandler();
     }
 
@@ -133,7 +134,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
      * 
      * @param consumer Consumer with type Dataset to be implemented in pth_07
      */
-    public void setConsumer(Consumer<Dataset<Row>> consumer) {
+    public void setConsumer(BiConsumer<Dataset<Row>, Boolean> consumer) {
         this.stepList.setBatchHandler(consumer);
     }
 
