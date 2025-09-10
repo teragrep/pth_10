@@ -45,10 +45,11 @@
  */
 package com.teragrep.pth_10.ast;
 
-import com.teragrep.pth_10.ast.time.DPLTimestampImpl;
+import com.teragrep.pth_10.ast.time.DPLTimestampString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -86,6 +87,17 @@ public class DPLParserConfig {
         config.put(key, value);
     }
 
+    public void setStartTime(ZonedDateTime baseTime) {
+        put("startTime", baseTime);
+    }
+
+    public ZonedDateTime startTime() {
+        if (!config.containsKey("startTime")) {
+            throw new IllegalStateException("Query start time was not set");
+        }
+        return (ZonedDateTime) config.get("startTime");
+    }
+
     /**
      * Get earliest flag which is used when calculating window ranges for different spans.
      * 
@@ -102,7 +114,11 @@ public class DPLParserConfig {
      * @param earliest string value like -1h or actual timestamp
      */
     public void setEarliest(String earliest) {
-        final long earliestEpoch = new DPLTimestampImpl(earliest).zonedDateTime().toEpochSecond();
+        if (!config.containsKey("startTime")) {
+            setStartTime(ZonedDateTime.now());
+        }
+        final DPLTimestampString dplTimestampString = new DPLTimestampString(earliest, startTime());
+        final long earliestEpoch = dplTimestampString.asDPLTimestamp().zonedDateTime().toEpochSecond();
         config.put("earliest", earliest);
         config.put("earliestEpoch", earliestEpoch);
     }
@@ -123,7 +139,8 @@ public class DPLParserConfig {
      * @param latest string value like -1h or actual timestamp
      */
     public void setLatest(String latest) {
-        final long latestEpoch = new DPLTimestampImpl(latest).zonedDateTime().toEpochSecond();
+        final DPLTimestampString dplTimestampString = new DPLTimestampString(latest, startTime());
+        final long latestEpoch = dplTimestampString.asDPLTimestamp().zonedDateTime().toEpochSecond();
         config.put("latest", latest);
         config.put("latestEpoch", latestEpoch);
     }

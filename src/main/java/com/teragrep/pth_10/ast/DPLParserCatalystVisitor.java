@@ -68,6 +68,7 @@ import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -267,7 +268,8 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
         LOGGER.info("CatalystVisitor Root incoming: <{}>", ctx.getText());
         // Set DPL query into CatalystContext: used if original query string is needed for something
         catCtx.setDplQuery(ctx.getText());
-
+        // set star time of query execution
+        catCtx.setStartTime(ZonedDateTime.now());
         // Current version has always 2 nodes at the root level.
         if (ctx.getChildCount() < 1) {
             throw new IllegalStateException("Missing logicalStatement and/or transformStatement: " + ctx.getText());

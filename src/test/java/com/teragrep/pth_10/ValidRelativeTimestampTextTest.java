@@ -87,8 +87,19 @@ public final class ValidRelativeTimestampTextTest {
     public void testInvalidInput() {
         final Text input = new TextString("invalid");
         final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
-        final RuntimeException runtimeException = Assertions.assertThrows(RuntimeException.class, offset::read);
+        final NumberFormatException runtimeException = Assertions
+                .assertThrows(NumberFormatException.class, offset::read);
         final String expectedMessage = "Unknown relative time modifier string <invalid>";
+        Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
+    }
+
+    @Test
+    public void testPlainNumbersException() {
+        final Text input = new TextString("1000");
+        final ValidRelativeTimestampText offset = new ValidRelativeTimestampText(input);
+        final NumberFormatException runtimeException = Assertions
+                .assertThrows(NumberFormatException.class, offset::read);
+        final String expectedMessage = "Unknown relative time modifier string <1000>";
         Assertions.assertEquals(expectedMessage, runtimeException.getMessage());
     }
 

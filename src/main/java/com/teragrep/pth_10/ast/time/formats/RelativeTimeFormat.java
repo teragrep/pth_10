@@ -43,61 +43,59 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.time;
+package com.teragrep.pth_10.ast.time.formats;
 
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import com.teragrep.pth_10.ast.time.RelativeTimestamp;
+import com.teragrep.pth_10.ast.time.StubTimestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+public final class RelativeTimeFormat implements DPLTimeFormat {
 
-    private final DPLTimestamp origin;
+    private final Logger LOGGER = LoggerFactory.getLogger(RelativeTimeFormat.class);
+    private final ZonedDateTime baseTime;
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
-        this.origin = origin;
-    }
-
-    public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
-        }
-        else {
-            rv = originZoneDateTime;
-        }
-        return rv;
+    public RelativeTimeFormat(final ZonedDateTime baseTime) {
+        this.baseTime = baseTime;
     }
 
     @Override
-    public boolean isValid() {
-        return origin.isValid();
+    public DPLTimestamp from(final String timestampString) {
+        DPLTimestamp timestamp = new RelativeTimestamp(timestampString, baseTime);
+        if (!timestamp.isValid()) {
+            LOGGER.info("timestamp <{}> was invalid", timestampString);
+            timestamp = new StubTimestamp();
+        }
+        else {
+            LOGGER.info("timestamp <{}> matched", timestampString);
+        }
+        return timestamp;
+    }
+
+    @Override
+    public DPLTimeFormat atZone(final ZoneId zoneId) {
+        return new RelativeTimeFormat(baseTime.withZoneSameInstant(zoneId));
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null) {
             return false;
         }
         if (getClass() != o.getClass()) {
             return false;
         }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
-        return Objects.equals(origin, other.origin);
+        RelativeTimeFormat that = (RelativeTimeFormat) o;
+        return Objects.equals(baseTime, that.baseTime);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(origin);
-    }
-
-    @Override
-    public boolean isStub() {
-        return false;
+        return Objects.hashCode(baseTime);
     }
 }
