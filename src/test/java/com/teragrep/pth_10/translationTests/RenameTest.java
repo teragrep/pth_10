@@ -58,6 +58,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RenameTest {
 
@@ -70,6 +73,7 @@ public class RenameTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         RenameTransformation ct = new RenameTransformation();
@@ -88,6 +92,7 @@ public class RenameTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         RenameTransformation ct = new RenameTransformation();

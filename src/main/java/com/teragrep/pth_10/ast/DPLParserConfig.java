@@ -114,9 +114,6 @@ public class DPLParserConfig {
      * @param earliest string value like -1h or actual timestamp
      */
     public void setEarliest(String earliest) {
-        if (!config.containsKey("startTime")) {
-            setStartTime(ZonedDateTime.now());
-        }
         final DPLTimestampString dplTimestampString = new DPLTimestampString(earliest, startTime());
         final long earliestEpoch = dplTimestampString.asDPLTimestamp().zonedDateTime().toEpochSecond();
         config.put("earliest", earliest);
