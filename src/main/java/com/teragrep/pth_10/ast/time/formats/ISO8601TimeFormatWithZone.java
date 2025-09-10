@@ -92,15 +92,16 @@ public final class ISO8601TimeFormatWithZone implements DPLTimeFormat {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null) {
+    public boolean equals(final Object object) {
+        if (object == null) {
             return false;
         }
-        if (getClass() != o.getClass()) {
+        if (getClass() != object.getClass()) {
             return false;
         }
-        ISO8601TimeFormatWithZone that = (ISO8601TimeFormatWithZone) o;
-        return Objects.equals(timeFormat, that.timeFormat) && Objects.equals(zoneId, that.zoneId);
+        final ISO8601TimeFormatWithZone iso8601TimeFormatWithZone = (ISO8601TimeFormatWithZone) object;
+        return Objects.equals(timeFormat, iso8601TimeFormatWithZone.timeFormat)
+                && Objects.equals(zoneId, iso8601TimeFormatWithZone.zoneId);
     }
 
     @Override
