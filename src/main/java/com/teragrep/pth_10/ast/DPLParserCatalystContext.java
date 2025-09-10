@@ -70,6 +70,7 @@ public class DPLParserCatalystContext implements Cloneable {
     SparkSession sparkSession;
     // If not set, create empty default
     private DPLParserConfig parserConfig = new DPLParserConfig();
+    private final ZonedDateTime startTime;
 
     // extremely important for tests using config
     private boolean testingMode = false;
@@ -354,11 +355,22 @@ public class DPLParserCatalystContext implements Cloneable {
 
     /**
      * Initialize context with spark session
-     * 
+     *
      * @param sparkSession active session
      */
     public DPLParserCatalystContext(SparkSession sparkSession) {
+        this(sparkSession, ZonedDateTime.now());
+    }
+
+    /**
+     * Initialize context with spark session and query start time
+     *
+     * @param sparkSession active session
+     * @param startTime    start time of the query used to calculate relative time differences
+     */
+    public DPLParserCatalystContext(SparkSession sparkSession, ZonedDateTime startTime) {
         this.sparkSession = sparkSession;
+        this.startTime = startTime;
         this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
@@ -366,13 +378,25 @@ public class DPLParserCatalystContext implements Cloneable {
 
     /**
      * Initialize context with spark session and incoming dataset
-     * 
+     *
      * @param sparkSession active session
      * @param ds           {@literal DataSet<Row>}
      */
     public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds) {
+        this(sparkSession, ds, ZonedDateTime.now());
+    }
+
+    /**
+     * Initialize context with spark session and incoming dataset
+     *
+     * @param sparkSession active session
+     * @param ds           {@literal DataSet<Row>}
+     * @param startTime    start time of the query used to calculate relative time differences
+     */
+    public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds, ZonedDateTime startTime) {
         this.sparkSession = sparkSession;
         this.inDs = ds;
+        this.startTime = startTime;
         this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
@@ -382,13 +406,25 @@ public class DPLParserCatalystContext implements Cloneable {
 
     /**
      * Initialize context with spark session and config which is created in zeppelin
-     * 
+     *
      * @param sparkSession active session
      * @param config       Zeppelin configuration object
      */
     public DPLParserCatalystContext(SparkSession sparkSession, Config config) {
+        this(sparkSession, config, ZonedDateTime.now());
+    }
+
+    /**
+     * Initialize context with spark session and config which is created in zeppelin
+     *
+     * @param sparkSession active session
+     * @param config       Zeppelin configuration object
+     * @param startTime    start time of the query used to calculate relative time differences
+     */
+    public DPLParserCatalystContext(SparkSession sparkSession, Config config, ZonedDateTime startTime) {
         this.sparkSession = sparkSession;
         this.config = config;
+        this.startTime = startTime;
         this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
@@ -439,12 +475,8 @@ public class DPLParserCatalystContext implements Cloneable {
         this.config = config;
     }
 
-    public void setStartTime(final ZonedDateTime baseTime) {
-        parserConfig.setStartTime(baseTime);
-    }
-
     public ZonedDateTime startTime() {
-        return parserConfig.startTime();
+        return startTime;
     }
 
     public String getEarliest() {
@@ -452,7 +484,7 @@ public class DPLParserCatalystContext implements Cloneable {
     }
 
     public void setEarliest(String earliest) {
-        parserConfig.setEarliest(earliest);
+        parserConfig.setEarliest(earliest, startTime);
     }
 
     public String getLatest() {
@@ -460,7 +492,7 @@ public class DPLParserCatalystContext implements Cloneable {
     }
 
     public void setLatest(String latest) {
-        parserConfig.setLatest(latest);
+        parserConfig.setLatest(latest, startTime);
     }
 
     public DPLParserConfig getParserConfig() {

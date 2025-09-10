@@ -58,8 +58,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -74,7 +72,6 @@ public class ChartTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ChartTransformation ct = new ChartTransformation(ctx);
@@ -99,7 +96,6 @@ public class ChartTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ChartTransformation ct = new ChartTransformation(ctx);
@@ -123,7 +119,6 @@ public class ChartTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ChartTransformation ct = new ChartTransformation(ctx);
