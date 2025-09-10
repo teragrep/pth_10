@@ -92,15 +92,16 @@ public final class EpochSecondsTimeFormat implements DPLTimeFormat {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null) {
+    public boolean equals(final Object object) {
+        if (object == null) {
             return false;
         }
-        if (getClass() != o.getClass()) {
+        if (getClass() != object.getClass()) {
             return false;
         }
-        EpochSecondsTimeFormat that = (EpochSecondsTimeFormat) o;
-        return Objects.equals(timeFormat, that.timeFormat) && Objects.equals(zoneId, that.zoneId);
+        final EpochSecondsTimeFormat epochSecondsTimeFormat = (EpochSecondsTimeFormat) object;
+        return Objects.equals(timeFormat, epochSecondsTimeFormat.timeFormat)
+                && Objects.equals(zoneId, epochSecondsTimeFormat.zoneId);
     }
 
     @Override

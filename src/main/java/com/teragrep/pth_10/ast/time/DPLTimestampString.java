@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public final class DPLTimestampString {
@@ -70,7 +71,7 @@ public final class DPLTimestampString {
     private final String timestampString;
     private final ZonedDateTime baseTime;
     private final List<DPLTimeFormat> defaultFormats;
-    private final List<DPLTimeFormat> customFormats;
+    private final List<DPLTimeFormat> userDefinedFormats;
 
     public DPLTimestampString(final String timestampString, ZonedDateTime baseTime) {
         this(
@@ -90,16 +91,16 @@ public final class DPLTimestampString {
             final String timestampString,
             final ZonedDateTime baseTime,
             final List<DPLTimeFormat> defaultFormats,
-            final List<DPLTimeFormat> customFormats
+            final List<DPLTimeFormat> userDefinedFormats
     ) {
         this.timestampString = timestampString;
         this.baseTime = baseTime;
         this.defaultFormats = defaultFormats;
-        this.customFormats = customFormats;
+        this.userDefinedFormats = userDefinedFormats;
     }
 
     public DPLTimestampString withFormat(final DPLTimeFormat addedFormat) {
-        final List<DPLTimeFormat> newCustomFormats = new ArrayList<>(customFormats);
+        final List<DPLTimeFormat> newCustomFormats = new ArrayList<>(userDefinedFormats);
         // ensure format is in the same zone as base time
         DPLTimeFormat addedFormatAtBaseTimeZone = addedFormat.atZone(baseTime.getZone());
         if (addedFormat.equals(addedFormatAtBaseTimeZone)) {
@@ -110,7 +111,7 @@ public final class DPLTimestampString {
     }
 
     public DPLTimestampString withFormats(final List<DPLTimeFormat> addedFormatsList) {
-        final List<DPLTimeFormat> newCustomFormats = new ArrayList<>(customFormats);
+        final List<DPLTimeFormat> newCustomFormats = new ArrayList<>(userDefinedFormats);
         // map added formats to the base time zone
         final List<DPLTimeFormat> addedFormatsInBaseTimeZone = addedFormatsList
                 .stream()
@@ -124,22 +125,24 @@ public final class DPLTimestampString {
     }
 
     public DPLTimestamp asDPLTimestamp() {
-        final List<DPLTimestamp> customMatchingTimestamps = customMatchingTimestamps();
+        final List<DPLTimestamp> customMatchingTimestamps = usedDefinedMatchingTimestamps();
         final List<DPLTimestamp> defaultMatchingTimestamps = defaultMatchingTimestamps();
         final DPLTimestamp dplTimestamp;
 
-        // prioritize matching with custom timestamps
-        // separated because certain custom formats can match with the provided default formats
+        // prioritize matching with user defined timestamps
+        // separated to avoid multiple matches if used defined timeformat clashes with default formats e.g. double match
         if (customMatchingTimestamps.size() > 1) {
-            throw new IllegalStateException(
-                    "String <" + timestampString + "> matched with multiple custom time formats"
+            throw new IllegalArgumentException(
+                    "Timestamp string <" + timestampString + "> matched with multiple user defined time formats"
             );
         }
         else if (customMatchingTimestamps.size() == 1) {
             dplTimestamp = customMatchingTimestamps.get(0);
         }
         else if (defaultMatchingTimestamps.size() > 1) {
-            throw new IllegalStateException("String <" + timestampString + "> matched with multipel time formats");
+            throw new IllegalArgumentException(
+                    "Timestamp string <" + timestampString + "> matched with multiple time formats"
+            );
         }
         else if (defaultMatchingTimestamps.size() == 1) {
             dplTimestamp = defaultMatchingTimestamps.get(0);
@@ -150,8 +153,8 @@ public final class DPLTimestampString {
         return dplTimestamp;
     }
 
-    private List<DPLTimestamp> customMatchingTimestamps() {
-        return customFormats
+    private List<DPLTimestamp> usedDefinedMatchingTimestamps() {
+        return userDefinedFormats
                 .stream()
                 .map(format -> format.from(timestampString))
                 .filter(timestamp -> !timestamp.isStub())
@@ -164,5 +167,24 @@ public final class DPLTimestampString {
                 .map(format -> format.from(timestampString))
                 .filter(timestamp -> !timestamp.isStub())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (getClass() != object.getClass()) {
+            return false;
+        }
+        final DPLTimestampString dplTimestampString = (DPLTimestampString) object;
+        return Objects.equals(timestampString, dplTimestampString.timestampString) && Objects
+                .equals(baseTime, dplTimestampString.baseTime)
+                && Objects.equals(defaultFormats, dplTimestampString.defaultFormats) && Objects.equals(userDefinedFormats, dplTimestampString.userDefinedFormats);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(timestampString, baseTime, defaultFormats, userDefinedFormats);
     }
 }

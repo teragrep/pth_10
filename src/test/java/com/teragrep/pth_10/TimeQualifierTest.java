@@ -49,7 +49,7 @@ import com.teragrep.pth_10.ast.time.DPLTimestamp;
 import com.teragrep.pth_10.ast.time.DPLTimestampString;
 import com.teragrep.pth_10.ast.time.TimeQualifier;
 import com.teragrep.pth_03.antlr.DPLLexer;
-import com.teragrep.pth_10.ast.time.formats.CustomTimeFormat;
+import com.teragrep.pth_10.ast.time.formats.UserDefinedTimeFormat;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
 import org.junit.jupiter.api.Assertions;
@@ -73,7 +73,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timestamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         TimeQualifier tq = new TimeQualifier(value, timestamp, type, doc);
         long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT;
@@ -162,7 +162,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT
@@ -183,7 +183,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT
@@ -204,7 +204,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT
@@ -225,7 +225,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
@@ -245,7 +245,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
@@ -265,7 +265,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         RuntimeException e = Assertions
                 .assertThrows(RuntimeException.class, () -> new TimeQualifier(value, timeStamp, type, doc).column());
@@ -283,7 +283,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         Assertions
                 .assertEquals(new TimeQualifier(value, timeStamp, type, doc), new TimeQualifier(value, timeStamp, type, doc));
@@ -299,7 +299,7 @@ public class TimeQualifierTest {
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
         DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeformat))
+                .withFormat(new UserDefinedTimeFormat(timeformat))
                 .asDPLTimestamp();
         Assertions
                 .assertNotEquals(new TimeQualifier(value, timeStamp, type, doc), new TimeQualifier(value2, timeStamp, type, doc));

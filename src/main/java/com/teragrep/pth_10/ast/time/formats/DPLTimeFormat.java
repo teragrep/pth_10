@@ -51,8 +51,8 @@ import java.time.ZoneId;
 
 public interface DPLTimeFormat {
 
-    public abstract DPLTimestamp from(String timestamp);
+    public abstract DPLTimestamp from(final String timestamp);
 
-    public abstract DPLTimeFormat atZone(ZoneId zoneId);
+    public abstract DPLTimeFormat atZone(final ZoneId zoneId);
 
 }

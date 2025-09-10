@@ -92,15 +92,16 @@ public final class DefaultTimeFormat implements DPLTimeFormat {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null) {
+    public boolean equals(Object object) {
+        if (object == null) {
             return false;
         }
-        if (getClass() != o.getClass()) {
+        if (getClass() != object.getClass()) {
             return false;
         }
-        DefaultTimeFormat that = (DefaultTimeFormat) o;
-        return Objects.equals(timeFormat, that.timeFormat) && Objects.equals(zoneId, that.zoneId);
+        final DefaultTimeFormat defaultTimeFormat = (DefaultTimeFormat) object;
+        return Objects.equals(timeFormat, defaultTimeFormat.timeFormat)
+                && Objects.equals(zoneId, defaultTimeFormat.zoneId);
     }
 
     @Override

@@ -83,15 +83,15 @@ public final class RelativeTimeFormat implements DPLTimeFormat {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null) {
+    public boolean equals(final Object object) {
+        if (object == null) {
             return false;
         }
-        if (getClass() != o.getClass()) {
+        if (getClass() != object.getClass()) {
             return false;
         }
-        RelativeTimeFormat that = (RelativeTimeFormat) o;
-        return Objects.equals(baseTime, that.baseTime);
+        final RelativeTimeFormat relativeTimeFormat = (RelativeTimeFormat) object;
+        return Objects.equals(baseTime, relativeTimeFormat.baseTime);
     }
 
     @Override

@@ -47,13 +47,15 @@ package com.teragrep.pth_10;
 
 import com.teragrep.pth_10.ast.time.DPLTimestamp;
 import com.teragrep.pth_10.ast.time.DPLTimestampString;
-import com.teragrep.pth_10.ast.time.formats.CustomTimeFormat;
+import com.teragrep.pth_10.ast.time.formats.UserDefinedTimeFormat;
 import com.teragrep.pth_10.ast.time.formats.DPLTimeFormat;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 
 public final class DPLTimestampStringTest {
 
@@ -116,8 +118,8 @@ public final class DPLTimestampStringTest {
     }
 
     @Test
-    public void testCustomFormatOverwritesDefault() {
-        DPLTimeFormat customFormat = new CustomTimeFormat("yyyyMMdd");
+    public void testUserDefinedFormatPrecedence() {
+        DPLTimeFormat customFormat = new UserDefinedTimeFormat("yyyyMMdd");
         DPLTimestampString dplTimestampString = new DPLTimestampString("20250910", startTime).withFormat(customFormat);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
@@ -126,5 +128,26 @@ public final class DPLTimestampStringTest {
         Assertions.assertEquals(9, zonedDateTime.getMonthValue());
         Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
         Assertions.assertEquals(ZoneId.of("UTC"), zonedDateTime.getZone());
+    }
+
+    @Test
+    public void testMultipleMatchingUserDefinedFormats() {
+        DPLTimeFormat userDefinedFormat1 = new UserDefinedTimeFormat("yyyyMMdd");
+        DPLTimeFormat userDefinedFormat2 = new UserDefinedTimeFormat("yyyyMMdd");
+        DPLTimestampString dplTimestampString = new DPLTimestampString("20250910", startTime)
+                .withFormats(Arrays.asList(userDefinedFormat1, userDefinedFormat2));
+        IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, dplTimestampString::asDPLTimestamp);
+        String expectedMessage = "Timestamp string <20250910> matched with multiple user defined time formats";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(DPLTimestampString.class)
+                .withIgnoredFields("LOGGER")
+                .withNonnullFields("timestampString", "baseTime", "defaultFormats", "userDefinedFormats")
+                .verify();
     }
 }

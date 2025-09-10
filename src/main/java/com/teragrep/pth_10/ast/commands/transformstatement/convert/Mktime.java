@@ -47,7 +47,7 @@ package com.teragrep.pth_10.ast.commands.transformstatement.convert;
 
 import com.teragrep.pth_10.ast.time.DPLTimestamp;
 import com.teragrep.pth_10.ast.time.DPLTimestampString;
-import com.teragrep.pth_10.ast.time.formats.CustomTimeFormat;
+import com.teragrep.pth_10.ast.time.formats.UserDefinedTimeFormat;
 import org.apache.spark.sql.api.java.UDF1;
 
 import java.time.ZonedDateTime;
@@ -73,7 +73,7 @@ public class Mktime implements UDF1<String, String> {
     @Override
     public String call(final String value) throws Exception {
         final DPLTimestampString dplTimestampString = new DPLTimestampString(value, baseTime)
-                .withFormat(new CustomTimeFormat(timeFormat));
+                .withFormat(new UserDefinedTimeFormat(timeFormat));
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         return Long.toString(timestamp.zonedDateTime().toEpochSecond());
     }
