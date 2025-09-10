@@ -58,9 +58,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class Rex4jTest {
 
@@ -73,7 +70,6 @@ public class Rex4jTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         Rex4jTransformation ct = new Rex4jTransformation(ctx);
         ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
@@ -94,7 +90,6 @@ public class Rex4jTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         Rex4jTransformation ct = new Rex4jTransformation(ctx);
@@ -116,7 +111,6 @@ public class Rex4jTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         Rex4jTransformation ct = new Rex4jTransformation(ctx);
@@ -139,7 +133,6 @@ public class Rex4jTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         Rex4jTransformation ct = new Rex4jTransformation(ctx);

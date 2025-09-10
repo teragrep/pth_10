@@ -61,9 +61,6 @@ import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TimechartTest {
 
@@ -81,7 +78,6 @@ public class TimechartTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         // Use this file for  dataset initialization
         String testFile = "src/test/resources/timechartTestData.jsonl";
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
@@ -109,7 +105,6 @@ public class TimechartTest {
         LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -136,7 +131,6 @@ public class TimechartTest {
         LOGGER.debug(tree.toStringTree(parser));
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 

@@ -58,8 +58,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -74,7 +72,6 @@ public class TableTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
-        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final TableTransformation ct = new TableTransformation();

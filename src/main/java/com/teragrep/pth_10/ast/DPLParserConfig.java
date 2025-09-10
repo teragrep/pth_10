@@ -87,17 +87,6 @@ public class DPLParserConfig {
         config.put(key, value);
     }
 
-    public void setStartTime(ZonedDateTime baseTime) {
-        put("startTime", baseTime);
-    }
-
-    public ZonedDateTime startTime() {
-        if (!config.containsKey("startTime")) {
-            throw new IllegalStateException("Query start time was not set");
-        }
-        return (ZonedDateTime) config.get("startTime");
-    }
-
     /**
      * Get earliest flag which is used when calculating window ranges for different spans.
      * 
@@ -113,8 +102,8 @@ public class DPLParserConfig {
      * 
      * @param earliest string value like -1h or actual timestamp
      */
-    public void setEarliest(String earliest) {
-        final DPLTimestampString dplTimestampString = new DPLTimestampString(earliest, startTime());
+    public void setEarliest(String earliest, ZonedDateTime startTime) {
+        final DPLTimestampString dplTimestampString = new DPLTimestampString(earliest, startTime);
         final long earliestEpoch = dplTimestampString.asDPLTimestamp().zonedDateTime().toEpochSecond();
         config.put("earliest", earliest);
         config.put("earliestEpoch", earliestEpoch);
@@ -135,8 +124,8 @@ public class DPLParserConfig {
      * 
      * @param latest string value like -1h or actual timestamp
      */
-    public void setLatest(String latest) {
-        final DPLTimestampString dplTimestampString = new DPLTimestampString(latest, startTime());
+    public void setLatest(String latest, ZonedDateTime startTime) {
+        final DPLTimestampString dplTimestampString = new DPLTimestampString(latest, startTime);
         final long latestEpoch = dplTimestampString.asDPLTimestamp().zonedDateTime().toEpochSecond();
         config.put("latest", latest);
         config.put("latestEpoch", latestEpoch);
