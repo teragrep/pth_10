@@ -43,61 +43,16 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.time;
+package com.teragrep.pth_10.ast.time.formats;
 
-import java.time.ZonedDateTime;
-import java.util.Objects;
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+import java.time.ZoneId;
 
-    private final DPLTimestamp origin;
+public interface DPLTimeFormat {
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
-        this.origin = origin;
-    }
+    public abstract DPLTimestamp from(String timestamp);
 
-    public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
-        }
-        else {
-            rv = originZoneDateTime;
-        }
-        return rv;
-    }
+    public abstract DPLTimeFormat atZone(ZoneId zoneId);
 
-    @Override
-    public boolean isValid() {
-        return origin.isValid();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-        if (getClass() != o.getClass()) {
-            return false;
-        }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
-        return Objects.equals(origin, other.origin);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(origin);
-    }
-
-    @Override
-    public boolean isStub() {
-        return false;
-    }
 }

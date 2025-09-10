@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10.steps.convert;
 
+import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import com.teragrep.pth_10.ast.commands.transformstatement.convert.*;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
@@ -52,6 +53,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -61,9 +63,11 @@ public final class ConvertStep extends AbstractConvertStep {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConvertStep.class);
     private SparkSession sparkSession;
+    private final ZonedDateTime baseTime;
 
-    public ConvertStep() {
+    public ConvertStep(final ZonedDateTime baseTime) {
         super();
+        this.baseTime = baseTime;
     }
 
     /**
@@ -214,11 +218,10 @@ public final class ConvertStep extends AbstractConvertStep {
      * @return Input dataset with added result column
      */
     private Dataset<Row> mktime(Dataset<Row> dataset, String field, String renameField) {
-        UserDefinedFunction mktimeUDF = functions.udf(new Mktime(), DataTypes.StringType);
+        UserDefinedFunction mktimeUDF = functions.udf(new Mktime(baseTime, timeformat), DataTypes.StringType);
         sparkSession.udf().register("UDF_Mktime", mktimeUDF);
 
-        Column udfResult = functions
-                .callUDF("UDF_Mktime", functions.col(field).cast(DataTypes.StringType), functions.lit(this.timeformat));
+        Column udfResult = functions.callUDF("UDF_Mktime", functions.col(field).cast(DataTypes.StringType));
         return dataset.withColumn(renameField == null ? field : renameField, udfResult);
     }
 
@@ -231,6 +234,8 @@ public final class ConvertStep extends AbstractConvertStep {
      * @return Input dataset with added result column
      */
     private Dataset<Row> ctime(Dataset<Row> dataset, String field, String renameField) {
+        DPLParserCatalystContext dplParserCatalystContext = new DPLParserCatalystContext(sparkSession);
+        String earliest = dplParserCatalystContext.getEarliest();
         UserDefinedFunction ctimeUDF = functions.udf(new Ctime(), DataTypes.StringType);
         sparkSession.udf().register("UDF_Ctime", ctimeUDF);
 

@@ -60,6 +60,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EvalTest {
 
@@ -82,6 +84,7 @@ public class EvalTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now());
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);
@@ -102,6 +105,7 @@ public class EvalTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now());
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);
@@ -121,6 +125,7 @@ public class EvalTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now());
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);

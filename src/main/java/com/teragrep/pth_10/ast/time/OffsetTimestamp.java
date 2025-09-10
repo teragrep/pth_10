@@ -165,6 +165,11 @@ public final class OffsetTimestamp implements DPLTimestamp {
         return isValid;
     }
 
+    @Override
+    public boolean isStub() {
+        return false;
+    }
+
     private long offsetAmount() {
         final String validAmountString = new ValidOffsetAmountText(offsetText).read();
         return Long.parseLong(validAmountString);

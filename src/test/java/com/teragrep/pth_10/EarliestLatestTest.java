@@ -356,7 +356,7 @@ public class EarliestLatestTest {
                 });
         Assertions
                 .assertEquals(
-                        "TimeQualifier conversion error: value <31/31/2014:00:00:00> couldn't be parsed using default formats.",
+                        "Could not parse value <31/31/2014:00:00:00> with custom format <> or with default formats",
                         sqe.getMessage()
                 );
     }

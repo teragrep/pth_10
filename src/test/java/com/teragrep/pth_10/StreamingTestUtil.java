@@ -64,6 +64,7 @@ import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
@@ -174,12 +175,12 @@ public class StreamingTestUtil {
         if (this.spark == null) {
             throw new NullPointerException("StreamingTestUtil's SparkSession is null: setEnv wasn't called");
         }
-
+        // forces timezone helsinki
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
         this.ctx = new DPLParserCatalystContext(spark);
+        ctx.setStartTime(ZonedDateTime.now());
         ctx.setEarliest("-1Y");
         ctx.setTestingMode(true);
-        // force timezone to Helsinki
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
         this.catalystVisitor = new DPLParserCatalystVisitor(ctx);
     }
 

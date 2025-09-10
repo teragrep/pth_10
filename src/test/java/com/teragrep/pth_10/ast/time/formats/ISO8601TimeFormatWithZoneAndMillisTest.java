@@ -43,61 +43,50 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.time;
+package com.teragrep.pth_10.ast.time.formats;
 
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+public final class ISO8601TimeFormatWithZoneAndMillisTest {
 
-    private final DPLTimestamp origin;
+    private final ZoneId utcZone = ZoneId.of("UTC");
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
-        this.origin = origin;
+    @Test
+    public void testValidValue() {
+        final DPLTimeFormat format = new ISO8601TimeFormatWithZoneAndMillis(utcZone);
+        final DPLTimestamp timestamp = format.from("2025-09-10T12:34:56.123+02:00");
+        Assertions.assertFalse(timestamp.isStub());
     }
 
-    public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
-        }
-        else {
-            rv = originZoneDateTime;
-        }
-        return rv;
+    @Test
+    public void testInvalidValue() {
+        final DPLTimeFormat format = new ISO8601TimeFormatWithZoneAndMillis(utcZone);
+        final DPLTimestamp timestamp = format.from("2025/09/10T12:34:56.123");
+        Assertions.assertTrue(timestamp.isStub());
     }
 
-    @Override
-    public boolean isValid() {
-        return origin.isValid();
+    @Test
+    public void testAtZone() {
+        ZoneId zone = ZoneId.of("Europe/Helsinki");
+        DPLTimeFormat format = new ISO8601TimeFormatWithZoneAndMillis(utcZone).atZone(zone);
+        DPLTimestamp timestamp = format.from("2025-09-10T12:34:56.123+02:00");
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        // timestamp provided in value takes precedence so +02:00 is kept over Europe/Helsinki
+        Assertions.assertEquals(ZoneId.of("+02:00"), zonedDateTime.getZone());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-        if (getClass() != o.getClass()) {
-            return false;
-        }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
-        return Objects.equals(origin, other.origin);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(origin);
-    }
-
-    @Override
-    public boolean isStub() {
-        return false;
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(ISO8601TimeFormatWithZoneAndMillis.class)
+                .withIgnoredFields("LOGGER")
+                .withNonnullFields("timeFormat", "zoneId")
+                .verify();
     }
 }
