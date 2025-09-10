@@ -59,6 +59,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -80,6 +82,7 @@ public class JoinTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
@@ -106,6 +109,7 @@ public class JoinTest {
         ParseTree tree = parser.root();
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
