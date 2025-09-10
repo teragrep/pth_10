@@ -65,18 +65,13 @@ import org.apache.spark.sql.streaming.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public final class DPLExecutorImpl implements DPLExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLExecutorImpl.class);
     private final Config config;
-    private String queryId;
-    private static long runIncrement = 0;
     private final BatchCollect batchCollect;
 
     // Active query
@@ -101,26 +96,15 @@ public final class DPLExecutorImpl implements DPLExecutor {
     @Override
     public DPLExecutorResult interpret(
             BiConsumer<Dataset<Row>, Boolean> batchHandler,
-            Consumer<StreamingQueryListener.QueryProgressEvent> queryProgressConsumer,
             SparkSession sparkSession,
+            String queryId,
             String noteId,
             String paragraphId,
             String lines
     ) throws TimeoutException {
-        final Map<String, String> metrics = new HashMap<>();
-
         LOGGER.debug("Running in interpret()");
         batchCollect.clear(); // do not store old values // TODO remove from NotebookDatasetStore too
 
-        queryId = "`" + sparkSession.sparkContext().applicationId() + "-" + runIncrement + "`";
-
-        metrics.put("queryId", queryId);
-        metrics.put("applicationId", sparkSession.sparkContext().applicationId());
-        LOGGER
-                .info(
-                        "DPL-interpreter start queryId=<{}> applicationId=<{}>", queryId,
-                        sparkSession.sparkContext().applicationId()
-                );
         LOGGER.info("DPL-interpreter initialized sparkInterpreter incoming query:<{}>", lines);
         DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config);
 
@@ -156,12 +140,12 @@ public final class DPLExecutorImpl implements DPLExecutor {
             tree = parser.root();
         }
         catch (IllegalStateException e) {
-            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, e.toString(), metrics);
+            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, e.toString());
         }
         catch (StringIndexOutOfBoundsException e) {
             final String msg = "Parsing error: String index out of bounds. Check for unbalanced quotes - "
                     + "make sure each quote (\") has a pair!";
-            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, msg, metrics);
+            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, msg);
         }
 
         // set output consumer
@@ -178,8 +162,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
         if (n == null) {
             return new DPLExecutorResultImpl(
                     DPLExecutorResult.Code.ERROR,
-                    "parser can't construct processing pipeline",
-                    metrics
+                    "parser can't construct processing pipeline"
             );
         }
         // execute steplist
@@ -197,7 +180,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
             while (exception.getCause() != null) {
                 exception = exception.getCause();
             }
-            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage(), metrics);
+            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
         }
 
         LOGGER.debug("Checking if aggregates are used");
@@ -205,18 +188,14 @@ public final class DPLExecutorImpl implements DPLExecutor {
         LOGGER.info("-------DPLExecutor aggregatesUsed: {} visitor: {}", aggregatesUsed, visitor.getClass().getName());
 
         LOGGER.debug("Running startQuery");
-        streamingQuery = startQuery(dsw);
+        streamingQuery = startQuery(dsw, queryId);
         LOGGER.debug("Query started");
 
         //outQ.explain(); // debug output
 
         // attach listener for query termination
         LOGGER.debug("Adding the listener");
-        sparkSession
-                .streams()
-                .addListener(
-                        new DPLStreamingQueryListener(streamingQuery, config, queryProgressConsumer, catalystContext)
-                );
+        sparkSession.streams().addListener(new DPLStreamingQueryListener(streamingQuery, config, catalystContext));
 
         try {
             if (LOGGER.isDebugEnabled()) {
@@ -241,14 +220,14 @@ public final class DPLExecutorImpl implements DPLExecutor {
             while (exception.getCause() != null) {
                 exception = exception.getCause();
             }
-            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage(), metrics);
+            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
         }
 
         LOGGER.debug("Returning from interpret()");
-        return new DPLExecutorResultImpl(DPLExecutorResult.Code.SUCCESS, "", metrics);
+        return new DPLExecutorResultImpl(DPLExecutorResult.Code.SUCCESS, "");
     }
 
-    private StreamingQuery startQuery(DataStreamWriter<Row> rowDataset) throws TimeoutException {
+    private StreamingQuery startQuery(DataStreamWriter<Row> rowDataset, String queryId) throws TimeoutException {
         LOGGER.debug("Running startQuery");
         StreamingQuery outQ;
 
@@ -262,9 +241,6 @@ public final class DPLExecutorImpl implements DPLExecutor {
         outQ = rowDataset.trigger(Trigger.ProcessingTime(processingTimeMillis)).queryName(queryId).start();
         LOGGER.debug("Trigger done");
 
-        LOGGER.debug("Incrementing runs, before: {}", runIncrement);
-        runIncrement++;
-        LOGGER.debug("Incrementing runs, after: {}", runIncrement);
         return outQ;
     }
 

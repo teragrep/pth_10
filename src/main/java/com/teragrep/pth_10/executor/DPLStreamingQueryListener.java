@@ -53,7 +53,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 
 public class DPLStreamingQueryListener extends StreamingQueryListener {
 
@@ -62,19 +61,17 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
     private final String queryName;
     private final StreamingQuery streamingQuery;
     private final Config config;
-    private final Consumer<QueryProgressEvent> queryProgressConsumer;
+
     private final DPLParserCatalystContext catalystContext;
 
     public DPLStreamingQueryListener(
             StreamingQuery streamingQuery,
             Config config,
-            Consumer<QueryProgressEvent> queryProgressConsumer,
             DPLParserCatalystContext catalystContext
     ) {
         this.queryName = streamingQuery.name();
         this.streamingQuery = streamingQuery;
         this.config = config;
-        this.queryProgressConsumer = queryProgressConsumer;
         this.catalystContext = catalystContext;
     }
 
@@ -98,9 +95,6 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
         if (queryName.equals(nameOfStream)) {
             LOGGER.debug("Name of stream equals query name");
-            // update performance data
-            LOGGER.debug("Updating performance data");
-            queryProgressConsumer.accept(queryProgress);
 
             LOGGER.debug("Checking for completion");
             if (checkCompletion(streamingQuery)) {

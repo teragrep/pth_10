@@ -47,18 +47,14 @@ package com.teragrep.pth_10.executor;
 
 import com.teragrep.pth_15.DPLExecutorResult;
 
-import java.util.Map;
-
 public final class DPLExecutorResultImpl implements DPLExecutorResult {
 
     private final Code code;
     private final String message;
-    private final Map<String, String> metrics;
 
-    public DPLExecutorResultImpl(final Code code, final String message, final Map<String, String> metrics) {
+    public DPLExecutorResultImpl(final Code code, final String message) {
         this.code = code;
         this.message = message;
-        this.metrics = metrics;
     }
 
     @Override
@@ -69,10 +65,5 @@ public final class DPLExecutorResultImpl implements DPLExecutorResult {
     @Override
     public String message() {
         return message;
-    }
-
-    @Override
-    public Map<String, String> metrics() {
-        return metrics;
     }
 }
