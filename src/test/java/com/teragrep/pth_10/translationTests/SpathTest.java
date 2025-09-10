@@ -58,6 +58,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SpathTest {
 
@@ -70,6 +73,7 @@ public class SpathTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final SpathTransformation ct = new SpathTransformation(ctx);
@@ -91,6 +95,7 @@ public class SpathTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final SpathTransformation ct = new SpathTransformation(ctx);
