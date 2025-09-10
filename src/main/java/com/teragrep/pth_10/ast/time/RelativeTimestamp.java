@@ -45,8 +45,11 @@
  */
 package com.teragrep.pth_10.ast.time;
 
+import com.teragrep.pth_10.ast.Text;
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.UnquotedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -54,11 +57,24 @@ import java.util.Objects;
 
 public final class RelativeTimestamp implements DPLTimestamp {
 
+    private final Logger LOGGER = LoggerFactory.getLogger(RelativeTimestamp.class);
+
     private final ValidRelativeTimestampText offsetString;
     private final ZonedDateTime baseTime;
 
+    public RelativeTimestamp(final String offsetString) {
+        this(
+                new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))),
+                ZonedDateTime.now(ZoneId.systemDefault())
+        );
+    }
+
     public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
         this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
+    }
+
+    public RelativeTimestamp(final Text offsetText, final ZonedDateTime baseTime) {
+        this(new ValidRelativeTimestampText(new UnquotedText(offsetText)), baseTime);
     }
 
     public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
@@ -76,6 +92,7 @@ public final class RelativeTimestamp implements DPLTimestamp {
             throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
         }
         final String validOffset = offsetString.read();
+        LOGGER.info("Parsing relative offset <{}> from basetime <{}>", validOffset, baseTime);
         final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
         final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
         final ZonedDateTime updatedTime;
@@ -118,5 +135,10 @@ public final class RelativeTimestamp implements DPLTimestamp {
     @Override
     public int hashCode() {
         return Objects.hash(offsetString, baseTime);
+    }
+
+    @Override
+    public boolean isStub() {
+        return false;
     }
 }

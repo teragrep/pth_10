@@ -69,7 +69,7 @@ public final class ValidRelativeTimestampText implements Text {
         final String originString = origin.read();
         final Matcher relativeTimeMatcher = pattern.matcher(originString);
 
-        if (!relativeTimeMatcher.matches() && !originString.equalsIgnoreCase("now")) {
+        if (!relativeTimeMatcher.matches() && !originString.equalsIgnoreCase("now") || originString.isEmpty()) {
             throw new NumberFormatException("Unknown relative time modifier string <" + originString + ">");
         }
     }

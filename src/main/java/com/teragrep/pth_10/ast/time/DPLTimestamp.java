@@ -45,9 +45,11 @@
  */
 package com.teragrep.pth_10.ast.time;
 
+import com.teragrep.pth_10.Stubbable;
+
 import java.time.ZonedDateTime;
 
-public interface DPLTimestamp {
+public interface DPLTimestamp extends Stubbable {
 
     public abstract ZonedDateTime zonedDateTime();
 

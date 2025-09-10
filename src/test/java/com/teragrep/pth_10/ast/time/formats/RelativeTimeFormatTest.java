@@ -43,61 +43,49 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast.time;
+package com.teragrep.pth_10.ast.time.formats;
 
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 
-/** Adds a second when the timestamp nanosecond is greater than 0 */
-public final class RoundedUpTimestamp implements DPLTimestamp {
+public final class RelativeTimeFormatTest {
 
-    private final DPLTimestamp origin;
+    private final ZonedDateTime baseTime = ZonedDateTime.of(2020, 1, 2, 3, 4, 5, 6, ZoneId.of("UTC"));
 
-    public RoundedUpTimestamp(final DPLTimestamp origin) {
-        this.origin = origin;
+    @Test
+    public void testValidValue() {
+        final DPLTimeFormat format = new RelativeTimeFormat(baseTime);
+        final DPLTimestamp timestamp = format.from("-1y");
+        Assertions.assertFalse(timestamp.isStub());
     }
 
-    public ZonedDateTime zonedDateTime() {
-        // If date is for latest timeQualifier and has fractions-of-second, add 1 second to capture events
-        // that are on the same second
-        final ZonedDateTime originZoneDateTime = origin.zonedDateTime();
-        final ZonedDateTime rv;
-        if (originZoneDateTime.getNano() > 0) {
-            rv = originZoneDateTime.plusSeconds(1);
-        }
-        else {
-            rv = originZoneDateTime;
-        }
-        return rv;
+    @Test
+    public void testInvalidValue() {
+        final DPLTimeFormat format = new RelativeTimeFormat(baseTime);
+        final DPLTimestamp timestamp = format.from("2025/09/10T12:34:56");
+        Assertions.assertTrue(timestamp.isStub());
     }
 
-    @Override
-    public boolean isValid() {
-        return origin.isValid();
+    @Test
+    public void testAtZone() {
+        ZoneId zone = ZoneId.of("Europe/Helsinki");
+        DPLTimeFormat format = new RelativeTimeFormat(baseTime).atZone(zone);
+        DPLTimestamp timestamp = format.from("-1y");
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(zone, zonedDateTime.getZone());
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null) {
-            return false;
-        }
-        if (getClass() != o.getClass()) {
-            return false;
-        }
-        final RoundedUpTimestamp other = (RoundedUpTimestamp) o;
-        return Objects.equals(origin, other.origin);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(origin);
-    }
-
-    @Override
-    public boolean isStub() {
-        return false;
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(RelativeTimeFormat.class)
+                .withIgnoredFields("LOGGER")
+                .withNonnullFields("baseTime")
+                .verify();
     }
 }

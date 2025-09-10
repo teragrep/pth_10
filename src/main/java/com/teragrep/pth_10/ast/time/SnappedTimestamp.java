@@ -201,6 +201,11 @@ public final class SnappedTimestamp implements DPLTimestamp {
         return validSnapToTimeText.containsSnapCharacter();
     }
 
+    @Override
+    public boolean isStub() {
+        return false;
+    }
+
     private SnapUnit snapUnit() {
         final String snapUnitSubstring = validSnapToTimeText.read();
         final SnapUnit snapUnit;

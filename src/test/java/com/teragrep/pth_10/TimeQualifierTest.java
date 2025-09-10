@@ -45,8 +45,11 @@
  */
 package com.teragrep.pth_10;
 
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import com.teragrep.pth_10.ast.time.DPLTimestampString;
 import com.teragrep.pth_10.ast.time.TimeQualifier;
 import com.teragrep.pth_03.antlr.DPLLexer;
+import com.teragrep.pth_10.ast.time.formats.CustomTimeFormat;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
 import org.junit.jupiter.api.Assertions;
@@ -55,8 +58,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilderFactory;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 public class TimeQualifierTest {
+
+    private final ZonedDateTime baseTime = ZonedDateTime.now(ZoneId.of("UTC"));
 
     @Test
     public void testEarliest() {
@@ -65,11 +72,15 @@ public class TimeQualifierTest {
         final int type = DPLLexer.EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
+        DPLTimestamp timestamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timestamp, type, doc);
+        long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT;
+        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(expectedEpoch)));
         Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
-        el.setAttribute("value", Long.toString(1730325600L));
+        el.setAttribute("value", Long.toString(expectedEpoch));
 
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
@@ -81,7 +92,8 @@ public class TimeQualifierTest {
         final int type = DPLLexer.EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        DPLTimestamp timestamp = new DPLTimestampString(value, baseTime).asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timestamp, type, doc);
         Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
         Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
@@ -97,7 +109,8 @@ public class TimeQualifierTest {
         final int type = DPLLexer.EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime).asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1704103200L)));
         Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
@@ -113,7 +126,8 @@ public class TimeQualifierTest {
         final int type = DPLLexer.LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime).asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L + 1L)));
         Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
@@ -129,7 +143,8 @@ public class TimeQualifierTest {
         final int type = DPLLexer.LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, "", type, doc);
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime).asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1704103200L)));
         Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
@@ -146,11 +161,15 @@ public class TimeQualifierTest {
         final int type = DPLLexer.LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
+        long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT
+        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(expectedEpoch)));
         Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
-        el.setAttribute("value", Long.toString(1730325600L));
+        el.setAttribute("value", Long.toString(expectedEpoch));
 
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
@@ -163,11 +182,15 @@ public class TimeQualifierTest {
         final int type = DPLLexer.INDEX_EARLIEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
+        long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT
+        Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(expectedEpoch)));
         Element el = doc.createElement("index_earliest");
         el.setAttribute("operation", "GE");
-        el.setAttribute("value", Long.toString(1730325600L));
+        el.setAttribute("value", Long.toString(expectedEpoch));
 
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
@@ -180,11 +203,15 @@ public class TimeQualifierTest {
         final int type = DPLLexer.INDEX_LATEST;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
-        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
+        long expectedEpoch = 1730332800L; // Thursday, Oct 31, 2024 00:00:00.000 GMT
+        Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(expectedEpoch)));
         Element el = doc.createElement("index_latest");
         el.setAttribute("operation", "LE");
-        el.setAttribute("value", Long.toString(1730325600L));
+        el.setAttribute("value", Long.toString(expectedEpoch));
 
         Assertions.assertEquals(expected, tq.column());
         Assertions.assertEquals(el.toString(), tq.xmlElement().toString());
@@ -197,7 +224,10 @@ public class TimeQualifierTest {
         final int type = DPLLexer.STARTTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         Column expected = new Column("`_time`").geq(functions.from_unixtime(functions.lit(1730325600L)));
         Element el = doc.createElement("earliest");
         el.setAttribute("operation", "GE");
@@ -214,7 +244,10 @@ public class TimeQualifierTest {
         final int type = DPLLexer.ENDTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-        TimeQualifier tq = new TimeQualifier(value, timeformat, type, doc);
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
+        TimeQualifier tq = new TimeQualifier(value, timeStamp, type, doc);
         Column expected = new Column("`_time`").lt(functions.from_unixtime(functions.lit(1730325600L)));
         Element el = doc.createElement("latest");
         el.setAttribute("operation", "LE");
@@ -231,12 +264,14 @@ public class TimeQualifierTest {
         final int type = DPLLexer.IN;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
         RuntimeException e = Assertions
-                .assertThrows(RuntimeException.class, () -> new TimeQualifier(value, timeformat, type, doc).column());
+                .assertThrows(RuntimeException.class, () -> new TimeQualifier(value, timeStamp, type, doc).column());
         Assertions.assertEquals("TimeQualifier <" + type + "> not implemented yet.", e.getMessage());
         RuntimeException exml = Assertions
-                .assertThrows(RuntimeException.class, () -> new TimeQualifier(value, timeformat, type, doc).xmlElement());
+                .assertThrows(RuntimeException.class, () -> new TimeQualifier(value, timeStamp, type, doc).xmlElement());
         Assertions.assertEquals("TimeQualifier <" + type + "> not implemented yet.", exml.getMessage());
     }
 
@@ -247,9 +282,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.ENDTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
         Assertions
-                .assertEquals(new TimeQualifier(value, timeformat, type, doc), new TimeQualifier(value, timeformat, type, doc));
+                .assertEquals(new TimeQualifier(value, timeStamp, type, doc), new TimeQualifier(value, timeStamp, type, doc));
 
     }
 
@@ -261,9 +298,11 @@ public class TimeQualifierTest {
         final int type = DPLLexer.ENDTIMEU;
         final Document doc = Assertions
                 .assertDoesNotThrow(() -> DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument());
-
+        DPLTimestamp timeStamp = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeformat))
+                .asDPLTimestamp();
         Assertions
-                .assertNotEquals(new TimeQualifier(value, timeformat, type, doc), new TimeQualifier(value2, timeformat, type, doc));
+                .assertNotEquals(new TimeQualifier(value, timeStamp, type, doc), new TimeQualifier(value2, timeStamp, type, doc));
 
     }
 }

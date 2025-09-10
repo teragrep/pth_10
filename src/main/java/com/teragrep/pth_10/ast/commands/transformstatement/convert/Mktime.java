@@ -45,8 +45,12 @@
  */
 package com.teragrep.pth_10.ast.commands.transformstatement.convert;
 
-import com.teragrep.pth_10.ast.time.DPLTimestampImpl;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import com.teragrep.pth_10.ast.time.DPLTimestampString;
+import com.teragrep.pth_10.ast.time.formats.CustomTimeFormat;
+import org.apache.spark.sql.api.java.UDF1;
+
+import java.time.ZonedDateTime;
 
 /**
  * UDF for convert command 'mktime'<br>
@@ -54,13 +58,23 @@ import org.apache.spark.sql.api.java.UDF2;
  *
  * @author eemhu
  */
-public class Mktime implements UDF2<String, String, String> {
+public class Mktime implements UDF1<String, String> {
+
+    private final ZonedDateTime baseTime;
+    private final String timeFormat;
+
+    public Mktime(final ZonedDateTime baseTime, final String timeFormat) {
+        this.baseTime = baseTime;
+        this.timeFormat = timeFormat;
+    }
 
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String call(final String value, final String timeFormat) throws Exception {
-        final DPLTimestampImpl timestamp = new DPLTimestampImpl(value, timeFormat);
+    public String call(final String value) throws Exception {
+        final DPLTimestampString dplTimestampString = new DPLTimestampString(value, baseTime)
+                .withFormat(new CustomTimeFormat(timeFormat));
+        DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         return Long.toString(timestamp.zonedDateTime().toEpochSecond());
     }
 

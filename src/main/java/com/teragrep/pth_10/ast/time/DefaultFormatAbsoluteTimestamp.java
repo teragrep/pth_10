@@ -115,4 +115,9 @@ public final class DefaultFormatAbsoluteTimestamp implements DPLTimestamp {
     public int hashCode() {
         return Objects.hash(value, Arrays.hashCode(timestamps));
     }
+
+    @Override
+    public boolean isStub() {
+        return false;
+    }
 }

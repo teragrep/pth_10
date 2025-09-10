@@ -60,6 +60,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class WhereTest {
 
@@ -71,6 +73,7 @@ public class WhereTest {
         spark = SparkSession.builder().appName("Java Spark SQL basic example").master("local[2]").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
         ctx = new DPLParserCatalystContext(spark);
+        ctx.setStartTime(ZonedDateTime.now());
     }
 
     @Test
@@ -101,6 +104,7 @@ public class WhereTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now());
         ctx.setEarliest("-1w");
 
         final WhereTransformation ct = new WhereTransformation(ctx);
@@ -138,6 +142,7 @@ public class WhereTest {
         final ParseTree tree = parser.root();
 
         final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        ctx.setStartTime(ZonedDateTime.now());
         ctx.setEarliest("-1w");
         final WhereTransformation ct = new WhereTransformation(ctx);
         ct.visitWhereTransformation((DPLParser.WhereTransformationContext) tree.getChild(1).getChild(0));

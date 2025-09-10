@@ -46,19 +46,18 @@
 package com.teragrep.pth_10.ast.time;
 
 import com.teragrep.pth_10.ast.DPLTimeFormatText;
-import com.teragrep.pth_10.ast.Text;
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.UnquotedText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.TemporalQueries;
@@ -68,36 +67,34 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbsoluteTimestamp.class);
 
-    private final Text value;
+    private final String value;
     private final String timeformat;
     private final ZoneId zoneId;
 
-    public AbsoluteTimestamp(final String value, final String timeformat, final ZoneId zoneId) {
-        this(new UnquotedText(new TextString(value)), timeformat, zoneId);
+    public AbsoluteTimestamp(final String value) {
+        this(value, "", ZoneId.systemDefault());
     }
 
-    public AbsoluteTimestamp(final Text value, final String timeformat, final ZoneId zoneId) {
+    public AbsoluteTimestamp(final String value, final String timeformat) {
+        this(value, timeformat, ZoneId.systemDefault());
+    }
+
+    public AbsoluteTimestamp(final String value, final String timeformat, final ZoneId zoneId) {
         this.value = value;
         this.timeformat = timeformat;
         this.zoneId = zoneId;
     }
 
     @Override
-    public ZonedDateTime zonedDateTime() throws DateTimeParseException {
-        final ZonedDateTime zonedDateTime;
-        final String unquotedValue = value.read();
-        // default formats
-        if (timeformat == null || timeformat.isEmpty()) {
-            LOGGER.info("No timeformat provided for value <{}> using default formats", unquotedValue);
-            final DefaultFormatAbsoluteTimestamp defaultFormatAbsoluteTimestamp = new DefaultFormatAbsoluteTimestamp(
-                    unquotedValue,
-                    zoneId
-            );
-            zonedDateTime = defaultFormatAbsoluteTimestamp.zonedDateTime();
+    public ZonedDateTime zonedDateTime() throws DateTimeException, NumberFormatException {
+        if (timeformat == null) {
+            throw new IllegalArgumentException("Parsing unavailable provided timeformat was null");
         }
+        final ZonedDateTime zonedDateTime;
+        final String unquotedValue = new UnquotedText(new TextString(value)).read();
         // direct epoch from value
-        else if (timeformat.equals("%s")) {
-            LOGGER.info("Parsing value <{}> directly to epoch", unquotedValue);
+        if (timeformat.equals("%s")) {
+            LOGGER.debug("Parsing value <{}> directly to epoch", unquotedValue);
             zonedDateTime = Instant.ofEpochSecond(Long.parseLong(unquotedValue)).atZone(zoneId);
         }
         // examine value with formatter using timeformat
@@ -105,7 +102,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
             final String javaAcceptedTimeFormat = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat)))
                     .read();
             final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(javaAcceptedTimeFormat);
-            LOGGER.info("Parsing value <{}> with format <{}>", unquotedValue, javaAcceptedTimeFormat);
+            LOGGER.debug("Parsing value <{}> with format <{}>", unquotedValue, javaAcceptedTimeFormat);
             final TemporalAccessor parseResult = dateTimeFormatter.parse(unquotedValue);
             // use zone from value if available
             if (parseResult.query(TemporalQueries.zone()) != null) {
@@ -134,7 +131,8 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
         try {
             zonedDateTime();
         }
-        catch (final DateTimeParseException exception) {
+        catch (final DateTimeException | NumberFormatException exception) {
+            LOGGER.debug("Validation encountered exception <{}>", exception.getMessage());
             isValid = false;
         }
         return isValid;
@@ -164,5 +162,10 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
     @Override
     public int hashCode() {
         return Objects.hash(value, timeformat, zoneId);
+    }
+
+    @Override
+    public boolean isStub() {
+        return false;
     }
 }

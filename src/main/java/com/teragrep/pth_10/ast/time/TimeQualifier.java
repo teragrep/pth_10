@@ -57,13 +57,13 @@ public final class TimeQualifier {
 
     private final int token;
     private final String value;
-    private final String timeformat;
+    private final DPLTimestamp timestamp;
     private final Document doc;
 
-    public TimeQualifier(final String value, final String timeformat, final int type, final Document doc) {
+    public TimeQualifier(final String value, final DPLTimestamp timestamp, final int type, final Document doc) {
         this.token = type;
         this.value = value;
-        this.timeformat = timeformat;
+        this.timestamp = timestamp;
         this.doc = doc;
     }
 
@@ -78,9 +78,9 @@ public final class TimeQualifier {
         }
 
         if (isEndTime()) {
-            return new RoundedUpTimestamp(new DPLTimestampImpl(value, timeformat)).zonedDateTime().toEpochSecond();
+            return new RoundedUpTimestamp(timestamp).zonedDateTime().toEpochSecond();
         }
-        return new DPLTimestampImpl(value, timeformat).zonedDateTime().toEpochSecond();
+        return timestamp.zonedDateTime().toEpochSecond();
     }
 
     public Column column() {
@@ -162,11 +162,11 @@ public final class TimeQualifier {
             return false;
         TimeQualifier that = (TimeQualifier) o;
         return Objects.equals(token, that.token) && Objects.equals(value, that.value)
-                && Objects.equals(timeformat, that.timeformat) && Objects.equals(doc, that.doc);
+                && Objects.equals(timestamp, that.timestamp) && Objects.equals(doc, that.doc);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(token, value, timeformat, doc);
+        return Objects.hash(token, value, timestamp, doc);
     }
 }

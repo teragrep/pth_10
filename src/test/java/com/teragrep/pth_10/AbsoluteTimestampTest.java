@@ -150,9 +150,11 @@ public class AbsoluteTimestampTest {
     @Test
     public void testTriesDefaultFormatsWithEmptyTimeformat() {
         final AbsoluteTimestamp timestamp = new AbsoluteTimestamp("2001-10-20", "", utcZone);
+        Assertions.assertFalse(timestamp.isValid());
         final RuntimeException runtimeException = Assertions
                 .assertThrows(RuntimeException.class, timestamp::zonedDateTime);
-        final String expected = "TimeQualifier conversion error: value <2001-10-20> couldn't be parsed using default formats.";
+        // direct exception message if called without checking with isValid() method
+        final String expected = "Text '2001-10-20' could not be parsed, unparsed text found at index 0";
         Assertions.assertEquals(expected, runtimeException.getMessage());
     }
 
@@ -161,7 +163,7 @@ public class AbsoluteTimestampTest {
         final AbsoluteTimestamp timestamp = new AbsoluteTimestamp("2000-10-20", null, utcZone);
         final RuntimeException runtimeException = Assertions
                 .assertThrows(RuntimeException.class, timestamp::zonedDateTime);
-        final String expected = "TimeQualifier conversion error: value <2000-10-20> couldn't be parsed using default formats.";
+        final String expected = "Parsing unavailable provided timeformat was null";
         Assertions.assertEquals(expected, runtimeException.getMessage());
     }
 

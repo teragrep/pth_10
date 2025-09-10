@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Consumer;
 
@@ -436,6 +437,14 @@ public class DPLParserCatalystContext implements Cloneable {
 
     public void setConfig(Config config) {
         this.config = config;
+    }
+
+    public void setStartTime(final ZonedDateTime baseTime) {
+        parserConfig.setStartTime(baseTime);
+    }
+
+    public ZonedDateTime startTime() {
+        return parserConfig.startTime();
     }
 
     public String getEarliest() {

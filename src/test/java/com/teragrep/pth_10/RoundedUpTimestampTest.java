@@ -46,23 +46,36 @@
 package com.teragrep.pth_10;
 
 import com.teragrep.pth_10.ast.time.DPLTimestamp;
-import com.teragrep.pth_10.ast.time.DPLTimestampImpl;
+import com.teragrep.pth_10.ast.time.DPLTimestampString;
 import com.teragrep.pth_10.ast.time.RoundedUpTimestamp;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 public final class RoundedUpTimestampTest {
+
+    private final ZoneId utcZone = ZoneId.of("UTC");
 
     @Test
     void testWithoutNanosecond() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00+00:00", ""));
+        DPLTimestamp timestampFromString = new DPLTimestampString(
+                "2024-01-01T00:00:00+00:00",
+                ZonedDateTime.now(utcZone)
+        ).asDPLTimestamp();
+        DPLTimestamp timestamp = new RoundedUpTimestamp(timestampFromString);
         Assertions.assertEquals(1704067200L, timestamp.zonedDateTime().toInstant().getEpochSecond());
     }
 
     @Test
     void testWithNanoseconds() {
-        DPLTimestamp timestamp = new RoundedUpTimestamp(new DPLTimestampImpl("2024-01-01T00:00:00.240+00:00", ""));
+        DPLTimestamp timestampFromString = new DPLTimestampString(
+                "2024-01-01T00:00:00.240+00:00",
+                ZonedDateTime.now(utcZone)
+        ).asDPLTimestamp();
+        DPLTimestamp timestamp = new RoundedUpTimestamp(timestampFromString);
         Assertions.assertEquals(1704067200L + 1L, timestamp.zonedDateTime().toInstant().getEpochSecond());
     }
 
