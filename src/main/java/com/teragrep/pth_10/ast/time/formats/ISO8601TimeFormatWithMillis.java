@@ -92,15 +92,16 @@ public final class ISO8601TimeFormatWithMillis implements DPLTimeFormat {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o == null) {
+    public boolean equals(final Object object) {
+        if (object == null) {
             return false;
         }
-        if (getClass() != o.getClass()) {
+        if (getClass() != object.getClass()) {
             return false;
         }
-        ISO8601TimeFormatWithMillis that = (ISO8601TimeFormatWithMillis) o;
-        return Objects.equals(timeFormat, that.timeFormat) && Objects.equals(zoneId, that.zoneId);
+        final ISO8601TimeFormatWithMillis iso8601TimeFormatWithMillis = (ISO8601TimeFormatWithMillis) object;
+        return Objects.equals(timeFormat, iso8601TimeFormatWithMillis.timeFormat)
+                && Objects.equals(zoneId, iso8601TimeFormatWithMillis.zoneId);
     }
 
     @Override

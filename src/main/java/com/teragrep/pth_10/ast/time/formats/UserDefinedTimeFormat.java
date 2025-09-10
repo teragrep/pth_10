@@ -45,54 +45,64 @@
  */
 package com.teragrep.pth_10.ast.time.formats;
 
+import com.teragrep.pth_10.ast.time.AbsoluteTimestamp;
 import com.teragrep.pth_10.ast.time.DPLTimestamp;
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import com.teragrep.pth_10.ast.time.StubTimestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.util.Objects;
 
-public final class CustomTimeFormatTest {
+/** Used when user provides a custom time format to be used for parsing */
+public final class UserDefinedTimeFormat implements DPLTimeFormat {
 
-    private final ZoneId utcZone = ZoneId.of("UTC");
+    private final Logger LOGGER = LoggerFactory.getLogger(UserDefinedTimeFormat.class);
+    private final String timeFormat;
+    private final ZoneId zoneId;
 
-    @Test
-    public void testValidValue() {
-        final CustomTimeFormat format = new CustomTimeFormat("yyyyMMdd", utcZone);
-        final DPLTimestamp timestamp = format.from("20200102");
-        Assertions.assertFalse(timestamp.isStub());
+    public UserDefinedTimeFormat(final String timeFormat) {
+        this(timeFormat, ZoneId.systemDefault());
     }
 
-    @Test
-    public void testInvalidValue() {
-        final CustomTimeFormat format = new CustomTimeFormat("yyyyMMDD", utcZone);
-        final DPLTimestamp timestamp = format.from("invalid");
-        Assertions.assertTrue(timestamp.isStub());
+    public UserDefinedTimeFormat(final String timeFormat, final ZoneId zoneId) {
+        this.timeFormat = timeFormat;
+        this.zoneId = zoneId;
     }
 
-    @Test
-    public void testEmpty() {
-        final CustomTimeFormat format = new CustomTimeFormat("", utcZone);
-        final DPLTimestamp timestamp = format.from("20200102");
-        Assertions.assertTrue(timestamp.isStub());
+    @Override
+    public DPLTimestamp from(final String timestampString) {
+        DPLTimestamp timestamp = new AbsoluteTimestamp(timestampString, timeFormat, zoneId);
+        if (!timestamp.isValid()) {
+            LOGGER.info("timestamp <{}> was invalid", timestampString);
+            timestamp = new StubTimestamp();
+        }
+        else {
+            LOGGER.info("timestamp <{}> matched", timestampString);
+        }
+        return timestamp;
     }
 
-    @Test
-    public void testAtZone() {
-        ZoneId zone = ZoneId.of("Europe/Helsinki");
-        DPLTimeFormat format = new CustomTimeFormat("yyyyMMdd", utcZone).atZone(zone);
-        DPLTimestamp timestamp = format.from("20200102");
-        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
-        Assertions.assertEquals(zone, zonedDateTime.getZone());
+    @Override
+    public DPLTimeFormat atZone(final ZoneId zoneId) {
+        return new UserDefinedTimeFormat(timeFormat, zoneId);
     }
 
-    @Test
-    public void testContract() {
-        EqualsVerifier
-                .forClass(CustomTimeFormat.class)
-                .withIgnoredFields("LOGGER")
-                .withNonnullFields("timeFormat", "zoneId")
-                .verify();
+    @Override
+    public boolean equals(final Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (getClass() != object.getClass()) {
+            return false;
+        }
+        final UserDefinedTimeFormat userDefinedTimeFormat = (UserDefinedTimeFormat) object;
+        return Objects.equals(timeFormat, userDefinedTimeFormat.timeFormat)
+                && Objects.equals(zoneId, userDefinedTimeFormat.zoneId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(timeFormat, zoneId);
     }
 }

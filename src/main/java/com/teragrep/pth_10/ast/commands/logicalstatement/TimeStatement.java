@@ -55,7 +55,7 @@ import com.teragrep.pth_10.ast.time.TimeQualifier;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
-import com.teragrep.pth_10.ast.time.formats.CustomTimeFormat;
+import com.teragrep.pth_10.ast.time.formats.UserDefinedTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -195,7 +195,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         String timeFormat = catCtx.getTimeFormatString();
         ZonedDateTime queryStartTime = catCtx.startTime();
         DPLTimestampString timeFormatText = new DPLTimestampString(value, queryStartTime)
-                .withFormat(new CustomTimeFormat(timeFormat));
+                .withFormat(new UserDefinedTimeFormat(timeFormat));
         DPLTimestamp timestamp = timeFormatText.asDPLTimestamp();
         if (timestamp.isStub()) {
             throw new IllegalArgumentException(
@@ -232,7 +232,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         String timeFormat = catCtx.getTimeFormatString();
         ZonedDateTime queryStartTime = catCtx.startTime();
         DPLTimestampString timeFormatText = new DPLTimestampString(value, queryStartTime)
-                .withFormat(new CustomTimeFormat(timeFormat));
+                .withFormat(new UserDefinedTimeFormat(timeFormat));
         DPLTimestamp timestamp = timeFormatText.asDPLTimestamp();
         if (timestamp.isStub()) {
             throw new IllegalArgumentException(
