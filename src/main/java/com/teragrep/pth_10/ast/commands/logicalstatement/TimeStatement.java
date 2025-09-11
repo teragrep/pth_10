@@ -55,7 +55,6 @@ import com.teragrep.pth_10.ast.time.TimeQualifier;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
-import com.teragrep.pth_10.ast.time.formats.UserDefinedTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -194,9 +193,15 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         String value = ctx.getChild(1).getText();
         String timeFormat = catCtx.getTimeFormatString();
         ZonedDateTime queryStartTime = catCtx.startTime();
-        DPLTimestampString timeFormatText = new DPLTimestampString(value, queryStartTime)
-                .withFormat(new UserDefinedTimeFormat(timeFormat));
-        DPLTimestamp timestamp = timeFormatText.asDPLTimestamp();
+        final DPLTimestampString timestampString;
+        // use user defined timeformat is provided
+        if (!timeFormat.isEmpty()) {
+            timestampString = new DPLTimestampString(value, queryStartTime, timeFormat);
+        }
+        else {
+            timestampString = new DPLTimestampString(value, queryStartTime);
+        }
+        final DPLTimestamp timestamp = timestampString.asDPLTimestamp();
         if (timestamp.isStub()) {
             throw new IllegalArgumentException(
                     "Could not parse value <" + value + "> with custom format <" + timeFormat
@@ -231,9 +236,15 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         String value = ctx.getChild(1).getText();
         String timeFormat = catCtx.getTimeFormatString();
         ZonedDateTime queryStartTime = catCtx.startTime();
-        DPLTimestampString timeFormatText = new DPLTimestampString(value, queryStartTime)
-                .withFormat(new UserDefinedTimeFormat(timeFormat));
-        DPLTimestamp timestamp = timeFormatText.asDPLTimestamp();
+        final DPLTimestampString timestampString;
+        // use user defined timeformat is provided
+        if (!timeFormat.isEmpty()) {
+            timestampString = new DPLTimestampString(value, queryStartTime, timeFormat);
+        }
+        else {
+            timestampString = new DPLTimestampString(value, queryStartTime);
+        }
+        final DPLTimestamp timestamp = timestampString.asDPLTimestamp();
         if (timestamp.isStub()) {
             throw new IllegalArgumentException(
                     "Could not parse value <" + value + "> with custom format <" + timeFormat

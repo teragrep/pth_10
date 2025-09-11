@@ -47,7 +47,7 @@ package com.teragrep.pth_10.ast.time;
 
 import java.time.ZonedDateTime;
 
-public class StubTimestamp implements DPLTimestamp {
+public final class StubTimestamp implements DPLTimestamp {
 
     @Override
     public ZonedDateTime zonedDateTime() {
@@ -56,7 +56,7 @@ public class StubTimestamp implements DPLTimestamp {
 
     @Override
     public boolean isValid() {
-        throw new UnsupportedOperationException("zonedDateTime() not supported for StubTimestamp");
+        throw new UnsupportedOperationException("isValid() not supported for StubTimestamp");
     }
 
     @Override
@@ -65,7 +65,7 @@ public class StubTimestamp implements DPLTimestamp {
     }
 
     @Override
-    public boolean equals(Object object) {
+    public boolean equals(final Object object) {
         if (object == null) {
             return false;
         }
