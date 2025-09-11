@@ -61,10 +61,6 @@ public final class UserDefinedTimeFormat implements DPLTimeFormat {
     private final String timeFormat;
     private final ZoneId zoneId;
 
-    public UserDefinedTimeFormat(final String timeFormat) {
-        this(timeFormat, ZoneId.systemDefault());
-    }
-
     public UserDefinedTimeFormat(final String timeFormat, final ZoneId zoneId) {
         this.timeFormat = timeFormat;
         this.zoneId = zoneId;
