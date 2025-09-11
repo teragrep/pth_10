@@ -53,11 +53,11 @@ import com.teragrep.pth_10.ast.time.formats.ISO8601TimeFormatWithMillis;
 import com.teragrep.pth_10.ast.time.formats.ISO8601TimeFormatWithZone;
 import com.teragrep.pth_10.ast.time.formats.ISO8601TimeFormatWithZoneAndMillis;
 import com.teragrep.pth_10.ast.time.formats.RelativeTimeFormat;
+import com.teragrep.pth_10.ast.time.formats.UserDefinedTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -67,13 +67,13 @@ import java.util.stream.Collectors;
 public final class DPLTimestampString {
 
     private final Logger LOGGER = LoggerFactory.getLogger(DPLTimestampString.class);
+    private final DPLTimestamp stubTimestamp = new StubTimestamp();
 
     private final String timestampString;
     private final ZonedDateTime baseTime;
-    private final List<DPLTimeFormat> defaultFormats;
-    private final List<DPLTimeFormat> userDefinedFormats;
+    private final List<DPLTimeFormat> formats;
 
-    public DPLTimestampString(final String timestampString, ZonedDateTime baseTime) {
+    public DPLTimestampString(final String timestampString, final ZonedDateTime baseTime) {
         this(
                 timestampString,
                 baseTime,
@@ -82,91 +82,52 @@ public final class DPLTimestampString {
                                 new DefaultTimeFormat(), new EpochSecondsTimeFormat(), new ISO8601TimeFormat(),
                                 new ISO8601TimeFormatWithMillis(), new ISO8601TimeFormatWithZone(),
                                 new ISO8601TimeFormatWithZoneAndMillis(), new RelativeTimeFormat(baseTime)
-                        ),
-                Collections.emptyList()
+                        )
+        );
+    }
+
+    /** Overwrites default time formats to use only the one defined in the constructor */
+    public DPLTimestampString(final String timestampString, final ZonedDateTime baseTime, final String timeFormat) {
+        this(
+                timestampString,
+                baseTime,
+                Collections.singletonList(new UserDefinedTimeFormat(timeFormat, baseTime.getZone()))
         );
     }
 
     public DPLTimestampString(
             final String timestampString,
             final ZonedDateTime baseTime,
-            final List<DPLTimeFormat> defaultFormats,
-            final List<DPLTimeFormat> userDefinedFormats
+            final List<DPLTimeFormat> formats
     ) {
         this.timestampString = timestampString;
         this.baseTime = baseTime;
-        this.defaultFormats = defaultFormats;
-        this.userDefinedFormats = userDefinedFormats;
-    }
-
-    public DPLTimestampString withFormat(final DPLTimeFormat addedFormat) {
-        final List<DPLTimeFormat> newCustomFormats = new ArrayList<>(userDefinedFormats);
-        // ensure format is in the same zone as base time
-        DPLTimeFormat addedFormatAtBaseTimeZone = addedFormat.atZone(baseTime.getZone());
-        if (addedFormat.equals(addedFormatAtBaseTimeZone)) {
-            LOGGER.debug("Overwrote <{}> zone with base time's zone", addedFormat);
-        }
-        newCustomFormats.add(addedFormatAtBaseTimeZone);
-        return new DPLTimestampString(timestampString, baseTime, defaultFormats, newCustomFormats);
-    }
-
-    public DPLTimestampString withFormats(final List<DPLTimeFormat> addedFormatsList) {
-        final List<DPLTimeFormat> newCustomFormats = new ArrayList<>(userDefinedFormats);
-        // map added formats to the base time zone
-        final List<DPLTimeFormat> addedFormatsInBaseTimeZone = addedFormatsList
-                .stream()
-                .map(f -> f.atZone(baseTime.getZone()))
-                .collect(Collectors.toList());
-        if (addedFormatsList.equals(addedFormatsInBaseTimeZone)) {
-            LOGGER.debug("Overwrote <{}> formats with base time's zone", addedFormatsList);
-        }
-        newCustomFormats.addAll(addedFormatsInBaseTimeZone);
-        return new DPLTimestampString(timestampString, baseTime, defaultFormats, newCustomFormats);
+        this.formats = formats;
     }
 
     public DPLTimestamp asDPLTimestamp() {
-        final List<DPLTimestamp> customMatchingTimestamps = usedDefinedMatchingTimestamps();
-        final List<DPLTimestamp> defaultMatchingTimestamps = defaultMatchingTimestamps();
-        final DPLTimestamp dplTimestamp;
+        final List<DPLTimestamp> matchingTimestamps = formats
+                .stream()
+                .map(format -> format.atZone(baseTime.getZone())) // ensure formats are in base time zone
+                .map(format -> format.from(timestampString))
+                .filter(timestamp -> !timestamp.isStub())
+                .collect(Collectors.toList());
 
-        // prioritize matching with user defined timestamps
-        // separated to avoid multiple matches if used defined timeformat clashes with default formats e.g. double match
-        if (customMatchingTimestamps.size() > 1) {
+        final DPLTimestamp dplTimestamp;
+        if (matchingTimestamps.size() > 1) {
+            LOGGER.debug("More than one match. Matching timestamps <{}>", matchingTimestamps);
             throw new IllegalArgumentException(
-                    "Timestamp string <" + timestampString + "> matched with multiple user defined time formats"
+                    "Timestamp string <" + timestampString + "> matched with <" + matchingTimestamps.size()
+                            + "> time formats"
             );
         }
-        else if (customMatchingTimestamps.size() == 1) {
-            dplTimestamp = customMatchingTimestamps.get(0);
-        }
-        else if (defaultMatchingTimestamps.size() > 1) {
-            throw new IllegalArgumentException(
-                    "Timestamp string <" + timestampString + "> matched with multiple time formats"
-            );
-        }
-        else if (defaultMatchingTimestamps.size() == 1) {
-            dplTimestamp = defaultMatchingTimestamps.get(0);
+        else if (matchingTimestamps.size() == 1) {
+            dplTimestamp = matchingTimestamps.get(0);
         }
         else {
-            dplTimestamp = new StubTimestamp();
+            dplTimestamp = stubTimestamp;
         }
         return dplTimestamp;
-    }
-
-    private List<DPLTimestamp> usedDefinedMatchingTimestamps() {
-        return userDefinedFormats
-                .stream()
-                .map(format -> format.from(timestampString))
-                .filter(timestamp -> !timestamp.isStub())
-                .collect(Collectors.toList());
-    }
-
-    private List<DPLTimestamp> defaultMatchingTimestamps() {
-        return defaultFormats
-                .stream()
-                .map(format -> format.from(timestampString))
-                .filter(timestamp -> !timestamp.isStub())
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -179,12 +140,11 @@ public final class DPLTimestampString {
         }
         final DPLTimestampString dplTimestampString = (DPLTimestampString) object;
         return Objects.equals(timestampString, dplTimestampString.timestampString) && Objects
-                .equals(baseTime, dplTimestampString.baseTime)
-                && Objects.equals(defaultFormats, dplTimestampString.defaultFormats) && Objects.equals(userDefinedFormats, dplTimestampString.userDefinedFormats);
+                .equals(baseTime, dplTimestampString.baseTime) && Objects.equals(formats, dplTimestampString.formats);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timestampString, baseTime, defaultFormats, userDefinedFormats);
+        return Objects.hash(timestampString, baseTime, formats);
     }
 }

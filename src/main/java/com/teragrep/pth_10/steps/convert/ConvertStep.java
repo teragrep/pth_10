@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth_10.steps.convert;
 
-import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import com.teragrep.pth_10.ast.commands.transformstatement.convert.*;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
@@ -234,8 +233,6 @@ public final class ConvertStep extends AbstractConvertStep {
      * @return Input dataset with added result column
      */
     private Dataset<Row> ctime(Dataset<Row> dataset, String field, String renameField) {
-        DPLParserCatalystContext dplParserCatalystContext = new DPLParserCatalystContext(sparkSession);
-        String earliest = dplParserCatalystContext.getEarliest();
         UserDefinedFunction ctimeUDF = functions.udf(new Ctime(), DataTypes.StringType);
         sparkSession.udf().register("UDF_Ctime", ctimeUDF);
 

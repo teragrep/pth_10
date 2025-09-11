@@ -118,9 +118,8 @@ public final class DPLTimestampStringTest {
     }
 
     @Test
-    public void testUserDefinedFormatPrecedence() {
-        DPLTimeFormat customFormat = new UserDefinedTimeFormat("yyyyMMdd");
-        DPLTimestampString dplTimestampString = new DPLTimestampString("20250910", startTime).withFormat(customFormat);
+    public void testUserDefinedFormat() {
+        DPLTimestampString dplTimestampString = new DPLTimestampString("20250910", startTime, "yyyyMMdd");
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
         ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
@@ -132,13 +131,16 @@ public final class DPLTimestampStringTest {
 
     @Test
     public void testMultipleMatchingUserDefinedFormats() {
-        DPLTimeFormat userDefinedFormat1 = new UserDefinedTimeFormat("yyyyMMdd");
-        DPLTimeFormat userDefinedFormat2 = new UserDefinedTimeFormat("yyyyMMdd");
-        DPLTimestampString dplTimestampString = new DPLTimestampString("20250910", startTime)
-                .withFormats(Arrays.asList(userDefinedFormat1, userDefinedFormat2));
+        DPLTimeFormat userDefinedFormat1 = new UserDefinedTimeFormat("yyyyMMdd", startTime.getZone());
+        DPLTimeFormat userDefinedFormat2 = new UserDefinedTimeFormat("yyyyddMM", startTime.getZone());
+        DPLTimestampString dplTimestampString = new DPLTimestampString(
+                "20250910",
+                startTime,
+                Arrays.asList(userDefinedFormat1, userDefinedFormat2)
+        );
         IllegalArgumentException exception = Assertions
                 .assertThrows(IllegalArgumentException.class, dplTimestampString::asDPLTimestamp);
-        String expectedMessage = "Timestamp string <20250910> matched with multiple user defined time formats";
+        String expectedMessage = "Timestamp string <20250910> matched with <2> time formats";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -146,8 +148,8 @@ public final class DPLTimestampStringTest {
     public void testContract() {
         EqualsVerifier
                 .forClass(DPLTimestampString.class)
-                .withIgnoredFields("LOGGER")
-                .withNonnullFields("timestampString", "baseTime", "defaultFormats", "userDefinedFormats")
+                .withIgnoredFields("LOGGER", "stubTimestamp")
+                .withNonnullFields("timestampString", "baseTime", "formats")
                 .verify();
     }
 }

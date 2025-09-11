@@ -59,8 +59,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class ConvertTest {
+
+    private final ZoneId utcZone = ZoneId.of("UTC");
 
     @Test
     void testConvertTranslation() {
@@ -72,8 +77,7 @@ public class ConvertTest {
 
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
-
-        ConvertTransformation ct = new ConvertTransformation();
+        ConvertTransformation ct = new ConvertTransformation(ZonedDateTime.now(utcZone));
         ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(1).getChild(0));
         ConvertStep cs = ct.convertStep;
 
@@ -97,7 +101,7 @@ public class ConvertTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        ConvertTransformation ct = new ConvertTransformation();
+        ConvertTransformation ct = new ConvertTransformation(ZonedDateTime.now(utcZone));
         ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(1).getChild(0));
         ConvertStep cs = ct.convertStep;
 
@@ -122,7 +126,7 @@ public class ConvertTest {
         DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
         ctx.setEarliest("-1w");
 
-        ConvertTransformation ct = new ConvertTransformation();
+        ConvertTransformation ct = new ConvertTransformation(ZonedDateTime.now(utcZone));
         ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(1).getChild(0));
         ConvertStep cs = ct.convertStep;
 

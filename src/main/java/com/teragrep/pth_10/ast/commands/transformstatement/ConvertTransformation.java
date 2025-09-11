@@ -85,10 +85,6 @@ public class ConvertTransformation extends DPLParserBaseVisitor<Node> {
     private ConvertCommand cmd = null;
     private final ZonedDateTime baseTime;
 
-    public ConvertTransformation() {
-        this(ZonedDateTime.now());
-    }
-
     public ConvertTransformation(final ZonedDateTime baseTime) {
         this.baseTime = baseTime;
     }
