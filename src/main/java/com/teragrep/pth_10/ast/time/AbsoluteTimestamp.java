@@ -71,14 +71,6 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
     private final String timeformat;
     private final ZoneId zoneId;
 
-    public AbsoluteTimestamp(final String value) {
-        this(value, "", ZoneId.systemDefault());
-    }
-
-    public AbsoluteTimestamp(final String value, final String timeformat) {
-        this(value, timeformat, ZoneId.systemDefault());
-    }
-
     public AbsoluteTimestamp(final String value, final String timeformat, final ZoneId zoneId) {
         this.value = value;
         this.timeformat = timeformat;

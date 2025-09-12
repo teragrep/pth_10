@@ -57,6 +57,9 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 public class PredictTest {
 
     @Test
@@ -67,7 +70,7 @@ public class PredictTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         PredictTransformation pt = new PredictTransformation();
@@ -87,7 +90,7 @@ public class PredictTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         PredictTransformation pt = new PredictTransformation();
@@ -107,7 +110,7 @@ public class PredictTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         PredictTransformation pt = new PredictTransformation();
@@ -127,7 +130,7 @@ public class PredictTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         PredictTransformation pt = new PredictTransformation();
@@ -151,7 +154,7 @@ public class PredictTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         PredictTransformation pt = new PredictTransformation();
@@ -172,7 +175,7 @@ public class PredictTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         PredictTransformation pt = new PredictTransformation();

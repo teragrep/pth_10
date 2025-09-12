@@ -66,6 +66,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -81,7 +83,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -105,7 +107,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -138,7 +140,7 @@ public class TeragrepTest {
         map.put("dpl.pth_10.transform.teragrep.syslog.parameter.port", port);
         Config c = ConfigFactory.parseMap(map);
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         ctx.setConfig(c);
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
@@ -163,7 +165,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -187,7 +189,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -213,7 +215,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -240,7 +242,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -263,7 +265,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -286,7 +288,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -309,7 +311,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -332,7 +334,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -359,7 +361,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 

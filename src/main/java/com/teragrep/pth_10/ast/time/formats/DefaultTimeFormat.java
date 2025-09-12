@@ -60,10 +60,6 @@ public final class DefaultTimeFormat implements DPLTimeFormat {
     private final String timeFormat;
     private final ZoneId zoneId;
 
-    public DefaultTimeFormat() {
-        this("MM/dd/yyyy:HH:mm:ss", ZoneId.systemDefault());
-    }
-
     public DefaultTimeFormat(final ZoneId zoneId) {
         this("MM/dd/yyyy:HH:mm:ss", zoneId);
     }
