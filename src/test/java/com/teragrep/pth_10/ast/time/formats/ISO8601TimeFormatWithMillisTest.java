@@ -62,6 +62,15 @@ public final class ISO8601TimeFormatWithMillisTest {
         final DPLTimeFormat format = new ISO8601TimeFormatWithMillis(utcZone);
         final DPLTimestamp timestamp = format.from("2025-09-10T12:34:56.123");
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(123000000, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
@@ -78,6 +87,13 @@ public final class ISO8601TimeFormatWithMillisTest {
         DPLTimestamp timestamp = format.from("2025-09-10T12:34:56.123");
         ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         Assertions.assertEquals(zone, zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(123000000, zonedDateTime.getNano());
     }
 
     @Test

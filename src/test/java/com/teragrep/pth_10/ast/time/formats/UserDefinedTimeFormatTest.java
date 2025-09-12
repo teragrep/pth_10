@@ -62,6 +62,15 @@ public final class UserDefinedTimeFormatTest {
         final UserDefinedTimeFormat format = new UserDefinedTimeFormat("yyyyMMdd", utcZone);
         final DPLTimestamp timestamp = format.from("20200102");
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2020, zonedDateTime.getYear());
+        Assertions.assertEquals(1, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(2, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(0, zonedDateTime.getHour());
+        Assertions.assertEquals(0, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
@@ -85,6 +94,13 @@ public final class UserDefinedTimeFormatTest {
         DPLTimestamp timestamp = format.from("20200102");
         ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         Assertions.assertEquals(zone, zonedDateTime.getZone());
+        Assertions.assertEquals(2020, zonedDateTime.getYear());
+        Assertions.assertEquals(1, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(2, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(0, zonedDateTime.getHour());
+        Assertions.assertEquals(0, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
     }
 
     @Test
