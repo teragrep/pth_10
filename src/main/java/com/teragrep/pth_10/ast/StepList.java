@@ -65,7 +65,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 
 public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
@@ -81,7 +81,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     private boolean ignoreDefaultSorting = false;
 
     private OutputMode outputMode = OutputMode.Append();
-    private Consumer<Dataset<Row>> batchHandler = null; // for UI
+    private BiConsumer<Dataset<Row>, Boolean> batchHandler = null; // for UI
     private BatchCollect batchCollect; // standard batchCollect, used before sending batch event
     private DPLParserCatalystVisitor catVisitor;
 
@@ -89,7 +89,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         this.batchCollect = batchCollect;
     }
 
-    public void setBatchHandler(Consumer<Dataset<Row>> batchHandler) {
+    public void setBatchHandler(BiConsumer<Dataset<Row>, Boolean> batchHandler) {
         this.batchHandler = batchHandler;
     }
 
@@ -98,7 +98,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     }
 
     @Deprecated
-    public Consumer<Dataset<Row>> getBatchHandler() {
+    public BiConsumer<Dataset<Row>, Boolean> getBatchHandler() {
         return batchHandler;
     }
 
@@ -299,14 +299,15 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
      * @param id ID of the processed batch dataset
      */
     private void sendBatchEvent(Dataset<Row> ds, Long id) {
+        boolean aggregatesUsed = aggregateCount > 0;
         if (this.batchHandler != null) {
             if (outputMode == OutputMode.Complete()) {
                 LOGGER.info("------------------ Aggregates (Complete Mode) used, sending batch event!");
-                this.batchHandler.accept(ds);
+                this.batchHandler.accept(ds, aggregatesUsed);
             }
             else if (this.batchCollect == null) {
                 LOGGER.info("------------------ No batchCollect present (no sorting column), sending batch event!");
-                this.batchHandler.accept(ds);
+                this.batchHandler.accept(ds, aggregatesUsed);
             }
             else {
                 LOGGER.info("------------------ Aggregates NOT USED (before seq. switch), using batchCollect!");
@@ -315,7 +316,7 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
                     index = breakpoints.get(BreakpointType.POST_BC);
                 }
                 this.batchCollect.collect(ds, id, this.list.subList(index, this.list.size()), false);
-                this.batchHandler.accept(batchCollect.getCollectedAsDataframe());
+                this.batchHandler.accept(batchCollect.getCollectedAsDataframe(), aggregatesUsed);
             }
         }
     }

@@ -54,10 +54,16 @@
     <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
     <teragrep.pth_03.version>9.3.0</teragrep.pth_03.version>
     <teragrep.pth_06.version>3.5.0</teragrep.pth_06.version>
+    <teragrep.pth_15.version>2.0.0</teragrep.pth_15.version>
     <teragrep.rlp_01.version>4.0.1</teragrep.rlp_01.version>
     <teragrep.rlp_03.version>9.0.0</teragrep.rlp_03.version>
   </properties>
   <dependencies>
+    <dependency>
+      <groupId>com.teragrep</groupId>
+      <artifactId>pth_15</artifactId>
+      <version>${teragrep.pth_15.version}</version>
+    </dependency>
     <!--DPL-dependencies -->
     <dependency>
       <groupId>com.teragrep</groupId>
