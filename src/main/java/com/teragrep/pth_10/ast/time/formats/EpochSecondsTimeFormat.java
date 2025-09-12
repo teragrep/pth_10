@@ -43,66 +43,65 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast;
+package com.teragrep.pth_10.ast.time.formats;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.teragrep.pth_10.ast.time.AbsoluteTimestamp;
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import com.teragrep.pth_10.ast.time.StubTimestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
- * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
- * uses the system default
- */
-public class DefaultTimeFormat {
+import java.time.ZoneId;
+import java.util.Objects;
 
-    private final String[] formats;
+public final class EpochSecondsTimeFormat implements DPLTimeFormat {
 
-    public DefaultTimeFormat() {
-        this(new String[] {
-                "MM/dd/yyyy:HH:mm:ss",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
-                "yyyy-MM-dd'T'HH:mm:ss"
-        });
+    private final Logger LOGGER = LoggerFactory.getLogger(EpochSecondsTimeFormat.class);
+    private final String timeFormat;
+    private final ZoneId zoneId;
+
+    public EpochSecondsTimeFormat(final ZoneId zoneId) {
+        this("%s", zoneId);
     }
 
-    public DefaultTimeFormat(String[] formats) {
-        this.formats = formats;
+    private EpochSecondsTimeFormat(final String timeFormat, final ZoneId zoneId) {
+        this.timeFormat = timeFormat;
+        this.zoneId = zoneId;
     }
 
-    /**
-     * Calculate the epoch from given string.
-     * 
-     * @param time The human-readable time
-     * @return epoch as long
-     */
-    public long getEpoch(String time) {
-        return this.parse(time).getTime() / 1000L;
-    }
-
-    /**
-     * Parses the given human-readable time to a Date object.
-     * 
-     * @param time The human-readable time
-     * @return Date parsed from the given string
-     */
-    public Date parse(String time) {
-        // Try parsing all provided time formats in order
-        for (final String format : formats) {
-            try {
-                return parseDate(time, format);
-            }
-            catch (ParseException ignored) {
-            }
+    @Override
+    public DPLTimestamp from(final String timestampString) {
+        DPLTimestamp timestamp = new AbsoluteTimestamp(timestampString, timeFormat, zoneId);
+        if (!timestamp.isValid()) {
+            LOGGER.info("timestamp <{}> was invalid", timestampString);
+            timestamp = new StubTimestamp();
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        else {
+            LOGGER.info("timestamp <{}> matched", timestampString);
+        }
+        return timestamp;
     }
 
-    private Date parseDate(String time, String timeFormat) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
-        sdf.setLenient(false);
-        return sdf.parse(time);
+    @Override
+    public DPLTimeFormat atZone(final ZoneId zoneId) {
+        return new EpochSecondsTimeFormat(timeFormat, zoneId);
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (getClass() != object.getClass()) {
+            return false;
+        }
+        final EpochSecondsTimeFormat epochSecondsTimeFormat = (EpochSecondsTimeFormat) object;
+        return Objects.equals(timeFormat, epochSecondsTimeFormat.timeFormat)
+                && Objects.equals(zoneId, epochSecondsTimeFormat.zoneId);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(timeFormat, zoneId);
     }
 }

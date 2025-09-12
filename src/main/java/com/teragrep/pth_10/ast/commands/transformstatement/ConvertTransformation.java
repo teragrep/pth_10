@@ -55,6 +55,7 @@ import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -82,9 +83,10 @@ public class ConvertTransformation extends DPLParserBaseVisitor<Node> {
     public ConvertStep convertStep = null;
 
     private ConvertCommand cmd = null;
+    private final ZonedDateTime baseTime;
 
-    public ConvertTransformation() {
-
+    public ConvertTransformation(final ZonedDateTime baseTime) {
+        this.baseTime = baseTime;
     }
 
     @Override
@@ -99,7 +101,7 @@ public class ConvertTransformation extends DPLParserBaseVisitor<Node> {
      * @return step node
      */
     private Node convertTransformationEmitCatalyst(DPLParser.ConvertTransformationContext ctx) {
-        this.convertStep = new ConvertStep();
+        this.convertStep = new ConvertStep(baseTime);
         visitChildren(ctx);
         return new StepNode(this.convertStep);
     }

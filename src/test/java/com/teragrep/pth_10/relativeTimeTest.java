@@ -45,53 +45,45 @@
  */
 package com.teragrep.pth_10;
 
-import com.teragrep.pth_10.ast.DefaultTimeFormat;
-import com.teragrep.pth_10.ast.time.RelativeTimeParser;
-import com.teragrep.pth_10.ast.time.RelativeTimestamp;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
-import java.time.*;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.TimeZone;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class relativeTimeTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(relativeTimeTest.class);
-    private TimeZone originalTimeZone = null;
-
     // use this file to initialize the streaming dataset
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
     private StreamingTestUtil streamingTestUtil;
+    private final ZoneId utcZone = ZoneId.of("UTC");
+    private final Pattern epochFromSparkQueryPattern = Pattern.compile("from_unixtime\\((\\d+)");
 
     @BeforeAll
     void setEnv() {
-        // set default timezone
-        originalTimeZone = TimeZone.getDefault();
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
-
         this.streamingTestUtil = new StreamingTestUtil();
         this.streamingTestUtil.setEnv();
     }
 
     @BeforeEach
     void setUp() {
-        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
         this.streamingTestUtil.setUp();
     }
 
     @AfterEach
     void tearDown() {
         this.streamingTestUtil.tearDown();
-    }
-
-    @AfterAll
-    void recoverTimeZone() {
-        TimeZone.setDefault(originalTimeZone);
     }
 
     @Test
@@ -101,13 +93,17 @@ public class relativeTimeTest {
     )
     public void parseEpochTimeformatTest() {
         // unix epoch format
-        String q = "index=kafka_topic timeformat=%s earliest=1587032680 latest=1587021942";
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-
-            String regex = "^.*_time >= from_unixtime\\(1587032680.*_time < from_unixtime\\(" + latestEpoch + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+        final String query = "index=kafka_topic timeformat=%s earliest=1587032680 latest=1587021942";
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            final List<Long> expectedList = Arrays.asList(1587032680L, 1587021942L);
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, epochs.size());
+            Assertions.assertEquals(expectedList, epochs);
         });
     }
 
@@ -118,15 +114,19 @@ public class relativeTimeTest {
     )
     public void parseDefaultTimeformatTest() {
         // default but given manually
-        String q = "index=kafka_topic timeformat=%m/%d/%Y:%H:%M:%S earliest=\"04/16/2020:10:24:40\" latest=\"04/16/2020:10:25:42\"";
-
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-
-            String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
-            LOGGER.info("Complex timeformat<{}>", q);
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+        final String query = "index=kafka_topic timeformat=%m/%d/%Y:%H:%M:%S earliest=\"04/16/2020:10:24:40\" latest=\"04/16/2020:10:25:42\"";
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 24, 40, 0, utcZone).toEpochSecond();
+            final long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            final List<Long> expectedList = Arrays.asList(earliestEpoch, latestEpoch);
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, epochs.size());
+            Assertions.assertEquals(expectedList, epochs);
         });
     }
 
@@ -137,14 +137,19 @@ public class relativeTimeTest {
     )
     public void parseCustomTimeFormatTest() {
         // custom format SS-MM-HH YY-DD-MM
-        String q = "index=kafka_topic timeformat=\"%S-%M-%H %Y-%d-%m\" earliest=\"40-24-10 2020-16-04\" latest=\"42-25-10 2020-16-04\"";
-
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-
-            String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+        final String query = "index=kafka_topic timeformat=\"%S-%M-%H %Y-%d-%m\" earliest=\"40-24-10 2020-16-04\" latest=\"42-25-10 2020-16-04\"";
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 24, 40, 0, utcZone).toEpochSecond();
+            final long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            final List<Long> expectedList = Arrays.asList(earliestEpoch, latestEpoch);
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, epochs.size());
+            Assertions.assertEquals(expectedList, epochs);
         });
     }
 
@@ -158,9 +163,10 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=\"%F %T\" earliest=\"2020-04-16 10:24:40\" latest=\"2020-04-16 10:25:42\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-
-            String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
+            long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 24, 40, 0, utcZone).toEpochSecond();
+            long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
+            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
+                    + ".*$";
             LOGGER.info("Complex timeformat<{}>", q);
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
@@ -177,9 +183,10 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=\"%d %b %Y %I.%M.%S %p\" earliest=\"16 Apr 2020 10.24.40 AM\" latest=\"16 Apr 2020 10.25.42 AM\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-
-            String regex = "^.*_time >= from_unixtime\\(1587021880.*_time < from_unixtime\\(" + latestEpoch + ".*$";
+            long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 24, 40, 0, utcZone).toEpochSecond();
+            long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
+            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
+                    + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
         });
@@ -221,89 +228,12 @@ public class relativeTimeTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseTimestampEarliestRelativeTest() {
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        Instant t1 = timestamp.toInstant();
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-
-        // Using instant-method
-        // -1 h
-        Instant exp = t1.plus(-1, ChronoUnit.HOURS);
-        LocalDateTime etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
-        RelativeTimestamp rtTimestamp = rtParser.parse("-1h");
-        long rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
-        Assertions
-                .assertEquals(etime.getHour(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getHour());
-
-        // -3 min
-        exp = t1.plus(-3, ChronoUnit.MINUTES);
-        etime = LocalDateTime.ofInstant(exp, ZoneOffset.UTC);
-        rtTimestamp = rtParser.parse("-3m");
-        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
-        Assertions
-                .assertEquals(etime.getMinute(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMinute());
-        // Using localDateTime-method
-        // -1 week
-        LocalDateTime dt = timestamp.toLocalDateTime();
-        LocalDateTime et = dt.minusWeeks(1);
-        rtTimestamp = rtParser.parse("-1w");
-        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
-        Assertions
-                .assertEquals(et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getDayOfWeek());
-        // -3 month
-        dt = timestamp.toLocalDateTime();
-        et = dt.minusMonths(3);
-        rtTimestamp = rtParser.parse("-3mon");
-        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
-        Assertions
-                .assertEquals(et.getMonth(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getMonth());
-
-        // -7 year
-        dt = timestamp.toLocalDateTime();
-        et = dt.minusYears(7);
-        rtTimestamp = rtParser.parse("-7y");
-        rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
-        Assertions
-                .assertEquals(et.getYear(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.UTC).getYear());
-    }
-
-    // test snap-to-time "@d"
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
-    public void parseTimestampSnapToTimeRelativeTest() {
-        // Test for snap-to-time functionality
-        // for example "-@d" would snap back to midnight of set day
-        long epochSeconds = 1643881600; // Thursday, February 3, 2022 09:46:40 UTC
-        Timestamp timestamp = new Timestamp(epochSeconds * 1000L);
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-
-        LocalDateTime dt = timestamp.toLocalDateTime();
-        LocalDateTime et = dt.minusHours(9);
-        et = et.minusMinutes(46);
-        et = et.minusSeconds(40); // Thu Feb 3, 2022 00:00 UTC
-
-        RelativeTimestamp rtTimestamp = rtParser.parse("@d");
-        long rtEpoch = rtTimestamp.calculate(timestamp).getEpochSecond();
-        Assertions
-                .assertEquals(et.getDayOfWeek(), LocalDateTime.ofInstant(Instant.ofEpochSecond(rtEpoch), ZoneOffset.systemDefault()).getDayOfWeek());
-    }
-
-    @Test
-    @DisabledIfSystemProperty(
-            named = "skipSparkTest",
-            matches = "true"
-    )
     public void parseTimestampLatestRelativeTest() {
         String q = "index=cinnamon latest=-3h ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            Instant now = timestamp.toInstant().plus(-3, ChronoUnit.HOURS);
-
-            String expected = String.valueOf(now.getEpochSecond()).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
+            long latestEpoch = ZonedDateTime.now(utcZone).minusHours(3).toEpochSecond();
+            String expected = String.valueOf(latestEpoch).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
             String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
@@ -319,10 +249,8 @@ public class relativeTimeTest {
         String q = "index=cinnamon latest=+3h ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            Instant now = timestamp.toInstant().plus(3, ChronoUnit.HOURS);
-
-            String expected = String.valueOf(now.getEpochSecond()).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
+            long latestEpoch = ZonedDateTime.now(utcZone).plusHours(3).toEpochSecond();
+            String expected = String.valueOf(latestEpoch).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
             String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
@@ -336,7 +264,7 @@ public class relativeTimeTest {
     )
     public void parseTimestampLatestRelativeTestWithoutSign() {
         String q = "index=cinnamon latest=3h ";
-        String expected = "TimeQualifier conversion error: <3h> can't be parsed.";
+        String expected = "Could not parse value <3h> with custom format <> or with default formats";
 
         RuntimeException exception = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
@@ -354,12 +282,8 @@ public class relativeTimeTest {
         String q = "index=cinnamon latest=@d ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            ZonedDateTime now = timestamp.toInstant().atZone(ZoneId.systemDefault());
-            now = now.truncatedTo(ChronoUnit.DAYS); // snap to start of day
-            long expected = now.toInstant().getEpochSecond(); // transform to Instant and get epoch
-
-            String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
+            long latestEpoch = ZonedDateTime.now(utcZone).truncatedTo(ChronoUnit.DAYS).toEpochSecond();
+            String regex = "^.*_time < from_unixtime\\(" + latestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
         });
@@ -371,18 +295,23 @@ public class relativeTimeTest {
             matches = "true"
     )
     public void parseTimestampLatestRelativeSnapWithOffsetTest() {
-        String q = "index=cinnamon latest=@d+3h ";
-
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            ZonedDateTime now = timestamp.toInstant().atZone(ZoneId.systemDefault());
-            now = now.truncatedTo(ChronoUnit.DAYS); // snap to start of day
-            now = now.plus(3, ChronoUnit.HOURS); // add three hours
-            long expected = now.toInstant().getEpochSecond(); // transform to Instant and get epoch
-
-            String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+        String query = "index=cinnamon latest=@d+3h ";
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            ZonedDateTime expected = ZonedDateTime.now(utcZone).truncatedTo(ChronoUnit.DAYS).plusHours(3);
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, timeQualifierEpochList.size());
+            final Long latestEpoch = timeQualifierEpochList.get(0);
+            final ZonedDateTime latest = ZonedDateTime.ofInstant(Instant.ofEpochSecond(latestEpoch), utcZone);
+            Assertions.assertEquals(expected.getZone(), latest.getZone(), "should have same zone");
+            Assertions.assertEquals(expected.getYear(), latest.getYear(), "should have same year");
+            Assertions.assertEquals(expected.getMonthValue(), latest.getMonthValue(), "should have same month");
+            Assertions.assertEquals(expected.getHour(), latest.getHour(), "should have same hour");
+            Assertions.assertEquals(expected.getMinute(), latest.getMinute(), "should have same minute");
         });
     }
 
@@ -392,16 +321,24 @@ public class relativeTimeTest {
             matches = "true"
     )
     public void parseTimestampLatestRelativeNowTest() {
-        String q = "index=cinnamon latest=now ";
-
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            Instant now = timestamp.toInstant();
-
-            String expected = String.valueOf(now.getEpochSecond()).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
-            String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+        String query = "index=cinnamon latest=now ";
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final ZonedDateTime now = ZonedDateTime.now(utcZone);
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, timeQualifierEpochList.size());
+            final Long latestEpoch = timeQualifierEpochList.get(0);
+            final ZonedDateTime latest = ZonedDateTime.ofInstant(Instant.ofEpochSecond(latestEpoch), utcZone);
+            Assertions.assertEquals(now.getZone(), latest.getZone());
+            Assertions.assertEquals(now.getYear(), latest.getYear());
+            Assertions.assertEquals(now.getMonthValue(), latest.getMonthValue());
+            Assertions.assertEquals(now.getHour(), latest.getHour());
+            Assertions.assertEquals(now.getMinute(), latest.getMinute());
+            // testing the accuracy to a minute as build time of the query might be longer than a second
         });
     }
 
@@ -411,20 +348,32 @@ public class relativeTimeTest {
             matches = "true"
     )
     public void parseTimestampEarliestRelativeSnapToDayLatestNow() {
-        // pth_10 ticket #24 query: 'index=... sourcetype=... earliest=@d latest=now'
-        String q = "index=cinnamon earliest=@d latest=now";
-
-        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            ZonedDateTime now = timestamp.toInstant().atZone(ZoneId.systemDefault());
-            long expectedEarliest = now.truncatedTo(ChronoUnit.DAYS).toInstant().getEpochSecond();
-            long expectedLatest = now.toEpochSecond();
-            String expectedLatestString = String.valueOf(expectedLatest).substring(0, 7); // don't check last 2 numbers as the query takes some time and the "now" is different
-            String regex = "^.*_time >= from_unixtime\\(" + expectedEarliest + ".*_time < from_unixtime\\("
-                    + expectedLatestString + ".*$";
-            ;
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+        // pth10 ticket #24 query: 'index=... sourcetype=... earliest=@d latest=now'
+        String query = "index=cinnamon earliest=@d latest=now";
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            ZonedDateTime now = ZonedDateTime.now(utcZone);
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, epochs.size());
+            // test earliest snapped to day
+            ZonedDateTime nowSnappedToDay = ZonedDateTime.now(utcZone).truncatedTo(ChronoUnit.DAYS);
+            Assertions.assertEquals(now.getDayOfMonth(), nowSnappedToDay.getDayOfMonth());
+            Assertions.assertEquals(0, nowSnappedToDay.getHour());
+            Assertions.assertEquals(nowSnappedToDay.toEpochSecond(), epochs.get(0));
+            // test latest is now, accurate to a minute
+            final Long latestEpochFromQuery = epochs.get(1);
+            ZonedDateTime latestTimeStamp = ZonedDateTime
+                    .ofInstant(Instant.ofEpochSecond(latestEpochFromQuery), utcZone);
+            Assertions.assertEquals(now.getZone(), latestTimeStamp.getZone());
+            Assertions.assertEquals(now.getYear(), latestTimeStamp.getYear());
+            Assertions.assertEquals(now.getMonthValue(), latestTimeStamp.getMonthValue());
+            Assertions.assertEquals(now.getDayOfMonth(), latestTimeStamp.getDayOfMonth());
+            Assertions.assertEquals(now.getHour(), latestTimeStamp.getHour());
+            Assertions.assertEquals(now.getMinute(), latestTimeStamp.getMinute());
         });
     }
 
@@ -437,7 +386,7 @@ public class relativeTimeTest {
     public void parseTimestampRelativeInvalidSnapToTimeUnitTest() {
         // pth_10 ticket #66 query: 'index=... sourcetype=... earliest=@-5h latest=@-3h'
         String query = "index=cinnamon earliest=\"@-5h\" latest=\"@-3h\"";
-        String expected = "TimeQualifier conversion error: <@-5h> can't be parsed.";
+        String expected = "Could not parse value <\"@-5h\"> with custom format <> or with default formats";
 
         RuntimeException exception = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
@@ -454,7 +403,7 @@ public class relativeTimeTest {
     )
     public void parseTimestampRelativeInvalidTimeUnitQueryTest() {
         String q = "index=cinnamon earliest=-5x latest=-7z";
-        String e = "Relative timestamp contained an invalid time unit";
+        String e = "Could not find offset time unit for string <x> used";
 
         Throwable exception = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, q, this.testFile, res -> {
@@ -473,12 +422,11 @@ public class relativeTimeTest {
         String q = "index=cinnamon earliest=\"-3h@h\" latest=\"-1h@h\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            Instant now = timestamp.toInstant();
-            Instant earliest = now.minus(3L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
-            Instant latest = now.minus(1L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.HOURS);
-            String regex = "^.*_time >= from_unixtime\\(" + earliest.getEpochSecond() + ".*_time < from_unixtime\\("
-                    + latest.getEpochSecond() + ".*$";
+            ZonedDateTime now = ZonedDateTime.now(utcZone);
+            long earliestEpoch = now.minusHours(3L).truncatedTo(ChronoUnit.HOURS).toEpochSecond();
+            long latestEpoch = now.minusHours(1).truncatedTo(ChronoUnit.HOURS).toEpochSecond();
+            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
+                    + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
         });
@@ -494,9 +442,7 @@ public class relativeTimeTest {
         String q = "index=cinnamon earliest=\"-h\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            Instant now = timestamp.toInstant();
-            long earliestEpoch = now.minus(1L, ChronoUnit.HOURS).getEpochSecond();
+            long earliestEpoch = ZonedDateTime.now(utcZone).minusHours(1).toEpochSecond();
             String earliestString = String.valueOf(earliestEpoch).substring(0, 7); // don't check last 2 indexes as the query takes some time and the "now" is different
             String regex = "^.*_time >= from_unixtime\\(" + earliestString + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -514,12 +460,13 @@ public class relativeTimeTest {
         String q = "index=cinnamon earliest=\"-3h@d+1d\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            ZonedDateTime now = timestamp.toInstant().atZone(ZoneId.systemDefault());
-            now = now.minus(3L, ChronoUnit.HOURS).truncatedTo(ChronoUnit.DAYS).plus(1L, ChronoUnit.DAYS);
-            long expected = now.toInstant().getEpochSecond();
-
-            String regex = "^.*_time >= from_unixtime\\(" + expected + ".*$";
+            long earliestEpoch = ZonedDateTime
+                    .now(utcZone)
+                    .minusHours(3)
+                    .truncatedTo(ChronoUnit.DAYS)
+                    .plusDays(1)
+                    .toEpochSecond();
+            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*$";
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
             Assertions.assertTrue(result.matches(regex));
         });
@@ -534,7 +481,7 @@ public class relativeTimeTest {
         String q;
         // earliest
         q = "index=cinnamon earliest=\"04/16/2020:10:25:40\"";
-        long earliestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
+        long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -552,7 +499,7 @@ public class relativeTimeTest {
         String q;
         // latest
         q = "index=cinnamon latest=\"04/16/2020:10:25:40\"";
-        long latestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
+        long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
         String regex = ".*_time < from_unixtime\\(" + latestEpoch + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -570,9 +517,10 @@ public class relativeTimeTest {
         String q;
         // earliest, latest
         q = "index=cinnamon earliest=\"04/16/2020:10:25:40\" latest=\"04/16/2020:10:25:42\"";
-        long earliestEpoch2 = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
-        long latestEpoch2 = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2
+
+        long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
+        long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
                 + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -589,10 +537,10 @@ public class relativeTimeTest {
     public void parseTimestampIndexEarliestLatestTest() {
         // _index_earliest, _index_latest
         String q = "index=cinnamon _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\"";
-        long indexEarliestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:40");
-        long indexLatestEpoch = new DefaultTimeFormat().getEpoch("04/16/2020:10:25:42");
-        String regex = "^.*_time >= from_unixtime\\(" + indexEarliestEpoch + ".*_time < from_unixtime\\("
-                + indexLatestEpoch + ".*$";
+        long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
+        long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
+                + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             String result = this.streamingTestUtil.getCtx().getSparkQuery();
@@ -607,8 +555,8 @@ public class relativeTimeTest {
     )
     public void streamListTest() {
         String q = "index = memory earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
-        long earliestEpoch = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
-        long latestEpoch = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
+        long earliestEpoch = ZonedDateTime.of(2019, 5, 8, 9, 10, 40, 0, utcZone).toEpochSecond();
+        long latestEpoch = ZonedDateTime.of(2022, 5, 10, 9, 11, 40, 0, utcZone).toEpochSecond();
         String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
                 + ".*$";
 
@@ -625,9 +573,9 @@ public class relativeTimeTest {
     )
     public void streamList1Test() {
         String q = "index = memory-test earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
-        long earliestEpoch2 = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
-        long latestEpoch2 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch2 + ".*_time < from_unixtime\\(" + latestEpoch2
+        long earliestEpoch = ZonedDateTime.of(2019, 5, 8, 9, 10, 40, 0, utcZone).toEpochSecond();
+        long latestEpoch = ZonedDateTime.of(2022, 5, 10, 9, 11, 40, 0, utcZone).toEpochSecond();
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
                 + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
@@ -643,9 +591,9 @@ public class relativeTimeTest {
     )
     public void streamList2Test() {
         String q = "index = memory-test/yyy earliest=\"05/08/2019:09:10:40\" latest=\"05/10/2022:09:11:40\" host=\"sc-99-99-14-25\" OR host=\"sc-99-99-14-20\" sourcetype=\"log:f17:0\" Latitude";
-        long earliestEpoch3 = new DefaultTimeFormat().getEpoch("05/08/2019:09:10:40");
-        long latestEpoch3 = new DefaultTimeFormat().getEpoch("05/10/2022:09:11:40");
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch3 + ".*_time < from_unixtime\\(" + latestEpoch3
+        long earliestEpoch = ZonedDateTime.of(2019, 5, 8, 9, 10, 40, 0, utcZone).toEpochSecond();
+        long latestEpoch = ZonedDateTime.of(2022, 5, 10, 9, 11, 40, 0, utcZone).toEpochSecond();
+        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
                 + ".*$";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
