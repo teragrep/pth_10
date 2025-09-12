@@ -72,8 +72,6 @@ public class evalTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    private static TimeZone originalTimeZone = null;
-
     @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
@@ -83,11 +81,6 @@ public class evalTest {
     @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
-    }
-
-    @AfterAll
-    void recoverTimeZone() {
-        TimeZone.setDefault(originalTimeZone);
     }
 
     @AfterEach

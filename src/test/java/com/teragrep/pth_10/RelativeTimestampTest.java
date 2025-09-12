@@ -52,6 +52,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 public class RelativeTimestampTest {
 
@@ -199,6 +201,165 @@ public class RelativeTimestampTest {
     public void testWhitespace() {
         final RelativeTimestamp timestamp = new RelativeTimestamp(" ", originTimestamp);
         Assertions.assertFalse(timestamp.isValid());
+    }
+
+    @Test
+    public void testSecondUnits() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final List<String> units = Arrays.asList("s", "sec", "secs", "second", "seconds");
+        final int amount = 100;
+        final long expected = startTime.plusSeconds(100).toEpochSecond();
+        int loops = 0;
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+            loops++;
+        }
+        Assertions.assertEquals(5, loops);
+    }
+
+    @Test
+    public void testMinuteUnits() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final List<String> units = Arrays.asList("m", "min", "minute", "minutes");
+        final int amount = 100;
+        final long expected = startTime.plusMinutes(100).toEpochSecond();
+        int loops = 0;
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+            loops++;
+        }
+        Assertions.assertEquals(4, loops);
+    }
+
+    @Test
+    public void testHourUnits() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final List<String> units = Arrays.asList("h", "hr", "hrs", "hour", "hours");
+        final int amount = 100;
+        final long expected = startTime.plusHours(100).toEpochSecond();
+        int loops = 0;
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+            loops++;
+        }
+        Assertions.assertEquals(5, loops);
+    }
+
+    @Test
+    public void testDayUnits() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final List<String> units = Arrays.asList("d", "day", "days");
+        final int amount = 100;
+        final long expected = startTime.plusDays(100).toEpochSecond();
+        int loops = 0;
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+            loops++;
+        }
+        Assertions.assertEquals(3, loops);
+    }
+
+    @Test
+    public void testWeekUnits() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final List<String> units = Arrays.asList("w", "week", "weeks");
+        final int amount = 100;
+        final long expected = startTime.plusWeeks(100).toEpochSecond();
+        int loops = 0;
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+            loops++;
+        }
+        Assertions.assertEquals(3, loops);
+    }
+
+    @Test
+    public void testMonthUnits() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final List<String> units = Arrays.asList("mon", "month", "months");
+        final int amount = 100;
+        final long expected = startTime.plusMonths(100).toEpochSecond();
+        int loops = 0;
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+            loops++;
+        }
+        Assertions.assertEquals(3, loops);
+    }
+
+    @Test
+    public void testYearUnits() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final List<String> units = Arrays.asList("y", "yr", "yrs", "year", "years");
+        final int amount = 100;
+        final long expected = startTime.plusYears(100).toEpochSecond();
+        int loops = 0;
+        for (final String unit : units) {
+            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
+            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+            loops++;
+        }
+        Assertions.assertEquals(5, loops);
+    }
+
+    @Test
+    public void testMaxYearLimitedTo9999() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final String relativeTimestamp = "+10000y";
+        final long expected = startTime.withYear(9999).toEpochSecond();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+    }
+
+    @Test
+    public void testMinYearLimitedTo1000() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final String relativeTimestamp = "-1100y";
+        final long expected = startTime.withYear(1000).toEpochSecond();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+    }
+
+    @Test
+    public void testInvalidUnit() {
+        final String unsupportedUnit = "xyz";
+        final RelativeTimestamp timestamp = new RelativeTimestamp(unsupportedUnit, ZonedDateTime.now());
+        Assertions
+                .assertThrows(
+                        RuntimeException.class, timestamp::zonedDateTime,
+                        "Relative timestamp contained an invalid time unit"
+                );
+    }
+
+    @Test
+    public void testOverflowLimitedToYear9999() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final String relativeTimestamp = String.format("+%sy", Long.MAX_VALUE);
+        final long expected = startTime.withYear(9999).toEpochSecond();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
+    }
+
+    @Test
+    public void TestNegativeOverflowLimitedToYear1000() {
+        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
+        final String relativeTimestamp = String.format("%sy", Long.MIN_VALUE);
+        final long expected = startTime.withYear(1000).toEpochSecond();
+        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
+        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
     }
 
     @Test

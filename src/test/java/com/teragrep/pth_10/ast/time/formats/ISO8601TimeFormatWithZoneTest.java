@@ -62,6 +62,15 @@ public final class ISO8601TimeFormatWithZoneTest {
         final DPLTimeFormat format = new ISO8601TimeFormatWithZone(utcZone);
         final DPLTimestamp timestamp = format.from("2025-09-10T12:34:56+02:00");
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        Assertions.assertEquals(ZoneId.of("+02:00"), zonedDateTime.getZone());
     }
 
     @Test
@@ -79,6 +88,13 @@ public final class ISO8601TimeFormatWithZoneTest {
         ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         // timestamp provided in value takes precedence so +02:00 is kept over Europe/Helsinki
         Assertions.assertEquals(ZoneId.of("+02:00"), zonedDateTime.getZone());
+        Assertions.assertEquals(2025, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
     }
 
     @Test

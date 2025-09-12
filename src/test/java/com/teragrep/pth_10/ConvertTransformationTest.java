@@ -257,7 +257,7 @@ public class ConvertTransformationTest {
                                     .collect(Collectors.toList());
                             List<String> expectedResults = Collections
                                     .singletonList(
-                                            "978303661" // +0300 timezone
+                                            "978310861" // +0300 timezone
                                     );
 
                             Assertions.assertEquals(expectedResults, listOfResults);

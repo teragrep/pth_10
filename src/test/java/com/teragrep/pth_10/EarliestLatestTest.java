@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth_10;
 
-import com.teragrep.pth_10.ast.time.RelativeTimestamp;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -61,7 +60,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -469,210 +467,6 @@ public class EarliestLatestTest {
     }
 
     @Test
-    public void RelativeTimestampSecondsTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("s", "sec", "secs", "second", "seconds");
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = startTime.plusSeconds(100).toEpochSecond();
-        int loops = 0;
-        for (final String unit : units) {
-            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-            loops++;
-        }
-        Assertions.assertEquals(5, loops);
-    }
-
-    @Test
-    public void RelativeTimestampMinutesTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("m", "min", "minute", "minutes");
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = startTime.plusMinutes(100).toEpochSecond();
-        int loops = 0;
-        for (final String unit : units) {
-            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-            loops++;
-        }
-        Assertions.assertEquals(4, loops);
-    }
-
-    @Test
-    public void RelativeTimestampHoursTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("h", "hr", "hrs", "hour", "hours");
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = startTime.plusHours(100).toEpochSecond();
-        int loops = 0;
-        for (final String unit : units) {
-            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-            loops++;
-        }
-        Assertions.assertEquals(5, loops);
-    }
-
-    @Test
-    public void RelativeTimestampDaysTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("d", "day", "days");
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = startTime.plusDays(100).toEpochSecond();
-        int loops = 0;
-        for (final String unit : units) {
-            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-            loops++;
-        }
-        Assertions.assertEquals(3, loops);
-    }
-
-    @Test
-    public void RelativeTimestampWeeksTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("w", "week", "weeks");
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = startTime.plusWeeks(100).toEpochSecond();
-        int loops = 0;
-        for (final String unit : units) {
-            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-            loops++;
-        }
-        Assertions.assertEquals(3, loops);
-    }
-
-    @Test
-    public void RelativeTimestampMonthsTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("mon", "month", "months");
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = startTime.plusMonths(100).toEpochSecond();
-        int loops = 0;
-        for (final String unit : units) {
-            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-            loops++;
-        }
-        Assertions.assertEquals(3, loops);
-    }
-
-    @Test
-    public void RelativeTimestampYearsTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("y", "yr", "yrs", "year", "years");
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = startTime.plusYears(100).toEpochSecond();
-        int loops = 0;
-        for (final String unit : units) {
-            final String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-            Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-            loops++;
-        }
-        Assertions.assertEquals(5, loops);
-    }
-
-    @Test
-    public void RelativeTimestampOver9999YearTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        final String relativeTimestamp = "+10000y";
-
-        // Expected result
-        final long expected = startTime.withYear(9999).toEpochSecond();
-
-        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-    }
-
-    @Test
-    public void RelativeTimestampLessThan1000YearTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        final String relativeTimestamp = "-1100y";
-
-        // Expected result
-        final long expected = startTime.withYear(1000).toEpochSecond();
-
-        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-    }
-
-    @Test
-    public void RelativeTimestampInvalidUnitTest() {
-        // Initial values
-        final String relativeTimestamp = "xyz";
-        final RelativeTimestamp timestamp = new RelativeTimestamp(relativeTimestamp, ZonedDateTime.now());
-        Assertions
-                .assertThrows(
-                        RuntimeException.class, timestamp::zonedDateTime,
-                        "Relative timestamp contained an invalid time unit"
-                );
-    }
-
-    @Test
-    public void RelativeTimestampOverflowPositiveTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        final String relativeTimestamp = String.format("+%sy", Long.MAX_VALUE);
-
-        // Expected result
-        final long expected = startTime.withYear(9999).toEpochSecond();
-
-        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-    }
-
-    @Test
-    public void RelativeTimestampOverflowNegativeTest() {
-        // Initial values
-        final ZonedDateTime startTime = ZonedDateTime.of(2010, 10, 10, 15, 15, 30, 0, utcZone);
-        final String relativeTimestamp = String.format("%sy", Long.MIN_VALUE);
-
-        // Expected result
-        final long expected = startTime.withYear(1000).toEpochSecond();
-
-        final ZonedDateTime zonedDateTime = new RelativeTimestamp(relativeTimestamp, startTime).zonedDateTime();
-        Assertions.assertEquals(expected, zonedDateTime.toEpochSecond());
-    }
-
-    @Test
     @Disabled(value = "Will be looked at in issue #295")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
@@ -874,7 +668,11 @@ public class EarliestLatestTest {
         // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
         String query = " index=abc earliest=\"01/01/2022:00:00:00\" latest=\"01/02/2022:00:00:00\" \"XYZ=\\\"yes asd\\\"\" ";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND (((_time >= from_unixtime(1640988000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1641074400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
+            long earliestEpoch = ZonedDateTime.of(2022, 1, 1, 0, 0, 0, 0, utcZone).toEpochSecond();
+            long latestEpoch = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, utcZone).toEpochSecond();
+            final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND (((_time >= from_unixtime(" + earliestEpoch
+                    + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(" + latestEpoch
+                    + ", yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
             Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
         });
     }

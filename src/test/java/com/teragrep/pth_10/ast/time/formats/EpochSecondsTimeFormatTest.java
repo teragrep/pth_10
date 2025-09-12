@@ -60,8 +60,18 @@ public final class EpochSecondsTimeFormatTest {
     @Test
     public void testValidValue() {
         final DPLTimeFormat format = new EpochSecondsTimeFormat(utcZone);
-        final DPLTimestamp timestamp = format.from("17000000");
+        // Mon Feb 03 2020 10:13:14 GMT+0000
+        final DPLTimestamp timestamp = format.from("1580724794");
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2020, zonedDateTime.getYear());
+        Assertions.assertEquals(2, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(3, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(10, zonedDateTime.getHour());
+        Assertions.assertEquals(13, zonedDateTime.getMinute());
+        Assertions.assertEquals(14, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
@@ -73,11 +83,18 @@ public final class EpochSecondsTimeFormatTest {
 
     @Test
     public void testAtZone() {
-        ZoneId zone = ZoneId.of("Europe/Helsinki");
+        ZoneId zone = ZoneId.of("+02:00");
         DPLTimeFormat format = new EpochSecondsTimeFormat(utcZone).atZone(zone);
-        DPLTimestamp timestamp = format.from("17000000");
+        DPLTimestamp timestamp = format.from("1580724794");
         ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         Assertions.assertEquals(zone, zonedDateTime.getZone());
+        Assertions.assertEquals(2020, zonedDateTime.getYear());
+        Assertions.assertEquals(2, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(3, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour()); // +02:00
+        Assertions.assertEquals(13, zonedDateTime.getMinute());
+        Assertions.assertEquals(14, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
     }
 
     @Test
