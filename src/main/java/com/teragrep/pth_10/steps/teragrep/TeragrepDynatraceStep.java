@@ -46,7 +46,6 @@
 package com.teragrep.pth_10.steps.teragrep;
 
 import com.google.gson.*;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
@@ -186,17 +185,17 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
             if (jsonResp == null || jsonResp.isJsonNull()) {
                 throw new IllegalStateException("Unexpected null JSON response");
             }
-            
+
             if (jsonResp.has("error") && !jsonResp.get("error").isJsonNull()) {
                 throw new RuntimeException("Error from server response: " + jsonResp.get("error").toString());
             }
-            
+
             final boolean hasValidElem = jsonResp.has("linesValid");
             if (!hasValidElem) {
                 throw new RuntimeException("Unexpected JSON: Could not find linesValid element.");
             }
             LOGGER.info("Valid lines: <[{}]>", jsonResp.get("linesValid"));
-            
+
             final boolean hasInvalidElem = jsonResp.has("linesInvalid");
             if (!hasInvalidElem) {
                 throw new RuntimeException("Unexpected JSON: Could not find linesInvalid element.");
