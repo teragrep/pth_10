@@ -60,6 +60,8 @@ import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -78,7 +80,7 @@ public class DedupTest {
         LOGGER.debug("Query: '{}'", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -100,7 +102,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -123,7 +125,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -146,7 +148,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -170,7 +172,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -193,7 +195,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);

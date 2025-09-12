@@ -60,10 +60,6 @@ public final class EpochSecondsTimeFormat implements DPLTimeFormat {
     private final String timeFormat;
     private final ZoneId zoneId;
 
-    public EpochSecondsTimeFormat() {
-        this("%s", ZoneId.systemDefault());
-    }
-
     public EpochSecondsTimeFormat(final ZoneId zoneId) {
         this("%s", zoneId);
     }

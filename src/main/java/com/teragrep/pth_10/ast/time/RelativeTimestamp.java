@@ -45,13 +45,11 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth_10.ast.Text;
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.UnquotedText;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
@@ -61,21 +59,6 @@ public final class RelativeTimestamp implements DPLTimestamp {
 
     private final ValidRelativeTimestampText offsetString;
     private final ZonedDateTime baseTime;
-
-    public RelativeTimestamp(final String offsetString) {
-        this(
-                new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))),
-                ZonedDateTime.now(ZoneId.systemDefault())
-        );
-    }
-
-    public RelativeTimestamp(final String offsetString, final ZoneId zoneId) {
-        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), ZonedDateTime.now(zoneId));
-    }
-
-    public RelativeTimestamp(final Text offsetText, final ZonedDateTime baseTime) {
-        this(new ValidRelativeTimestampText(new UnquotedText(offsetText)), baseTime);
-    }
 
     public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
         this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);

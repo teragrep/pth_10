@@ -60,12 +60,16 @@ import java.time.ZonedDateTime;
  */
 public class Relative_time implements UDF2<Long, String, Long>, Serializable {
 
+    private ZoneId zoneId;
     private static final long serialVersionUID = 1L;
+
+    public Relative_time(ZoneId zoneId) {
+        this.zoneId = zoneId;
+    }
 
     @Override
     public Long call(Long unixtime, String modifier) throws Exception {
-        final ZonedDateTime startTime = ZonedDateTime
-                .ofInstant(Instant.ofEpochSecond(unixtime), ZoneId.systemDefault());
+        final ZonedDateTime startTime = ZonedDateTime.ofInstant(Instant.ofEpochSecond(unixtime), zoneId);
         final RelativeTimestamp relativeTimestamp = new RelativeTimestamp(modifier, startTime);
         return relativeTimestamp.zonedDateTime().toEpochSecond();
     }
