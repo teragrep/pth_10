@@ -58,6 +58,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class RexTest {
 
@@ -69,7 +72,7 @@ public class RexTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         RexTransformation rexTf = new RexTransformation(ctx);
@@ -91,7 +94,7 @@ public class RexTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         RexTransformation rexTf = new RexTransformation(ctx);
@@ -113,7 +116,7 @@ public class RexTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         RexTransformation rexTf = new RexTransformation(ctx);
@@ -135,7 +138,7 @@ public class RexTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         RexTransformation rexTf = new RexTransformation(ctx);

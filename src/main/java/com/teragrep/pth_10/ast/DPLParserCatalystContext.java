@@ -354,15 +354,6 @@ public class DPLParserCatalystContext implements Cloneable {
     public final NullValue nullValue;
 
     /**
-     * Initialize context with spark session
-     *
-     * @param sparkSession active session
-     */
-    public DPLParserCatalystContext(SparkSession sparkSession) {
-        this(sparkSession, ZonedDateTime.now());
-    }
-
-    /**
      * Initialize context with spark session and query start time
      *
      * @param sparkSession active session
@@ -377,17 +368,7 @@ public class DPLParserCatalystContext implements Cloneable {
     }
 
     /**
-     * Initialize context with spark session and incoming dataset
-     *
-     * @param sparkSession active session
-     * @param ds           {@literal DataSet<Row>}
-     */
-    public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds) {
-        this(sparkSession, ds, ZonedDateTime.now());
-    }
-
-    /**
-     * Initialize context with spark session and incoming dataset
+     * Initialize context with spark session, incoming dataset and query start time
      *
      * @param sparkSession active session
      * @param ds           {@literal DataSet<Row>}
@@ -403,16 +384,6 @@ public class DPLParserCatalystContext implements Cloneable {
     }
 
     // When config is set, execute actual query into the archive and use result as a dataset for further processing
-
-    /**
-     * Initialize context with spark session and config which is created in zeppelin
-     *
-     * @param sparkSession active session
-     * @param config       Zeppelin configuration object
-     */
-    public DPLParserCatalystContext(SparkSession sparkSession, Config config) {
-        this(sparkSession, config, ZonedDateTime.now());
-    }
 
     /**
      * Initialize context with spark session and config which is created in zeppelin
@@ -519,7 +490,7 @@ public class DPLParserCatalystContext implements Cloneable {
         }
         catch (CloneNotSupportedException e) {
             LOGGER.debug("Clone not supported, create object copy");
-            ctx = new DPLParserCatalystContext(this.sparkSession);
+            ctx = new DPLParserCatalystContext(this.sparkSession, this.startTime);
             ctx.setParserConfig(parserConfig);
             ctx.setDs(inDs);
             ctx.setConfig(config);

@@ -60,6 +60,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class EvalTest {
 
@@ -70,7 +73,7 @@ public class EvalTest {
     void setEnv() {
         spark = SparkSession.builder().appName("Java Spark SQL basic example").master("local[2]").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
-        ctx = new DPLParserCatalystContext(spark);
+        ctx = new DPLParserCatalystContext(spark, ZonedDateTime.now(ZoneId.of("UTC")));
     }
 
     @Test
@@ -81,7 +84,7 @@ public class EvalTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);
@@ -101,7 +104,7 @@ public class EvalTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);
@@ -120,7 +123,7 @@ public class EvalTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);

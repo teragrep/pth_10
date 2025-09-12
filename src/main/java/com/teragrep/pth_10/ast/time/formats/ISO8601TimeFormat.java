@@ -60,10 +60,6 @@ public final class ISO8601TimeFormat implements DPLTimeFormat {
     private final String timeFormat;
     private final ZoneId zoneId;
 
-    public ISO8601TimeFormat() {
-        this("yyyy-MM-dd'T'HH:mm:ss", ZoneId.systemDefault());
-    }
-
     public ISO8601TimeFormat(final ZoneId zoneId) {
         this("yyyy-MM-dd'T'HH:mm:ss", zoneId);
     }

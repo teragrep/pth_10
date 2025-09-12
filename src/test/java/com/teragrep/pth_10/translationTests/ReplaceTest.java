@@ -58,6 +58,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -71,7 +73,7 @@ public class ReplaceTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ReplaceTransformation ct = new ReplaceTransformation();
@@ -92,7 +94,7 @@ public class ReplaceTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ReplaceTransformation ct = new ReplaceTransformation();
@@ -113,7 +115,7 @@ public class ReplaceTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ReplaceTransformation ct = new ReplaceTransformation();

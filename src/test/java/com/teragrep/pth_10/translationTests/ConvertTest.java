@@ -75,7 +75,7 @@ public class ConvertTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
         ConvertTransformation ct = new ConvertTransformation(ZonedDateTime.now(utcZone));
         ct.visitConvertTransformation((DPLParser.ConvertTransformationContext) tree.getChild(1).getChild(0));
@@ -98,7 +98,7 @@ public class ConvertTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ConvertTransformation ct = new ConvertTransformation(ZonedDateTime.now(utcZone));
@@ -123,7 +123,7 @@ public class ConvertTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         ConvertTransformation ct = new ConvertTransformation(ZonedDateTime.now(utcZone));

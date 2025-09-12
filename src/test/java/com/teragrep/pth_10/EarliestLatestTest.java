@@ -337,8 +337,8 @@ public class EarliestLatestTest {
                     .collect(Collectors.toList());
 
             // Daylight savings happens between these two timestamps, which explains the +1 hour difference.
-            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
+            Assertions.assertEquals("2014-04-15 06:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 19:54:14.0", time.get(1));
         });
     }
 
@@ -374,8 +374,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
+            Assertions.assertEquals("2014-04-15 06:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 19:54:14.0", time.get(1));
         });
     }
 
@@ -394,8 +394,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
+            Assertions.assertEquals("2014-04-15 06:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 19:54:14.0", time.get(1));
         });
     }
 
@@ -427,8 +427,8 @@ public class EarliestLatestTest {
         streamingTestUtil.performDPLTest(query, testFile, res -> {
             String maxTime = res.agg(functions.max("_time")).first().get(0).toString();
             String minTime = res.agg(functions.min("_time")).first().get(0).toString();
-            Assertions.assertEquals("2014-03-15 21:54:14.0", maxTime);
-            Assertions.assertEquals("2013-07-15 11:01:50.0", minTime);
+            Assertions.assertEquals("2014-03-15 19:54:14.0", maxTime);
+            Assertions.assertEquals("2013-07-15 08:01:50.0", minTime);
         });
     }
 
@@ -776,8 +776,8 @@ public class EarliestLatestTest {
                         "index=* earliest=2013-07-15T10:01:50.000+02:00 latest=2014-04-15T08:23:17.001+02:00",
                         this.testFile, res -> {
                             Row r = res.select("_time").agg(functions.min("_time"), functions.max("_time")).first();
-                            Assertions.assertEquals("2013-07-15 11:01:50.0", r.get(0).toString());
-                            Assertions.assertEquals("2014-04-15 09:23:17.0", r.get(1).toString());
+                            Assertions.assertEquals("2013-07-15 08:01:50.0", r.get(0).toString());
+                            Assertions.assertEquals("2014-04-15 06:23:17.0", r.get(1).toString());
                         }
                 );
     }

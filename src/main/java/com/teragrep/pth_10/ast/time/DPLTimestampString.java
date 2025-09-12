@@ -77,12 +77,7 @@ public final class DPLTimestampString {
         this(
                 timestampString,
                 baseTime,
-                Arrays
-                        .asList(
-                                new DefaultTimeFormat(), new EpochSecondsTimeFormat(), new ISO8601TimeFormat(),
-                                new ISO8601TimeFormatWithMillis(), new ISO8601TimeFormatWithZone(),
-                                new ISO8601TimeFormatWithZoneAndMillis(), new RelativeTimeFormat(baseTime)
-                        )
+                Arrays.asList(new DefaultTimeFormat(baseTime.getZone()), new EpochSecondsTimeFormat(baseTime.getZone()), new ISO8601TimeFormat(baseTime.getZone()), new ISO8601TimeFormatWithMillis(baseTime.getZone()), new ISO8601TimeFormatWithZone(baseTime.getZone()), new ISO8601TimeFormatWithZoneAndMillis(baseTime.getZone()), new RelativeTimeFormat(baseTime))
         );
     }
 
