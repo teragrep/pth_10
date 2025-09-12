@@ -50,14 +50,14 @@ import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
-import com.teragrep.pth_10.ast.DPLTimeFormat;
 import org.apache.spark.sql.Row;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.text.ParseException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -68,6 +68,7 @@ public class CatalystVisitorTest {
     // Use this file for  dataset initialization
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming/xmlWalkerTestDataStreaming*";
     private StreamingTestUtil streamingTestUtil;
+    private final ZoneId utcZone = ZoneId.of("UTC");
 
     @BeforeAll
     void setEnv() {
@@ -125,24 +126,15 @@ public class CatalystVisitorTest {
         // Add time ranges
         String q = "((( index =\"cpu\" AND host = \"sc-99-99-14-25\" ) AND sourcetype = \"log:cpu:0\" ) AND ( earliest= \"01/01/1970:02:00:00\"  AND latest= \"01/01/2030:00:00:00\" ))";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            try {
-                long earliestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss")
-                        .instantOf("01/01/1970:02:00:00")
-                        .getEpochSecond();
-                long latestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss")
-                        .instantOf("01/01/2030:00:00:00")
-                        .getEpochSecond();
-                String e = "(((RLIKE(index, (?i)^cpu$) AND RLIKE(host, (?i)^sc-99-99-14-25)) AND RLIKE(sourcetype, (?i)^log:cpu:0)) AND ((_time >= from_unixtime("
-                        + earliestEpoch + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(" + latestEpoch
-                        + ", yyyy-MM-dd HH:mm:ss))))";
-                DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
+            long earliestEpoch = ZonedDateTime.of(1970, 1, 1, 2, 0, 0, 0, utcZone).toEpochSecond();
+            long latestEpoch = ZonedDateTime.of(2030, 1, 1, 0, 0, 0, 0, utcZone).toEpochSecond();
+            String e = "(((RLIKE(index, (?i)^cpu$) AND RLIKE(host, (?i)^sc-99-99-14-25)) AND RLIKE(sourcetype, (?i)^log:cpu:0)) AND ((_time >= from_unixtime("
+                    + earliestEpoch + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(" + latestEpoch
+                    + ", yyyy-MM-dd HH:mm:ss))))";
+            DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
-                String result = ctx.getSparkQuery();
-                Assertions.assertEquals(e, result);
-            }
-            catch (ParseException e) {
-                Assertions.fail(e.getMessage());
-            }
+            String result = ctx.getSparkQuery();
+            Assertions.assertEquals(e, result);
         });
     }
 
@@ -188,8 +180,7 @@ public class CatalystVisitorTest {
     void searchQueryWithAggrTest() {
         String q = "index = cinnamon _index_earliest=\"04/16/2020:10:25:40\" | chart count(_raw) as count by _time | where  count > 70";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
-            long earliest = Assertions.assertDoesNotThrow(() -> tf.instantOf("04/16/2020:10:25:40")).getEpochSecond();
+            long earliest = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
             String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + earliest
                     + ", yyyy-MM-dd HH:mm:ss)))";
             DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
@@ -225,10 +216,7 @@ public class CatalystVisitorTest {
 
                     String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
                     // check column for archive query i.e. only logical part'
-                    DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
-                    long indexEarliestEpoch = Assertions
-                            .assertDoesNotThrow(() -> tf.instantOf("04/16/2020:10:25:40"))
-                            .getEpochSecond();
+                    long indexEarliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
                     String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch
                             + ", yyyy-MM-dd HH:mm:ss)))";
                     Assertions.assertEquals(e, logicalPart);

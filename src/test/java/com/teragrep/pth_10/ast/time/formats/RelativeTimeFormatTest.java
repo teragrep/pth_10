@@ -55,13 +55,23 @@ import java.time.ZonedDateTime;
 
 public final class RelativeTimeFormatTest {
 
-    private final ZonedDateTime baseTime = ZonedDateTime.of(2020, 1, 2, 3, 4, 5, 6, ZoneId.of("UTC"));
+    private final ZoneId utcZone = ZoneId.of("UTC");
+    private final ZonedDateTime baseTime = ZonedDateTime.of(2020, 1, 2, 3, 4, 5, 6, utcZone);
 
     @Test
     public void testValidValue() {
         final DPLTimeFormat format = new RelativeTimeFormat(baseTime);
         final DPLTimestamp timestamp = format.from("-1y");
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2019, zonedDateTime.getYear());
+        Assertions.assertEquals(1, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(2, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(3, zonedDateTime.getHour());
+        Assertions.assertEquals(4, zonedDateTime.getMinute());
+        Assertions.assertEquals(5, zonedDateTime.getSecond());
+        Assertions.assertEquals(6, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
@@ -73,11 +83,18 @@ public final class RelativeTimeFormatTest {
 
     @Test
     public void testAtZone() {
-        ZoneId zone = ZoneId.of("Europe/Helsinki");
+        ZoneId zone = ZoneId.of("+02:00");
         DPLTimeFormat format = new RelativeTimeFormat(baseTime).atZone(zone);
         DPLTimestamp timestamp = format.from("-1y");
         ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
         Assertions.assertEquals(zone, zonedDateTime.getZone());
+        Assertions.assertEquals(2019, zonedDateTime.getYear());
+        Assertions.assertEquals(1, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(2, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(5, zonedDateTime.getHour()); // + 2 hours
+        Assertions.assertEquals(4, zonedDateTime.getMinute());
+        Assertions.assertEquals(5, zonedDateTime.getSecond());
+        Assertions.assertEquals(6, zonedDateTime.getNano());
     }
 
     @Test

@@ -59,13 +59,18 @@ import java.util.Arrays;
 
 public final class DPLTimestampStringTest {
 
-    private final ZonedDateTime startTime = ZonedDateTime.now(ZoneId.of("UTC"));
+    private final ZoneId utcZone = ZoneId.of("UTC");
+    private final ZonedDateTime startTime = ZonedDateTime.of(2020, 1, 2, 3, 4, 5, 6, utcZone);
 
     @Test
     public void testUnsupportedTimestamp() {
         DPLTimestampString dplTimestampString = new DPLTimestampString("invalid", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertTrue(timestamp.isStub());
+        UnsupportedOperationException zonedDateTimeException = Assertions
+                .assertThrows(UnsupportedOperationException.class, timestamp::zonedDateTime);
+        final String expected = "zonedDateTime() not supported for StubTimestamp";
+        Assertions.assertEquals(expected, zonedDateTimeException.getMessage());
     }
 
     @Test
@@ -73,6 +78,15 @@ public final class DPLTimestampStringTest {
         DPLTimestampString dplTimestampString = new DPLTimestampString("04/16/2003:10:25:40", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2003, zonedDateTime.getYear());
+        Assertions.assertEquals(4, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(16, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(10, zonedDateTime.getHour());
+        Assertions.assertEquals(25, zonedDateTime.getMinute());
+        Assertions.assertEquals(40, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
@@ -80,41 +94,96 @@ public final class DPLTimestampStringTest {
         DPLTimestampString dplTimestampString = new DPLTimestampString("-1y", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2019, zonedDateTime.getYear());
+        Assertions.assertEquals(1, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(2, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(3, zonedDateTime.getHour());
+        Assertions.assertEquals(4, zonedDateTime.getMinute());
+        Assertions.assertEquals(5, zonedDateTime.getSecond());
+        Assertions.assertEquals(6, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
     public void testISO8601() {
-        DPLTimestampString dplTimestampString = new DPLTimestampString("2025-09-10T12:34:56", startTime);
+        DPLTimestampString dplTimestampString = new DPLTimestampString("2003-09-10T12:34:56", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2003, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
     public void testISO8601WithMillis() {
-        DPLTimestampString dplTimestampString = new DPLTimestampString("2025-09-10T12:34:56.789", startTime);
+        DPLTimestampString dplTimestampString = new DPLTimestampString("2003-09-10T12:34:56.789", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2003, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(789000000, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
     public void testISO8601WithZone() {
-        DPLTimestampString dplTimestampString = new DPLTimestampString("2025-09-10T12:34:56+02:00", startTime);
+        DPLTimestampString dplTimestampString = new DPLTimestampString("2003-09-10T12:34:56+02:00", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2003, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        Assertions.assertEquals(ZoneId.of("+02:00"), zonedDateTime.getZone());
     }
 
     @Test
     public void testISO8601WithZoneAndMillis() {
-        DPLTimestampString dplTimestampString = new DPLTimestampString("2025-09-10T12:34:56.789+02:00", startTime);
+        DPLTimestampString dplTimestampString = new DPLTimestampString("2003-09-10T12:34:56.789+02:00", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2003, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(10, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(12, zonedDateTime.getHour());
+        Assertions.assertEquals(34, zonedDateTime.getMinute());
+        Assertions.assertEquals(56, zonedDateTime.getSecond());
+        Assertions.assertEquals(789000000, zonedDateTime.getNano());
+        Assertions.assertEquals(ZoneId.of("+02:00"), zonedDateTime.getZone());
     }
 
     @Test
     public void testEpochSeconds() {
+        // Thu Sep 07 2023 13:20:00 GMT+0000
         DPLTimestampString dplTimestampString = new DPLTimestampString("1694092800", startTime);
         DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
         Assertions.assertFalse(timestamp.isStub());
+        ZonedDateTime zonedDateTime = timestamp.zonedDateTime();
+        Assertions.assertEquals(2023, zonedDateTime.getYear());
+        Assertions.assertEquals(9, zonedDateTime.getMonthValue());
+        Assertions.assertEquals(7, zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(13, zonedDateTime.getHour());
+        Assertions.assertEquals(20, zonedDateTime.getMinute());
+        Assertions.assertEquals(0, zonedDateTime.getSecond());
+        Assertions.assertEquals(0, zonedDateTime.getNano());
+        Assertions.assertEquals(utcZone, zonedDateTime.getZone());
     }
 
     @Test
