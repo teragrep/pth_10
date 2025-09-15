@@ -75,7 +75,6 @@ public final class RelativeTimestamp implements DPLTimestamp {
             throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
         }
         final String validOffset = offsetString.read();
-        LOGGER.info("Parsing relative offset <{}> from basetime <{}>", validOffset, baseTime);
         final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
         final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
         final ZonedDateTime updatedTime;

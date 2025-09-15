@@ -60,10 +60,10 @@ import java.time.ZonedDateTime;
  */
 public class Relative_time implements UDF2<Long, String, Long>, Serializable {
 
-    private ZoneId zoneId;
+    private final ZoneId zoneId;
     private static final long serialVersionUID = 1L;
 
-    public Relative_time(ZoneId zoneId) {
+    public Relative_time(final ZoneId zoneId) {
         this.zoneId = zoneId;
     }
 

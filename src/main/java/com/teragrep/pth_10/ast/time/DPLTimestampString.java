@@ -112,7 +112,7 @@ public final class DPLTimestampString {
         if (matchingTimestamps.size() > 1) {
             LOGGER.debug("More than one match. Matching timestamps <{}>", matchingTimestamps);
             throw new IllegalArgumentException(
-                    "Timestamp string <" + timestampString + "> matched with <" + matchingTimestamps.size()
+                    "Timestamp string <[" + timestampString + "]> matched with <" + matchingTimestamps.size()
                             + "> time formats"
             );
         }

@@ -81,9 +81,9 @@ public final class OffsetTimestamp implements DPLTimestamp {
 
     @Override
     public ZonedDateTime zonedDateTime() {
-        LOGGER.debug("start time <{}>", startTime);
         final OffsetUnit unit = offsetUnit();
         final long amount = offsetAmount();
+        LOGGER.debug("Calculating <{}> units of <{}> from start time <{}>", amount, unit, startTime);
         ZonedDateTime updatedTime;
         try {
             // used "plus" methods also accept negative values

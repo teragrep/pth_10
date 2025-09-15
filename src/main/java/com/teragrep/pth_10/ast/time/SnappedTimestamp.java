@@ -115,6 +115,7 @@ public final class SnappedTimestamp implements DPLTimestamp {
             throw new UnsupportedOperationException("Timestamp did not contain '@' for a snap to time value");
         }
         final SnapUnit unit = snapUnit();
+        LOGGER.debug("Snapping time <{}> to <{}>", startTime, unit);
         final ZonedDateTime updatedTime;
         switch (unit) {
             case SECONDS:
