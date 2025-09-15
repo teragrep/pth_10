@@ -68,11 +68,11 @@ public final class RelativeTimeFormat implements DPLTimeFormat {
     public DPLTimestamp from(final String timestampString) {
         DPLTimestamp timestamp = new RelativeTimestamp(timestampString, baseTime);
         if (!timestamp.isValid()) {
-            LOGGER.info("timestamp <{}> was invalid", timestampString);
+            LOGGER.debug("timestamp <[{}]> was invalid", timestampString);
             timestamp = new StubTimestamp();
         }
         else {
-            LOGGER.info("timestamp <{}> matched", timestampString);
+            LOGGER.debug("timestamp <[{}]> matched", timestampString);
         }
         return timestamp;
     }

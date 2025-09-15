@@ -86,7 +86,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
         final String unquotedValue = new UnquotedText(new TextString(value)).read();
         // direct epoch from value
         if (timeformat.equals("%s")) {
-            LOGGER.debug("Parsing value <{}> directly to epoch", unquotedValue);
+            LOGGER.debug("Parsing value <[{}]> directly to epoch", unquotedValue);
             zonedDateTime = Instant.ofEpochSecond(Long.parseLong(unquotedValue)).atZone(zoneId);
         }
         // examine value with formatter using timeformat
@@ -94,7 +94,7 @@ public final class AbsoluteTimestamp implements DPLTimestamp {
             final String javaAcceptedTimeFormat = new DPLTimeFormatText(new UnquotedText(new TextString(timeformat)))
                     .read();
             final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern(javaAcceptedTimeFormat);
-            LOGGER.debug("Parsing value <{}> with format <{}>", unquotedValue, javaAcceptedTimeFormat);
+            LOGGER.debug("Parsing value <[{}]> with format <[{}]>", unquotedValue, javaAcceptedTimeFormat);
             final TemporalAccessor parseResult = dateTimeFormatter.parse(unquotedValue);
             // use zone from value if available
             if (parseResult.query(TemporalQueries.zone()) != null) {
