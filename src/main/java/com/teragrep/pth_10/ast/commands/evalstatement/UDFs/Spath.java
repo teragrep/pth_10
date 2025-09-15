@@ -119,8 +119,14 @@ public class Spath implements UDF4<String, String, String, String, Map<String, S
 
             if (!jsonElem.isJsonObject()) {
                 LOGGER.warn("spath command expected a valid JSON Object as input but was given: <{}>", input);
-                // return empty result
-                result.put(new QuotedText(new TextString(nameOfInputCol), "`").read(), nullValue.value());
+                if (spathExpr == null) {
+                    // return pre-existing content
+                    result.put(new QuotedText(new TextString(nameOfInputCol), "`").read(), input);
+                }
+                else {
+                    // return empty
+                    result.put(new QuotedText(new TextString(spathExpr), "`").read(), nullValue.value());
+                }
                 return result;
             }
 

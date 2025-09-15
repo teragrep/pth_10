@@ -110,6 +110,7 @@ public class SpathTransformationTest {
     final String XML_DATA_1 = "src/test/resources/spath/spathTransformationTest_xml1*.jsonl";
     final String XML_DATA_2 = "src/test/resources/spath/spathTransformationTest_xml2*.jsonl";
     final String INVALID_DATA = "src/test/resources/spath/spathTransformationTest_invalid*.jsonl";
+    final String VALID_INVALID_DATA = "src/test/resources/spath/spathTransformationTest_valid_and_invalid*.jsonl";
 
     @Test
     @DisabledIfSystemProperty(
@@ -376,7 +377,8 @@ public class SpathTransformationTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList())
                     .get(0);
-            Assertions.assertEquals("", result);
+            //should return pre-existing content
+            Assertions.assertEquals("12.34", result);
         });
 
     }
@@ -720,6 +722,43 @@ public class SpathTransformationTest {
                     .get(0);
             Assertions.assertEquals("debugo", json);
             Assertions.assertEquals("xml", lil);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void spathTestDataWithBothValidAndInvalidInput() {
+        streamingTestUtil.performDPLTest("index=index_A | spath", VALID_INVALID_DATA, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("json", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("lil", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
+
+            List<Row> validJsonresult = ds.where("offset <= 7").select("json", "lil").dropDuplicates().collectAsList();
+            Assertions.assertEquals(1, validJsonresult.size());
+            Assertions.assertEquals("debugo", validJsonresult.get(0).getAs("json"));
+            Assertions.assertEquals("xml", validJsonresult.get(0).getAs("lil"));
+
+            List<Row> invalidJsonresult = ds.where("offset > 7").select("json", "lil").dropDuplicates().collectAsList();
+            Assertions.assertEquals("", invalidJsonresult.get(0).getAs("json"));
+            Assertions.assertEquals("", invalidJsonresult.get(0).getAs("lil"));
         });
     }
 }
