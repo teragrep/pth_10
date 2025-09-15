@@ -209,7 +209,7 @@ public final class DPLTimestampStringTest {
         );
         IllegalArgumentException exception = Assertions
                 .assertThrows(IllegalArgumentException.class, dplTimestampString::asDPLTimestamp);
-        String expectedMessage = "Timestamp string <20250910> matched with <2> time formats";
+        String expectedMessage = "Timestamp string <[20250910]> matched with <2> time formats";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
