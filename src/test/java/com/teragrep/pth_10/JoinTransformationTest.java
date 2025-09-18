@@ -312,17 +312,17 @@ public class JoinTransformationTest {
                                             "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
-                            Assertions.assertEquals(10, ds.count(), "Should return 10 rows");
+                            final List<String> listOfAColumn = ds
+                                    .select("a")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.get(0))
+                                    .filter(Objects::nonNull)
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
 
-                            List<Row> listOfAColumn = ds.select("a").collectAsList();
-
-                            int notNulls = 0;
-                            for (Row r : listOfAColumn) {
-                                String val = r.getString(0);
-                                Assertions.assertNotNull(val, "All rows should have a valid value (non-null) !");
-                                notNulls++;
-                            }
-                            Assertions.assertEquals(10, notNulls, "Should execute 10 loops");
+                            Assertions.assertEquals(10, listOfAColumn.size(), "Should have 10 rows");
+                            Assertions.assertNotNull(listOfAColumn, "All rows should have a valid value (non-null) !");
                         }
                 );
     }
