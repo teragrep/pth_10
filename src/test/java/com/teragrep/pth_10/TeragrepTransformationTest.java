@@ -715,6 +715,10 @@ public class TeragrepTransformationTest {
     }
 
     @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void tgRegexExtractInputWithNullValuesTest() {
         // _raw is null for the first 4 rows and last one is "47.2"
         String regex = "\\d+";
