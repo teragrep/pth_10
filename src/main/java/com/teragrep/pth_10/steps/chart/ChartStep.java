@@ -67,10 +67,6 @@ public final class ChartStep extends AbstractStep {
 
     @Override
     public Dataset<Row> get(final Dataset<Row> dataset) {
-        if (dataset == null) {
-            return null;
-        }
-
         if (listOfAggrExpressions.isEmpty()) {
             throw new RuntimeException("ChartStep did not receive the necessary aggregation columns");
         }
