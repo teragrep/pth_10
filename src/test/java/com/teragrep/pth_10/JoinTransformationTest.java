@@ -322,7 +322,6 @@ public class JoinTransformationTest {
                                     .collect(Collectors.toList());
 
                             Assertions.assertEquals(10, listOfAColumn.size(), "Should have 10 rows");
-                            Assertions.assertNotNull(listOfAColumn, "All rows should have a valid value (non-null) !");
                         }
                 );
     }
