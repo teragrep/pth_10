@@ -173,8 +173,9 @@ public class commandTest {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host | teragrep get system version";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
-            Assertions.assertEquals(1, res.count());
+            List<Row> sourcetypeCol = res.select("sourcetype").distinct().collectAsList();
+            Assertions.assertEquals(9, res.count());
+            Assertions.assertEquals(1, sourcetypeCol.size());
             Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
             List<Row> rawCol = res.select("_raw").collectAsList();
@@ -183,8 +184,12 @@ public class commandTest {
             // teragrep.XXX_XX.version: X.X.X
             // Teragrep version: X.X.X
 
-            Assertions.assertTrue(rawCol.get(0).get(0).toString().contains("version:"));
-
+            int executedLoops = 0;
+            for (Row r : rawCol) {
+                Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
+                executedLoops++;
+            }
+            Assertions.assertEquals(9, executedLoops);
         });
     }
 
@@ -197,7 +202,8 @@ public class commandTest {
         String q = " | teragrep get system version";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
+            List<Row> sourcetypeCol = res.select("sourcetype").distinct().collectAsList();
+            Assertions.assertEquals(9, res.count());
             Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
             List<Row> rawCol = res.select("_raw").collectAsList();
@@ -205,8 +211,13 @@ public class commandTest {
             // _ raw should contain TG version information
             // teragrep.XXX_XX.version: X.X.X
             // Teragrep version: X.X.X
-            Assertions.assertTrue(rawCol.get(0).get(0).toString().contains("version:"));
 
+            int executedLoops = 0;
+            for (Row r : rawCol) {
+                Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
+                executedLoops++;
+            }
+            Assertions.assertEquals(9, executedLoops);
         });
     }
 
