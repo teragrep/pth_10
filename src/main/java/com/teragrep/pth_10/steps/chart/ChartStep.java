@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10.steps.chart;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -53,29 +54,38 @@ import scala.collection.Seq;
 
 import java.util.List;
 
-public final class ChartStep extends AbstractChartStep {
+public final class ChartStep extends AbstractStep {
 
-    public ChartStep(List<Column> listOfExpr, List<Column> listOfGroupBy) {
-        super(listOfExpr, listOfGroupBy);
+    private final List<Column> listOfAggrExpressions;
+    private final List<Column> groupByList;
+
+    public ChartStep(final List<Column> listOfAggrExpressions, final List<Column> groupByList) {
+        this.listOfAggrExpressions = listOfAggrExpressions;
+        this.groupByList = groupByList;
         this.properties.add(CommandProperty.AGGREGATE);
     }
 
     @Override
-    public Dataset<Row> get(Dataset<Row> dataset) {
-        if (dataset == null) {
-            return null;
+    public Dataset<Row> get(final Dataset<Row> dataset) {
+        if (listOfAggrExpressions.isEmpty()) {
+            throw new RuntimeException("ChartStep did not receive the necessary aggregation columns");
         }
 
-        if (listOfExpr.isEmpty()) {
-            return null;
-        }
-
-        Column mainExpr = listOfExpr.get(0);
+        final Column mainExpr = listOfAggrExpressions.get(0);
 
         // skip first one as .agg has strange arguments
-        Seq<Column> seqOfExpr = JavaConversions.asScalaBuffer(listOfExpr.subList(1, listOfExpr.size()));
-        Seq<Column> seqOfGroupBy = JavaConversions.asScalaBuffer(listOfGroupBy);
+        final Seq<Column> seqOfExpr = JavaConversions
+                .asScalaBuffer(listOfAggrExpressions.subList(1, listOfAggrExpressions.size()));
+        final Seq<Column> seqOfGroupBy = JavaConversions.asScalaBuffer(groupByList);
 
         return dataset.groupBy(seqOfGroupBy).agg(mainExpr, seqOfExpr);
+    }
+
+    public List<Column> aggrExpressionsList() {
+        return listOfAggrExpressions;
+    }
+
+    public List<Column> groupByList() {
+        return groupByList;
     }
 }
