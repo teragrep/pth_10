@@ -45,9 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonNull;
+import com.google.gson.*;
 import com.google.gson.JsonObject;
 import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
@@ -55,6 +53,7 @@ import com.teragrep.pth_10.ast.NumericText;
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.steps.Flushable;
 import com.teragrep.pth_10.steps.teragrep.dynatrace.DynatraceItem;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
@@ -159,35 +158,54 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
         httpPost.setEntity(new StringEntity(dti.toString(), "utf-8"));
 
         try (
-                CloseableHttpClient client = HttpClients.createDefault();
-                CloseableHttpResponse response = client.execute(httpPost)
+                final CloseableHttpClient client = HttpClients.createDefault();
+                final CloseableHttpResponse response = client.execute(httpPost)
         ) {
             final int statusCode = response.getStatusLine().getStatusCode();
 
-            try (InputStream respStream = response.getEntity().getContent()) {
-                JsonObject jsonResp = new Gson()
-                        .fromJson(new InputStreamReader(respStream, StandardCharsets.UTF_8), JsonObject.class);
-                JsonElement errorElem = jsonResp.get("error");
-                if (!(errorElem instanceof JsonNull)) {
-                    throw new RuntimeException("Error from server response: " + errorElem.toString());
-                }
-                JsonElement validElem = jsonResp.get("linesValid");
-                if (validElem == null) {
-                    throw new RuntimeException("Unexpected JSON: Could not find linesValid element.");
-                }
-                LOGGER.info("Valid lines: <[{}]>", validElem);
-                JsonElement invalidElem = jsonResp.get("linesInvalid");
-                if (invalidElem == null) {
-                    throw new RuntimeException("Unexpected JSON: Could not find linesInvalid element.");
-                }
-                LOGGER.warn("Invalid lines: <[{}]>", invalidElem);
+            final HttpEntity entity = response.getEntity();
+
+            if (entity == null) {
+                throw new IllegalStateException("Response entity was null!");
             }
+
+            final JsonObject jsonResp;
+            try (final InputStream respStream = entity.getContent()) {
+                final InputStreamReader inputStreamReader = new InputStreamReader(respStream, StandardCharsets.UTF_8);
+                try {
+                    jsonResp = new Gson().fromJson(inputStreamReader, JsonObject.class);
+                }
+                catch (final JsonIOException | JsonSyntaxException je) {
+                    throw new IllegalArgumentException("Error parsing JSON response, message: " + je.getMessage());
+                }
+            }
+            catch (final IOException | UnsupportedOperationException e) {
+                throw new IllegalStateException("Error getting response stream, message: " + e.getMessage());
+            }
+            if (jsonResp == null || jsonResp.isJsonNull()) {
+                throw new IllegalStateException("Unexpected null JSON response");
+            }
+
+            if (jsonResp.has("error") && !jsonResp.get("error").isJsonNull()) {
+                throw new RuntimeException("Error from server response: " + jsonResp.get("error").toString());
+            }
+
+            final boolean hasValidElem = jsonResp.has("linesValid");
+            if (!hasValidElem) {
+                throw new RuntimeException("Unexpected JSON: Could not find linesValid element.");
+            }
+            LOGGER.info("Valid lines: <[{}]>", jsonResp.get("linesValid"));
+
+            final boolean hasInvalidElem = jsonResp.has("linesInvalid");
+            if (!hasInvalidElem) {
+                throw new RuntimeException("Unexpected JSON: Could not find linesInvalid element.");
+            }
+            LOGGER.warn("Invalid lines: <[{}]>", jsonResp.get("linesInvalid"));
 
             if (statusCode != 202 && statusCode != 400) {
                 throw new RuntimeException("Error! Response code: <[" + statusCode + "]>. Expected 202 or 400.");
             }
         }
-
     }
 
     @Override
