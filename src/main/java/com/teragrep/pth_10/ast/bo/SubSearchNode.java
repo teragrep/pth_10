@@ -121,13 +121,17 @@ public class SubSearchNode extends ColumnNode {
         Element el = d.createElement("indexstatement");
         el.setAttribute("OPERATION", "EQUALS");
         el.setAttribute("value", "%" + valList.get(0) + "%");
-        LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info("Construct archiveQuery: <{}>", new ElementNode(el));
+        }
         if (valList.size() > 1) {
             for (int i = 1; i < valList.size(); i++) {
                 Element e = d.createElement("indexstatement");
                 e.setAttribute("OPERATION", "EQUALS");
                 e.setAttribute("value", "%" + valList.get(i) + "%");
-                LOGGER.info("Construct archiveQuery: <{}>", ElementNode.toString(el));
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Construct archiveQuery: <{}>", new ElementNode(el));
+                }
                 Element andE = d.createElement("AND");
                 andE.appendChild(el);
                 andE.appendChild(e);
