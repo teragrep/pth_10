@@ -204,6 +204,7 @@ public class commandTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").distinct().collectAsList();
             Assertions.assertEquals(9, res.count());
+            Assertions.assertEquals(1, sourcetypeCol.size());
             Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
             List<Row> rawCol = res.select("_raw").collectAsList();
