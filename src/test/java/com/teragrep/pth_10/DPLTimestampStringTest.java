@@ -201,7 +201,8 @@ public final class DPLTimestampStringTest {
     @Test
     public void testInvalidUserDefinedFormat() {
         DPLTimestampString dplTimestampString = new DPLTimestampString("20250910", startTime, "invalid");
-        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, dplTimestampString::asDPLTimestamp);
+        IllegalArgumentException exception = Assertions
+                .assertThrows(IllegalArgumentException.class, dplTimestampString::asDPLTimestamp);
         String expectedMessage = "Unknown pattern letter: i";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }

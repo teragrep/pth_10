@@ -73,16 +73,14 @@ public final class DPLExecutorImpl implements DPLExecutor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLExecutorImpl.class);
     private final Config config;
-    private final ZonedDateTime startTime;
     private final BatchCollect batchCollect;
 
     // Active query
     StreamingQuery streamingQuery = null;
 
-    public DPLExecutorImpl(Config config, ZonedDateTime startTime) {
+    public DPLExecutorImpl(Config config) {
         LOGGER.info("DPLExecutor() was initialized");
         this.config = config;
-        this.startTime = startTime;
         this.batchCollect = new BatchCollect("_time", this.config.getInt("dpl.recall-size"));
     }
 
@@ -109,8 +107,12 @@ public final class DPLExecutorImpl implements DPLExecutor {
         batchCollect.clear(); // do not store old values // TODO remove from NotebookDatasetStore too
 
         LOGGER.info("DPL-interpreter initialized sparkInterpreter incoming query:<{}>", lines);
-        LOGGER.debug("Query start time <{}>", startTime);
-        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config, startTime);
+        // TODO update ctor to use method start time after available from  in pth_15
+        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(
+                sparkSession,
+                config,
+                ZonedDateTime.now()
+        );
 
         LOGGER.debug("Adding audit information");
         catalystContext.setAuditInformation(setupAuditInformation(lines));

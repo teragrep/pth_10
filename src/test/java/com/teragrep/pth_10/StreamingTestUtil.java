@@ -183,6 +183,19 @@ public class StreamingTestUtil {
     }
 
     /**
+     * Used in BeforeEach -annotation with a configured query start time
+     */
+    public void setUpWithStartTime(ZonedDateTime startTime) {
+        if (this.spark == null) {
+            throw new NullPointerException("StreamingTestUtil's SparkSession is null: setEnv wasn't called");
+        }
+        this.ctx = new DPLParserCatalystContext(spark, startTime);
+        ctx.setEarliest("-1Y");
+        ctx.setTestingMode(true);
+        this.catalystVisitor = new DPLParserCatalystVisitor(ctx);
+    }
+
+    /**
      * Used in AfterEach -annotation.
      */
     void tearDown() {

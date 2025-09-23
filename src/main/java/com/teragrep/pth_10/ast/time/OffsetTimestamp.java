@@ -89,7 +89,7 @@ public final class OffsetTimestamp implements DPLTimestamp {
             // used "plus" methods also accept negative values
             switch (unit) {
                 case NOW:
-                    updatedTime = ZonedDateTime.now(startTime.getZone());
+                    updatedTime = startTime;
                     break;
                 case SECONDS:
                     updatedTime = startTime.plusSeconds(amount);

@@ -145,13 +145,14 @@ public class RelativeTimestampTest {
     public void testNow() {
         final RelativeTimestamp relativeTimestamp = new RelativeTimestamp("now", originTimestamp);
         final ZonedDateTime zonedDateTime = relativeTimestamp.zonedDateTime();
-        final ZonedDateTime now = ZonedDateTime.now(utcZone);
-        Assertions.assertEquals(now.getZone(), zonedDateTime.getZone());
-        Assertions.assertEquals(now.getYear(), zonedDateTime.getYear());
-        Assertions.assertEquals(now.getMonthValue(), zonedDateTime.getMonthValue());
-        Assertions.assertEquals(now.getDayOfMonth(), zonedDateTime.getDayOfMonth());
-        Assertions.assertEquals(now.getHour(), zonedDateTime.getHour());
-        Assertions.assertEquals(now.getMinute(), zonedDateTime.getMinute());
+        Assertions.assertEquals(originTimestamp.getZone(), zonedDateTime.getZone());
+        Assertions.assertEquals(originTimestamp.getYear(), zonedDateTime.getYear());
+        Assertions.assertEquals(originTimestamp.getMonthValue(), zonedDateTime.getMonthValue());
+        Assertions.assertEquals(originTimestamp.getDayOfMonth(), zonedDateTime.getDayOfMonth());
+        Assertions.assertEquals(originTimestamp.getHour(), zonedDateTime.getHour());
+        Assertions.assertEquals(originTimestamp.getMinute(), zonedDateTime.getMinute());
+        Assertions.assertEquals(originTimestamp.getSecond(), zonedDateTime.getSecond());
+        Assertions.assertEquals(originTimestamp.getNano(), zonedDateTime.getNano());
     }
 
     @Test
