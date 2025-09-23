@@ -199,6 +199,14 @@ public final class DPLTimestampStringTest {
     }
 
     @Test
+    public void testInvalidUserDefinedFormat() {
+        DPLTimestampString dplTimestampString = new DPLTimestampString("20250910", startTime, "invalid");
+        IllegalArgumentException exception = Assertions.assertThrows(IllegalArgumentException.class, dplTimestampString::asDPLTimestamp);
+        String expectedMessage = "Unknown pattern letter: i";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
     public void testMultipleMatchingUserDefinedFormats() {
         DPLTimeFormat userDefinedFormat1 = new UserDefinedTimeFormat("yyyyMMdd", startTime.getZone());
         DPLTimeFormat userDefinedFormat2 = new UserDefinedTimeFormat("yyyyddMM", startTime.getZone());
