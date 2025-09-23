@@ -50,7 +50,6 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -68,6 +67,7 @@ public class relativeTimeTest {
     String testFile = "src/test/resources/xmlWalkerTestDataStreaming";
     private StreamingTestUtil streamingTestUtil;
     private final ZoneId utcZone = ZoneId.of("UTC");
+    private final ZonedDateTime startTime = ZonedDateTime.of(2020, 1, 2, 3, 4, 5, 0, utcZone);
     private final Pattern epochFromSparkQueryPattern = Pattern.compile("from_unixtime\\((\\d+)");
 
     @BeforeAll
@@ -78,7 +78,7 @@ public class relativeTimeTest {
 
     @BeforeEach
     void setUp() {
-        this.streamingTestUtil.setUp();
+        this.streamingTestUtil.setUpWithStartTime(startTime);
     }
 
     @AfterEach
@@ -163,13 +163,17 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=\"%F %T\" earliest=\"2020-04-16 10:24:40\" latest=\"2020-04-16 10:25:42\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, timeQualifierEpochList.size());
             long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 24, 40, 0, utcZone).toEpochSecond();
             long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
-            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
-                    + ".*$";
-            LOGGER.info("Complex timeformat<{}>", q);
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            Assertions.assertEquals(earliestEpoch, timeQualifierEpochList.get(0));
+            Assertions.assertEquals(latestEpoch, timeQualifierEpochList.get(1));
         });
     }
 
@@ -183,12 +187,17 @@ public class relativeTimeTest {
         String q = "index=kafka_topic timeformat=\"%d %b %Y %I.%M.%S %p\" earliest=\"16 Apr 2020 10.24.40 AM\" latest=\"16 Apr 2020 10.25.42 AM\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 24, 40, 0, utcZone).toEpochSecond();
-            long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
-            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
-                    + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, timeQualifierEpochList.size());
+            long expectedEarliest = ZonedDateTime.of(2020, 4, 16, 10, 24, 40, 0, utcZone).toEpochSecond();
+            long expectedLatest = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
+            List<Long> expectedList = Arrays.asList(expectedEarliest, expectedLatest);
+            Assertions.assertEquals(expectedList, timeQualifierEpochList);
         });
     }
 
@@ -201,9 +210,14 @@ public class relativeTimeTest {
         String q = "index=cinnamon starttimeu=1587032680";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String regex = "^.*_time >= from_unixtime\\(1587032680.*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, timeQualifierEpochList.size());
+            Assertions.assertEquals(1587032680L, timeQualifierEpochList.get(0));
         });
     }
 
@@ -216,9 +230,14 @@ public class relativeTimeTest {
         String q = "index=cinnamon endtimeu=1587032680";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String regex = "^.*_time < from_unixtime\\(1587032680.*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, timeQualifierEpochList.size());
+            Assertions.assertEquals(1587032680L, timeQualifierEpochList.get(0));
         });
 
     }
@@ -232,11 +251,15 @@ public class relativeTimeTest {
         String q = "index=cinnamon latest=-3h ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = ZonedDateTime.now(utcZone).minusHours(3).toEpochSecond();
-            String expected = String.valueOf(latestEpoch).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
-            String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, timeQualifierEpochList.size());
+            long expectedLatest = startTime.minusHours(3).toEpochSecond();
+            Assertions.assertEquals(expectedLatest, timeQualifierEpochList.get(0));
         });
     }
 
@@ -249,11 +272,15 @@ public class relativeTimeTest {
         String q = "index=cinnamon latest=+3h ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = ZonedDateTime.now(utcZone).plusHours(3).toEpochSecond();
-            String expected = String.valueOf(latestEpoch).substring(0, 7); // don't check the seconds within a minute, as the query takes some time and might be a few seconds off
-            String regex = "^.*_time < from_unixtime\\(" + expected + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, timeQualifierEpochList.size());
+            long latestEpoch = startTime.plusHours(3).toEpochSecond();
+            Assertions.assertEquals(latestEpoch, timeQualifierEpochList.get(0));
         });
     }
 
@@ -282,10 +309,15 @@ public class relativeTimeTest {
         String q = "index=cinnamon latest=@d ";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long latestEpoch = ZonedDateTime.now(utcZone).truncatedTo(ChronoUnit.DAYS).toEpochSecond();
-            String regex = "^.*_time < from_unixtime\\(" + latestEpoch + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> timeQualifierEpochList = new ArrayList<>();
+            while (matcher.find()) {
+                timeQualifierEpochList.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, timeQualifierEpochList.size());
+            final Long latestEpoch = timeQualifierEpochList.get(0);
+            Assertions.assertEquals(startTime.truncatedTo(ChronoUnit.DAYS).toEpochSecond(), latestEpoch);
         });
     }
 
@@ -297,7 +329,7 @@ public class relativeTimeTest {
     public void parseTimestampLatestRelativeSnapWithOffsetTest() {
         String query = "index=cinnamon latest=@d+3h ";
         streamingTestUtil.performDPLTest(query, testFile, res -> {
-            ZonedDateTime expected = ZonedDateTime.now(utcZone).truncatedTo(ChronoUnit.DAYS).plusHours(3);
+            ZonedDateTime expected = startTime.truncatedTo(ChronoUnit.DAYS).plusHours(3);
             final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
             final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
             final List<Long> timeQualifierEpochList = new ArrayList<>();
@@ -306,12 +338,7 @@ public class relativeTimeTest {
             }
             Assertions.assertEquals(1, timeQualifierEpochList.size());
             final Long latestEpoch = timeQualifierEpochList.get(0);
-            final ZonedDateTime latest = ZonedDateTime.ofInstant(Instant.ofEpochSecond(latestEpoch), utcZone);
-            Assertions.assertEquals(expected.getZone(), latest.getZone(), "should have same zone");
-            Assertions.assertEquals(expected.getYear(), latest.getYear(), "should have same year");
-            Assertions.assertEquals(expected.getMonthValue(), latest.getMonthValue(), "should have same month");
-            Assertions.assertEquals(expected.getHour(), latest.getHour(), "should have same hour");
-            Assertions.assertEquals(expected.getMinute(), latest.getMinute(), "should have same minute");
+            Assertions.assertEquals(expected.toEpochSecond(), latestEpoch);
         });
     }
 
@@ -323,7 +350,6 @@ public class relativeTimeTest {
     public void parseTimestampLatestRelativeNowTest() {
         String query = "index=cinnamon latest=now ";
         streamingTestUtil.performDPLTest(query, testFile, res -> {
-            final ZonedDateTime now = ZonedDateTime.now(utcZone);
             final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
             final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
             final List<Long> timeQualifierEpochList = new ArrayList<>();
@@ -332,13 +358,7 @@ public class relativeTimeTest {
             }
             Assertions.assertEquals(1, timeQualifierEpochList.size());
             final Long latestEpoch = timeQualifierEpochList.get(0);
-            final ZonedDateTime latest = ZonedDateTime.ofInstant(Instant.ofEpochSecond(latestEpoch), utcZone);
-            Assertions.assertEquals(now.getZone(), latest.getZone());
-            Assertions.assertEquals(now.getYear(), latest.getYear());
-            Assertions.assertEquals(now.getMonthValue(), latest.getMonthValue());
-            Assertions.assertEquals(now.getHour(), latest.getHour());
-            Assertions.assertEquals(now.getMinute(), latest.getMinute());
-            // testing the accuracy to a minute as build time of the query might be longer than a second
+            Assertions.assertEquals(startTime.toEpochSecond(), latestEpoch);
         });
     }
 
@@ -351,7 +371,6 @@ public class relativeTimeTest {
         // pth10 ticket #24 query: 'index=... sourcetype=... earliest=@d latest=now'
         String query = "index=cinnamon earliest=@d latest=now";
         streamingTestUtil.performDPLTest(query, testFile, res -> {
-            ZonedDateTime now = ZonedDateTime.now(utcZone);
             final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
             final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
             final List<Long> epochs = new ArrayList<>();
@@ -360,20 +379,12 @@ public class relativeTimeTest {
             }
             Assertions.assertEquals(2, epochs.size());
             // test earliest snapped to day
-            ZonedDateTime nowSnappedToDay = ZonedDateTime.now(utcZone).truncatedTo(ChronoUnit.DAYS);
-            Assertions.assertEquals(now.getDayOfMonth(), nowSnappedToDay.getDayOfMonth());
-            Assertions.assertEquals(0, nowSnappedToDay.getHour());
-            Assertions.assertEquals(nowSnappedToDay.toEpochSecond(), epochs.get(0));
+            final Long earliestEpochFromQuery = epochs.get(0);
+            ZonedDateTime startTimeSnappedToDay = startTime.truncatedTo(ChronoUnit.DAYS);
+            Assertions.assertEquals(startTimeSnappedToDay.toEpochSecond(), earliestEpochFromQuery);
             // test latest is now, accurate to a minute
             final Long latestEpochFromQuery = epochs.get(1);
-            ZonedDateTime latestTimeStamp = ZonedDateTime
-                    .ofInstant(Instant.ofEpochSecond(latestEpochFromQuery), utcZone);
-            Assertions.assertEquals(now.getZone(), latestTimeStamp.getZone());
-            Assertions.assertEquals(now.getYear(), latestTimeStamp.getYear());
-            Assertions.assertEquals(now.getMonthValue(), latestTimeStamp.getMonthValue());
-            Assertions.assertEquals(now.getDayOfMonth(), latestTimeStamp.getDayOfMonth());
-            Assertions.assertEquals(now.getHour(), latestTimeStamp.getHour());
-            Assertions.assertEquals(now.getMinute(), latestTimeStamp.getMinute());
+            Assertions.assertEquals(startTime.toEpochSecond(), latestEpochFromQuery);
         });
     }
 
@@ -422,13 +433,20 @@ public class relativeTimeTest {
         String q = "index=cinnamon earliest=\"-3h@h\" latest=\"-1h@h\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            ZonedDateTime now = ZonedDateTime.now(utcZone);
-            long earliestEpoch = now.minusHours(3L).truncatedTo(ChronoUnit.HOURS).toEpochSecond();
-            long latestEpoch = now.minusHours(1).truncatedTo(ChronoUnit.HOURS).toEpochSecond();
-            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
-                    + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, epochs.size());
+            final Long earliestEpochFromQuery = epochs.get(0);
+            final Long latestEpochFromQuery = epochs.get(1);
+
+            long expectedEarliest = startTime.minusHours(3L).truncatedTo(ChronoUnit.HOURS).toEpochSecond();
+            long expectedLatest = startTime.minusHours(1).truncatedTo(ChronoUnit.HOURS).toEpochSecond();
+            Assertions.assertEquals(expectedEarliest, earliestEpochFromQuery);
+            Assertions.assertEquals(expectedLatest, latestEpochFromQuery);
         });
     }
 
@@ -442,11 +460,16 @@ public class relativeTimeTest {
         String q = "index=cinnamon earliest=\"-h\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long earliestEpoch = ZonedDateTime.now(utcZone).minusHours(1).toEpochSecond();
-            String earliestString = String.valueOf(earliestEpoch).substring(0, 7); // don't check last 2 indexes as the query takes some time and the "now" is different
-            String regex = "^.*_time >= from_unixtime\\(" + earliestString + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, epochs.size());
+            final Long earliestEpochFromQuery = epochs.get(0);
+            long expectedEarliest = startTime.minusHours(1).toEpochSecond();
+            Assertions.assertEquals(expectedEarliest, earliestEpochFromQuery);
         });
     }
 
@@ -460,15 +483,17 @@ public class relativeTimeTest {
         String q = "index=cinnamon earliest=\"-3h@d+1d\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            long earliestEpoch = ZonedDateTime
-                    .now(utcZone)
-                    .minusHours(3)
-                    .truncatedTo(ChronoUnit.DAYS)
-                    .plusDays(1)
-                    .toEpochSecond();
-            String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*$";
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, epochs.size());
+            final Long earliestEpochFromQuery = epochs.get(0);
+
+            long expectedEarliest = startTime.minusHours(3).truncatedTo(ChronoUnit.DAYS).plusDays(1).toEpochSecond();
+            Assertions.assertEquals(expectedEarliest, earliestEpochFromQuery);
         });
     }
 
@@ -478,15 +503,19 @@ public class relativeTimeTest {
             matches = "true"
     )
     public void parseTimestampEarliestTest() {
-        String q;
-        // earliest
-        q = "index=cinnamon earliest=\"04/16/2020:10:25:40\"";
-        long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*$";
+        String q = "index=cinnamon earliest=\"04/16/2020:10:25:40\"";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, epochs.size());
+            final Long earliestEpochFromQuery = epochs.get(0);
+            long expectedEarliest = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
+            Assertions.assertEquals(expectedEarliest, earliestEpochFromQuery);
         });
     }
 
@@ -496,15 +525,18 @@ public class relativeTimeTest {
             matches = "true"
     )
     public void parseTimestampLatestTest() {
-        String q;
-        // latest
-        q = "index=cinnamon latest=\"04/16/2020:10:25:40\"";
-        long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
-        String regex = ".*_time < from_unixtime\\(" + latestEpoch + ".*$";
-
+        String q = "index=cinnamon latest=\"04/16/2020:10:25:40\"";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochs = new ArrayList<>();
+            while (matcher.find()) {
+                epochs.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(1, epochs.size());
+            final Long latestFromQuery = epochs.get(0);
+            long expectedLatest = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
+            Assertions.assertEquals(expectedLatest, latestFromQuery);
         });
     }
 
@@ -518,14 +550,18 @@ public class relativeTimeTest {
         // earliest, latest
         q = "index=cinnamon earliest=\"04/16/2020:10:25:40\" latest=\"04/16/2020:10:25:42\"";
 
-        long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
-        long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
-                + ".*$";
-
+        long expectedEarliest = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
+        long expectedLatest = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochListFromQuery = new ArrayList<>();
+            while (matcher.find()) {
+                epochListFromQuery.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, epochListFromQuery.size());
+            List<Long> expectedList = Arrays.asList(expectedEarliest, expectedLatest);
+            Assertions.assertEquals(expectedList, epochListFromQuery);
         });
     }
 
@@ -537,14 +573,19 @@ public class relativeTimeTest {
     public void parseTimestampIndexEarliestLatestTest() {
         // _index_earliest, _index_latest
         String q = "index=cinnamon _index_earliest=\"04/16/2020:10:25:40\" _index_latest=\"04/16/2020:10:25:42\"";
-        long earliestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
-        long latestEpoch = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
-        String regex = "^.*_time >= from_unixtime\\(" + earliestEpoch + ".*_time < from_unixtime\\(" + latestEpoch
-                + ".*$";
+        long expectedEarliest = ZonedDateTime.of(2020, 4, 16, 10, 25, 40, 0, utcZone).toEpochSecond();
+        long expectedLatest = ZonedDateTime.of(2020, 4, 16, 10, 25, 42, 0, utcZone).toEpochSecond();
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertTrue(result.matches(regex));
+            final String sparkQuery = streamingTestUtil.getCtx().getSparkQuery();
+            final Matcher matcher = epochFromSparkQueryPattern.matcher(sparkQuery);
+            final List<Long> epochListFromQuery = new ArrayList<>();
+            while (matcher.find()) {
+                epochListFromQuery.add(Long.parseLong(matcher.group(1)));
+            }
+            Assertions.assertEquals(2, epochListFromQuery.size());
+            List<Long> expectedList = Arrays.asList(expectedEarliest, expectedLatest);
+            Assertions.assertEquals(expectedList, epochListFromQuery);
         });
     }
 
