@@ -55,7 +55,10 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * Tests for the new ProcessingStack implementation Uses streaming datasets
@@ -213,17 +216,21 @@ public class JoinTransformationTest {
                                             "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
-                            List<Row> listOfRows = ds.collectAsList();
-
                             // 3 rows should be not null, since only three subsearch matches are requested using max=3
-                            int notNulls = 0;
-                            for (Row r : listOfRows) {
-                                if (r.getAs("R_a") != null) {
-                                    notNulls++;
-                                }
-                            }
+                            final List<String> listOfRows = ds
+                                    .select("R_a")
+                                    .orderBy("offset")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.get(0))
+                                    .filter(Objects::nonNull)
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
 
-                            Assertions.assertEquals(3, notNulls, "subsearch limit 3, so 3 should be not null");
+                            Assertions.assertEquals(3, listOfRows.size());
+                            final List<String> expected = Arrays.asList("1", "2", "1");
+                            Assertions.assertEquals(expected, listOfRows);
+
                         }
                 );
     }
@@ -305,14 +312,16 @@ public class JoinTransformationTest {
                                             "Batch handler dataset contained an unexpected column arrangement !"
                                     );
 
-                            Assertions.assertEquals(10, ds.count(), "Should return 10 rows");
+                            final List<String> listOfAColumn = ds
+                                    .select("a")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.get(0))
+                                    .filter(Objects::nonNull)
+                                    .map(Object::toString)
+                                    .collect(Collectors.toList());
 
-                            List<Row> listOfAColumn = ds.select("a").collectAsList();
-
-                            for (Row r : listOfAColumn) {
-                                String val = r.getString(0);
-                                Assertions.assertTrue(val != null, "All rows should have a valid value (non-null) !");
-                            }
+                            Assertions.assertEquals(10, listOfAColumn.size(), "Should have 10 rows");
                         }
                 );
     }

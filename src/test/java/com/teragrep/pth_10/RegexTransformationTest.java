@@ -54,6 +54,9 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 /**
  * Tests for RegexTransformation Uses streaming datasets
  * 
@@ -117,8 +120,18 @@ public class RegexTransformationTest {
     )
     public void testRegexFieldEqual() {
         streamingTestUtil.performDPLTest("index=index_A | regex _raw = \"data data\"", testFile, ds -> {
-            int size = ds.collectAsList().size();
-            Assertions.assertTrue(size > 1);
+            List<String> resList = ds
+                    .select("_raw")
+                    .distinct()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.get(0))
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, resList.size());
+            Assertions.assertEquals("data data", resList.get(0));
+
         });
     }
 
@@ -129,8 +142,17 @@ public class RegexTransformationTest {
     )
     public void testRegexWithString() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"data data\"", testFile, ds -> {
-            int size = ds.collectAsList().size();
-            Assertions.assertTrue(size > 1);
+            List<String> resList = ds
+                    .select("_raw")
+                    .distinct()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.get(0))
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, resList.size());
+            Assertions.assertEquals("data data", resList.get(0));
         });
     }
 
@@ -141,8 +163,17 @@ public class RegexTransformationTest {
     )
     public void testRegexMatchedPattern() {
         streamingTestUtil.performDPLTest("index=index_A | regex \"^[d|D][a|z][t|T][a|B]\\s.{4}$\"", testFile, ds -> {
-            int size = ds.collectAsList().size();
-            Assertions.assertTrue(size > 1);
+            List<String> resList = ds
+                    .select("_raw")
+                    .distinct()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.get(0))
+                    .map(Object::toString)
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, resList.size());
+            Assertions.assertEquals("data data", resList.get(0));
         });
     }
 

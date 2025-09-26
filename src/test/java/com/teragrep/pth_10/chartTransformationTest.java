@@ -56,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -122,22 +123,21 @@ public class chartTransformationTest {
 
             Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
-            // 3 first rows are earlier than where _index_earliest is set to
-            List<String> expectedValues = new ArrayList<>();
-            for (int i = 4; i < 11; i++) {
-                expectedValues.add(i + ",1");
-            }
-
             List<String> resultList = res
                     .collectAsList()
                     .stream()
                     .map(r -> r.mkString(","))
                     .collect(Collectors.toList());
 
+            // 3 first rows are earlier than where _index_earliest is set to
+            List<String> expectedValues = Arrays.asList("4,1", "5,1", "6,1", "7,1", "8,1", "9,1", "10,1");
+
             // sort the lists, as the order of rows doesn't matter with this aggregation
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
+            Assertions.assertEquals(7, resultList.size());
+            Assertions.assertEquals(7, expectedValues.size());
             Assertions.assertEquals(expectedValues, resultList);
         });
     }
@@ -159,22 +159,21 @@ public class chartTransformationTest {
 
             Assertions.assertEquals(expectedSchema, res.schema()); // At least schema is correct
 
-            List<String> expectedValues = new ArrayList<>();
-            // Only first 5 rows have index: index_A
-            // and only the latter 2 have _time after index_earliest
-            expectedValues.add(4 + ",1");
-            expectedValues.add(5 + ",1");
-
             List<String> resultList = res
                     .collectAsList()
                     .stream()
                     .map(r -> r.mkString(","))
                     .collect(Collectors.toList());
 
+            // Only first 5 rows have index: index_A
+            // and only the latter 2 have _time after index_earliest
+            List<String> expectedValues = Arrays.asList("4,1", "5,1");
+
             // sort the lists, as the order of rows doesn't matter with this aggregation
             Collections.sort(expectedValues);
             Collections.sort(resultList);
 
+            Assertions.assertEquals(2, resultList.size());
             Assertions.assertEquals(expectedValues, resultList);
         });
     }

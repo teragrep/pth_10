@@ -173,19 +173,23 @@ public class commandTest {
         String q = "index=index_A sourcetype= A:X:0 | top limit=1 host | fields + host | teragrep get system version";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
-            for (Row r : sourcetypeCol) {
-                Assertions.assertTrue(r.getString(0).contains("teragrep version"));
-            }
+            List<Row> sourcetypeCol = res.select("sourcetype").distinct().collectAsList();
+            Assertions.assertEquals(9, res.count());
+            Assertions.assertEquals(1, sourcetypeCol.size());
+            Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
             List<Row> rawCol = res.select("_raw").collectAsList();
 
+            // _ raw should contain TG version information
+            // teragrep.XXX_XX.version: X.X.X
+            // Teragrep version: X.X.X
+
+            int executedLoops = 0;
             for (Row r : rawCol) {
-                // _ raw should contain TG version information
-                // teragrep.XXX_XX.version: X.X.X
-                // Teragrep version: X.X.X
                 Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
+                executedLoops++;
             }
+            Assertions.assertEquals(9, executedLoops);
         });
     }
 
@@ -198,19 +202,23 @@ public class commandTest {
         String q = " | teragrep get system version";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            List<Row> sourcetypeCol = res.select("sourcetype").collectAsList();
-            for (Row r : sourcetypeCol) {
-                Assertions.assertTrue(r.getString(0).contains("teragrep version"));
-            }
+            List<Row> sourcetypeCol = res.select("sourcetype").distinct().collectAsList();
+            Assertions.assertEquals(9, res.count());
+            Assertions.assertEquals(1, sourcetypeCol.size());
+            Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
             List<Row> rawCol = res.select("_raw").collectAsList();
 
+            // _ raw should contain TG version information
+            // teragrep.XXX_XX.version: X.X.X
+            // Teragrep version: X.X.X
+
+            int executedLoops = 0;
             for (Row r : rawCol) {
-                // _ raw should contain TG version information
-                // teragrep.XXX_XX.version: X.X.X
-                // Teragrep version: X.X.X
                 Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
+                executedLoops++;
             }
+            Assertions.assertEquals(9, executedLoops);
         });
     }
 
