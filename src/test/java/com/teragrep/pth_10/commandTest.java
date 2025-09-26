@@ -174,7 +174,7 @@ public class commandTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").distinct().collectAsList();
-            Assertions.assertEquals(9, res.count());
+            Assertions.assertEquals(10, res.count());
             Assertions.assertEquals(1, sourcetypeCol.size());
             Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
@@ -189,7 +189,7 @@ public class commandTest {
                 Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
                 executedLoops++;
             }
-            Assertions.assertEquals(9, executedLoops);
+            Assertions.assertEquals(10, executedLoops);
         });
     }
 
@@ -203,7 +203,7 @@ public class commandTest {
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             List<Row> sourcetypeCol = res.select("sourcetype").distinct().collectAsList();
-            Assertions.assertEquals(9, res.count());
+            Assertions.assertEquals(10, res.count());
             Assertions.assertEquals(1, sourcetypeCol.size());
             Assertions.assertEquals("teragrep version", sourcetypeCol.get(0).get(0).toString());
 
@@ -218,7 +218,7 @@ public class commandTest {
                 Assertions.assertTrue(r.getAs(0).toString().contains("version:"));
                 executedLoops++;
             }
-            Assertions.assertEquals(9, executedLoops);
+            Assertions.assertEquals(10, executedLoops);
         });
     }
 
