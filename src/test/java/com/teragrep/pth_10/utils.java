@@ -65,6 +65,8 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -75,7 +77,11 @@ public class utils {
     public static Dataset<Row> executeQueryWithCatalystOutput(String str, SparkSession spark, Dataset<Row> testSet) {
         // TODO change to streaming mode
         // initializing DPLParserCatalystContext with existing dataset -> processing will not be streaming
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark, testSet);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(
+                spark,
+                testSet,
+                ZonedDateTime.now(ZoneId.of("UTC"))
+        );
         CharStream inputStream = CharStreams.fromString(str);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));

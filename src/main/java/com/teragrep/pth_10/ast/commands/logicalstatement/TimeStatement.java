@@ -49,6 +49,8 @@ import com.teragrep.pth_10.ast.*;
 import com.teragrep.pth_10.ast.bo.*;
 import com.teragrep.pth_10.ast.bo.Token.Type;
 import com.teragrep.pth_10.ast.commands.EmitMode;
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import com.teragrep.pth_10.ast.time.DPLTimestampString;
 import com.teragrep.pth_10.ast.time.TimeQualifier;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
@@ -56,6 +58,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
+
+import java.time.ZonedDateTime;
 
 /**
  * <p>
@@ -187,8 +191,24 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
         // 'earliest = '
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
-
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
+        String timeFormat = catCtx.getTimeFormatString();
+        ZonedDateTime queryStartTime = catCtx.startTime();
+        final DPLTimestampString timestampString;
+        // use user defined timeformat is provided
+        if (!timeFormat.isEmpty()) {
+            timestampString = new DPLTimestampString(value, queryStartTime, timeFormat);
+        }
+        else {
+            timestampString = new DPLTimestampString(value, queryStartTime);
+        }
+        final DPLTimestamp timestamp = timestampString.asDPLTimestamp();
+        if (timestamp.isStub()) {
+            throw new IllegalArgumentException(
+                    "Could not parse value <" + value + "> with custom format <" + timeFormat
+                            + "> or with default formats"
+            );
+        }
+        TimeQualifier tq = new TimeQualifier(value, timestamp, node.getSymbol().getType(), doc);
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();
@@ -214,8 +234,24 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
     private ColumnNode timeQualifierEmitCatalyst(DPLParser.TimeQualifierContext ctx) {
         TerminalNode node = (TerminalNode) ctx.getChild(0);
         String value = ctx.getChild(1).getText();
-
-        TimeQualifier tq = new TimeQualifier(value, catCtx.getTimeFormatString(), node.getSymbol().getType(), doc);
+        String timeFormat = catCtx.getTimeFormatString();
+        ZonedDateTime queryStartTime = catCtx.startTime();
+        final DPLTimestampString timestampString;
+        // use user defined timeformat is provided
+        if (!timeFormat.isEmpty()) {
+            timestampString = new DPLTimestampString(value, queryStartTime, timeFormat);
+        }
+        else {
+            timestampString = new DPLTimestampString(value, queryStartTime);
+        }
+        final DPLTimestamp timestamp = timestampString.asDPLTimestamp();
+        if (timestamp.isStub()) {
+            throw new IllegalArgumentException(
+                    "Could not parse value <" + value + "> with custom format <" + timeFormat
+                            + "> or with default formats"
+            );
+        }
+        TimeQualifier tq = new TimeQualifier(value, timestamp, node.getSymbol().getType(), doc);
 
         if (tq.isStartTime()) {
             startTime = tq.epoch();

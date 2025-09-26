@@ -45,25 +45,35 @@
  */
 package com.teragrep.pth_10.ast.commands.transformstatement.convert;
 
-import com.teragrep.pth_10.ast.DPLTimeFormat;
-import org.apache.spark.sql.api.java.UDF2;
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import com.teragrep.pth_10.ast.time.DPLTimestampString;
+import org.apache.spark.sql.api.java.UDF1;
+
+import java.time.ZonedDateTime;
 
 /**
  * UDF for convert command 'mktime'<br>
  * Human readable time to epoch using given timeformat<br>
- * 
+ *
  * @author eemhu
  */
-public class Mktime implements UDF2<String, String, String> {
+public class Mktime implements UDF1<String, String> {
+
+    private final ZonedDateTime baseTime;
+    private final String timeFormat;
+
+    public Mktime(final ZonedDateTime baseTime, final String timeFormat) {
+        this.baseTime = baseTime;
+        this.timeFormat = timeFormat;
+    }
 
     private static final long serialVersionUID = 1L;
 
     @Override
-    public String call(String hrt, String tf) throws Exception {
-        DPLTimeFormat format = new DPLTimeFormat(tf);
-        Long rv = format.instantOf(hrt).getEpochSecond();
-
-        return rv.toString();
+    public String call(final String value) throws Exception {
+        final DPLTimestampString dplTimestampString = new DPLTimestampString(value, baseTime, timeFormat);
+        DPLTimestamp timestamp = dplTimestampString.asDPLTimestamp();
+        return Long.toString(timestamp.zonedDateTime().toEpochSecond());
     }
 
 }
