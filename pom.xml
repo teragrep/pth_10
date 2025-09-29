@@ -275,7 +275,7 @@
           <!-- Default configuration -->
           <xmlOutput>true</xmlOutput>
           <effort>Max</effort>
-          <failThreshold>Low</failThreshold>
+          <failThreshold>High</failThreshold>
           <failOnError>true</failOnError>
           <includeTests>true</includeTests>
           <plugins>
