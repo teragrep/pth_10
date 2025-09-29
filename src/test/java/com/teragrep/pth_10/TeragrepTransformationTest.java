@@ -726,7 +726,6 @@ public class TeragrepTransformationTest {
                 .performDPLTest(
                         "index=abc | teragrep exec regexextract regex " + regex + " output strTokens", nullValueFile,
                         ds -> {
-                            ds.show(false);
 
                             List<List<Object>> rowTokensList = ds
                                     .select("strTokens")
