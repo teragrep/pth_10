@@ -66,16 +66,16 @@ public class Mstime implements UDF1<String, String> {
         String[] minutesAndSeconds = parts[0].split(":"); // separate MM and SS
 
         long min = 0;
-        long sec = 0;
+        long sec;
         if (minutesAndSeconds.length > 1) { // if minutes present
-            min = Long.valueOf(minutesAndSeconds[0]);
-            sec = Long.valueOf(minutesAndSeconds[1]);
+            min = Long.parseLong(minutesAndSeconds[0]);
+            sec = Long.parseLong(minutesAndSeconds[1]);
         }
         else { // no minutes, just sec and millisec
-            sec = Long.valueOf(minutesAndSeconds[0]);
+            sec = Long.parseLong(minutesAndSeconds[0]);
         }
 
-        long ms = Long.valueOf(parts[1]);
+        long ms = Long.parseLong(parts[1]);
 
         // add everything up to milliseconds
         ms += min * 60L * 1000L;
