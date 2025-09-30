@@ -272,12 +272,12 @@
         <!-- Version 4.9.x.x series requires java 11+ -->
         <version>4.9.4.1</version>
         <configuration>
-          <!-- Default configuration -->
           <xmlOutput>true</xmlOutput>
           <effort>Max</effort>
           <failThreshold>High</failThreshold>
           <failOnError>true</failOnError>
           <includeTests>true</includeTests>
+          <excludeFilterFile>${project.basedir}/spotbugs-exclude-filter.xml</excludeFilterFile>
           <plugins>
             <plugin>
               <groupId>com.h3xstream.findsecbugs</groupId>
@@ -445,6 +445,8 @@
             <exclude>settings.xml</exclude>
             <exclude>dependencies.settings.xml</exclude>
             <exclude>rpm/rpm.pom.xml</exclude>
+            <!-- spotbugs filter -->
+            <exclude>spotbugs-exclude-filter.xml</exclude>
             <!-- readme -->
             <exclude>README.adoc</exclude>
             <exclude>README.md</exclude>

@@ -1,0 +1,6 @@
+<FindBugsFilter>
+    <!-- Ignore serialization bug (HDFS save & load) -->
+    <Match>
+        <Bug pattern="OBJECT_DESERIALIZATION" />
+    </Match>
+</FindBugsFilter>
