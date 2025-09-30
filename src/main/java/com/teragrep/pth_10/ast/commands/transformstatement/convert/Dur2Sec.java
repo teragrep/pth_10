@@ -62,17 +62,15 @@ public class Dur2Sec implements UDF1<String, String> {
         // split based on colon (':')
         String[] parts = duration.split(":");
 
-        long hrs = 0L, min = 0L, sec = 0L;
-        if (parts.length == 3) {
-            hrs = Long.valueOf(parts[0]);
-            min = Long.valueOf(parts[1]);
-            sec = Long.valueOf(parts[2]);
-        }
-        else {
+        if (parts.length != 3) {
             throw new RuntimeException(
                     "Duration value '" + duration + "' is not of valid format. Expected: [D+]HH:MM:SS"
             );
         }
+
+        final long hrs = Long.parseLong(parts[0]);
+        final long min = Long.parseLong(parts[1]);
+        long sec = Long.parseLong(parts[2]);
 
         // add minutes and hours to seconds
         sec += (min * 60L);

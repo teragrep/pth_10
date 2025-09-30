@@ -57,7 +57,7 @@ import java.util.regex.Pattern;
  * Would return anything matching ' latitude": 0.0 ' as a new field latiTUDE with the 0.0 being the contents of that new
  * generated field.
  */
-public class NamedGroupsRex {
+public final class NamedGroupsRex {
 
     /**
      * Gets multiple new groups
@@ -66,33 +66,13 @@ public class NamedGroupsRex {
      * @return map with group and group index
      */
     public static Map<String, Integer> getNamedGroups(String regex) {
-        List<String> namedGroups = new ArrayList<>();
-        Map<String, Integer> rv = new LinkedHashMap<>();
-        HashMap<String, Integer> offsets = new HashMap<>();
-        Matcher m = Pattern.compile("\\(\\?<([a-zA-Z][a-zA-Z0-9]*)>").matcher(regex);
+        final Map<String, Integer> rv = new LinkedHashMap<>();
+        final Matcher matcher = Pattern.compile("\\(\\?<([a-zA-Z][a-zA-Z0-9]*)>").matcher(regex);
         int ind = 1;
-        while (m.find()) {
-            namedGroups.add(m.group(1));
-            //            LOGGER.info(m.group()+" groupCount"+(ind));
-            rv.put(m.group(1), ind++);
+        while (matcher.find()) {
+            rv.put(matcher.group(1), ind++);
         }
         return rv;
-    }
-
-    /**
-     * Gets a single group
-     * 
-     * @param regex Regex and group
-     * @return group
-     */
-    public static String getNamedGroup(String regex) {
-        Matcher m = Pattern.compile("\\(\\?<([a-zA-Z][a-zA-Z0-9]*)>").matcher(regex);
-
-        if (m.find()) {
-            return m.group(1);
-        }
-
-        return null;
     }
 
 }

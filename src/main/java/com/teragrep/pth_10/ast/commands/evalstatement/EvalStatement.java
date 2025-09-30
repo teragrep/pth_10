@@ -1442,16 +1442,14 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodPi(DPLParser.EvalMethodPiContext ctx) {
-        Node rv = evalMethodPiEmitCatalyst(ctx);
-        return rv;
+        return evalMethodPiEmitCatalyst(ctx);
     }
 
     private Node evalMethodPiEmitCatalyst(DPLParser.EvalMethodPiContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // Return pi constant
-        final double PI = 3.14159265358d;
-        Column res = functions.lit(PI);
+        Column res = functions.lit(Math.PI);
         rv = new ColumnNode(res);
 
         return rv;

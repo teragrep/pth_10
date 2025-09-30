@@ -595,12 +595,11 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
         LOGGER.info("visitSubsearchStatement with brackets: <{}>", ctx.getText());
-        // Strip brackets around statement
-        DPLParserCatalystContext subCtx = null;
-        if (catCtx != null) {
-            LOGGER.info("Cloning main visitor to subsearch");
-            subCtx = catCtx.clone();
+        if (catCtx == null) {
+            throw new IllegalStateException("Catalyst context is null!");
         }
+        LOGGER.info("Cloning main visitor to subsearch");
+        final DPLParserCatalystContext subCtx = catCtx.clone();
         LOGGER.info("(Catalyst) subVisitor init with subCtx= <{}>", subCtx);
         DPLParserCatalystVisitor subVisitor = new DPLParserCatalystVisitor(subCtx);
 
