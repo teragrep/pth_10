@@ -65,7 +65,9 @@ import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1449,7 +1451,10 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Node rv;
 
         // Return pi constant
-        Column res = functions.lit(Math.PI);
+        final NumberFormat nf = NumberFormat.getNumberInstance();
+        nf.setMaximumFractionDigits(11);
+        nf.setRoundingMode(RoundingMode.DOWN);
+        Column res = functions.lit(Double.parseDouble(nf.format(Math.PI)));
         rv = new ColumnNode(res);
 
         return rv;
