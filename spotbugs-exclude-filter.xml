@@ -1,6 +1,7 @@
 <FindBugsFilter>
     <!-- Ignore serialization bug (HDFS save & load) -->
     <Match>
+        <Class name="com.teragrep.pth_10.steps.teragrep.TeragrepHdfsStep"/>
         <Bug pattern="OBJECT_DESERIALIZATION" />
     </Match>
 </FindBugsFilter>
