@@ -68,49 +68,49 @@ import java.util.*;
 /**
  * A class that processes a list of rows into an email. Used for the sendemail command.
  */
-public class SendemailResultsProcessor implements Serializable {
+public final class SendemailResultsProcessor implements Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SendemailResultsProcessor.class);
 
     private static final long serialVersionUID = 1L;
-    private static List<Row> listOfRows = new ArrayList<>();
-    private static int maxCount = 50000;
+    private static final List<Row> listOfRows = new ArrayList<>();
+    private final int maxCount;
     private static int count = 0;
 
     // from constructor
-    private boolean use_tls = false;
-    private String server = "localhost";
-    private int port = 25;
-    private boolean use_ssl = false;
-    //DPLParserCatalystContext catCtx = null;
-    private String fromEmail = null;
-    private String toEmails = null;
-    private String ccEmails = null;
-    private String bccEmails = null;
-    private String subject = null;
-    private String customMessageContent = null;
+    private final boolean use_tls;
+    private final String server;
+    private final int port;
+    private final boolean use_ssl;
 
-    private String format = "csv";
-    private boolean sendResults = false;
-    private boolean inline = false;
-    private boolean sendCsv = false;
-    private boolean sendPdf = false;
-    private String customFooterContent = null;
-    private String paperSize = null;
-    private String paperOrientation = null;
-    private String content_type = null;
+    private final String fromEmail;
+    private final String toEmails;
+    private final String ccEmails;
+    private final String bccEmails;
+    private final String subject;
+    private final String customMessageContent;
+
+    private final String format;
+    private final boolean sendResults;
+    private final boolean inline;
+    private final boolean sendCsv;
+    private final boolean sendPdf;
+    private final String customFooterContent;
+    private final String paperSize;
+    private final String paperOrientation;
+    private final String content_type;
 
     private static PDPage page1 = new PDPage();
     private static PDDocument pdfDoc = new PDDocument();
     private static MimeBodyPart dataBodyPart = new MimeBodyPart();
     private static MimeBodyPart attachmentBodyPart = new MimeBodyPart();
 
-    private static String username = "";
-    private static String password = "";
+    private final String username;
+    private final String password;
 
-    private String urlToParagraph = null;
+    private final String urlToParagraph;
 
-    private boolean smtpDebug = false; // enable debugging for email sending
+    private final boolean smtpDebug; // enable debugging for email sending
 
     // Was the email processor called already? (make sure that email is only sent once if sendresults=false)
     private boolean isCalledBefore = false;
@@ -176,8 +176,8 @@ public class SendemailResultsProcessor implements Serializable {
         this.port = port;
         this.use_ssl = use_ssl;
 
-        SendemailResultsProcessor.username = username;
-        SendemailResultsProcessor.password = password;
+        this.username = username;
+        this.password = password;
 
         this.fromEmail = fromEmail;
         this.toEmails = toEmails;
@@ -196,7 +196,7 @@ public class SendemailResultsProcessor implements Serializable {
         this.paperOrientation = paperOrientation;
         this.content_type = content_type;
 
-        SendemailResultsProcessor.maxCount = maxInputs; // set to other than 50k
+        this.maxCount = maxInputs;
 
         this.urlToParagraph = urlToParagraph;
         this.smtpDebug = smtpDebug;

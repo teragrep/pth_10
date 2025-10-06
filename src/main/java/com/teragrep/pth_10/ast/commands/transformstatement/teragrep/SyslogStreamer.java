@@ -71,7 +71,7 @@ import java.util.concurrent.TimeoutException;
 public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SyslogStreamer.class);
-    private RelpConnection sender;
+    private transient RelpConnection sender;
     private Boolean initialized = false;
 
     // relp window

@@ -53,11 +53,10 @@ import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 
-import java.io.Serializable;
 import java.util.Iterator;
 import java.util.List;
 
-public class AddtotalsStep extends AbstractStep implements Serializable {
+public class AddtotalsStep extends AbstractStep {
 
     private final DPLParserCatalystContext catCtx;
     public final boolean row;

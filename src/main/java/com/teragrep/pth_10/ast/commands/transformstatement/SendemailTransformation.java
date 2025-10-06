@@ -60,6 +60,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 /**
  * Base transformation class for the 'sendemail' command <pre>... | sendemail to=...</pre>
  */
@@ -248,60 +250,60 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
             }
             else if (child instanceof DPLParser.T_sendemail_toOptionParameterContext) {
                 // t_sendemail_toOptionParameter
-                toEmails = ((StringNode) visit(child)).toString();
+                toEmails = visit(child).toString();
             }
             else if (child instanceof DPLParser.T_sendemail_fromOptionParameterContext) {
                 // t_sendemail_fromOptionParameter
-                fromEmail = ((StringNode) visit(child)).toString();
+                fromEmail = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_ccOptionParameterContext) {
                 // t_sendemail_ccOptionParameter
-                ccEmails = ((StringNode) visit(child)).toString();
+                ccEmails = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_bccOptionParameterContext) {
                 // t_sendemail_bccOptionParameter
-                bccEmails = ((StringNode) visit(child)).toString();
+                bccEmails = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_subjectOptionParameterContext) {
                 // t_sendemail_subjectOptionParameter
-                subject = ((StringNode) visit(child)).toString();
+                subject = visit(child).toString();
             }
             else if (child instanceof DPLParser.T_sendemail_messageOptionParameterContext) {
                 // T_sendemail_messageOptionParameter
-                customMessageContent = ((StringNode) visit(child)).toString();
+                customMessageContent = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_footerOptionParameterContext) {
                 // T_sendemail_footerOptionParameter
-                customFooterContent = ((StringNode) visit(child)).toString();
+                customFooterContent = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_sendresultsOptionParameterContext) {
                 // T_sendemail_sendresultsOptionParameter
-                sendResults = ((StringNode) visit(child)).toString() == "true";
+                sendResults = Objects.equals(visit(child).toString(), "true");
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_inlineOptionParameterContext) {
                 // t_sendemail_inlineOptionParameter
-                inline = ((StringNode) visit(child)).toString() == "true";
+                inline = Objects.equals(visit(child).toString(), "true");
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_formatOptionParameterContext) {
                 // t_sendemail_formatOptionParameter
-                inlineFormat = ((StringNode) visit(child)).toString();
+                inlineFormat = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_sendcsvOptionParameterContext) {
                 // t_sendemail_sendcsvOptionParameter
-                sendCsv = ((StringNode) visit(child)).toString() == "true";
+                sendCsv = Objects.equals(visit(child).toString(), "true");
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_sendpdfOptionParameterContext) {
                 // t_sendemail_sendpdfOptionParameter
-                sendPdf = ((StringNode) visit(child)).toString() == "true";
+                sendPdf = Objects.equals(visit(child).toString(), "true");
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_pdfviewOptionParameterContext) {
@@ -310,12 +312,12 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
             }
             else if (child instanceof DPLParser.T_sendemail_paperorientationOptionParameterContext) {
                 // t_sendemail_paperorientationOptionParameter
-                paperOrientation = ((StringNode) visit(child)).toString();
+                paperOrientation = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_papersizeOptionParameterContext) {
                 // t_sendemail_papersizeOptionParameter
-                paperSize = ((StringNode) visit(child)).toString();
+                paperSize = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_priorityOptionParameterContext) {
@@ -326,7 +328,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
                 // t_sendemail_serverOptionParameter
                 // split <host>:<port>
                 // if <port> is missing, use default
-                String serverString = ((StringNode) visit(child)).toString();
+                String serverString = visit(child).toString();
 
                 LOGGER.debug("server string (should be host:port) = <[{}]>", serverString);
 
@@ -345,12 +347,12 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
             }
             else if (child instanceof DPLParser.T_sendemail_gracefulParameterContext) {
                 // t_sendemail_gracefulParameter
-                graceful = ((StringNode) visit(child)).toString() == "true";
+                graceful = Objects.equals(visit(child).toString(), "true");
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_contentTypeOptionParameterContext) {
                 // T_sendemail_contentTypeOptionParameter
-                content_type = ((StringNode) visit(child)).toString();
+                content_type = visit(child).toString();
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_widthSortColumnsOptionParameterContext) {
@@ -362,17 +364,17 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
             }
             else if (child instanceof DPLParser.T_sendemail_useSslOptionParameterContext) {
                 // T_sendemail_useSslOptionParameter
-                use_ssl = ((StringNode) visit(child)).toString() == "true";
+                use_ssl = Objects.equals(visit(child).toString(), "true");
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_useTlsOptionParameterContext) {
                 // T_sendemail_useTlsOptionParameter
-                use_tls = ((StringNode) visit(child)).toString() == "true";
+                use_tls = Objects.equals(visit(child).toString(), "true");
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_maxinputsParameterContext) {
                 // T_sendemail_maxinputsParameter
-                maxInputs = Integer.parseInt(((StringNode) visit(child)).toString());
+                maxInputs = Integer.parseInt(visit(child).toString());
                 hasForbiddenConfig = true;
             }
             else if (child instanceof DPLParser.T_sendemail_maxtimeParameterContext) {
@@ -447,7 +449,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
     // COMMAND_SENDEMAIL_MODE_TO t_sendemail_emailListParameter
     @Override
     public Node visitT_sendemail_toOptionParameter(DPLParser.T_sendemail_toOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // skip keyword and return email list
         rv = visit(ctx.getChild(1));
@@ -458,7 +460,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
     // COMMAND_SENDEMAIL_MODE_FROM ...
     @Override
     public Node visitT_sendemail_fromOptionParameter(DPLParser.T_sendemail_fromOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // skip keyword and return email list
         rv = visit(ctx.getChild(1));
@@ -468,7 +470,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_ccOptionParameter(DPLParser.T_sendemail_ccOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // skip keyword and return email list
         rv = visit(ctx.getChild(1));
@@ -478,7 +480,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_bccOptionParameter(DPLParser.T_sendemail_bccOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // skip keyword and return email list
         rv = visit(ctx.getChild(1));
@@ -488,7 +490,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_subjectOptionParameter(DPLParser.T_sendemail_subjectOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // skip keyword and return subject
         rv = new StringNode(
@@ -500,7 +502,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_messageOptionParameter(DPLParser.T_sendemail_messageOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // skip keyword and return message
         rv = new StringNode(
@@ -512,7 +514,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_footerOptionParameter(DPLParser.T_sendemail_footerOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // skip keyword and return footer
         rv = new StringNode(
@@ -524,7 +526,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_inlineOptionParameter(DPLParser.T_sendemail_inlineOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -544,7 +546,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_formatOptionParameter(DPLParser.T_sendemail_formatOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode formatValue = (TerminalNode) ctx.getChild(1);//.getChild(0);
         String value = null;
@@ -568,7 +570,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_sendcsvOptionParameter(DPLParser.T_sendemail_sendcsvOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -589,7 +591,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_sendpdfOptionParameter(DPLParser.T_sendemail_sendpdfOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -610,7 +612,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_pdfviewOptionParameter(DPLParser.T_sendemail_pdfviewOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         rv = new StringNode(new Token(Token.Type.STRING, ctx.getChild(1).getText()));
 
@@ -621,7 +623,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_sendemail_sendresultsOptionParameter(
             DPLParser.T_sendemail_sendresultsOptionParameterContext ctx
     ) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -643,7 +645,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_sendemail_paperorientationOptionParameter(
             DPLParser.T_sendemail_paperorientationOptionParameterContext ctx
     ) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode paperOrientationValue = (TerminalNode) ctx.getChild(1);
         String value = null;
@@ -663,7 +665,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_papersizeOptionParameter(DPLParser.T_sendemail_papersizeOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode paperSizeValue = (TerminalNode) ctx.getChild(1);
         String value = null;
@@ -698,7 +700,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_priorityOptionParameter(DPLParser.T_sendemail_priorityOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode priorityValue = (TerminalNode) ctx.getChild(1);
         String value = "";
@@ -727,7 +729,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_serverOptionParameter(DPLParser.T_sendemail_serverOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         String server = ctx.getChild(1).getText();
 
@@ -737,7 +739,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_gracefulParameter(DPLParser.T_sendemail_gracefulParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -759,7 +761,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_sendemail_contentTypeOptionParameter(
             DPLParser.T_sendemail_contentTypeOptionParameterContext ctx
     ) {
-        Node rv = null;
+        Node rv;
 
         // content_type is html OR plain
 
@@ -784,7 +786,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_sendemail_widthSortColumnsOptionParameter(
             DPLParser.T_sendemail_widthSortColumnsOptionParameterContext ctx
     ) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -805,7 +807,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_useSslOptionParameter(DPLParser.T_sendemail_useSslOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -826,7 +828,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_useTlsOptionParameter(DPLParser.T_sendemail_useTlsOptionParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         TerminalNode booleanValue = (TerminalNode) ctx.getChild(1).getChild(0);
         String value = null;
@@ -847,7 +849,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_maxinputsParameter(DPLParser.T_sendemail_maxinputsParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         rv = new StringNode(new Token(Token.Type.STRING, ctx.getChild(1).getText()));
 
@@ -856,7 +858,7 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_sendemail_maxtimeParameter(DPLParser.T_sendemail_maxtimeParameterContext ctx) {
-        Node rv = null;
+        Node rv;
 
         rv = new StringNode(new Token(Token.Type.STRING, ctx.getChild(1).getText()));
 

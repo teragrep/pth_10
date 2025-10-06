@@ -1,0 +1,25 @@
+<FindBugsFilter>
+    <!-- Ignore serialization bug (HDFS save & load) -->
+    <Match>
+        <Class name="com.teragrep.pth_10.steps.teragrep.TeragrepHdfsStep"/>
+        <Bug pattern="OBJECT_DESERIALIZATION" />
+    </Match>
+    <!-- Ignore dummy passwords in tests -->
+    <Match>
+        <Class name="com.teragrep.pth_10.steps.teragrep.bloomfilter.BloomFilterTableTest"/>
+        <Bug pattern="HARD_CODE_PASSWORD"/>
+    </Match>
+    <Match>
+        <Class name="com.teragrep.pth_10.steps.teragrep.bloomfilter.FilterTypesTest"/>
+        <Bug pattern="HARD_CODE_PASSWORD"/>
+    </Match>
+    <Match>
+        <Class name="com.teragrep.pth_10.steps.teragrep.bloomfilter.TeragrepBloomFilterTest"/>
+        <Bug pattern="HARD_CODE_PASSWORD"/>
+    </Match>
+    <!-- Ignore MD5 hashing function in tests, only used to test md5() function, not for security purposes. -->
+    <Match>
+        <Class name="com.teragrep.pth_10.evalTest"/>
+        <Bug pattern="WEAK_MESSAGE_DIGEST_MD5"/>
+    </Match>
+</FindBugsFilter>

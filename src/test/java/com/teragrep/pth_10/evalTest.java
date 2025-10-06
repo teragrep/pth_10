@@ -57,7 +57,9 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1141,7 +1143,12 @@ public class evalTest {
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
             List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
 
-            Assertions.assertEquals(3.14159265358d, lst.get(0));
+            // expect PI with 11 decimals precision
+            final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+            numberFormat.setMaximumFractionDigits(11);
+            numberFormat.setRoundingMode(RoundingMode.DOWN);
+            final double expectedPi = Double.parseDouble(numberFormat.format(Math.PI));
+            Assertions.assertEquals(expectedPi, lst.get(0));
         });
     }
 

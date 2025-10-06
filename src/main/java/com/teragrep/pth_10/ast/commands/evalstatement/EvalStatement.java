@@ -65,7 +65,9 @@ import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
+import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -1442,16 +1444,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodPi(DPLParser.EvalMethodPiContext ctx) {
-        Node rv = evalMethodPiEmitCatalyst(ctx);
-        return rv;
+        return evalMethodPiEmitCatalyst(ctx);
     }
 
     private Node evalMethodPiEmitCatalyst(DPLParser.EvalMethodPiContext ctx) {
-        Node rv = null;
+        Node rv;
 
         // Return pi constant
-        final double PI = 3.14159265358d;
-        Column res = functions.lit(PI);
+        final NumberFormat nf = NumberFormat.getNumberInstance();
+        nf.setMaximumFractionDigits(11);
+        nf.setRoundingMode(RoundingMode.DOWN);
+        Column res = functions.lit(Double.parseDouble(nf.format(Math.PI)));
         rv = new ColumnNode(res);
 
         return rv;
