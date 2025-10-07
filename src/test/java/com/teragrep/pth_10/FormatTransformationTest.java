@@ -108,26 +108,27 @@ public class FormatTransformationTest {
             // Check if result contains the column that was created for format result
             Assertions.assertEquals(expectedSchema, res.schema());
 
+            System.out.println("ZONE: " + streamingTestUtil.getCtx().startTime().getZone());
             // List of expected values for the format destination field
             List<String> expectedValues = Collections
                     .singletonList(
-                            "( " + "( " + "_time=\"2023-09-06 11:22:31.0\" " + "AND " + "id=\"1\" " + "AND "
+                            "( " + "( " + "_time=\"2023-09-06 08:22:31.0\" " + "AND " + "id=\"1\" " + "AND "
                                     + "_raw=\"raw 01\" " + "AND " + "index=\"index_A\" " + "AND "
                                     + "sourcetype=\"A:X:0\" " + "AND " + "host=\"host\" " + "AND " + "source=\"input\" "
                                     + "AND " + "partition=\"0\" " + "AND offset=\"1\"" + " ) " + "OR " + "( "
-                                    + "_time=\"2023-09-06 12:22:31.0\" " + "AND " + "id=\"2\" " + "AND "
+                                    + "_time=\"2023-09-06 09:22:31.0\" " + "AND " + "id=\"2\" " + "AND "
                                     + "_raw=\"raw 02\" " + "AND " + "index=\"index_A\" " + "AND "
                                     + "sourcetype=\"A:X:0\" " + "AND " + "host=\"host\" " + "AND " + "source=\"input\" "
                                     + "AND " + "partition=\"0\" " + "AND " + "offset=\"2\" " + ") " + "OR " + "( "
-                                    + "_time=\"2023-09-06 13:22:31.0\" " + "AND id=\"3\" " + "AND " + "_raw=\"raw 03\" "
+                                    + "_time=\"2023-09-06 10:22:31.0\" " + "AND id=\"3\" " + "AND " + "_raw=\"raw 03\" "
                                     + "AND " + "index=\"index_A\" " + "AND " + "sourcetype=\"A:Y:0\" " + "AND "
                                     + "host=\"host\" " + "AND " + "source=\"input\" " + "AND " + "partition=\"0\" "
                                     + "AND " + "offset=\"3\" " + ") " + "OR " + "( "
-                                    + "_time=\"2023-09-06 14:22:31.0\" " + "AND " + "id=\"4\" " + "AND "
+                                    + "_time=\"2023-09-06 11:22:31.0\" " + "AND " + "id=\"4\" " + "AND "
                                     + "_raw=\"raw 04\" " + "AND " + "index=\"index_A\" " + "AND "
                                     + "sourcetype=\"A:Y:0\" " + "AND " + "host=\"host\" " + "AND " + "source=\"input\" "
                                     + "AND " + "partition=\"0\" " + "AND " + "offset=\"4\" " + ") " + "OR " + "( "
-                                    + "_time=\"2023-09-06 15:22:31.0\" " + "AND " + "id=\"5\" " + "AND "
+                                    + "_time=\"2023-09-06 12:22:31.0\" " + "AND " + "id=\"5\" " + "AND "
                                     + "_raw=\"raw 05\" " + "AND " + "index=\"index_A\" " + "AND "
                                     + "sourcetype=\"A:Y:0\" " + "AND " + "host=\"host\" " + "AND " + "source=\"input\" "
                                     + "AND " + "partition=\"0\" " + "AND " + "offset=\"5\" " + ") " + ")"
@@ -164,7 +165,7 @@ public class FormatTransformationTest {
             // List of expected values for the format destination field
             List<String> expectedValues = Collections
                     .singletonList(
-                            "( " + "( " + "_time=\"2023-09-06 11:22:31.0\" " + "AND " + "id=\"1\" " + "AND "
+                            "( " + "( " + "_time=\"2023-09-06 08:22:31.0\" " + "AND " + "id=\"1\" " + "AND "
                                     + "_raw=\"raw 01\" " + "AND " + "index=\"index_A\" " + "AND "
                                     + "sourcetype=\"A:X:0\" " + "AND " + "host=\"host\" " + "AND " + "source=\"input\" "
                                     + "AND " + "partition=\"0\" " + "AND " + "offset=\"1\" " + "AND " + "( "
@@ -202,11 +203,11 @@ public class FormatTransformationTest {
             // List of expected values for the format destination field
             List<String> expectedValues = Collections
                     .singletonList(
-                            "ROWPRE " + "COLPRE " + "_time=\"2023-09-06 11:22:31.0\" " + "COLSEP " + "id=\"1\" "
+                            "ROWPRE " + "COLPRE " + "_time=\"2023-09-06 08:22:31.0\" " + "COLSEP " + "id=\"1\" "
                                     + "COLSEP " + "_raw=\"raw 01\" " + "COLSEP " + "index=\"index_A\" " + "COLSEP "
                                     + "sourcetype=\"A:X:0\" " + "COLSEP " + "host=\"host\" " + "COLSEP "
                                     + "source=\"input\" " + "COLSEP " + "partition=\"0\" " + "COLSEP " + "offset=\"1\""
-                                    + " COLSUF " + "ROWSEP " + "COLPRE " + "_time=\"2023-09-06 12:22:31.0\" "
+                                    + " COLSUF " + "ROWSEP " + "COLPRE " + "_time=\"2023-09-06 09:22:31.0\" "
                                     + "COLSEP " + "id=\"2\" " + "COLSEP " + "_raw=\"raw 02\" " + "COLSEP "
                                     + "index=\"index_A\" " + "COLSEP " + "sourcetype=\"A:X:0\" " + "COLSEP "
                                     + "host=\"host\" " + "COLSEP " + "source=\"input\" " + "COLSEP "

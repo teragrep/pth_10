@@ -45,41 +45,82 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import java.sql.Timestamp;
-import java.time.Instant;
+import com.teragrep.pth_10.ast.TextString;
+import com.teragrep.pth_10.ast.UnquotedText;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class RelativeTimestamp {
+import java.time.ZonedDateTime;
+import java.util.Objects;
 
-    private final RelativeOffset offset;
-    private final SnapToTime snapToTime;
+public final class RelativeTimestamp implements DPLTimestamp {
 
-    public RelativeTimestamp(RelativeOffset offset, SnapToTime snapToTime) {
-        this.offset = offset;
-        this.snapToTime = snapToTime;
+    private final Logger LOGGER = LoggerFactory.getLogger(RelativeTimestamp.class);
+
+    private final ValidRelativeTimestampText offsetString;
+    private final ZonedDateTime baseTime;
+
+    public RelativeTimestamp(final String offsetString, final ZonedDateTime baseTime) {
+        this(new ValidRelativeTimestampText(new UnquotedText(new TextString(offsetString))), baseTime);
     }
 
-    /**
-     * Calculate epoch time from relative time modifier. IE. now()- time range
-     * 
-     * @param timestamp A moment in time, usually the current time
-     * @return Calculated time as epoch milliseconds
-     */
-    public Instant calculate(Timestamp timestamp) {
-        Instant time = timestamp.toInstant();
+    public RelativeTimestamp(final ValidRelativeTimestampText offsetString, final ZonedDateTime baseTime) {
+        this.offsetString = offsetString;
+        this.baseTime = baseTime;
+    }
 
-        // if both are null, "now" option is left. Therefore, returns current time.
-        if (offset == null && snapToTime == null) {
-            time = new Timestamp(System.currentTimeMillis()).toInstant();
+    @Override
+    public ZonedDateTime zonedDateTime() {
+        if (!isValid()) {
+            throw new RuntimeException("Timestamp did not contain a valid relative timestamp information");
         }
-
-        if (offset != null) {
-            time = offset.addOffset(time);
+        final String validOffset = offsetString.read();
+        final DPLTimestamp offsetTimestamp = new OffsetTimestamp(validOffset, baseTime);
+        final DPLTimestamp snappedTimestamp = new SnappedTimestamp(validOffset, offsetTimestamp);
+        final ZonedDateTime updatedTime;
+        if (snappedTimestamp.isValid()) {
+            updatedTime = snappedTimestamp.zonedDateTime();
         }
-
-        if (snapToTime != null) {
-            time = snapToTime.snap(time);
+        else {
+            updatedTime = offsetTimestamp.zonedDateTime();
         }
+        return updatedTime;
+    }
 
-        return time;
+    @Override
+    public boolean isValid() {
+        boolean isValid = true;
+        try {
+            offsetString.read();
+        }
+        catch (final IllegalArgumentException e) {
+            isValid = false;
+        }
+        return isValid;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final RelativeTimestamp other = (RelativeTimestamp) o;
+        return Objects.equals(offsetString, other.offsetString) && Objects.equals(baseTime, other.baseTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(offsetString, baseTime);
+    }
+
+    @Override
+    public boolean isStub() {
+        return false;
     }
 }

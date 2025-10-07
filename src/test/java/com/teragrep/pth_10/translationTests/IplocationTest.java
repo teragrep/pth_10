@@ -61,6 +61,9 @@ import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class IplocationTest {
 
@@ -76,7 +79,7 @@ public class IplocationTest {
 
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
@@ -100,7 +103,7 @@ public class IplocationTest {
 
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);

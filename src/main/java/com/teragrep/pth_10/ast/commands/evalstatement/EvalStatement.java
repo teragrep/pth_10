@@ -745,7 +745,8 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Column relativeTimeSpecifier = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
         // Register and call UDF Relative_time
-        UserDefinedFunction Relative_timeUDF = functions.udf(new Relative_time(), DataTypes.LongType);
+        UserDefinedFunction Relative_timeUDF = functions
+                .udf(new Relative_time(catCtx.startTime().getZone()), DataTypes.LongType);
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("Relative_timeUDF", Relative_timeUDF);
 

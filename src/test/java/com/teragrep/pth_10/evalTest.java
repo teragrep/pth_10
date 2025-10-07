@@ -72,8 +72,6 @@ public class evalTest {
 
     private StreamingTestUtil streamingTestUtil;
 
-    private static TimeZone originalTimeZone = null;
-
     @BeforeAll
     void setEnv() {
         this.streamingTestUtil = new StreamingTestUtil();
@@ -83,11 +81,6 @@ public class evalTest {
     @BeforeEach
     void setUp() {
         this.streamingTestUtil.setUp();
-    }
-
-    @AfterAll
-    void recoverTimeZone() {
-        TimeZone.setDefault(originalTimeZone);
     }
 
     @AfterEach
@@ -3499,7 +3492,7 @@ public class evalTest {
 
             // Assert equals with expected
             Assertions.assertEquals(1644487237L, lstA.get(0).getLong(0));
-            Assertions.assertEquals(1645048800L, lstB.get(0).getLong(0));
+            Assertions.assertEquals(1645056000L, lstB.get(0).getLong(0));
         });
     }
 

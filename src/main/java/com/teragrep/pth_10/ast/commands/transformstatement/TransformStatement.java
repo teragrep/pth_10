@@ -58,6 +58,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZonedDateTime;
+
 /**
  * Base statement for all transformation commands, for example statistics (stats) command, evaluation (eval) command and
  * Teragrep system commands.
@@ -266,8 +268,9 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitConvertTransformation(DPLParser.ConvertTransformationContext ctx) {
+        final ZonedDateTime queryStartTime = catCtx.startTime();
         // convert command
-        return new ConvertTransformation().visitConvertTransformation(ctx);
+        return new ConvertTransformation(queryStartTime).visitConvertTransformation(ctx);
     }
 
     @Override
