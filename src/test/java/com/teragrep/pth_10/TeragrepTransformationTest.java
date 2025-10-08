@@ -70,7 +70,6 @@ public class TeragrepTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTransformationTest.class);
 
     private final String testFile = "src/test/resources/IplocationTransformationTest_data*.jsonl"; // * to make the path into a directory path
-    private final String nullValueFile = "src/test/resources/fillnull/fillnull0*.jsonl";
 
     private String testResourcesPath;
     private final StructType testSchema = new StructType(new StructField[] {
@@ -721,20 +720,21 @@ public class TeragrepTransformationTest {
     )
     public void tgRegexExtractInputWithNullValuesTest() {
         // _raw is null for the first 4 rows and last one is "47.2"
-        String regex = "\\d+";
+        final String regex = "\\d+";
+        final String nullValueFile = "src/test/resources/teragrep_regexextract_null_safe*.jsonl";
         streamingTestUtil
                 .performDPLTest(
                         "index=abc | teragrep exec regexextract regex " + regex + " output strTokens", nullValueFile,
                         ds -> {
 
-                            List<List<Object>> rowTokensList = ds
+                            final List<List<Object>> rowTokensList = ds
                                     .select("strTokens")
                                     .collectAsList()
                                     .stream()
                                     .map(row -> row.getList(0))
                                     .collect(Collectors.toList());
 
-                            List<List<Object>> expectedList = List
+                            final List<List<Object>> expectedList = List
                                     .of(
                                             Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
                                             Collections.emptyList(), List.of("47", "2")
