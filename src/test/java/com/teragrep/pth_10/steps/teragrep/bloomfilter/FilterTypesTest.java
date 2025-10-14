@@ -54,9 +54,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -76,14 +74,19 @@ public final class FilterTypesTest {
     @BeforeEach
     public void setup() {
         Assertions.assertDoesNotThrow(() -> {
-            conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
+            try (PreparedStatement stmt = conn.prepareStatement("DROP ALL OBJECTS")) {
+                stmt.execute(); // h2 clear database
+            }
         });
         String createFilterType = "CREATE TABLE `filtertype` ("
                 + "`id`               bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,"
                 + "`expectedElements` bigint(20) NOT NULL," + "`targetFpp`        DOUBLE UNSIGNED NOT NULL,"
                 + "`pattern`          VARCHAR(255) NOT NULL)";
         Assertions.assertDoesNotThrow(() -> {
-            conn.prepareStatement(createFilterType).execute();
+            try (PreparedStatement stmt = conn.prepareStatement(createFilterType)) {
+                stmt.execute();
+            }
+
         });
 
     }
@@ -144,22 +147,24 @@ public final class FilterTypesTest {
         Assertions.assertDoesNotThrow(() -> new FilterTypes(config).saveToDatabase(regex));
 
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet result = conn.prepareStatement("SELECT * FROM filtertype").executeQuery();
-            int loops = 0;
-            List<Long> expectedSizeList = new ArrayList<>();
-            List<Double> fppList = new ArrayList<>();
-            while (result.next()) {
-                expectedSizeList.add(result.getLong(2));
-                fppList.add(result.getDouble(3));
-                Assertions.assertEquals(regex, result.getString(4));
-                loops++;
+            try (PreparedStatement stmt = conn.prepareStatement("SELECT * FROM filtertype")) {
+                ResultSet result = stmt.executeQuery();
+                int loops = 0;
+                List<Long> expectedSizeList = new ArrayList<>();
+                List<Double> fppList = new ArrayList<>();
+                while (result.next()) {
+                    expectedSizeList.add(result.getLong(2));
+                    fppList.add(result.getDouble(3));
+                    Assertions.assertEquals(regex, result.getString(4));
+                    loops++;
+                }
+                Assertions.assertEquals(3, loops);
+                Assertions.assertEquals(3, expectedSizeList.size());
+                Assertions.assertEquals(3, fppList.size());
+                Assertions.assertEquals(Arrays.asList(1000L, 2000L, 3000L), expectedSizeList);
+                Assertions.assertEquals(Arrays.asList(0.01, 0.02, 0.03), fppList);
+                result.close();
             }
-            Assertions.assertEquals(3, loops);
-            Assertions.assertEquals(3, expectedSizeList.size());
-            Assertions.assertEquals(3, fppList.size());
-            Assertions.assertEquals(Arrays.asList(1000L, 2000L, 3000L), expectedSizeList);
-            Assertions.assertEquals(Arrays.asList(0.01, 0.02, 0.03), fppList);
-            result.close();
         });
     }
 
