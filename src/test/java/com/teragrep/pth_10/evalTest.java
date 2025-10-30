@@ -808,22 +808,28 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // Get column 'offset' and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
             // we should get the same amount of values back as we put in
             Assertions.assertEquals(19, lst.size());
             // Compare values to expected
-            List<Long> expectedLst = new ArrayList<>();
+            final List<Long> expectedLst = new ArrayList<>();
 
+            int expectedLoops = 0;
             for (Long val : srcLst) {
                 Double v = Math.ceil(val.doubleValue() + 0.5d);
                 expectedLst.add(v.longValue());
+                expectedLoops++;
             }
-
+            Assertions.assertEquals(19, expectedLoops);
             Assertions.assertEquals(expectedLst, lst);
         });
     }
@@ -852,12 +858,20 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'offset' and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("a");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("a");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
             // we should get the same amount of values back as we put in
             Assertions.assertEquals(19, srcLst.size());
             Assertions.assertEquals(19, lst.size());
@@ -899,22 +913,29 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by value
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
 
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
             // we should get the same amount of values back as we put in
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, srcLst.size());
             // Compare values to expected
-            List<Long> expectedLst = new ArrayList<>();
+            final List<Long> expectedLst = new ArrayList<>();
 
+            int expectedLoops = 0;
             for (Long val : srcLst) {
                 Double v = Math.floor(val.doubleValue() + 0.5d);
                 expectedLst.add(v.longValue());
+                expectedLoops++;
             }
-
+            Assertions.assertEquals(19, expectedLoops, "Should execute 19 loops");
             Assertions.assertEquals(expectedLst, lst);
         });
     }
@@ -943,14 +964,23 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'offset' and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
             // we should get the same amount of values back as we put in
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, srcLst.size());
             // Compare values to expected
             int i = 0;
 
@@ -992,32 +1022,46 @@ public class evalTest {
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
             // Get column 'a' and order by value
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
             // we should get the same amount of values back as we put in
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, srcLst.size());
             // Compare values to expected
-            List<Double> expectedLst = new ArrayList<>();
+            final List<Double> expectedLst = new ArrayList<>();
 
             // Round both column 'a' contents and the expected, as spark log10 and java log10
             // return slightly different values. Making sure it is within margin of error.
+            int executedLoops = 0;
             for (int i = 0; i < lst.size(); i++) {
                 Double v = lst.get(i);
                 v = Double.valueOf(df.format(v));
                 lst.set(i, v);
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops, "Should execute 19 loops");
 
             // Calculate java log10 and round to 8 decimal precision,
             // and compare to spark log10 rounded to 8 decimals.
+            int executedLoops2 = 0;
             for (Long val : srcLst) {
                 Double v = Math.log10(val.doubleValue());
                 expectedLst.add(Double.valueOf(df.format(v)));
+                executedLoops2++;
             }
-
+            Assertions.assertEquals(19, executedLoops2, "Should execute 19 loops");
             Assertions.assertEquals(expectedLst, lst);
         });
     }
@@ -1049,20 +1093,30 @@ public class evalTest {
             final DecimalFormat df = new DecimalFormat("0.00000000");
 
             // Get column 'a', which is the column of the result, and order by value
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'offset', which is the column used as log() function input, and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in (log input param -> log output)
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, srcLst.size());
 
             // Compare values to expected
-            List<Double> expectedLst = new ArrayList<>();
+            final List<Double> expectedLst = new ArrayList<>();
             // Round both column 'a' contents and the expected, as spark log10 and java log10
             // return slightly different values. Making sure it is within margin of error.
+            int executedLoops = 0;
             for (int i = 0; i < lst.size(); i++) {
                 // Get double value from log() input number
                 Double v = lst.get(i);
@@ -1070,15 +1124,19 @@ public class evalTest {
                 v = Double.valueOf(df.format(v));
                 // add to list
                 lst.set(i, v);
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops, "Should execute 19 loops");
 
             // Calculate java log10 and round to 8 decimal precision,
             // and compare to spark log10 rounded to 8 decimals.
+            int executedLoops2 = 0;
             for (Long val : srcLst) {
                 Double v = Math.log10(val.doubleValue());
                 expectedLst.add(Double.valueOf(df.format(v)));
+                executedLoops2++;
             }
-
+            Assertions.assertEquals(19, executedLoops2, "Should execute 19 loops");
             Assertions.assertEquals(expectedLst, lst);
         });
     }
@@ -1215,30 +1273,45 @@ public class evalTest {
                     new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            /*
-             *  eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245)
-             */
 
             // Get column 'a'
-            Dataset<Row> resA = res.select("a");
-            List<Double> lstA = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'b'
-            Dataset<Row> resB = res.select("b");
-            List<Double> lstB = resB.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resB = res.select("b");
+            final List<Double> lstB = resB
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'c'
-            Dataset<Row> resC = res.select("c");
-            List<Double> lstC = resC.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resC = res.select("c");
+            final List<Double> lstC = resC
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'd'
-            Dataset<Row> resD = res.select("d");
-            List<Double> lstD = resD.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resD = res.select("d");
+            final List<Double> lstD = resD
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             boolean isOfEqualSize = (lstA.size() == lstB.size()) && (lstB.size() == lstC.size())
                     && (lstC.size() == lstD.size());
             Assertions.assertTrue(isOfEqualSize);
 
+            // does not assert that the values are correct for lists b,c and d
+            int executedLoops = 0;
             for (int i = 0; i < lstA.size(); i++) {
                 Assertions.assertFalse(Double.isNaN(lstA.get(i)));
                 Assertions.assertFalse(Double.isNaN(lstB.get(i)));
@@ -1247,7 +1320,9 @@ public class evalTest {
 
                 // 1.00 * 1111 => 1110(.0)
                 Assertions.assertEquals(1110d, lstA.get(i));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -1275,17 +1350,30 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(19, lst.size());
 
             // Get col offset and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(19, srcLst.size());
 
             // Assert
+            int executedLoops = 0;
             for (int i = 0; i < srcLst.size(); i++) {
                 Assertions.assertEquals(Math.sqrt(srcLst.get(i)), lst.get(i));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -1313,12 +1401,18 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            Assertions.assertEquals(19, lst.size());
 
             // Get col offset and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(19, srcLst.size());
 
             // Assert
             Assertions.assertEquals(19, srcLst.size());
@@ -1355,12 +1449,22 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(19, lst.size());
 
             // Get col offset and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(19, srcLst.size());
 
             // Assert
             Assertions.assertEquals(19, srcLst.size());
@@ -1397,14 +1501,23 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get col offset and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
             // Assert
+            Assertions.assertEquals(19, lst.size());
             Assertions.assertEquals(19, srcLst.size());
             int loopsExecuted = 0;
             for (int i = 0; i < srcLst.size(); i++) {
@@ -1439,14 +1552,24 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a' and order by values
-            Dataset<Row> resA = res.select("a").orderBy("a");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("a");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(19, lst.size());
 
             // Get col offset and order by values
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
             // Assert
+            Assertions.assertEquals(19, lst.size());
             Assertions.assertEquals(19, srcLst.size());
             int loopsExecuted = 0;
             for (int i = 0; i < srcLst.size(); i++) {
@@ -1549,12 +1672,16 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
-            Dataset<Row> resA = res.select("a").orderBy("offset");
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
-            List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
+            final List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            final List<Long> lstOffset = resOffset
                     .collectAsList()
                     .stream()
                     .map(r -> r.getLong(0))
@@ -1562,10 +1689,14 @@ public class evalTest {
 
             // we should get 19
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lstOffset.size());
             // Compare values to expected
+            int executedLoops = 0;
             for (int i = 0; i < lst.size(); i++) {
                 Assertions.assertEquals(lstOffset.get(i) - 1, Double.parseDouble(lst.get(i)));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -1593,12 +1724,16 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
-            Dataset<Row> resA = res.select("a").orderBy("offset");
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
-            List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
+            final List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            final List<Long> lstOffset = resOffset
                     .collectAsList()
                     .stream()
                     .map(r -> r.getLong(0))
@@ -1606,10 +1741,14 @@ public class evalTest {
 
             // we should get 19
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lstOffset.size());
             // Compare values to expected
+            int executedLoops = 0;
             for (int i = 0; i < lst.size(); i++) {
                 Assertions.assertEquals(lstOffset.get(i) * lstOffset.get(i), Long.parseLong(lst.get(i)));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -1637,12 +1776,16 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
-            Dataset<Row> resA = res.select("a").orderBy("offset");
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
-            List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
+            final List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            final List<Long> lstOffset = resOffset
                     .collectAsList()
                     .stream()
                     .map(r -> r.getLong(0))
@@ -1650,11 +1793,15 @@ public class evalTest {
 
             // we should get 19
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lstOffset.size());
             // Compare values to expected
+            int executedLoops = 0;
             for (int i = 0; i < lst.size(); i++) {
                 Assertions
                         .assertEquals((double) lstOffset.get(i) / (double) lstOffset.get(i), Double.parseDouble(lst.get(i)));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -1682,12 +1829,16 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
-            Dataset<Row> resA = res.select("a").orderBy("offset");
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
 
-            List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
-            List<Long> lstOffset = resOffset
+            final List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            final List<Long> lstOffset = resOffset
                     .collectAsList()
                     .stream()
                     .map(r -> r.getLong(0))
@@ -1695,10 +1846,14 @@ public class evalTest {
 
             // we should get 19
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, lstOffset.size());
             // Compare values to expected
+            int executedLoops = 0;
             for (int i = 0; i < lst.size(); i++) {
                 Assertions.assertEquals(lstOffset.get(i) % 2, Double.parseDouble(lst.get(i)));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -1925,21 +2080,31 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
 
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
             // check amount of results
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, srcLst.size());
             // Compare values to expected
-            List<String> expectedLst = new ArrayList<>();
-
+            final List<String> expectedLst = new ArrayList<>();
+            int executedLoops = 0;
             for (Long item : srcLst) {
                 expectedLst.add("0x".concat(Integer.toHexString(item.intValue()).toUpperCase()));
+                executedLoops++;
             }
-
+            Assertions.assertEquals(19, executedLoops);
             Assertions.assertEquals(expectedLst, lst);
         });
     }
@@ -1969,21 +2134,31 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' and order by offset
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<String> lst = resA.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<String> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
 
             // Get column 'offset' and order by value
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
             // check amount of results
             Assertions.assertEquals(19, lst.size());
+            Assertions.assertEquals(19, srcLst.size());
             // Compare values to expected
-            List<String> expectedLst = new ArrayList<>();
-
+            final List<String> expectedLst = new ArrayList<>();
+            int executedLoops = 0;
             for (Long item : srcLst) {
                 expectedLst.add("00:00:".concat(item < 10 ? "0".concat(item.toString()) : item.toString()));
+                executedLoops++;
             }
-
+            Assertions.assertEquals(19, executedLoops);
             Assertions.assertEquals(expectedLst, lst);
         });
     }
@@ -2118,45 +2293,68 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Without orderBy collectAsList will change the order randomly. Order every column by offset.
             // Get column 'a'
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'b'
-            Dataset<Row> resB = res.select("b").orderBy("offset");
-            List<Double> lstB = resB.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
+            final List<Double> lstB = resB
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // c, cos
-            Dataset<Row> resC = res.select("c").orderBy("offset");
-            List<Double> lstC = resC.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resC = res.select("c").orderBy("offset");
+            final List<Double> lstC = resC
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // d, cosh
-            Dataset<Row> resD = res.select("d").orderBy("offset");
-            List<Double> lstD = resD.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resD = res.select("d").orderBy("offset");
+            final List<Double> lstD = resD
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get source column
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
             Assertions.assertEquals(19, lst.size());
             Assertions.assertEquals(19, lstB.size());
             Assertions.assertEquals(19, lstC.size());
             Assertions.assertEquals(19, lstD.size());
+            Assertions.assertEquals(19, srcLst.size());
             // Compare values to expected
-            List<Double> expectedLst = new ArrayList<>();
-            List<Double> expectedLstB = new ArrayList<>();
-            List<Double> expectedLstC = new ArrayList<>();
-            List<Double> expectedLstD = new ArrayList<>();
+            final List<Double> expectedLst = new ArrayList<>();
+            final List<Double> expectedLstB = new ArrayList<>();
+            final List<Double> expectedLstC = new ArrayList<>();
+            final List<Double> expectedLstD = new ArrayList<>();
 
-            org.apache.commons.math3.analysis.function.Acosh acoshFunction = new org.apache.commons.math3.analysis.function.Acosh();
+            final org.apache.commons.math3.analysis.function.Acosh acoshFunction = new org.apache.commons.math3.analysis.function.Acosh();
 
+            int executedLoops = 0;
             for (Long val : srcLst) {
                 expectedLst.add(Math.acos(Double.valueOf((double) val / 10d)));
                 expectedLstB.add(acoshFunction.value(Double.valueOf(val)));
                 expectedLstC.add(Math.cos(Double.valueOf((double) val / 10d)));
                 expectedLstD.add(Math.cosh(Double.valueOf((double) val / 10d)));
+                executedLoops++;
             }
-
+            Assertions.assertEquals(19, executedLoops);
             Assertions.assertEquals(expectedLst, lst);
             Assertions.assertEquals(expectedLstB, lstB);
             Assertions.assertEquals(expectedLstC, lstC);
@@ -2191,45 +2389,69 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'b'
-            Dataset<Row> resB = res.select("b").orderBy("offset");
-            List<Double> lstB = resB.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
+            final List<Double> lstB = resB
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'c'
-            Dataset<Row> resC = res.select("c").orderBy("offset");
-            List<Double> lstC = resC.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resC = res.select("c").orderBy("offset");
+            final List<Double> lstC = resC
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'd'
-            Dataset<Row> resD = res.select("d").orderBy("offset");
-            List<Double> lstD = resD.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resD = res.select("d").orderBy("offset");
+            final List<Double> lstD = resD
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get source column
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
             Assertions.assertEquals(19, lst.size());
             Assertions.assertEquals(19, lstB.size());
             Assertions.assertEquals(19, lstC.size());
             Assertions.assertEquals(19, lstD.size());
+            Assertions.assertEquals(19, srcLst.size());
 
             // Compare values to expected
-            List<Double> expectedLst = new ArrayList<>();
-            List<Double> expectedLstB = new ArrayList<>();
-            List<Double> expectedLstC = new ArrayList<>();
-            List<Double> expectedLstD = new ArrayList<>();
+            final List<Double> expectedLst = new ArrayList<>();
+            final List<Double> expectedLstB = new ArrayList<>();
+            final List<Double> expectedLstC = new ArrayList<>();
+            final List<Double> expectedLstD = new ArrayList<>();
 
-            org.apache.commons.math3.analysis.function.Asinh asinhFunction = new org.apache.commons.math3.analysis.function.Asinh();
+            final org.apache.commons.math3.analysis.function.Asinh asinhFunction = new org.apache.commons.math3.analysis.function.Asinh();
 
+            int executedLoops = 0;
             for (Long val : srcLst) {
                 expectedLst.add(Math.asin(Double.valueOf((double) val / 10d)));
                 expectedLstB.add(asinhFunction.value(Double.valueOf(val)));
                 expectedLstC.add(Math.sin(Double.valueOf((double) val / 10d)));
                 expectedLstD.add(Math.sinh(Double.valueOf((double) val / 10d)));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
             Assertions.assertEquals(expectedLst, lst);
             Assertions.assertEquals(expectedLstB, lstB);
             Assertions.assertEquals(expectedLstC, lstC);
@@ -2265,51 +2487,79 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a' atan
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get column 'b' atanh
-            Dataset<Row> resB = res.select("b").orderBy("offset");
-            List<Double> lstB = resB.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
+            final List<Double> lstB = resB
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // c tan
-            Dataset<Row> resC = res.select("c").orderBy("offset");
-            List<Double> lstC = resC.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resC = res.select("c").orderBy("offset");
+            final List<Double> lstC = resC
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // d tanh
-            Dataset<Row> resD = res.select("d").orderBy("offset");
-            List<Double> lstD = resD.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resD = res.select("d").orderBy("offset");
+            final List<Double> lstD = resD
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // e atan2
-            Dataset<Row> resE = res.select("e").orderBy("offset");
-            List<Double> lstE = resE.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resE = res.select("e").orderBy("offset");
+            final List<Double> lstE = resE
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get source column
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, srcLst.size());
             Assertions.assertEquals(srcLst.size(), lst.size());
             Assertions.assertEquals(srcLst.size(), lstB.size());
             Assertions.assertEquals(srcLst.size(), lstC.size());
             Assertions.assertEquals(srcLst.size(), lstD.size());
             Assertions.assertEquals(srcLst.size(), lstE.size());
             // Compare values to expected
-            List<Double> expectedLst = new ArrayList<>();
-            List<Double> expectedLstB = new ArrayList<>();
-            List<Double> expectedLstC = new ArrayList<>();
-            List<Double> expectedLstD = new ArrayList<>();
-            List<Double> expectedLstE = new ArrayList<>();
+            final List<Double> expectedLst = new ArrayList<>();
+            final List<Double> expectedLstB = new ArrayList<>();
+            final List<Double> expectedLstC = new ArrayList<>();
+            final List<Double> expectedLstD = new ArrayList<>();
+            final List<Double> expectedLstE = new ArrayList<>();
 
-            org.apache.commons.math3.analysis.function.Atanh atanhFunction = new org.apache.commons.math3.analysis.function.Atanh();
+            final org.apache.commons.math3.analysis.function.Atanh atanhFunction = new org.apache.commons.math3.analysis.function.Atanh();
 
+            int executedLoops = 0;
             for (Long val : srcLst) {
                 expectedLst.add(Math.atan(Double.valueOf(val))); // atan
                 expectedLstB.add(atanhFunction.value(Double.valueOf((double) val / 10d))); // atanh
                 expectedLstC.add(Math.tan(Double.valueOf((double) val / 10d))); // tan
                 expectedLstD.add(Math.tanh(Double.valueOf((double) val / 10d))); // tanh
                 expectedLstE.add(Math.atan2(Double.valueOf((double) val / 10d), Double.valueOf((double) val / 20d))); // atan
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
             Assertions.assertEquals(expectedLst, lst);
             Assertions.assertEquals(expectedLstB, lstB);
             Assertions.assertEquals(expectedLstC, lstC);
@@ -2342,13 +2592,18 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
-            Dataset<Row> a = res.select("a").orderBy("offset");
-            List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
+            final Dataset<Row> a = res.select("a").orderBy("offset");
+            final List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
 
             // Get offset column
-            Dataset<Row> offset = res.select("offset").orderBy("offset");
-            List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> offset = res.select("offset").orderBy("offset");
+            final List<Long> offsetList = offset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
+            Assertions.assertEquals(19, aList.size());
             Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
@@ -2383,18 +2638,23 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
-            Dataset<Row> a = res.select("a").orderBy("offset");
-            List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
+            final Dataset<Row> a = res.select("a").orderBy("offset");
+            final List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
 
             // Get offset column
-            Dataset<Row> offset = res.select("offset").orderBy("offset");
-            List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> offset = res.select("offset").orderBy("offset");
+            final List<Long> offsetList = offset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
+            Assertions.assertEquals(19, aList.size());
             Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
-                loopsExecuted++;
                 Assertions.assertEquals(Math.round((offsetList.get(i) + 1) / 2.0), (long) aList.get(i));
+                loopsExecuted++;
             }
             Assertions.assertEquals(19, loopsExecuted);
         });
@@ -2424,18 +2684,23 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
-            Dataset<Row> a = res.select("a").orderBy("offset");
-            List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
+            final Dataset<Row> a = res.select("a").orderBy("offset");
+            final List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
 
             // Get offset column
-            Dataset<Row> offset = res.select("offset").orderBy("offset");
-            List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> offset = res.select("offset").orderBy("offset");
+            final List<Long> offsetList = offset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
+            Assertions.assertEquals(19, aList.size());
             Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
-                loopsExecuted++;
                 Assertions.assertEquals(Math.round((offsetList.get(i) + 1.5 + 3.5) / 3.0), (long) aList.get(i));
+                loopsExecuted++;
             }
             Assertions.assertEquals(19, loopsExecuted);
         });
@@ -2465,18 +2730,23 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
             // Get column 'a'
-            Dataset<Row> a = res.select("a").orderBy("offset");
-            List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
+            final Dataset<Row> a = res.select("a").orderBy("offset");
+            final List<Integer> aList = a.collectAsList().stream().map(r -> r.getInt(0)).collect(Collectors.toList());
 
             // Get offset column
-            Dataset<Row> offset = res.select("offset").orderBy("offset");
-            List<Long> offsetList = offset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> offset = res.select("offset").orderBy("offset");
+            final List<Long> offsetList = offset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
+            Assertions.assertEquals(19, aList.size());
             Assertions.assertEquals(19, offsetList.size());
             int loopsExecuted = 0;
             for (int i = 0; i < offsetList.size(); i++) {
-                loopsExecuted++;
                 Assertions.assertEquals(Math.round((offsetList.get(i) + 5 + 11) / 3.0), (long) aList.get(i));
+                loopsExecuted++;
             }
             Assertions.assertEquals(19, loopsExecuted);
         });
@@ -2506,23 +2776,34 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Double> lst = resA.collectAsList().stream().map(r -> r.getDouble(0)).collect(Collectors.toList());
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lst = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
 
             // Get source column
-            Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            List<Long> srcLst = resOffset.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> srcLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lst.size());
             Assertions.assertEquals(srcLst.size(), lst.size());
 
             // Compare values to expected
-            List<Double> expectedLst = new ArrayList<>();
+            final List<Double> expectedLst = new ArrayList<>();
 
+            int loopsExecuted = 0;
             for (Long val : srcLst) {
                 expectedLst.add(Math.hypot(Double.valueOf(val), Double.valueOf(val)));
+                loopsExecuted++;
             }
-
+            Assertions.assertEquals(19, loopsExecuted);
             Assertions.assertEquals(expectedLst, lst);
         });
     }
@@ -3838,44 +4119,37 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'test'
-            Dataset<Row> resA = res.select("test").orderBy("offset");
-            List<Row> lst = resA.collectAsList();
+            final Dataset<Row> resA = res.select("test").orderBy("offset");
+            final List<Row> lst = resA.distinct().collectAsList();
 
             // Get column 'test2'
-            Dataset<Row> resB = res.select("test2").orderBy("offset");
-            List<Row> lstB = resB.collectAsList();
+            final Dataset<Row> resB = res.select("test2").orderBy("offset");
+            final List<Row> lstB = resB.distinct().collectAsList();
 
-            // Get column 'test3'
-            Dataset<Row> resC = res.select("test3").orderBy("offset");
-            List<Row> lstC = resC.collectAsList();
+            // Get column 'test3', values with offset < 4 are TRUE, otherwise FALSE
+            final Dataset<Row> resC = res.select("test3").orderBy("offset").where("offset < 4");
+            final Dataset<Row> resD = res.select("test3").orderBy("offset").where("offset >= 4");
+            final List<Row> lstTrue = resC.distinct().collectAsList();
+            final List<Row> lstFalse = resD.distinct().collectAsList();
 
-            /* eval test = searchmatch("index=index_A") |
-             * eval test2 = searchmatch("index=index_B") |
-             * eval test3 = searchmatch("offset<10 index=index_A sourcetype=a*")
-             */
+            // assert row counts
+            Assertions.assertEquals(19, resA.count());
+            Assertions.assertEquals(19, resB.count());
+            Assertions.assertEquals(6, resC.count());
+            Assertions.assertEquals(13, resD.count());
+            Assertions.assertEquals(1, lst.size());
+            Assertions.assertEquals(1, lstB.size());
+            Assertions.assertEquals(1, lstTrue.size());
+            Assertions.assertEquals(1, lstFalse.size());
 
-            // assert that all rows are kept
-            Assertions.assertEquals(19, lst.size());
-            Assertions.assertEquals(19, lstB.size());
-            Assertions.assertEquals(19, lstC.size());
+            // eval test results in all TRUE
+            Assertions.assertTrue(lst.get(0).getBoolean(0));
+            // eval test2 results in all FALSE
+            Assertions.assertFalse(lstB.get(0).getBoolean(0));
 
-            int loopCount = 0;
-            for (int i = 0; i < lst.size(); i++) {
-                // eval test results in all TRUE
-                Assertions.assertTrue(lst.get(i).getBoolean(0));
-                // eval test2 results in all FALSE
-                Assertions.assertFalse(lstB.get(i).getBoolean(0));
-
-                // eval test3, values between i=0..6 are TRUE, otherwise FALSE
-                if (i < 6) {
-                    Assertions.assertTrue(lstC.get(i).getBoolean(0));
-                }
-                else {
-                    Assertions.assertFalse(lstC.get(i).getBoolean(0));
-                }
-                loopCount++;
-            }
-            Assertions.assertEquals(19, loopCount);
+            // eval test3, values with offset < 4 are TRUE, otherwise FALSE
+            Assertions.assertTrue(lstTrue.get(0).getBoolean(0));
+            Assertions.assertFalse(lstFalse.get(0).getBoolean(0));
         });
     }
 
@@ -3902,8 +4176,8 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'test'
-            Dataset<Row> resA = res.select("_raw", "test").orderBy("offset");
-            List<Row> lst = resA.collectAsList();
+            final Dataset<Row> resA = res.select("_raw", "test").orderBy("offset");
+            final List<Row> lst = resA.collectAsList();
 
             // assert that all rows are kept
             Assertions.assertEquals(19, lst.size());
@@ -4326,6 +4600,8 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
+            int executedLoops = 0;
+
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     Assertions.assertEquals("true", a.get(i));
@@ -4340,7 +4616,9 @@ public class evalTest {
                 else {
                     Assertions.assertEquals("false", b.get(i));
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -4382,6 +4660,7 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
+            int executedLoops = 0;
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     Assertions.assertEquals("false", a.get(i));
@@ -4396,7 +4675,9 @@ public class evalTest {
                 else {
                     Assertions.assertEquals("true", b.get(i));
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -4438,6 +4719,7 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
+            int executedLoops = 0;
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     Assertions.assertEquals("false", a.get(i));
@@ -4452,7 +4734,9 @@ public class evalTest {
                 else {
                     Assertions.assertEquals("true", b.get(i));
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -4494,6 +4778,7 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
+            int executedLoops = 0;
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     Assertions.assertEquals("false", a.get(i));
@@ -4508,7 +4793,9 @@ public class evalTest {
                 else {
                     Assertions.assertEquals("true", b.get(i));
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -4550,6 +4837,7 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
+            int executedLoops = 0;
             for (int i = 0; i < a.size(); i++) {
                 if (i < 4) {
                     Assertions.assertEquals("true", a.get(i));
@@ -4560,11 +4848,14 @@ public class evalTest {
 
                 if (i < 3 || i > 14) {
                     Assertions.assertEquals("true", b.get(i));
+
                 }
                 else {
                     Assertions.assertEquals("false", b.get(i));
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -4606,6 +4897,7 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
+            int executedLoops = 0;
             for (int i = 0; i < a.size(); i++) {
                 if (i < 5) {
                     Assertions.assertEquals("true", a.get(i));
@@ -4620,7 +4912,9 @@ public class evalTest {
                 else {
                     Assertions.assertEquals("false", b.get(i));
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
