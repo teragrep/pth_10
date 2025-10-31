@@ -68,14 +68,36 @@ public final class CustomDataset {
     private final StructType schema;
     private final List<Object[]> values;
     private final DPLParserCatalystContext catCtx;
+    private final boolean isStreaming;
 
-    public CustomDataset(final StructType schema, final List<Object[]> values, final DPLParserCatalystContext catCtx) {
+    public CustomDataset(
+            final StructType schema,
+            final List<Object[]> values,
+            final boolean isStreaming,
+            final DPLParserCatalystContext catCtx
+    ) {
         this.schema = schema;
         this.values = values;
+        this.isStreaming = isStreaming;
         this.catCtx = catCtx;
     }
 
     public Dataset<Row> dataset() throws StreamingQueryException {
+        final Dataset<Row> ds;
+        if (isStreaming) {
+            ds = streamingDs();
+        }
+        else {
+            ds = staticDs();
+        }
+        return ds;
+    }
+
+    private Dataset<Row> staticDs() {
+        return catCtx.getSparkSession().createDataFrame(makeRowsList(values), schema);
+    }
+
+    private Dataset<Row> streamingDs() throws StreamingQueryException {
         final SQLContext sqlContext = catCtx.getSparkSession().sqlContext();
         final ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
         final MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
@@ -85,9 +107,7 @@ public final class CustomDataset {
 
         final DataStreamWriter<Row> writer = rowDataset.writeStream().format("memory").outputMode(OutputMode.Append());
 
-        for (final Object[] rowValues : values) {
-            rowMemoryStream.addData(makeRows(rowValues));
-        }
+        rowMemoryStream.addData(makeRowsSeq(values));
 
         final StreamingQuery sq = this.catCtx.getInternalStreamingQueryListener().registerQuery(queryName, writer);
         sq.awaitTermination();
@@ -95,11 +115,20 @@ public final class CustomDataset {
         return rowDataset;
     }
 
-    private Seq<Row> makeRows(Object[] rowValues) {
-        final List<Row> rowArrayList = new ArrayList<>();
+    private List<Row> makeRowsList(final List<Object[]> rowsValues) {
+        final List<Row> rows = new ArrayList<>();
+        for (final Object[] rowValues : rowsValues) {
+            rows.add(RowFactory.create(rowValues));
+        }
+        return rows;
+    }
 
-        rowArrayList.add(RowFactory.create(rowValues));
-        return JavaConverters.asScalaIteratorConverter(rowArrayList.iterator()).asScala().toSeq();
+    private Seq<Row> makeRowsSeq(final List<Object[]> rowsValues) {
+        final List<Row> rows = new ArrayList<>();
+        for (final Object[] rowValues : rowsValues) {
+            rows.add(RowFactory.create(rowValues));
+        }
+        return JavaConverters.asScalaBuffer(rows).toSeq();
     }
 
     @Override
@@ -108,12 +137,12 @@ public final class CustomDataset {
             return false;
         }
         final CustomDataset that = (CustomDataset) o;
-        return Objects.equals(schema, that.schema) && Objects.equals(values, that.values)
-                && Objects.equals(catCtx, that.catCtx);
+        return isStreaming == that.isStreaming && Objects.equals(schema, that.schema)
+                && Objects.equals(values, that.values) && Objects.equals(catCtx, that.catCtx);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(schema, values, catCtx);
+        return Objects.hash(schema, values, catCtx, isStreaming);
     }
 }

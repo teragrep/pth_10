@@ -164,7 +164,7 @@ public final class TeragrepBloomStep extends AbstractStep {
                     StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
             }), Collections.singletonList(new Object[] {
                     "Bloom filter created."
-            }), catCtx).dataset();
+            }), dataset.isStreaming(), catCtx).dataset();
         }
         catch (StreamingQueryException e) {
             LOGGER.error("Failed to create bloom filter", e);
@@ -187,7 +187,7 @@ public final class TeragrepBloomStep extends AbstractStep {
                     StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
             }), Collections.singletonList(new Object[] {
                     "Bloom filter updated."
-            }), catCtx).dataset();
+            }), dataset.isStreaming(), catCtx).dataset();
         }
         catch (StreamingQueryException e) {
             LOGGER.error("Failed to update bloom filter", e);

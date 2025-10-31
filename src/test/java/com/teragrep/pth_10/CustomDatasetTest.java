@@ -91,14 +91,14 @@ public final class CustomDatasetTest {
     }
 
     @Test
-    void testCreateDataset() {
+    void testCreateStreamingDataset() {
         final CustomDataset customDataset = new CustomDataset(new StructType(new StructField[] {
                 StructField.apply("fieldName", DataTypes.StringType, false, new MetadataBuilder().build())
         }), Arrays.asList(new Object[] {
                 "row1"
         }, new Object[] {
                 "row2"
-        }), streamingTestUtil.getCtx());
+        }), true, streamingTestUtil.getCtx());
 
         final Dataset<Row> resultDs = Assertions.assertDoesNotThrow(customDataset::dataset);
         Assertions.assertTrue(resultDs.isStreaming());
@@ -116,5 +116,24 @@ public final class CustomDatasetTest {
         Assertions.assertEquals(2, listOfBatches.get(0).count());
         Assertions.assertEquals("row1", listOfBatches.get(0).collectAsList().get(0).getString(0));
         Assertions.assertEquals("row2", listOfBatches.get(0).collectAsList().get(1).getString(0));
+    }
+
+    @Test
+    void testCreateStaticDataset() {
+        final CustomDataset customDataset = new CustomDataset(new StructType(new StructField[] {
+                StructField.apply("fieldName", DataTypes.StringType, false, new MetadataBuilder().build())
+        }), Arrays.asList(new Object[] {
+                "row1"
+        }, new Object[] {
+                "row2"
+        }), false, streamingTestUtil.getCtx());
+
+        final Dataset<Row> resultDs = Assertions.assertDoesNotThrow(customDataset::dataset);
+        Assertions.assertFalse(resultDs.isStreaming());
+
+        Assertions.assertEquals(2, resultDs.count());
+        final List<Row> collected = resultDs.collectAsList();
+        Assertions.assertEquals("row1", collected.get(0).getString(0));
+        Assertions.assertEquals("row2", collected.get(1).getString(0));
     }
 }
