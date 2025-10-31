@@ -3808,20 +3808,28 @@ public class evalTest {
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Row> lstA = resA.collectAsList();
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Row> lstA = resA.collectAsList();
 
-            Dataset<Row> resB = res.select("b").orderBy("offset");
-            List<Row> lstB = resB.collectAsList();
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
+            final List<Row> lstB = resB.collectAsList();
 
-            Dataset<Row> srcDs = res.select("offset").orderBy("offset");
-            List<Row> srcLst = srcDs.collectAsList();
+            final Dataset<Row> srcDs = res.select("offset").orderBy("offset");
+            final List<Row> srcLst = srcDs.collectAsList();
 
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, lstB.size());
+            Assertions.assertEquals(19, srcLst.size());
+
+            int executedLoops = 0;
             // Assert equals with expected
             for (int i = 0; i < srcLst.size(); i++) {
                 Assertions.assertEquals(srcLst.get(i).getLong(0) - 5, Double.parseDouble(lstA.get(i).getString(0)));
                 Assertions.assertEquals(srcLst.get(i).getLong(0) + 5, Double.parseDouble(lstB.get(i).getString(0)));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -3849,20 +3857,28 @@ public class evalTest {
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Row> lstA = resA.collectAsList();
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Row> lstA = resA.collectAsList();
 
-            Dataset<Row> resB = res.select("b").orderBy("offset");
-            List<Row> lstB = resB.collectAsList();
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
+            final List<Row> lstB = resB.collectAsList();
 
-            Dataset<Row> srcDs = res.select("offset").orderBy("offset");
-            List<Row> srcLst = srcDs.collectAsList();
+            final Dataset<Row> srcDs = res.select("offset").orderBy("offset");
+            final List<Row> srcLst = srcDs.collectAsList();
 
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, lstB.size());
+            Assertions.assertEquals(19, srcLst.size());
+
+            int executedLoops = 0;
             // Assert equals with expected
             for (int i = 0; i < srcLst.size(); i++) {
                 Assertions.assertEquals(srcLst.get(i).getLong(0), Long.parseLong(lstA.get(i).getString(0)));
                 Assertions.assertEquals("foo", lstB.get(i).getString(0));
+                executedLoops++;
             }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -3890,17 +3906,19 @@ public class evalTest {
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Row> lstA = resA.collectAsList();
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Row> lstA = resA.distinct().collectAsList();
 
-            Dataset<Row> resB = res.select("b").orderBy("offset");
-            List<Row> lstB = resB.collectAsList();
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
+            final List<Row> lstB = resB.distinct().collectAsList();
 
             // Assert equals with expected
-            for (int i = 0; i < lstA.size(); i++) {
-                Assertions.assertEquals("10", lstA.get(i).getString(0));
-                Assertions.assertEquals("foo", lstB.get(i).getString(0));
-            }
+            Assertions.assertEquals(19, resA.count());
+            Assertions.assertEquals(19, resB.count());
+            Assertions.assertEquals(1, lstA.size());
+            Assertions.assertEquals(1, lstB.size());
+            Assertions.assertEquals("10", lstA.get(0).getString(0));
+            Assertions.assertEquals("foo", lstB.get(0).getString(0));
         });
     }
 
@@ -3928,17 +3946,19 @@ public class evalTest {
                     new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Row> lstA = resA.collectAsList();
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Row> lstA = resA.distinct().collectAsList();
 
-            Dataset<Row> resB = res.select("b").orderBy("offset");
-            List<Row> lstB = resB.collectAsList();
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
+            final List<Row> lstB = resB.distinct().collectAsList();
 
             // Assert equals with expected
-            for (int i = 0; i < lstA.size(); i++) {
-                Assertions.assertEquals("4.7", lstA.get(i).getString(0));
-                Assertions.assertEquals("10.0", lstB.get(i).getString(0));
-            }
+            Assertions.assertEquals(19, resA.count());
+            Assertions.assertEquals(19, resB.count());
+            Assertions.assertEquals(1, lstA.size());
+            Assertions.assertEquals(1, lstB.size());
+            Assertions.assertEquals("4.7", lstA.get(0).getString(0));
+            Assertions.assertEquals("10.0", lstB.get(0).getString(0));
         });
     }
 
@@ -4293,13 +4313,19 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Row> lst = resA.collectAsList();
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Row> lst = resA.collectAsList();
 
+            // assert that all rows are kept
+            Assertions.assertEquals(19, lst.size());
+
+            int executedLoops = 0;
             // Start from i = 3 because there are multiple 1's in offset
             for (int i = 1; i < 17; i++) {
                 Assertions.assertEquals(i + "string", lst.get(i + 2).getString(0));
+                executedLoops++;
             }
+            Assertions.assertEquals(16, executedLoops);
         });
     }
 
