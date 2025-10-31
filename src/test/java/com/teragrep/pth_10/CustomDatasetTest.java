@@ -50,6 +50,7 @@ import com.teragrep.pth_10.datasources.CustomDataset;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.types.*;
@@ -61,9 +62,6 @@ import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class CustomDatasetTest {
-
-    // Use this file for dataset initialization
-    private final String testFile = "src/test/resources/bloomAggregationData*.jsonl"; // * to make the path into a directory path
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -85,9 +83,10 @@ public final class CustomDatasetTest {
 
     @Test
     void testEqualsContract() {
+        final SparkSession sparkSession = streamingTestUtil.getCtx().getSparkSession();
         EqualsVerifier
                 .forClass(CustomDataset.class)
-                .withPrefabValues(DPLParserCatalystContext.class, new DPLParserCatalystContext(null), new DPLParserCatalystContext(null)).verify();
+                .withPrefabValues(DPLParserCatalystContext.class, new DPLParserCatalystContext(sparkSession), new DPLParserCatalystContext(sparkSession)).verify();
     }
 
     @Test
