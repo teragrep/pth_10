@@ -47,6 +47,8 @@ package com.teragrep.pth_10.steps.teragrep;
 
 import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
+import com.teragrep.pth_10.ast.DPLParserCatalystContext;
+import com.teragrep.pth_10.datasources.CustomDataset;
 import com.teragrep.pth_10.steps.teragrep.aggregate.ColumnBinaryListingDataset;
 import com.teragrep.pth_10.steps.teragrep.bloomfilter.BloomFilterForeachPartitionFunction;
 import com.teragrep.pth_10.steps.teragrep.bloomfilter.BloomFilterTable;
@@ -55,8 +57,15 @@ import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.streaming.StreamingQueryException;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
 
 /**
  * teragrep exec bloom
@@ -69,6 +78,7 @@ public final class TeragrepBloomStep extends AbstractStep {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepBloomStep.class);
 
+    private final DPLParserCatalystContext catCtx;
     private final Config zeppelinConfig;
     public final BloomMode mode;
     private final String tableName;
@@ -78,16 +88,18 @@ public final class TeragrepBloomStep extends AbstractStep {
     private final String estimateCol;
 
     public TeragrepBloomStep(
+            DPLParserCatalystContext catCtx,
             Config zeppelinConfig,
             BloomMode mode,
             String inputCol,
             String outputCol,
             String estimateCol
     ) {
-        this(zeppelinConfig, mode, "table_name", "default_regex", inputCol, outputCol, estimateCol);
+        this(catCtx, zeppelinConfig, mode, "table_name", "default_regex", inputCol, outputCol, estimateCol);
     }
 
     public TeragrepBloomStep(
+            DPLParserCatalystContext catCtx,
             Config zeppelinConfig,
             BloomMode mode,
             String tableName,
@@ -96,6 +108,7 @@ public final class TeragrepBloomStep extends AbstractStep {
             String outputCol,
             String estimateCol
     ) {
+        this.catCtx = catCtx;
         this.zeppelinConfig = zeppelinConfig;
         this.mode = mode;
         this.tableName = tableName;
@@ -146,7 +159,17 @@ public final class TeragrepBloomStep extends AbstractStep {
         new FilterTypes(zeppelinConfig).saveToDatabase(regex);
         new BloomFilterTable(zeppelinConfig, tableName).create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex));
-        return dataset;
+        try {
+            return new CustomDataset(new StructType(new StructField[] {
+                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+            }), Collections.singletonList(new Object[] {
+                    "Bloom filter created."
+            }), catCtx).dataset();
+        }
+        catch (StreamingQueryException e) {
+            LOGGER.error("Failed to create bloom filter", e);
+            throw new IllegalStateException("Failed to create bloom filter", e);
+        }
     }
 
     /**
@@ -159,7 +182,17 @@ public final class TeragrepBloomStep extends AbstractStep {
         new FilterTypes(zeppelinConfig).saveToDatabase(regex);
         new BloomFilterTable(zeppelinConfig, tableName).create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex, true));
-        return dataset;
+        try {
+            return new CustomDataset(new StructType(new StructField[] {
+                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+            }), Collections.singletonList(new Object[] {
+                    "Bloom filter updated."
+            }), catCtx).dataset();
+        }
+        catch (StreamingQueryException e) {
+            LOGGER.error("Failed to update bloom filter", e);
+            throw new IllegalStateException("Failed to update bloom filter", e);
+        }
     }
 
     private Dataset<Row> estimateSize(Dataset<Row> dataset) {

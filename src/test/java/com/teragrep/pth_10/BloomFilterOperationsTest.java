@@ -226,6 +226,7 @@ public class BloomFilterOperationsTest {
                         aggregateFile, ds -> {
                             Config config = ConfigFactory.parseProperties(properties);
                             TeragrepBloomStep step = new TeragrepBloomStep(
+                                    streamingTestUtil.getCtx(),
                                     config,
                                     TeragrepBloomStep.BloomMode.AGGREGATE,
                                     "tokens",
@@ -291,6 +292,7 @@ public class BloomFilterOperationsTest {
                         aggregateFile, ds -> {
                             Config config = ConfigFactory.parseProperties(properties);
                             TeragrepBloomStep step = new TeragrepBloomStep(
+                                    streamingTestUtil.getCtx(),
                                     config,
                                     TeragrepBloomStep.BloomMode.AGGREGATE,
                                     "tokens",
