@@ -113,8 +113,9 @@ public final class CustomDatasetTest {
 
         Assertions.assertEquals(1, listOfBatches.size());
         Assertions.assertEquals(2, listOfBatches.get(0).count());
-        Assertions.assertEquals("row1", listOfBatches.get(0).collectAsList().get(0).getString(0));
-        Assertions.assertEquals("row2", listOfBatches.get(0).collectAsList().get(1).getString(0));
+        final List<Row> collected = listOfBatches.get(0).collectAsList();
+        Assertions.assertEquals("row1", collected.get(0).getString(0));
+        Assertions.assertEquals("row2", collected.get(1).getString(0));
     }
 
     @Test
