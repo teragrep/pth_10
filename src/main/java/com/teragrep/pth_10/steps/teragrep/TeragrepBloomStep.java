@@ -65,6 +65,7 @@ import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
 import java.util.Collections;
 
 /**
@@ -161,9 +162,10 @@ public final class TeragrepBloomStep extends AbstractStep {
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex));
         try {
             return new CustomDataset(new StructType(new StructField[] {
-                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+                    StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
             }), Collections.singletonList(new Object[] {
-                    "Bloom filter created."
+                    Instant.now(), "Bloom filter created."
             }), dataset.isStreaming(), catCtx).dataset();
         }
         catch (StreamingQueryException e) {
@@ -184,9 +186,10 @@ public final class TeragrepBloomStep extends AbstractStep {
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex, true));
         try {
             return new CustomDataset(new StructType(new StructField[] {
-                    StructField.apply("result", DataTypes.StringType, false, new MetadataBuilder().build())
+                    StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
             }), Collections.singletonList(new Object[] {
-                    "Bloom filter updated."
+                    Instant.now(), "Bloom filter updated."
             }), dataset.isStreaming(), catCtx).dataset();
         }
         catch (StreamingQueryException e) {
