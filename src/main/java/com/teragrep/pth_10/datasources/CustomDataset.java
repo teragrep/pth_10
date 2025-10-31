@@ -56,10 +56,7 @@ import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import scala.Option;
-import scala.collection.JavaConverters;
-import scala.collection.Seq;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -94,7 +91,7 @@ public final class CustomDataset {
     }
 
     private Dataset<Row> staticDs() {
-        return catCtx.getSparkSession().createDataFrame(makeRowsList(values), schema);
+        return catCtx.getSparkSession().createDataFrame(new Rows(values).asList(), schema);
     }
 
     private Dataset<Row> streamingDs() throws StreamingQueryException {
@@ -107,28 +104,12 @@ public final class CustomDataset {
 
         final DataStreamWriter<Row> writer = rowDataset.writeStream().format("memory").outputMode(OutputMode.Append());
 
-        rowMemoryStream.addData(makeRowsSeq(values));
+        rowMemoryStream.addData(new Rows(values).asSeq());
 
         final StreamingQuery sq = this.catCtx.getInternalStreamingQueryListener().registerQuery(queryName, writer);
         sq.awaitTermination();
 
         return rowDataset;
-    }
-
-    private List<Row> makeRowsList(final List<Object[]> rowsValues) {
-        final List<Row> rows = new ArrayList<>();
-        for (final Object[] rowValues : rowsValues) {
-            rows.add(RowFactory.create(rowValues));
-        }
-        return rows;
-    }
-
-    private Seq<Row> makeRowsSeq(final List<Object[]> rowsValues) {
-        final List<Row> rows = new ArrayList<>();
-        for (final Object[] rowValues : rowsValues) {
-            rows.add(RowFactory.create(rowValues));
-        }
-        return JavaConverters.asScalaBuffer(rows).toSeq();
     }
 
     @Override
