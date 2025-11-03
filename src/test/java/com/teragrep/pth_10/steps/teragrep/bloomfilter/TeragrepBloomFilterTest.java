@@ -262,11 +262,16 @@ class TeragrepBloomFilterTest {
 
     @Test
     void testCorrectFilterSizeSelection() {
-        List<String> tokens = new ArrayList<>();
+        final List<String> tokens = new ArrayList<>();
         tokens.add("one");
+        int executedLoops = 0;
         for (int i = 1; i < 1500; i++) {
             tokens.add("token:" + i);
+            executedLoops++;
         }
+        Assertions.assertEquals(1499, executedLoops);
+        Assertions.assertEquals(1500, tokens.size());
+
         Row row = generatedRow(sizeMap, tokens);
         String partition = row.getString(0);
         byte[] filterBytes = (byte[]) row.get(1);
@@ -282,12 +287,17 @@ class TeragrepBloomFilterTest {
         );
         filter.saveFilter(false);
         long size = Long.MAX_VALUE;
+        Assertions.assertEquals(3, sizeMap.size());
+        int executedLoops2 = 0;
         for (long key : sizeMap.keySet()) {
             if (size > key && key >= tokens.size()) {
                 size = key;
             }
+            executedLoops2++;
         }
-        Double fpp = sizeMap.get(size);
+        Assertions.assertEquals(3, executedLoops2);
+
+        final Double fpp = sizeMap.get(size);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
             try (PreparedStatement stmt = conn.prepareStatement(sql)) {

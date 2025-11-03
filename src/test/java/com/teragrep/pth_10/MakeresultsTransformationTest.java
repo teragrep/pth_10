@@ -116,15 +116,18 @@ public class MakeresultsTransformationTest {
             Assertions.assertEquals(1, ds.count());
 
             // get all rows except '_time'
-            List<Row> rows = ds.drop("_time").collectAsList();
+            final List<Row> rows = ds.drop("_time").collectAsList();
             Assertions.assertEquals(1, rows.size());
             // assert all of them to be null
             rows.forEach(row -> {
                 Assertions.assertEquals(6, row.length());
 
+                int executedLoops = 0;
                 for (int i = 0; i < row.length(); i++) {
                     Assertions.assertEquals(this.streamingTestUtil.getCtx().nullValue.value(), row.get(i));
+                    executedLoops++;
                 }
+                Assertions.assertEquals(6, executedLoops);
             });
         });
     }
