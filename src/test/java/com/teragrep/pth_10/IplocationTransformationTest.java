@@ -127,16 +127,16 @@ public class IplocationTransformationTest {
             matches = "true"
     )
     public void testIplocationGeoLite2City() {
-        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
-        String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
-        String ipColumn = "source";
+        final String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        final String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
+        final String ipColumn = "source";
 
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
         this.streamingTestUtil.performDPLTest("index=index_A | iplocation source", this.testFile, ds -> {
             LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
 
             // GEO DB type, get db mapper
-            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
+            final IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
                     mmdbPath,
                     this.streamingTestUtil.getCtx().nullValue,
                     extractMapFromHadoopCfg(
@@ -145,15 +145,23 @@ public class IplocationTransformationTest {
             );
 
             // run mapper on ip to assert expected
-            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            final List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            Assertions.assertEquals(5, ips.size());
+            Assertions.assertEquals(5, expectedCols.length);
+            int executedLoops = 0;
+            int executedLoops2 = 0;
             for (Row ip : ips) {
-                Map<String, String> result = Assertions
+                final Map<String, String> result = Assertions
                         .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                 for (String col : expectedCols) {
                     Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                    executedLoops2++;
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(25, executedLoops2);
+            Assertions.assertEquals(5, executedLoops);
         });
     }
 
@@ -163,16 +171,16 @@ public class IplocationTransformationTest {
             matches = "true"
     )
     public void testIplocationRirDataSample() {
-        String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
-        String[] expectedCols = RIR_COLUMNS;
-        String ipColumn = "source";
+        final String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
+        final String[] expectedCols = RIR_COLUMNS;
+        final String ipColumn = "source";
 
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
         this.streamingTestUtil.performDPLTest("index=index_A | iplocation source", this.testFile, ds -> {
             LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
 
             // RIR DB type
-            IplocationRirDataMapper mapper = new IplocationRirDataMapper(
+            final IplocationRirDataMapper mapper = new IplocationRirDataMapper(
                     mmdbPath,
                     this.streamingTestUtil.getCtx().nullValue,
                     extractMapFromHadoopCfg(
@@ -181,7 +189,11 @@ public class IplocationTransformationTest {
             );
 
             // run mapper on ip to assert expected
-            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            final List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            Assertions.assertEquals(5, ips.size());
+            Assertions.assertEquals(2, expectedCols.length);
+            int executedLoops = 0;
+            int executedLoops2 = 0;
             for (Row ip : ips) {
                 Map<String, String> result = Assertions
                         .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
@@ -189,8 +201,12 @@ public class IplocationTransformationTest {
                 for (String col : expectedCols) {
                     String expected = result.get(col);
                     Assertions.assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
+                    executedLoops2++;
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(10, executedLoops2);
+            Assertions.assertEquals(5, executedLoops);
         });
     }
 
@@ -204,16 +220,16 @@ public class IplocationTransformationTest {
             matches = "true"
     )
     public void testIplocationGeoLite2Country() {
-        String mmdbPath = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
-        String[] expectedCols = COUNTRY_COLUMNS;
-        String ipColumn = "source";
+        final String mmdbPath = "/usr/share/GeoIP/GeoLite2-Country.mmdb";
+        final String[] expectedCols = COUNTRY_COLUMNS;
+        final String ipColumn = "source";
 
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
         this.streamingTestUtil.performDPLTest("index=index_A | iplocation source", this.testFile, ds -> {
             LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
 
             // GEO DB type, get db mapper
-            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
+            final IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
                     mmdbPath,
                     this.streamingTestUtil.getCtx().nullValue,
                     extractMapFromHadoopCfg(
@@ -222,15 +238,23 @@ public class IplocationTransformationTest {
             );
 
             // run mapper on ip to assert expected
-            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            final List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            Assertions.assertEquals(5, ips.size());
+            Assertions.assertEquals(2, expectedCols.length);
+            int executedLoops = 0;
+            int executedLoops2 = 0;
             for (Row ip : ips) {
                 Map<String, String> result = Assertions
                         .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                 for (String col : expectedCols) {
                     Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                    executedLoops2++;
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(10, executedLoops2);
+            Assertions.assertEquals(5, executedLoops);
         });
     }
 
@@ -244,16 +268,16 @@ public class IplocationTransformationTest {
             matches = "true"
     )
     public void testIplocationGeoLite2CityWithAllfieldsTrue() {
-        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
-        String[] expectedCols = GEOIP_FULL_COLUMNS;
-        String ipColumn = "source";
+        final String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        final String[] expectedCols = GEOIP_FULL_COLUMNS;
+        final String ipColumn = "source";
 
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
         this.streamingTestUtil.performDPLTest("index=index_A | iplocation allfields=true source", this.testFile, ds -> {
             LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
 
             // GEO DB type, get db mapper
-            IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
+            final IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
                     mmdbPath,
                     this.streamingTestUtil.getCtx().nullValue,
                     extractMapFromHadoopCfg(
@@ -262,15 +286,23 @@ public class IplocationTransformationTest {
             );
 
             // run mapper on ip to assert expected
-            List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            final List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+            Assertions.assertEquals(5, ips.size());
+            Assertions.assertEquals(7, expectedCols.length);
+            int executedLoops = 0;
+            int executedLoops2 = 0;
             for (Row ip : ips) {
                 Map<String, String> result = Assertions
                         .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                 for (String col : expectedCols) {
                     Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                    executedLoops2++;
                 }
+                executedLoops++;
             }
+            Assertions.assertEquals(35, executedLoops2);
+            Assertions.assertEquals(5, executedLoops);
         });
     }
 
@@ -284,9 +316,9 @@ public class IplocationTransformationTest {
             matches = "true"
     )
     public void testIplocationGeoLite2CityInvalidIPAddressWithAllfieldsTrue() {
-        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
-        String[] expectedCols = GEOIP_FULL_COLUMNS;
-        String ipColumn = "otherIP";
+        final String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        final String[] expectedCols = GEOIP_FULL_COLUMNS;
+        final String ipColumn = "otherIP";
 
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
         this.streamingTestUtil
@@ -294,7 +326,7 @@ public class IplocationTransformationTest {
                     LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
 
                     // GEO DB type, get db mapper
-                    IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
+                    final IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
                             mmdbPath,
                             this.streamingTestUtil.getCtx().nullValue,
                             extractMapFromHadoopCfg(
@@ -307,15 +339,23 @@ public class IplocationTransformationTest {
                     );
 
                     // run mapper on ip to assert expected
-                    List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+                    final List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+                    Assertions.assertEquals(5, ips.size());
+                    Assertions.assertEquals(7, expectedCols.length);
+                    int executedLoops = 0;
+                    int executedLoops2 = 0;
                     for (Row ip : ips) {
                         Map<String, String> result = Assertions
                                 .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                         for (String col : expectedCols) {
                             Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                            executedLoops2++;
                         }
+                        executedLoops++;
                     }
+                    Assertions.assertEquals(35, executedLoops2);
+                    Assertions.assertEquals(5, executedLoops);
                 });
     }
 
@@ -329,9 +369,9 @@ public class IplocationTransformationTest {
             matches = "true"
     )
     public void testIplocationGeoLite2CityInvalidIPAddressWithAllfieldsFalse() {
-        String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
-        String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
-        String ipColumn = "otherIP";
+        final String mmdbPath = "/usr/share/GeoIP/GeoLite2-City.mmdb";
+        final String[] expectedCols = GEOIP_MINIMAL_COLUMNS;
+        final String ipColumn = "otherIP";
 
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
         this.streamingTestUtil
@@ -339,7 +379,7 @@ public class IplocationTransformationTest {
                     LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
 
                     // GEO DB type, get db mapper
-                    IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
+                    final IplocationGeoIPDataMapper mapper = new IplocationGeoIPDataMapper(
                             mmdbPath,
                             this.streamingTestUtil.getCtx().nullValue,
                             extractMapFromHadoopCfg(
@@ -352,15 +392,23 @@ public class IplocationTransformationTest {
                     );
 
                     // run mapper on ip to assert expected
-                    List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+                    final List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+                    Assertions.assertEquals(5, ips.size());
+                    Assertions.assertEquals(5, expectedCols.length);
+                    int executedLoops = 0;
+                    int executedLoops2 = 0;
                     for (Row ip : ips) {
                         Map<String, String> result = Assertions
                                 .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
 
                         for (String col : expectedCols) {
                             Assertions.assertEquals(result.get(col), ip.getAs(ip.fieldIndex(col)));
+                            executedLoops2++;
                         }
+                        executedLoops++;
                     }
+                    Assertions.assertEquals(25, executedLoops2);
+                    Assertions.assertEquals(5, executedLoops);
                 });
     }
 
@@ -374,9 +422,9 @@ public class IplocationTransformationTest {
             matches = "true"
     )
     public void testIplocationRirDataInvalidIPAddress() {
-        String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
-        String[] expectedCols = RIR_COLUMNS;
-        String ipColumn = "otherIP";
+        final String mmdbPath = "src/test/resources/rir-data.sample.mmdb";
+        final String[] expectedCols = RIR_COLUMNS;
+        final String ipColumn = "otherIP";
 
         this.streamingTestUtil.getCatalystVisitor().setIplocationMmdbPath(mmdbPath);
         this.streamingTestUtil
@@ -384,7 +432,7 @@ public class IplocationTransformationTest {
                     LOGGER.info("Consumer dataset's schema is <{}>", ds.schema());
 
                     // RIR DB type
-                    IplocationRirDataMapper mapper = new IplocationRirDataMapper(
+                    final IplocationRirDataMapper mapper = new IplocationRirDataMapper(
                             mmdbPath,
                             this.streamingTestUtil.getCtx().nullValue,
                             extractMapFromHadoopCfg(
@@ -397,7 +445,12 @@ public class IplocationTransformationTest {
                     );
 
                     // run mapper on ip to assert expected
-                    List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+                    final List<Row> ips = ds.select(ipColumn, expectedCols).collectAsList();
+                    Assertions.assertEquals(5, ips.size());
+                    Assertions.assertEquals(2, expectedCols.length);
+                    int executedLoops = 0;
+                    int executedLoops2 = 0;
+                    System.out.println(expectedCols.length);
                     for (Row ip : ips) {
                         Map<String, String> result = Assertions
                                 .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
@@ -405,8 +458,12 @@ public class IplocationTransformationTest {
                         for (String col : expectedCols) {
                             String expected = result.get(col);
                             Assertions.assertEquals(expected, ip.getAs(ip.fieldIndex(col)));
+                            executedLoops2++;
                         }
+                        executedLoops++;
                     }
+                    Assertions.assertEquals(10, executedLoops2);
+                    Assertions.assertEquals(5, executedLoops);
                 });
     }
 
