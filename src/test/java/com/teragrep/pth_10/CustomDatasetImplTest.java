@@ -46,7 +46,7 @@
 package com.teragrep.pth_10;
 
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
-import com.teragrep.pth_10.datasources.CustomDataset;
+import com.teragrep.pth_10.datasources.CustomDatasetImpl;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -61,7 +61,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public final class CustomDatasetTest {
+public final class CustomDatasetImplTest {
 
     private StreamingTestUtil streamingTestUtil;
 
@@ -85,21 +85,21 @@ public final class CustomDatasetTest {
     void testEqualsContract() {
         final SparkSession sparkSession = streamingTestUtil.getCtx().getSparkSession();
         EqualsVerifier
-                .forClass(CustomDataset.class)
+                .forClass(CustomDatasetImpl.class)
                 .withPrefabValues(DPLParserCatalystContext.class, new DPLParserCatalystContext(sparkSession), new DPLParserCatalystContext(sparkSession)).verify();
     }
 
     @Test
     void testCreateStreamingDataset() {
-        final CustomDataset customDataset = new CustomDataset(new StructType(new StructField[] {
+        final CustomDatasetImpl customDataset = new CustomDatasetImpl(new StructType(new StructField[] {
                 StructField.apply("fieldName", DataTypes.StringType, false, new MetadataBuilder().build())
         }), Arrays.asList(new Object[] {
                 "row1"
         }, new Object[] {
                 "row2"
-        }), true, streamingTestUtil.getCtx());
+        }), streamingTestUtil.getCtx());
 
-        final Dataset<Row> resultDs = Assertions.assertDoesNotThrow(customDataset::dataset);
+        final Dataset<Row> resultDs = Assertions.assertDoesNotThrow(customDataset::asStreamingDataset);
         Assertions.assertTrue(resultDs.isStreaming());
         final List<Dataset<Row>> listOfBatches = new ArrayList<>();
         final StreamingQuery sq = Assertions.assertDoesNotThrow(() -> {
@@ -120,15 +120,15 @@ public final class CustomDatasetTest {
 
     @Test
     void testCreateStaticDataset() {
-        final CustomDataset customDataset = new CustomDataset(new StructType(new StructField[] {
+        final CustomDatasetImpl customDataset = new CustomDatasetImpl(new StructType(new StructField[] {
                 StructField.apply("fieldName", DataTypes.StringType, false, new MetadataBuilder().build())
         }), Arrays.asList(new Object[] {
                 "row1"
         }, new Object[] {
                 "row2"
-        }), false, streamingTestUtil.getCtx());
+        }), streamingTestUtil.getCtx());
 
-        final Dataset<Row> resultDs = Assertions.assertDoesNotThrow(customDataset::dataset);
+        final Dataset<Row> resultDs = Assertions.assertDoesNotThrow(customDataset::asStaticDataset);
         Assertions.assertFalse(resultDs.isStreaming());
 
         Assertions.assertEquals(2, resultDs.count());

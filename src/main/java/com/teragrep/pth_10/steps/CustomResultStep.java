@@ -43,15 +43,33 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.datasources;
+package com.teragrep.pth_10.steps;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
+import com.teragrep.pth_10.datasources.CustomDataset;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 
-public interface CustomDataset {
+public final class CustomResultStep extends AbstractStep {
 
-    public abstract Dataset<Row> asStaticDataset();
+    private final CustomDataset customDataset;
 
-    public abstract Dataset<Row> asStreamingDataset() throws StreamingQueryException;
+    public CustomResultStep(final CustomDataset customDataset) {
+        this.customDataset = customDataset;
+    }
+
+    @Override
+    public Dataset<Row> get(final Dataset<Row> dataset) throws StreamingQueryException {
+        final Dataset<Row> result;
+
+        if (dataset.isStreaming()) {
+            result = customDataset.asStreamingDataset();
+        }
+        else {
+            result = customDataset.asStaticDataset();
+        }
+
+        return result;
+    }
 }

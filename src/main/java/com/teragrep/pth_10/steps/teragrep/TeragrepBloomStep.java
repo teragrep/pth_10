@@ -48,7 +48,6 @@ package com.teragrep.pth_10.steps.teragrep;
 import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.functions.dpf_03.BloomFilterAggregator;
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
-import com.teragrep.pth_10.datasources.CustomDataset;
 import com.teragrep.pth_10.steps.teragrep.aggregate.ColumnBinaryListingDataset;
 import com.teragrep.pth_10.steps.teragrep.bloomfilter.BloomFilterForeachPartitionFunction;
 import com.teragrep.pth_10.steps.teragrep.bloomfilter.BloomFilterTable;
@@ -57,16 +56,8 @@ import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
-import org.apache.spark.sql.streaming.StreamingQueryException;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.MetadataBuilder;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
-import java.util.Collections;
 
 /**
  * teragrep exec bloom
@@ -160,18 +151,7 @@ public final class TeragrepBloomStep extends AbstractStep {
         new FilterTypes(zeppelinConfig).saveToDatabase(regex);
         new BloomFilterTable(zeppelinConfig, tableName).create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex));
-        try {
-            return new CustomDataset(new StructType(new StructField[] {
-                    StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
-            }), Collections.singletonList(new Object[] {
-                    Instant.now(), "Bloom filter created."
-            }), dataset.isStreaming(), catCtx).dataset();
-        }
-        catch (StreamingQueryException e) {
-            LOGGER.error("Failed to create bloom filter", e);
-            throw new IllegalStateException("Failed to create bloom filter", e);
-        }
+        return dataset;
     }
 
     /**
@@ -184,18 +164,7 @@ public final class TeragrepBloomStep extends AbstractStep {
         new FilterTypes(zeppelinConfig).saveToDatabase(regex);
         new BloomFilterTable(zeppelinConfig, tableName).create();
         dataset.foreachPartition(new BloomFilterForeachPartitionFunction(zeppelinConfig, tableName, regex, true));
-        try {
-            return new CustomDataset(new StructType(new StructField[] {
-                    StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
-            }), Collections.singletonList(new Object[] {
-                    Instant.now(), "Bloom filter updated."
-            }), dataset.isStreaming(), catCtx).dataset();
-        }
-        catch (StreamingQueryException e) {
-            LOGGER.error("Failed to update bloom filter", e);
-            throw new IllegalStateException("Failed to update bloom filter", e);
-        }
+        return dataset;
     }
 
     private Dataset<Row> estimateSize(Dataset<Row> dataset) {
