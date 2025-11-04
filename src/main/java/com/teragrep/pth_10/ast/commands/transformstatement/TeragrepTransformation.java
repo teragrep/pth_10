@@ -499,7 +499,6 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         if (mode.value() == TeragrepBloomStep.BloomMode.CREATE || mode.value() == TeragrepBloomStep.BloomMode.UPDATE) {
             // create an aggregate step to run before bloom create and bloom update
             final TeragrepBloomStep aggregateStep = new TeragrepBloomStep(
-                    catCtx,
                     zplnConfig,
                     TeragrepBloomStep.BloomMode.AGGREGATE,
                     tableName.value(),
@@ -510,7 +509,6 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             );
             // Create a step with table and regex parameters needed (create|update)
             final TeragrepBloomStep bloomStepWithRegexAndTable = new TeragrepBloomStep(
-                    catCtx,
                     zplnConfig,
                     mode.value(),
                     tableName.value(),
@@ -534,7 +532,6 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         }
         else {
             final TeragrepBloomStep bloomStep = new TeragrepBloomStep(
-                    catCtx,
                     this.zplnConfig,
                     mode.value(),
                     inputCol.value(),
