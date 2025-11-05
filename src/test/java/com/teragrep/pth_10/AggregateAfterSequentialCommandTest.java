@@ -139,9 +139,10 @@ public class AggregateAfterSequentialCommandTest {
                                             "_time",
                                             DataTypes.TimestampType,
                                             false,
-                                            new MetadataBuilder().build()),
+                                            new MetadataBuilder().build()
+                                    ),
                                     new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
-                                    }), ds.schema());
+                            }), ds.schema());
                         }
                 );
         this.streamingTestUtil.setUp(); // reset for 2nd query

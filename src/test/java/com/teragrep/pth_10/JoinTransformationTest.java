@@ -122,7 +122,8 @@ public class JoinTransformationTest {
                                             false,
                                             new MetadataBuilder().build()
                                     ),
-                                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build())});
+                                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
+                            });
                             Assertions
                                     .assertEquals(
                                             expectedSchema, ds.schema(),
