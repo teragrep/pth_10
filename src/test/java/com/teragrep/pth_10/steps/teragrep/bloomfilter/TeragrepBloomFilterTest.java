@@ -309,9 +309,12 @@ class TeragrepBloomFilterTest {
         Assertions.assertDoesNotThrow(() -> {
             ResultSet rs = conn.prepareStatement(sql).executeQuery();
             String pattern = "";
+            int loops = 0;
             while (rs.next()) {
                 pattern = rs.getString(1);
+                loops++;
             }
+            Assertions.assertEquals(1, loops);
             Assertions.assertEquals(this.pattern, pattern);
         });
     }
