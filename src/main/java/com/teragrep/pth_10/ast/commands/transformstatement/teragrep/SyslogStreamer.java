@@ -51,6 +51,7 @@ import com.cloudbees.syslog.Severity;
 import com.cloudbees.syslog.SyslogMessage;
 import com.teragrep.rlp_01.RelpBatch;
 import com.teragrep.rlp_01.RelpConnection;
+import org.apache.spark.api.java.function.ForeachFunction;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructField;
@@ -68,7 +69,7 @@ import java.util.concurrent.TimeoutException;
  * Streams the given dataset (using the map function of a dataset) as syslog messages via the RELP protocol.<br>
  * Provide the RELP server's hostname/ip and port using the constructor.
  */
-public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
+public class SyslogStreamer implements ForeachFunction<Row>, Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SyslogStreamer.class);
     private transient RelpConnection sender;
@@ -235,10 +236,9 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
      * <br>
      *
      * @param row Input row to send as syslog
-     * @return the given input row unchanged
      * @throws Exception If any failure is encountered during the call
      */
-    public Row call(Row row) throws Exception {
+    public void call(Row row) throws Exception {
         if (!initialized) {
             this.start();
             initialized = true;
@@ -289,8 +289,6 @@ public class SyslogStreamer implements MapFunction<Row, Row>, Serializable {
 
         // send to server
         this.append(syslogMessage);
-
-        return row;
     }
 
     /**
