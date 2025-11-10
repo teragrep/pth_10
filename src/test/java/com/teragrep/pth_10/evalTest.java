@@ -1277,13 +1277,14 @@ public class evalTest {
             // Get column 'a'
             final Dataset<Row> resA = res.select("a");
             final List<Double> lstA = resA
+                    .distinct()
                     .collectAsList()
                     .stream()
                     .map(r -> r.getDouble(0))
                     .collect(Collectors.toList());
 
             // Get column 'b'
-            final Dataset<Row> resB = res.select("b");
+            final Dataset<Row> resB = res.select("b").orderBy("offset");
             final List<Double> lstB = resB
                     .collectAsList()
                     .stream()
@@ -1291,7 +1292,7 @@ public class evalTest {
                     .collect(Collectors.toList());
 
             // Get column 'c'
-            final Dataset<Row> resC = res.select("c");
+            final Dataset<Row> resC = res.select("c").orderBy("offset");
             final List<Double> lstC = resC
                     .collectAsList()
                     .stream()
@@ -1299,30 +1300,39 @@ public class evalTest {
                     .collect(Collectors.toList());
 
             // Get column 'd'
-            final Dataset<Row> resD = res.select("d");
+            final Dataset<Row> resD = res.select("d").orderBy("offset");
             final List<Double> lstD = resD
                     .collectAsList()
                     .stream()
                     .map(r -> r.getDouble(0))
                     .collect(Collectors.toList());
 
-            boolean isOfEqualSize = (lstA.size() == lstB.size()) && (lstB.size() == lstC.size())
-                    && (lstC.size() == lstD.size());
-            Assertions.assertTrue(isOfEqualSize);
+            final List<Double> expectedListB = Arrays
+                    .asList(
+                            -0.1, -0.1, -0.1, -0.1, 0.9, 1.9, 2.9, 3.9, 4.9, 5.9, 6.9, 7.9, 8.9, 9.9, 10.9, 11.9, 12.9,
+                            13.9, 14.9
+                    );
+            final List<Double> expectedListC = Arrays
+                    .asList(
+                            1.0, 1.0, 1.0, 1.0, 2.0, 4.0, 5.0, 6.0, 7.0, 9.0, 10.0, 10.0, 12.0, 14.0, 15.0, 16.0, 17.0,
+                            19.0, 20.0
+                    );
+            final List<Double> expectedListD = Arrays
+                    .asList(
+                            0.3, 0.3, 0.3, 0.3, 0.6, 0.9, 1.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.1, 3.4, 3.7, 4.0, 4.3, 4.6,
+                            4.9
+                    );
 
-            // does not assert that the values are correct for lists b,c and d
-            int executedLoops = 0;
-            for (int i = 0; i < lstA.size(); i++) {
-                Assertions.assertFalse(Double.isNaN(lstA.get(i)));
-                Assertions.assertFalse(Double.isNaN(lstB.get(i)));
-                Assertions.assertFalse(Double.isNaN(lstC.get(i)));
-                Assertions.assertFalse(Double.isNaN(lstD.get(i)));
+            Assertions.assertEquals(19, resA.count());
+            Assertions.assertEquals(1, lstA.size());
+            Assertions.assertEquals(19, lstB.size());
+            Assertions.assertEquals(19, lstC.size());
+            Assertions.assertEquals(19, lstD.size());
 
-                // 1.00 * 1111 => 1110(.0)
-                Assertions.assertEquals(1110d, lstA.get(i));
-                executedLoops++;
-            }
-            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(1110d, lstA.get(0));
+            Assertions.assertEquals(expectedListB, lstB);
+            Assertions.assertEquals(expectedListC, lstC);
+            Assertions.assertEquals(expectedListD, lstD);
         });
     }
 
@@ -4611,14 +4621,14 @@ public class evalTest {
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
-            List<String> a = ds
+            List<String> resA = ds
                     .select("a")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
-            List<String> b = ds
+            List<String> resB = ds
                     .select("b")
                     .orderBy("_time")
                     .collectAsList()
@@ -4626,25 +4636,21 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
-            int executedLoops = 0;
+            List<String> expectedA = Arrays
+                    .asList(
+                            "true", "true", "true", "true", "false", "false", "false", "false", "false", "false",
+                            "false", "false", "false", "false", "false", "false", "false", "false", "false"
+                    );
+            List<String> expectedB = Arrays
+                    .asList(
+                            "true", "true", "true", "false", "false", "false", "false", "false", "false", "false",
+                            "false", "false", "false", "false", "false", "false", "false", "false", "false"
+                    );
 
-            for (int i = 0; i < a.size(); i++) {
-                if (i < 4) {
-                    Assertions.assertEquals("true", a.get(i));
-                }
-                else {
-                    Assertions.assertEquals("false", a.get(i));
-                }
-
-                if (i < 3) {
-                    Assertions.assertEquals("true", b.get(i));
-                }
-                else {
-                    Assertions.assertEquals("false", b.get(i));
-                }
-                executedLoops++;
-            }
-            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(19, resA.size());
+            Assertions.assertEquals(19, resB.size());
+            Assertions.assertEquals(resA, expectedA);
+            Assertions.assertEquals(resB, expectedB);
         });
     }
 
@@ -4671,14 +4677,14 @@ public class evalTest {
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
-            List<String> a = ds
+            List<String> resA = ds
                     .select("a")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
-            List<String> b = ds
+            List<String> resB = ds
                     .select("b")
                     .orderBy("_time")
                     .collectAsList()
@@ -4686,24 +4692,21 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
-            int executedLoops = 0;
-            for (int i = 0; i < a.size(); i++) {
-                if (i < 4) {
-                    Assertions.assertEquals("false", a.get(i));
-                }
-                else {
-                    Assertions.assertEquals("true", a.get(i));
-                }
+            List<String> expectedA = Arrays
+                    .asList(
+                            "false", "false", "false", "false", "true", "true", "true", "true", "true", "true", "true",
+                            "true", "true", "true", "true", "true", "true", "true", "true"
+                    );
+            List<String> expectedB = Arrays
+                    .asList(
+                            "false", "false", "false", "true", "true", "true", "true", "true", "true", "true", "true",
+                            "true", "true", "true", "true", "true", "true", "true", "true"
+                    );
 
-                if (i < 3) {
-                    Assertions.assertEquals("false", b.get(i));
-                }
-                else {
-                    Assertions.assertEquals("true", b.get(i));
-                }
-                executedLoops++;
-            }
-            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(19, resA.size());
+            Assertions.assertEquals(19, resB.size());
+            Assertions.assertEquals(resA, expectedA);
+            Assertions.assertEquals(resB, expectedB);
         });
     }
 
@@ -4730,14 +4733,14 @@ public class evalTest {
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
-            List<String> a = ds
+            final List<String> resA = ds
                     .select("a")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
-            List<String> b = ds
+            final List<String> resB = ds
                     .select("b")
                     .orderBy("_time")
                     .collectAsList()
@@ -4745,24 +4748,21 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
-            int executedLoops = 0;
-            for (int i = 0; i < a.size(); i++) {
-                if (i < 4) {
-                    Assertions.assertEquals("false", a.get(i));
-                }
-                else {
-                    Assertions.assertEquals("true", a.get(i));
-                }
+            final List<String> expectedA = Arrays
+                    .asList(
+                            "false", "false", "false", "false", "true", "true", "true", "true", "true", "true", "true",
+                            "true", "true", "true", "true", "true", "true", "true", "true"
+                    );
+            final List<String> expectedB = Arrays
+                    .asList(
+                            "false", "false", "false", "true", "true", "true", "true", "true", "true", "true", "true",
+                            "true", "true", "true", "true", "true", "true", "true", "true"
+                    );
 
-                if (i < 3) {
-                    Assertions.assertEquals("false", b.get(i));
-                }
-                else {
-                    Assertions.assertEquals("true", b.get(i));
-                }
-                executedLoops++;
-            }
-            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(19, resA.size());
+            Assertions.assertEquals(19, resB.size());
+            Assertions.assertEquals(resA, expectedA);
+            Assertions.assertEquals(resB, expectedB);
         });
     }
 
@@ -4789,14 +4789,14 @@ public class evalTest {
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
-            List<String> a = ds
+            final List<String> resA = ds
                     .select("a")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
-            List<String> b = ds
+            final List<String> resB = ds
                     .select("b")
                     .orderBy("_time")
                     .collectAsList()
@@ -4804,24 +4804,21 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
-            int executedLoops = 0;
-            for (int i = 0; i < a.size(); i++) {
-                if (i < 4) {
-                    Assertions.assertEquals("false", a.get(i));
-                }
-                else {
-                    Assertions.assertEquals("true", a.get(i));
-                }
+            final List<String> expectedA = Arrays
+                    .asList(
+                            "false", "false", "false", "false", "true", "true", "true", "true", "true", "true", "true",
+                            "true", "true", "true", "true", "true", "true", "true", "true"
+                    );
+            final List<String> expectedB = Arrays
+                    .asList(
+                            "false", "false", "false", "true", "true", "true", "true", "true", "true", "true", "true",
+                            "true", "true", "true", "true", "false", "false", "false", "false"
+                    );
 
-                if (i < 3 || i > 14) {
-                    Assertions.assertEquals("false", b.get(i));
-                }
-                else {
-                    Assertions.assertEquals("true", b.get(i));
-                }
-                executedLoops++;
-            }
-            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(19, resA.size());
+            Assertions.assertEquals(19, resB.size());
+            Assertions.assertEquals(resA, expectedA);
+            Assertions.assertEquals(resB, expectedB);
         });
     }
 
@@ -4848,14 +4845,14 @@ public class evalTest {
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
-            List<String> a = ds
+            final List<String> resA = ds
                     .select("a")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
-            List<String> b = ds
+            final List<String> resB = ds
                     .select("b")
                     .orderBy("_time")
                     .collectAsList()
@@ -4863,25 +4860,21 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
-            int executedLoops = 0;
-            for (int i = 0; i < a.size(); i++) {
-                if (i < 4) {
-                    Assertions.assertEquals("true", a.get(i));
-                }
-                else {
-                    Assertions.assertEquals("false", a.get(i));
-                }
+            final List<String> expectedA = Arrays
+                    .asList(
+                            "true", "true", "true", "true", "false", "false", "false", "false", "false", "false",
+                            "false", "false", "false", "false", "false", "false", "false", "false", "false"
+                    );
+            final List<String> expectedB = Arrays
+                    .asList(
+                            "true", "true", "true", "false", "false", "false", "false", "false", "false", "false",
+                            "false", "false", "false", "false", "false", "true", "true", "true", "true"
+                    );
 
-                if (i < 3 || i > 14) {
-                    Assertions.assertEquals("true", b.get(i));
-
-                }
-                else {
-                    Assertions.assertEquals("false", b.get(i));
-                }
-                executedLoops++;
-            }
-            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(19, resA.size());
+            Assertions.assertEquals(19, resB.size());
+            Assertions.assertEquals(resA, expectedA);
+            Assertions.assertEquals(resB, expectedB);
         });
     }
 
@@ -4908,14 +4901,14 @@ public class evalTest {
                     new StructField("a", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build()), new StructField("b", DataTypes.createArrayType(DataTypes.StringType, true), true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema()); //check schema
-            List<String> a = ds
+            final List<String> resA = ds
                     .select("a")
                     .orderBy("offset")
                     .collectAsList()
                     .stream()
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
-            List<String> b = ds
+            final List<String> resB = ds
                     .select("b")
                     .orderBy("_time")
                     .collectAsList()
@@ -4923,24 +4916,21 @@ public class evalTest {
                     .map(r -> r.getList(0).get(0).toString())
                     .collect(Collectors.toList());
 
-            int executedLoops = 0;
-            for (int i = 0; i < a.size(); i++) {
-                if (i < 5) {
-                    Assertions.assertEquals("true", a.get(i));
-                }
-                else {
-                    Assertions.assertEquals("false", a.get(i));
-                }
+            final List<String> expectedA = Arrays
+                    .asList(
+                            "true", "true", "true", "true", "true", "false", "false", "false", "false", "false",
+                            "false", "false", "false", "false", "false", "false", "false", "false", "false"
+                    );
+            final List<String> expectedB = Arrays
+                    .asList(
+                            "true", "true", "true", "true", "true", "true", "false", "false", "false", "false", "false",
+                            "false", "false", "false", "false", "true", "true", "true", "true"
+                    );
 
-                if (i < 6 || i > 14) {
-                    Assertions.assertEquals("true", b.get(i));
-                }
-                else {
-                    Assertions.assertEquals("false", b.get(i));
-                }
-                executedLoops++;
-            }
-            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(19, resA.size());
+            Assertions.assertEquals(19, resB.size());
+            Assertions.assertEquals(resA, expectedA);
+            Assertions.assertEquals(resB, expectedB);
         });
     }
 
