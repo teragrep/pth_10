@@ -283,8 +283,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                         StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
                         StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
                 }), Collections.singletonList(new Object[] {
-                        Instant.now(),
-                        "Syslog stream in progress..."
+                        Instant.now(), "Syslog stream in progress..."
                 }), catCtx)
         );
 
