@@ -47,11 +47,10 @@ package com.teragrep.pth_10.datasources;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 
 public interface CustomDataset {
 
     public abstract Dataset<Row> asStaticDataset();
 
-    public abstract Dataset<Row> asStreamingDataset() throws StreamingQueryException;
+    public abstract Dataset<Row> asStreamingDataset();
 }
