@@ -50,10 +50,6 @@ import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.execution.streaming.MemoryStream;
-import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.OutputMode;
-import org.apache.spark.sql.streaming.StreamingQuery;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.StructType;
 import scala.Option;
 
@@ -82,22 +78,14 @@ public final class CustomDatasetImpl implements CustomDataset {
     }
 
     @Override
-    public Dataset<Row> asStreamingDataset() throws StreamingQueryException {
+    public Dataset<Row> asStreamingDataset() {
         final SQLContext sqlContext = catCtx.getSparkSession().sqlContext();
         final ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
         final MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
 
-        final Dataset<Row> rowDataset = rowMemoryStream.toDF();
-        final String queryName = "custom_dataset_" + ((int) (Math.random() * 100000));
-
-        final DataStreamWriter<Row> writer = rowDataset.writeStream().format("memory").outputMode(OutputMode.Append());
-
         rowMemoryStream.addData(new Rows(values).asSeq());
 
-        final StreamingQuery sq = this.catCtx.getInternalStreamingQueryListener().registerQuery(queryName, writer);
-        sq.awaitTermination();
-
-        return rowDataset;
+        return rowMemoryStream.toDF();
     }
 
     @Override
