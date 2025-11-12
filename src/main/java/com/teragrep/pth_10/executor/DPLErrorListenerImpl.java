@@ -59,9 +59,11 @@ public final class DPLErrorListenerImpl extends BaseErrorListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLErrorListenerImpl.class);
 
     private final String listenedTo;
+    private final String queryName;
 
-    public DPLErrorListenerImpl(String listenedTo) {
+    public DPLErrorListenerImpl(String listenedTo, String queryName) {
         this.listenedTo = listenedTo;
+        this.queryName = queryName;
     }
 
     @Override
@@ -74,10 +76,14 @@ public final class DPLErrorListenerImpl extends BaseErrorListener {
             RecognitionException e
     ) {
         if (e == null) {
-            LOGGER.error("Got an exception from <{}>, no message", listenedTo);
+            LOGGER.error("Got an exception from <{}> during query {}, no message", listenedTo, queryName);
         }
         else {
-            LOGGER.error("Got an exception from <{}>: <[{}]>", listenedTo, e.getMessage(), e);
+            LOGGER
+                    .error(
+                            "Got an exception from <{}> during query {}: <[{}]>", listenedTo, queryName, e.getMessage(),
+                            e
+                    );
         }
         throw new IllegalStateException(
                 listenedTo + " failure on line " + line + ", column " + charPositionInLine + " due to " + msg + "\n"

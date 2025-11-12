@@ -77,7 +77,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     @Override
     public void onQueryStarted(QueryStartedEvent queryStarted) {
-        LOGGER.info("Query started: {}", queryStarted.id());
+        LOGGER.info("Query started: id: {} name: {}", queryStarted.id(), queryName);
     }
 
     @Override
