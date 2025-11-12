@@ -64,6 +64,7 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
@@ -102,6 +103,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
             String paragraphId,
             String lines
     ) throws TimeoutException {
+        MDC.put("queryName",queryName);
         LOGGER.debug("Running in interpret()");
         batchCollect.clear(); // do not store old values // TODO remove from NotebookDatasetStore too
 
@@ -140,11 +142,13 @@ public final class DPLExecutorImpl implements DPLExecutor {
             tree = parser.root();
         }
         catch (IllegalStateException e) {
+            MDC.clear();
             return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, e.toString());
         }
         catch (StringIndexOutOfBoundsException e) {
             final String msg = "Parsing error: String index out of bounds. Check for unbalanced quotes - "
                     + "make sure each quote (\") has a pair!";
+            MDC.clear();
             return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, msg);
         }
 
@@ -160,6 +164,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
         TranslationResultNode n = (TranslationResultNode) visitor.visit(tree);
         DataStreamWriter<Row> dsw;
         if (n == null) {
+            MDC.clear();
             return new DPLExecutorResultImpl(
                     DPLExecutorResult.Code.ERROR,
                     "parser can't construct processing pipeline"
@@ -180,6 +185,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
             while (exception.getCause() != null) {
                 exception = exception.getCause();
             }
+            MDC.clear();
             return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
         }
 
@@ -232,10 +238,12 @@ public final class DPLExecutorImpl implements DPLExecutor {
             while (exception.getCause() != null) {
                 exception = exception.getCause();
             }
+            MDC.clear();
             return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
         }
 
         LOGGER.debug("Returning from interpret() for query {}", queryName);
+        MDC.clear();
         return new DPLExecutorResultImpl(DPLExecutorResult.Code.SUCCESS, "");
     }
 
