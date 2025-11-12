@@ -61,6 +61,8 @@ import com.teragrep.pth_10.ast.commands.transformstatement.teragrep.OutputColumn
 import com.teragrep.pth_10.ast.commands.transformstatement.teragrep.RegexValueFromBloomContext;
 import com.teragrep.pth_10.ast.commands.transformstatement.teragrep.TableNameFromBloomContext;
 import com.teragrep.pth_10.ast.ContextValue;
+import com.teragrep.pth_10.datasources.CustomDatasetImpl;
+import com.teragrep.pth_10.steps.CustomResultStep;
 import com.teragrep.pth_10.steps.teragrep.*;
 import com.teragrep.pth_10.steps.teragrep.AbstractTokenizerStep;
 import com.teragrep.pth_10.steps.teragrep.TeragrepTokenizerStep;
@@ -69,13 +71,19 @@ import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * Class containing the visitor methods for all "| teragrep" subcommands
@@ -509,7 +517,18 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
                     outputCol.value(),
                     estimateCol.value()
             );
-            rv = new StepListNode(Arrays.asList(aggregateStep, bloomStepWithRegexAndTable));
+            // Create a step, that returns a Custom dataset containing the result message
+            // instead of the whole dataset
+            final CustomResultStep customResultStep = new CustomResultStep(
+                    new CustomDatasetImpl(new StructType(new StructField[] {
+                            StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                            StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
+                    }), Collections.singletonList(new Object[] {
+                            Instant.now(),
+                            "Bloom filter operation ".concat(mode.value().toString()).concat(" was completed.")
+                    }), catCtx)
+            );
+            rv = new StepListNode(Arrays.asList(aggregateStep, bloomStepWithRegexAndTable, customResultStep));
         }
         else {
             final TeragrepBloomStep bloomStep = new TeragrepBloomStep(

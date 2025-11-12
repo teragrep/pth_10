@@ -55,8 +55,6 @@ import com.typesafe.config.Config;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.functions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * teragrep exec bloom
@@ -66,8 +64,6 @@ public final class TeragrepBloomStep extends AbstractStep {
     public enum BloomMode {
         UPDATE, CREATE, ESTIMATE, AGGREGATE, DEFAULT
     }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepBloomStep.class);
 
     private final Config zeppelinConfig;
     public final BloomMode mode;
