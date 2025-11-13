@@ -88,7 +88,7 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_table_wcfieldListParameter(DPLParser.T_table_wcfieldListParameterContext ctx) {
-        List<String> listOfFields = new ArrayList<>();
+        final List<String> listOfFields = new ArrayList<>();
 
         ctx.t_table_fieldType().forEach(fieldType -> {
             String fieldName = ((StringNode) visit(fieldType)).toString();
@@ -97,6 +97,20 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
                 listOfFields.addAll(Arrays.asList(fieldName.split(",")));
             }
         });
+
+        if (listOfFields.isEmpty()) {
+            try {
+                // check if table command has just a wildcard
+                final String wc = ctx.COMMAND_TABLE_MODE_WILDCARD().get(0).toString();
+                listOfFields.add(wc);
+            }
+            catch (Exception e) {
+                // table command must be given field name(s) or wildcard
+                throw new IllegalStateException(
+                        "table command is missing field names, it requires at least one valid field name."
+                );
+            }
+        }
 
         return new StringListNode(listOfFields);
     }
