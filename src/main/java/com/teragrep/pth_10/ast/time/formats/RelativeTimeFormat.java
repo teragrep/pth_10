@@ -43,66 +43,59 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.ast;
+package com.teragrep.pth_10.ast.time.formats;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import com.teragrep.pth_10.ast.time.DPLTimestamp;
+import com.teragrep.pth_10.ast.time.RelativeTimestamp;
+import com.teragrep.pth_10.ast.time.StubTimestamp;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- * Parser for the three default timeformats that can be used: 1. MM/dd/yyyy:HH:mm:ss 2. ISO 8601 with timezone offset,
- * e.g. 2011-12-03T10:15:30+01:00 3. ISO 8601 without offset, e.g. 2011-12-03T10:15:30 When timezone is not specified,
- * uses the system default
- */
-public class DefaultTimeFormat {
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Objects;
 
-    private final String[] formats;
+public final class RelativeTimeFormat implements DPLTimeFormat {
 
-    public DefaultTimeFormat() {
-        this(new String[] {
-                "MM/dd/yyyy:HH:mm:ss",
-                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
-                "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                "yyyy-MM-dd'T'HH:mm:ssXXX",
-                "yyyy-MM-dd'T'HH:mm:ss"
-        });
+    private final Logger LOGGER = LoggerFactory.getLogger(RelativeTimeFormat.class);
+    private final ZonedDateTime baseTime;
+
+    public RelativeTimeFormat(final ZonedDateTime baseTime) {
+        this.baseTime = baseTime;
     }
 
-    public DefaultTimeFormat(String[] formats) {
-        this.formats = formats;
-    }
-
-    /**
-     * Calculate the epoch from given string.
-     * 
-     * @param time The human-readable time
-     * @return epoch as long
-     */
-    public long getEpoch(String time) {
-        return this.parse(time).getTime() / 1000L;
-    }
-
-    /**
-     * Parses the given human-readable time to a Date object.
-     * 
-     * @param time The human-readable time
-     * @return Date parsed from the given string
-     */
-    public Date parse(String time) {
-        // Try parsing all provided time formats in order
-        for (final String format : formats) {
-            try {
-                return parseDate(time, format);
-            }
-            catch (ParseException ignored) {
-            }
+    @Override
+    public DPLTimestamp from(final String timestampString) {
+        DPLTimestamp timestamp = new RelativeTimestamp(timestampString, baseTime);
+        if (!timestamp.isValid()) {
+            LOGGER.debug("timestamp <[{}]> was invalid", timestampString);
+            timestamp = new StubTimestamp();
         }
-        throw new RuntimeException("TimeQualifier conversion error: <" + time + "> can't be parsed.");
+        else {
+            LOGGER.debug("timestamp <[{}]> matched", timestampString);
+        }
+        return timestamp;
     }
 
-    private Date parseDate(String time, String timeFormat) throws ParseException {
-        SimpleDateFormat sdf = new SimpleDateFormat(timeFormat);
-        sdf.setLenient(false);
-        return sdf.parse(time);
+    @Override
+    public DPLTimeFormat atZone(final ZoneId zoneId) {
+        return new RelativeTimeFormat(baseTime.withZoneSameInstant(zoneId));
+    }
+
+    @Override
+    public boolean equals(final Object object) {
+        if (object == null) {
+            return false;
+        }
+        if (getClass() != object.getClass()) {
+            return false;
+        }
+        final RelativeTimeFormat relativeTimeFormat = (RelativeTimeFormat) object;
+        return Objects.equals(baseTime, relativeTimeFormat.baseTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(baseTime);
     }
 }

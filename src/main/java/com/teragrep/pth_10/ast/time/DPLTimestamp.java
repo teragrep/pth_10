@@ -45,9 +45,14 @@
  */
 package com.teragrep.pth_10.ast.time;
 
-import java.time.Instant;
+import com.teragrep.pth_10.Stubbable;
 
-public interface DPLTimestamp {
+import java.time.ZonedDateTime;
 
-    public abstract Instant instant();
+public interface DPLTimestamp extends Stubbable {
+
+    public abstract ZonedDateTime zonedDateTime();
+
+    public abstract boolean isValid();
+
 }

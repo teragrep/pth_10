@@ -65,6 +65,7 @@ import org.apache.spark.sql.streaming.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.ZonedDateTime;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiConsumer;
 
@@ -100,13 +101,14 @@ public final class DPLExecutorImpl implements DPLExecutor {
             String queryId,
             String noteId,
             String paragraphId,
-            String lines
+            String lines,
+            ZonedDateTime startTime
     ) throws TimeoutException {
         LOGGER.debug("Running in interpret()");
         batchCollect.clear(); // do not store old values // TODO remove from NotebookDatasetStore too
 
         LOGGER.info("DPL-interpreter initialized sparkInterpreter incoming query:<{}>", lines);
-        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config);
+        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config, startTime);
 
         LOGGER.debug("Adding audit information");
         catalystContext.setAuditInformation(setupAuditInformation(lines));

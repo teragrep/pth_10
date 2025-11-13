@@ -45,60 +45,35 @@
  */
 package com.teragrep.pth_10.ast;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.Instant;
+import java.util.Objects;
 
-/**
- * For using the DPL custom timeformat like Java's SimpleDateFormat. Get a Date object with parse -function for example.
- */
-public final class DPLTimeFormat {
+/** replaces dpl time units with java-compatible time units */
+public final class DPLTimeFormatText implements Text {
 
-    private final String format;
+    private final Text origin;
 
-    public DPLTimeFormat(String format) {
-        this.format = format;
+    public DPLTimeFormatText(final Text origin) {
+        this.origin = origin;
     }
 
-    /**
-     * Create a SimpleDateFormat object from the given DPL specific timeformat. Allows all sorts of parsing and
-     * tampering with the time.
-     * 
-     * @return SimpleDateFormat created from the DPLTimeFormat
-     */
-    public SimpleDateFormat createSimpleDateFormat() {
-        return new SimpleDateFormat(convertDplTimeFormatToJava(this.format));
-    }
-
-    /**
-     * Parses the time string and converts it to an unic epoch long. Uses the system timezone as default if timezone is
-     * not specified in the pattern (given in the constructor). For setting a timezone later on (or any other operation)
-     * you will have to use createSimpleDateFormat function.
-     * 
-     * @param dplTime Time represented with the pattern
-     * @return Unix Epoch
-     * @throws ParseException when dplTime doesn't have the correct format
-     */
-    public Instant instantOf(String dplTime) throws ParseException {
-        return createSimpleDateFormat().parse(dplTime).toInstant();
-    }
-
-    // replace dpl time units with java-compatible time units
-    private String convertDplTimeFormatToJava(String dplTf) {
-        dplTf = new UnquotedText(new TextString(dplTf)).read();
-        return dplTf
-                // Date
-                .replaceAll("%F", "y-MM-dd") // ISO 8601 %Y-%m-%d
+    @Override
+    public String read() {
+        String read = origin.read();
+        if ("%s".equals(read)) {
+            return read;
+        }
+        return read
+                .replaceAll("%F", "yyyy-MM-dd") // ISO 8601 %Y-%m-%d
                 .replaceAll("%y", "yy") // year without century (00-99)
-                .replaceAll("%Y", "y") // full year
+                .replaceAll("%Y", "yyyy") // full year
                 .replaceAll("%m", "MM") // month 1-12
                 .replaceAll("%d", "dd") // day 1-31
                 .replaceAll("%b", "MMM") // abbrv. month name
                 .replaceAll("%B", "MMMM") // full month name
-                .replaceAll("%A", "EE") // full weekday name, e.g. "sunday"
+                .replaceAll("%A", "EEEE") // full weekday name, e.g. "sunday"
                 .replaceAll("%a", "E") // abbrv. weekday name, e.g. "Sun"
                 .replaceAll("%j", "D") // day of year, 001-366
-                .replaceAll("%w", "F") // weekday as decimal 0=sun 6=sat
+                .replaceAll("%w", "e") // weekday as decimal 0=sun 6=sat
                 // Time
                 .replaceAll("%H", "HH") // hour 0-23
                 .replaceAll("%k", "H") // hour without leading zeroes
@@ -109,9 +84,32 @@ public final class DPLTimeFormat {
                 .replaceAll("%T", "HH:mm:ss") // hour:min:sec
                 .replaceAll("%f", "SSS") // microsecs
                 // Time zone
-                .replaceAll("%Z", "zz") // timezone abbreviation
-                .replaceAll("%z", "X") // timezone offset +00:00
+                .replaceAll("%Z", "zzz") // timezone abbreviation
+                .replaceAll("%z", "XXX") // timezone offset +00:00
                 // Other
-                .replaceAll("%%", "%"); // percent sign
+                .replaceAll("%%", "%") // percent sign
+                // remove unsupported
+                .replaceAll("%c", "")
+                .replaceAll("%x", "");
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final DPLTimeFormatText other = (DPLTimeFormatText) o;
+        return Objects.equals(origin, other.origin);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(origin);
     }
 }

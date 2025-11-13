@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth_10;
 
-import com.teragrep.pth_10.ast.time.RelativeTimeParser;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -59,12 +58,8 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -83,6 +78,7 @@ public class EarliestLatestTest {
     private final String testFile = "src/test/resources/earliestLatestTest_data*.jsonl"; // * to make the path into a directory path
     private final String epochTestFile = "src/test/resources/earliestLatestTest_epoch_data*.jsonl";
     private StreamingTestUtil streamingTestUtil;
+    private final ZoneId utcZone = ZoneId.of("UTC");
 
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
@@ -249,18 +245,17 @@ public class EarliestLatestTest {
     )
     public void earliestRelativeTimeAtStartAndLatestAtEndOfMainSearchTest() {
         String query = "earliest=-10y index=strawberry OR index=seagull latest=-1y | stats count(_raw) by index";
-        this.streamingTestUtil
-                .performDPLTest(query, this.testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
-                    List<String> indexAsList = res
-                            .select("index")
-                            .collectAsList()
-                            .stream()
-                            .map(r -> r.getAs(0).toString())
-                            .collect(Collectors.toList());
+        streamingTestUtil.performDPLTest(query, testFile, setTimeDifferenceToSameAsDate("2023-01-01 12:00:00"), res -> {
+            List<String> indexAsList = res
+                    .select("index")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
 
-                    Assertions.assertTrue(indexAsList.contains("strawberry"));
-                    Assertions.assertTrue(indexAsList.contains("seagull"));
-                });
+            Assertions.assertTrue(indexAsList.contains("strawberry"));
+            Assertions.assertTrue(indexAsList.contains("seagull"));
+        });
     }
 
     @Test
@@ -342,8 +337,8 @@ public class EarliestLatestTest {
                     .collect(Collectors.toList());
 
             // Daylight savings happens between these two timestamps, which explains the +1 hour difference.
-            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
+            Assertions.assertEquals("2014-04-15 06:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 19:54:14.0", time.get(1));
         });
     }
 
@@ -358,7 +353,10 @@ public class EarliestLatestTest {
                 .performThrowingDPLTest(RuntimeException.class, query, this.testFile, res -> {
                 });
         Assertions
-                .assertEquals("TimeQualifier conversion error: <31/31/2014:00:00:00> can't be parsed.", sqe.getMessage());
+                .assertEquals(
+                        "Could not parse value <31/31/2014:00:00:00> with custom format <> or with default formats",
+                        sqe.getMessage()
+                );
     }
 
     @Test
@@ -376,8 +374,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
+            Assertions.assertEquals("2014-04-15 06:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 19:54:14.0", time.get(1));
         });
     }
 
@@ -396,8 +394,8 @@ public class EarliestLatestTest {
                     .map(r -> r.getAs(0).toString())
                     .collect(Collectors.toList());
 
-            Assertions.assertEquals("2014-04-15 09:23:17.0", time.get(0));
-            Assertions.assertEquals("2014-03-15 21:54:14.0", time.get(1));
+            Assertions.assertEquals("2014-04-15 06:23:17.0", time.get(0));
+            Assertions.assertEquals("2014-03-15 19:54:14.0", time.get(1));
         });
     }
 
@@ -426,12 +424,11 @@ public class EarliestLatestTest {
     )
     public void OverflowTest2() {
         String query = "index=strawberry earliest=-1000y@y latest=+3644444444444444d";
-        this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
             String maxTime = res.agg(functions.max("_time")).first().get(0).toString();
             String minTime = res.agg(functions.min("_time")).first().get(0).toString();
-
-            Assertions.assertEquals("2014-03-15 21:54:14.0", maxTime);
-            Assertions.assertEquals("2013-07-15 11:01:50.0", minTime);
+            Assertions.assertEquals("2014-03-15 19:54:14.0", maxTime);
+            Assertions.assertEquals("2013-07-15 08:01:50.0", minTime);
         });
     }
 
@@ -467,219 +464,6 @@ public class EarliestLatestTest {
             Assertions.assertEquals("2030-01-14 00:56:08.0", maxTime);
             Assertions.assertEquals("2030-01-14 00:56:08.0", minTime);
         });
-    }
-
-    @Test
-    public void RelativeTimestampSecondsTest() {
-        // Initial values
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("s", "sec", "secs", "second", "seconds");
-
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        final Instant i = ts.toInstant();
-
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = i.plus(amount, ChronoUnit.SECONDS).getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        units.forEach(unit -> {
-            String relativeTimestamp = "+" + amount + unit; //+100sec etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-        });
-    }
-
-    @Test
-    public void RelativeTimestampMinutesTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("m", "min", "minute", "minutes");
-        final Instant i = ts.toInstant();
-
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = i.plus(amount, ChronoUnit.MINUTES).getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        units.forEach(unit -> {
-            String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-        });
-    }
-
-    @Test
-    public void RelativeTimestampHoursTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("h", "hr", "hrs", "hour", "hours");
-        final Instant i = ts.toInstant();
-
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = i.plus(amount, ChronoUnit.HOURS).getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        units.forEach(unit -> {
-            String relativeTimestamp = "+" + amount + unit; //+100hour etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-        });
-    }
-
-    @Test
-    public void RelativeTimestampDaysTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("d", "day", "days");
-        final Instant i = ts.toInstant();
-
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = i.plus(amount, ChronoUnit.DAYS).getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        units.forEach(unit -> {
-            String relativeTimestamp = "+" + amount + unit; //+100d etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-        });
-    }
-
-    @Test
-    public void RelativeTimestampWeeksTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("w", "week", "weeks");
-        final LocalDateTime now = ts.toLocalDateTime();
-
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = now.plusWeeks(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        units.forEach(unit -> {
-            String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-        });
-    }
-
-    @Test
-    public void RelativeTimestampMonthsTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("mon", "month", "months");
-        final LocalDateTime now = ts.toLocalDateTime();
-
-        // Amount to add
-        final int amount = 100;
-        // Expected result
-        final long expected = now.plusMonths(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        units.forEach(unit -> {
-            String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-        });
-    }
-
-    @Test
-    public void RelativeTimestampYearsTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        // Various possible unit strings
-        final List<String> units = Arrays.asList("y", "yr", "yrs", "year", "years");
-        final LocalDateTime now = ts.toLocalDateTime();
-
-        // Amount to add
-        final long amount = 100;
-        // Expected result
-        final long expected = now.plusYears(amount).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        units.forEach(unit -> {
-            String relativeTimestamp = "+" + amount + unit; //+100min etc.
-            Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-        });
-    }
-
-    @Test
-    public void RelativeTimestampOver9999YearTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        final String relativeTimestamp = "+10000y";
-
-        // Expected result
-        final long expected = Timestamp.valueOf("9999-10-10 15:15:30.00").toInstant().getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-    }
-
-    @Test
-    public void RelativeTimestampLessThan1000YearTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-        final String relativeTimestamp = "-1100y";
-        final LocalDateTime now = ts.toLocalDateTime();
-
-        // Expected result
-        final long expected = now.minusYears(1010).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        Assertions.assertEquals(expected, rtParser.parse(relativeTimestamp).calculate(ts).getEpochSecond());
-    }
-
-    @Test
-    public void RelativeTimestampInvalidUnitTest() {
-        // Initial values
-        final String relativeTimestamp = "xyz";
-
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        Assertions.assertThrows(RuntimeException.class, () -> {
-            rtParser.parse(relativeTimestamp);
-        }, "Relative timestamp contained an invalid time unit");
-    }
-
-    @Test
-    public void RelativeTimestampOverflowPositiveTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-
-        // Amount to add
-        final long v = Long.MAX_VALUE;
-        final long expected = Instant
-                .ofEpochMilli(v)
-                .atZone(ZoneId.systemDefault())
-                .withYear(9999)
-                .toInstant()
-                .getEpochSecond();
-
-        // positive overflow epoch should be long max value
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        long result = rtParser.parse("+" + v + "h").calculate(ts).getEpochSecond();
-        Assertions.assertEquals(expected, result);
-    }
-
-    @Test
-    public void RelativeTimestampOverflowNegativeTest() {
-        // Initial values
-        final Timestamp ts = Timestamp.valueOf("2010-10-10 15:15:30.00");
-
-        // Amount to add
-        final long v = Long.MIN_VALUE;
-
-        // negative overflow epoch should be epoch=0
-        RelativeTimeParser rtParser = new RelativeTimeParser();
-        long result = rtParser.parse(v + "h").calculate(ts).getEpochSecond();
-        Assertions.assertEquals(0, result);
     }
 
     @Test
@@ -884,7 +668,11 @@ public class EarliestLatestTest {
         // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
         String query = " index=abc earliest=\"01/01/2022:00:00:00\" latest=\"01/02/2022:00:00:00\" \"XYZ=\\\"yes asd\\\"\" ";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND (((_time >= from_unixtime(1640988000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1641074400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
+            long earliestEpoch = ZonedDateTime.of(2022, 1, 1, 0, 0, 0, 0, utcZone).toEpochSecond();
+            long latestEpoch = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, utcZone).toEpochSecond();
+            final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND (((_time >= from_unixtime(" + earliestEpoch
+                    + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(" + latestEpoch
+                    + ", yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
             Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
         });
     }
@@ -988,8 +776,8 @@ public class EarliestLatestTest {
                         "index=* earliest=2013-07-15T10:01:50.000+02:00 latest=2014-04-15T08:23:17.001+02:00",
                         this.testFile, res -> {
                             Row r = res.select("_time").agg(functions.min("_time"), functions.max("_time")).first();
-                            Assertions.assertEquals("2013-07-15 11:01:50.0", r.get(0).toString());
-                            Assertions.assertEquals("2014-04-15 09:23:17.0", r.get(1).toString());
+                            Assertions.assertEquals("2013-07-15 08:01:50.0", r.get(0).toString());
+                            Assertions.assertEquals("2014-04-15 06:23:17.0", r.get(1).toString());
                         }
                 );
     }

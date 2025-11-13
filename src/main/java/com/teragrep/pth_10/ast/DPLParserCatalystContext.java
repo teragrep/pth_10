@@ -55,6 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.function.Consumer;
 
@@ -69,6 +70,7 @@ public class DPLParserCatalystContext implements Cloneable {
     SparkSession sparkSession;
     // If not set, create empty default
     private DPLParserConfig parserConfig = new DPLParserConfig();
+    private final ZonedDateTime startTime;
 
     // extremely important for tests using config
     private boolean testingMode = false;
@@ -352,26 +354,30 @@ public class DPLParserCatalystContext implements Cloneable {
     public final NullValue nullValue;
 
     /**
-     * Initialize context with spark session
-     * 
+     * Initialize context with spark session and query start time
+     *
      * @param sparkSession active session
+     * @param startTime    start time of the query used to calculate relative time differences
      */
-    public DPLParserCatalystContext(SparkSession sparkSession) {
+    public DPLParserCatalystContext(SparkSession sparkSession, ZonedDateTime startTime) {
         this.sparkSession = sparkSession;
+        this.startTime = startTime;
         this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
     }
 
     /**
-     * Initialize context with spark session and incoming dataset
-     * 
+     * Initialize context with spark session, incoming dataset and query start time
+     *
      * @param sparkSession active session
      * @param ds           {@literal DataSet<Row>}
+     * @param startTime    start time of the query used to calculate relative time differences
      */
-    public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds) {
+    public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds, ZonedDateTime startTime) {
         this.sparkSession = sparkSession;
         this.inDs = ds;
+        this.startTime = startTime;
         this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
@@ -381,13 +387,15 @@ public class DPLParserCatalystContext implements Cloneable {
 
     /**
      * Initialize context with spark session and config which is created in zeppelin
-     * 
+     *
      * @param sparkSession active session
      * @param config       Zeppelin configuration object
+     * @param startTime    start time of the query used to calculate relative time differences
      */
-    public DPLParserCatalystContext(SparkSession sparkSession, Config config) {
+    public DPLParserCatalystContext(SparkSession sparkSession, Config config, ZonedDateTime startTime) {
         this.sparkSession = sparkSession;
         this.config = config;
+        this.startTime = startTime;
         this.nullValue = new NullValue();
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
@@ -438,12 +446,16 @@ public class DPLParserCatalystContext implements Cloneable {
         this.config = config;
     }
 
+    public ZonedDateTime startTime() {
+        return startTime;
+    }
+
     public String getEarliest() {
         return parserConfig.getEarliest();
     }
 
     public void setEarliest(String earliest) {
-        parserConfig.setEarliest(earliest);
+        parserConfig.setEarliest(earliest, startTime);
     }
 
     public String getLatest() {
@@ -451,7 +463,7 @@ public class DPLParserCatalystContext implements Cloneable {
     }
 
     public void setLatest(String latest) {
-        parserConfig.setLatest(latest);
+        parserConfig.setLatest(latest, startTime);
     }
 
     public DPLParserConfig getParserConfig() {
@@ -478,7 +490,7 @@ public class DPLParserCatalystContext implements Cloneable {
         }
         catch (CloneNotSupportedException e) {
             LOGGER.debug("Clone not supported, create object copy");
-            ctx = new DPLParserCatalystContext(this.sparkSession);
+            ctx = new DPLParserCatalystContext(this.sparkSession, this.startTime);
             ctx.setParserConfig(parserConfig);
             ctx.setDs(inDs);
             ctx.setConfig(config);

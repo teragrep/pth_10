@@ -267,7 +267,6 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
         LOGGER.info("CatalystVisitor Root incoming: <{}>", ctx.getText());
         // Set DPL query into CatalystContext: used if original query string is needed for something
         catCtx.setDplQuery(ctx.getText());
-
         // Current version has always 2 nodes at the root level.
         if (ctx.getChildCount() < 1) {
             throw new IllegalStateException("Missing logicalStatement and/or transformStatement: " + ctx.getText());

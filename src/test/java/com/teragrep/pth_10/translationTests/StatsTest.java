@@ -58,6 +58,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class StatsTest {
 
@@ -69,7 +72,7 @@ public class StatsTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final StatsTransformation ct = new StatsTransformation(ctx);
@@ -93,7 +96,7 @@ public class StatsTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final StatsTransformation ct = new StatsTransformation(ctx);
@@ -117,7 +120,7 @@ public class StatsTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, ZonedDateTime.now(ZoneId.of("UTC")));
         ctx.setEarliest("-1w");
 
         final StatsTransformation ct = new StatsTransformation(ctx);

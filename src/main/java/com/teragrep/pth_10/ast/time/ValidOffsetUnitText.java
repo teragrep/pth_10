@@ -43,36 +43,64 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10;
+package com.teragrep.pth_10.ast.time;
 
-import com.teragrep.pth_10.ast.DPLTimeFormat;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import com.teragrep.pth_10.ast.Text;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import java.text.SimpleDateFormat;
+public final class ValidOffsetUnitText implements Text {
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class DPLTimeFormatTest {
+    private final Text origin;
+    private final Pattern pattern;
 
-    @Test
-    void formatTest() {
-        String dplPattern = "%Y-%m-%d %H:%M:%S.%f '('%Z')'";
-        String expectedPattern = "y-MM-dd HH:mm:ss.SSS '('zz')'";
-
-        SimpleDateFormat format = new DPLTimeFormat(dplPattern).createSimpleDateFormat();
-        String formattedPattern = format.toPattern();
-        Assertions.assertEquals(expectedPattern, formattedPattern);
+    public ValidOffsetUnitText(final Text origin) {
+        this(origin, Pattern.compile("([a-zA-Z]+)"));
     }
 
-    @Test
-    void toEpochTest() {
-        String dplPattern = "%Y-%m-%d %H:%M:%S.%f '('%Z')'";
-        String dplDate = "2023-12-15 08:04:39.123 (EET)";
-        long expectedEpoch = 1702620279;
+    public ValidOffsetUnitText(final Text origin, final Pattern pattern) {
+        this.origin = origin;
+        this.pattern = pattern;
+    }
 
-        DPLTimeFormat format = new DPLTimeFormat(dplPattern);
-        long actualEpoch = Assertions.assertDoesNotThrow(() -> format.instantOf(dplDate).getEpochSecond());
-        Assertions.assertEquals(expectedEpoch, actualEpoch);
+    @Override
+    public String read() {
+        final String originString = origin.read();
+        final Matcher matcher = pattern.matcher(originString);
+        final String updatedString;
+        if (originString.toLowerCase().startsWith("now")) {
+            updatedString = "now";
+        }
+        else if (originString.toLowerCase().contains("now")) {
+            throw new IllegalArgumentException("timestamp 'now' should not have any values before it");
+        }
+        else {
+            if (!matcher.find()) {
+                throw new IllegalArgumentException("Text <" + originString + "> did not contain a valid offset unit");
+            }
+            updatedString = matcher.group(); // next group of alphabetical characters
+        }
+        return updatedString;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            return false;
+        }
+        if (getClass() != o.getClass()) {
+            return false;
+        }
+        final ValidOffsetUnitText other = (ValidOffsetUnitText) o;
+        return Objects.equals(origin, other.origin) && Objects.equals(pattern, other.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(origin, pattern);
     }
 }
