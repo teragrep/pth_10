@@ -238,6 +238,12 @@ public class DPLDatasource {
             reader = reader.option("metadataQuery.enabled", "true");
         }
 
+        // debug logging
+        if (config.hasPath("dpl.pth_06.logging.debug.enabled")) {
+            final boolean isDebug = config.getBoolean("dpl.pth_06.logging.debug.enabled");
+            reader = reader.option("logging.debug.enabled", isDebug);
+        }
+
         LOGGER.debug("Loading reader");
         Dataset<Row> out = reader.load();
         LOGGER.debug("Reader loaded");
