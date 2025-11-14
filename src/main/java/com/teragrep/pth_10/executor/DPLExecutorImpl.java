@@ -103,7 +103,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
             String paragraphId,
             String lines
     ) throws TimeoutException {
-        MDC.put("queryName",queryName);
+        MDC.put("queryName", queryName);
         LOGGER.debug("Running in interpret()");
         batchCollect.clear(); // do not store old values // TODO remove from NotebookDatasetStore too
 
