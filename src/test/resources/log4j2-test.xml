@@ -2,7 +2,7 @@
 <Configuration status="WARN">
   <Appenders>
     <Console name="Console" target="SYSTEM_OUT">
-      <PatternLayout pattern="%5p [%d] [%C] ({%t} %F[%M]:%L) [%X{queryName}] - %m%n"/>
+      <PatternLayout pattern="%5p [%d] [%C] ({%t} %F[%M]:%L) <%X{queryName}> - %m%n"/>
     </Console>
   </Appenders>
   <Loggers>
