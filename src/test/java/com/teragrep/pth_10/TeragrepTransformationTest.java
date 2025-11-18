@@ -375,12 +375,13 @@ public class TeragrepTransformationTest {
                                 + id,
                         testFile, ds -> {
                             List<String> listOfResult = ds
-                                    .select("estimate(tokens)")
+                                    .select("_raw")
+                                    .distinct()
                                     .collectAsList()
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
+                            Assertions.assertEquals(List.of("HDFS save complete."), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -408,12 +409,13 @@ public class TeragrepTransformationTest {
                                 + id,
                         testFile, ds -> {
                             List<String> listOfResult = ds
-                                    .select("avg_offset")
+                                    .select("_raw")
+                                    .distinct()
                                     .collectAsList()
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            Assertions.assertEquals(Collections.singletonList("3.0"), listOfResult);
+                            Assertions.assertEquals(List.of("HDFS save complete."), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -441,12 +443,13 @@ public class TeragrepTransformationTest {
                                 + " | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id,
                         testFile, ds -> {
                             List<String> listOfResult = ds
-                                    .select("offset_values")
+                                    .select("_raw")
+                                    .distinct()
                                     .collectAsList()
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            Assertions.assertEquals(Collections.singletonList("3.0"), listOfResult);
+                            Assertions.assertEquals(List.of("HDFS save complete."), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -473,13 +476,13 @@ public class TeragrepTransformationTest {
                         "index=index_A | sort num(offset) | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id, testFile,
                         ds -> {
                             List<String> listOfResult = ds
-                                    .select("offset")
-                                    .orderBy("offset")
+                                    .select("_raw")
+                                    .distinct()
                                     .collectAsList()
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(List.of("HDFS save complete."), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -505,13 +508,13 @@ public class TeragrepTransformationTest {
         streamingTestUtil
                 .performDPLTest("index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id, testFile, ds -> {
                     List<String> listOfResult = ds
-                            .select("offset")
-                            .orderBy("offset")
+                            .select("_raw")
+                            .distinct()
                             .collectAsList()
                             .stream()
                             .map(r -> r.getAs(0).toString())
                             .collect(Collectors.toList());
-                    Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                    Assertions.assertEquals(List.of("HDFS save complete."), listOfResult);
                 });
         this.streamingTestUtil.setUp();
         streamingTestUtil.performDPLTest("| teragrep exec hdfs load /tmp/pth_10_hdfs/" + id, testFile, ds -> {
@@ -538,13 +541,13 @@ public class TeragrepTransformationTest {
                         "index=index_A | teragrep exec hdfs save /tmp/pth_10_hdfs/" + id + " overwrite=true", testFile,
                         ds -> {
                             List<String> listOfResult = ds
-                                    .select("offset")
-                                    .orderBy("offset")
+                                    .select("_raw")
+                                    .distinct()
                                     .collectAsList()
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            Assertions.assertEquals(Arrays.asList("1", "2", "3", "4", "5"), listOfResult);
+                            Assertions.assertEquals(List.of("HDFS save complete."), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();
@@ -768,12 +771,13 @@ public class TeragrepTransformationTest {
                                 + id,
                         testFile, ds -> {
                             List<String> listOfResult = ds
-                                    .select("estimate(tokens)")
+                                    .select("_raw")
+                                    .distinct()
                                     .collectAsList()
                                     .stream()
                                     .map(r -> r.getAs(0).toString())
                                     .collect(Collectors.toList());
-                            Assertions.assertEquals(Collections.singletonList("5"), listOfResult);
+                            Assertions.assertEquals(List.of("HDFS save complete."), listOfResult);
                         }
                 );
         this.streamingTestUtil.setUp();

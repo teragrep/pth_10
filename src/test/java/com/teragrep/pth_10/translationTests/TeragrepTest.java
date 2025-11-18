@@ -180,15 +180,19 @@ public class TeragrepTest {
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct
+        StepListNode stepNode = (StepListNode) ct
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
-        final AbstractStep step = stepNode.get();
+        final List<AbstractStep> steps = stepNode.asList();
+        final AbstractStep step = steps.get(0);
 
         Assertions.assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
         final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
         Assertions.assertEquals("/tmp/path", saveStep.pathStr);
         Assertions.assertNull(saveStep.retentionSpan);
+
+        final AbstractStep step2 = steps.get(1);
+        Assertions.assertEquals(CustomResultStep.class, step2.getClass());
     }
 
     @Test
@@ -206,15 +210,18 @@ public class TeragrepTest {
         LOGGER.debug(tree.toStringTree(parser));
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct
+        StepListNode stepNode = (StepListNode) ct
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
-        final AbstractStep step = stepNode.get();
+        final List<AbstractStep> steps = stepNode.asList();
+        final AbstractStep step = steps.get(0);
 
         Assertions.assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
         final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
 
         Assertions.assertEquals("/tmp/path", saveStep.pathStr);
         Assertions.assertEquals("1d", saveStep.retentionSpan);
+        final AbstractStep step2 = steps.get(1);
+        Assertions.assertEquals(CustomResultStep.class, step2.getClass());
     }
 
     @Test
@@ -232,9 +239,10 @@ public class TeragrepTest {
         LOGGER.debug(tree.toStringTree(parser));
 
         final TeragrepTransformation ct = new TeragrepTransformation(ctx, visitor);
-        StepNode stepNode = (StepNode) ct
+        StepListNode stepNode = (StepListNode) ct
                 .visitTeragrepTransformation((DPLParser.TeragrepTransformationContext) tree.getChild(1).getChild(0));
-        final AbstractStep step = stepNode.get();
+        final List<AbstractStep> steps = stepNode.asList();
+        final AbstractStep step = steps.get(0);
 
         Assertions.assertEquals(TeragrepHdfsSaveStep.class, step.getClass());
         final TeragrepHdfsSaveStep saveStep = (TeragrepHdfsSaveStep) step;
@@ -242,6 +250,10 @@ public class TeragrepTest {
         Assertions.assertEquals("/tmp/path", saveStep.pathStr);
         Assertions.assertTrue(saveStep.overwrite);
         Assertions.assertNull(saveStep.retentionSpan);
+
+        final AbstractStep step2 = steps.get(1);
+        Assertions.assertEquals(CustomResultStep.class, step2.getClass());
+
     }
 
     @Test

@@ -375,8 +375,27 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        return new StepNode(
-                new TeragrepHdfsSaveStep(catCtx, hdfsOverwrite, hdfsPath, hdfsRetentionSpan, format, header)
+        final CustomResultStep customResultStep = new CustomResultStep(
+                new CustomDatasetImpl(new StructType(new StructField[] {
+                        StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                        StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
+                }), Collections.singletonList(new Object[] {
+                        java.sql.Timestamp.from(Instant.now()), "HDFS save complete."
+                }), catCtx)
+        );
+
+        return new StepListNode(
+                Arrays
+                        .asList(
+                                new TeragrepHdfsSaveStep(
+                                        catCtx,
+                                        hdfsOverwrite,
+                                        hdfsPath,
+                                        hdfsRetentionSpan,
+                                        format,
+                                        header
+                                ), customResultStep
+                        )
         );
     }
 
