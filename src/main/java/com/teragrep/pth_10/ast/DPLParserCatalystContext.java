@@ -112,7 +112,7 @@ public class DPLParserCatalystContext implements Cloneable {
             this.messageLogger.accept(msg);
         }
         else {
-            LOGGER.warn("Tried to log message <{}> to UI, but messageLogger was not set!", msg);
+            LOGGER.warn("Tried to log message <{}> to UI for query <{}>, but messageLogger was not set!", queryName, msg);
         }
     }
 
@@ -125,7 +125,7 @@ public class DPLParserCatalystContext implements Cloneable {
             this.metricsLogger.accept(metricsDs);
         }
         else {
-            LOGGER.warn("Tried to send metrics via MetricsLogger, but it was not set.");
+            LOGGER.warn("Tried to send metrics via MetricsLogger for query <{}>, but it was not set.", queryName);
         }
     }
 
@@ -222,6 +222,7 @@ public class DPLParserCatalystContext implements Cloneable {
     private String baseUrl = null;
     private String paragraphUrl = null;
     private String notebookUrl = null;
+    private String queryName = null;
 
     /**
      * Sets the base url to be used for linking to the search results in sent emails
@@ -239,6 +240,24 @@ public class DPLParserCatalystContext implements Cloneable {
      */
     public void setParagraphUrl(String newValue) {
         this.paragraphUrl = newValue;
+    }
+
+    /**
+     * Sets the query name for use in logging
+     *
+     * @param newValue like <code>28935532348</code>
+     */
+    public void setQueryName(String newValue) {
+        this.queryName = newValue;
+    }
+
+    /**
+     * Get the query name
+     *
+     * @return query name
+     */
+    public String getQueryName() {
+        return queryName;
     }
 
     /**

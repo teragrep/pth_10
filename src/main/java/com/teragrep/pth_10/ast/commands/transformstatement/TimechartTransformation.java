@@ -343,7 +343,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 timescale = parts[1].trim();
         }
         else {
-            LOGGER.error("Span length error: missing numerical value:<{}>", value);
+            LOGGER.error("Span length error in query <{}>: missing numerical value:<{}>", catCtx.getQueryName(), value);
             throw new RuntimeException("getSpanLength, missing numerical value:" + value);
         }
         // Calculate value

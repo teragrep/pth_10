@@ -145,7 +145,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
             this.catCtx.getInternalStreamingQueryListener().registerHandler(this.messageHandler);
         }
         else {
-            LOGGER.error("Unable to set message handler successfully.");
+            LOGGER.error("Unable to set message handler successfully to query <{}>.", catCtx.getQueryName());
         }
     }
 
@@ -264,7 +264,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitRoot(DPLParser.RootContext ctx) {
-        LOGGER.info("CatalystVisitor Root incoming: <{}>", ctx.getText());
+        LOGGER.info("CatalystVisitor Root incoming for query <{}>: <{}>", catCtx.getQueryName(), ctx.getText());
         // Set DPL query into CatalystContext: used if original query string is needed for something
         catCtx.setDplQuery(ctx.getText());
 
@@ -275,7 +275,8 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
 
         // Logical part
         if (ctx.searchTransformationRoot() != null) {
-            LOGGER.info("visitRoot Handle logical part: <{}>", ctx.getChild(0).getText());
+            LOGGER
+                    .info("visitRoot Handle logical part for query <{}>: <{}>", catCtx.getQueryName(), ctx.getChild(0).getText());
             logicalPart = visitSearchTransformationRoot(ctx.searchTransformationRoot());
         }
         else {
@@ -288,13 +289,17 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
             transformPart = visitTransformStatement(ctx.transformStatement());
         }
 
-        LOGGER.info("visitRoot complete.");
+        LOGGER.info("visitRoot complete for query <{}>.", catCtx.getQueryName());
         return new TranslationResultNode(stepList);
     }
 
     @Override
     public Node visitSearchTransformationRoot(DPLParser.SearchTransformationRootContext ctx) {
-        LOGGER.info("CatalystVisitor visitSearchTransformationRoot: <{}>", ctx.getText());
+        LOGGER
+                .info(
+                        "CatalystVisitor visitSearchTransformationRoot for query <{}>: <{}>", catCtx.getQueryName(),
+                        ctx.getText()
+                );
 
         // Check for index= / index!= / index IN without right side
         if (ctx.getChildCount() == 1 && ctx.getChild(0) instanceof TerminalNode) {

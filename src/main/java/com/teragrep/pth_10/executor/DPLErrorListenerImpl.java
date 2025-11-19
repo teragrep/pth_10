@@ -76,13 +76,13 @@ public final class DPLErrorListenerImpl extends BaseErrorListener {
             RecognitionException e
     ) {
         if (e == null) {
-            LOGGER.error("Got an exception from <{}> during query {}, no message", listenedTo, queryName);
+            LOGGER.error("Got an exception from <{}> during query <{}>, no message", listenedTo, queryName);
         }
         else {
             LOGGER
                     .error(
-                            "Got an exception from <{}> during query {}: <[{}]>", listenedTo, queryName, e.getMessage(),
-                            e
+                            "Got an exception from <{}> during query <{}>: <[{}]>", listenedTo, queryName,
+                            e.getMessage(), e
                     );
         }
         throw new IllegalStateException(

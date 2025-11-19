@@ -82,7 +82,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     @Override
     public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-        LOGGER.info("Query terminated: {}", queryTerminated.id());
+        LOGGER.info("Query terminated: id: {} name: {}", queryTerminated.id(), queryName);
         streamingQuery.sparkSession().streams().removeListener(this);
     }
 
@@ -102,7 +102,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
                 // a flush call for post query actions to finish
                 catalystContext.flush();
                 try {
-                    LOGGER.info("Stopping streaming query");
+                    LOGGER.info("Stopping streaming query <{}>", queryName);
                     streamingQuery.stop();
                 }
                 catch (TimeoutException e) {

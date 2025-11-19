@@ -84,7 +84,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
         // FIXME implement allnum=bool parameter
         if (ctx.t_eventstats_allnumParameter() != null) {
-            LOGGER.warn("Detected allnum parameter; however, it is not yet implemented and will be skipped.");
+            LOGGER.warn("Detected allnum parameter in query <{}>; however, it is not yet implemented and will be skipped.", catCtx.getQueryName());
             Node allNumParamNode = visit(ctx.t_eventstats_allnumParameter());
         }
 

@@ -145,7 +145,7 @@ public final class TeragrepSystemStep extends AbstractStep {
             });
         }
         catch (IOException e) {
-            LOGGER.error("Failed to load InputStream: ", e);
+            LOGGER.error("Failed to load InputStream for query <{}>: ", catCtx.getQueryName(), e);
             throw new UncheckedIOException("Failed to load InputStream: ", e);
         }
         return rv;

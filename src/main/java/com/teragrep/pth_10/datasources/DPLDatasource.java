@@ -83,8 +83,8 @@ public class DPLDatasource {
 
     public Dataset<Row> constructStreams(ArchiveQuery archiveQuery, boolean isMetadataQuery) {
         // resolve archive Query which is then used with archiveDatasource
-        LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]>", archiveQuery);
-        LOGGER.info("DPL Interpreter constructStream config=<[{}]>", config);
+        LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]> for query <{}>", archiveQuery, catCtx.getQueryName());
+        LOGGER.info("DPL Interpreter constructStream config=<[{}]> for query <{}>", config, catCtx.getQueryName());
         if (!config.getBoolean("dpl.pth_06.enabled")) {
             throw new RuntimeException("Teragrep datasource was disabled: <dpl.pth_06.enabled=false>");
         }
@@ -99,7 +99,7 @@ public class DPLDatasource {
      */
     private Dataset<Row> archiveStreamConsumerDataset(ArchiveQuery query, boolean isMetadataQuery) {
         DataStreamReader reader;
-        LOGGER.info("ArchiveStreamConsumerDatasource initialized with query: <[{}]>", query);
+        LOGGER.info("ArchiveStreamConsumerDatasource initialized with query <{}>: <[{}]>", catCtx.getQueryName(), query);
 
         // setup s3 credentials
         final SparkContext sc = sparkSession.sparkContext();
@@ -159,7 +159,7 @@ public class DPLDatasource {
                 reader = reader.option("scheduler", schedulerType);
             }
             else {
-                LOGGER.warn("DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty");
+                LOGGER.warn("DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty for query <{}>", catCtx.getQueryName());
             }
         }
 
