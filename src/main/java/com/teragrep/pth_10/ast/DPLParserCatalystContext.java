@@ -506,6 +506,7 @@ public class DPLParserCatalystContext implements Cloneable {
             ctx.setDs(inDs);
             ctx.setConfig(config);
             ctx.setAuditInformation(auditInformation);
+            ctx.setQueryName(queryName);
         }
         return ctx;
     }
