@@ -134,7 +134,7 @@ public class DPLDatasource {
                 .option("hideDatabaseExceptions", config.getString("dpl.pth_06.archive.db.hideDatabaseExceptions"))
                 .option("skipNonRFC5424Files", config.getString("dpl.pth_06.archive.s3.skipNonRFC5424Files"))
                 .option("queryXML", query.queryString)
-                .option("queryName",catCtx.getQueryName());
+                .option("queryName", catCtx.getQueryName());
         // Add auditInformation options if exists
         if (catCtx != null && catCtx.getAuditInformation() != null) {
             LOGGER.debug("Adding auditInformation");
