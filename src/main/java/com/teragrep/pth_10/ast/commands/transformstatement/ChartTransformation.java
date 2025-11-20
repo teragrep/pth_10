@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
 public class ChartTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChartTransformation.class);
-    DPLParserCatalystContext catCtx;
+    private final DPLParserCatalystContext catCtx;
 
     EvalTransformation evalTransformation;
     AggregateFunction aggregateFunction;
@@ -112,7 +112,7 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
      * @return
      */
     private Node visitChartTransformationEmitCatalyst(DPLParser.ChartTransformationContext ctx) {
-        LOGGER.info("ChartTransformation incoming: text=<{}>", ctx.getText());
+        LOGGER.info("ChartTransformation incoming: text=<{}> query=<{}>", ctx.getText(), catCtx.getQueryName());
 
         ArrayList<Column> listOfExpr = new ArrayList<>();
         // aggregate function and its field renaming instruction

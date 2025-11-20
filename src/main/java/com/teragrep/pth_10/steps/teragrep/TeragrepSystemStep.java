@@ -118,11 +118,15 @@ public final class TeragrepSystemStep extends AbstractStep {
         final List<String> rv = new ArrayList<>();
 
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("programmatically resolved package: <{}>", TeragrepSystemStep.class.getPackage());
             LOGGER
                     .info(
-                            "programmatically resolved: <{}>",
-                            TeragrepSystemStep.class.getPackage().getImplementationVersion()
+                            "programmatically resolved package: <{}> for query <{}>",
+                            TeragrepSystemStep.class.getPackage(), catCtx.getQueryName()
+                    );
+            LOGGER
+                    .info(
+                            "programmatically resolved: <{}> for query <{}>",
+                            TeragrepSystemStep.class.getPackage().getImplementationVersion(), catCtx.getQueryName()
                     );
         }
 

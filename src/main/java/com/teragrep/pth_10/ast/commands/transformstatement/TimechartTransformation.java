@@ -73,7 +73,7 @@ import java.util.regex.Pattern;
 public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTransformation.class);
-    private DPLParserCatalystContext catCtx = null;
+    private final DPLParserCatalystContext catCtx;
     private DPLParserCatalystVisitor catVisitor;
     private Document doc;
 
@@ -113,7 +113,11 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         Column span = null;
 
         if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty()) {
-            LOGGER.info("Timechart Optional parameters: <[{}]>", ctx.t_timechart_binOptParameter().get(0).getText());
+            LOGGER
+                    .info(
+                            "Timechart Optional parameters: <[{}]> for query <{}>",
+                            ctx.t_timechart_binOptParameter().get(0).getText(), catCtx.getQueryName()
+                    );
 
             ColumnNode spanNode = (ColumnNode) visit(ctx.t_timechart_binOptParameter().get(0));
             if (spanNode != null) {
@@ -248,13 +252,13 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_timechart_binOptParameter(DPLParser.T_timechart_binOptParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binOptParameter:<{}>", ctx.getText());
+        LOGGER.info("visitT_timechart_binOptParameter:<{}> query:<{}>", ctx.getText(), catCtx.getQueryName());
         return visitChildren(ctx);
     }
 
     @Override
     public Node visitT_timechart_binSpanParameter(DPLParser.T_timechart_binSpanParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binSpanParameter:<{}>", ctx.getText());
+        LOGGER.info("visitT_timechart_binSpanParameter:<{}> query:<{}>", ctx.getText(), catCtx.getQueryName());
         CalendarInterval ival = getSpanLength(ctx.getChild(1).getText());
         Column col = new Column("_time");
         Column span = functions.window(col, String.valueOf(ival));

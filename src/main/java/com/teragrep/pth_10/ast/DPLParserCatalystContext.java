@@ -112,7 +112,11 @@ public class DPLParserCatalystContext implements Cloneable {
             this.messageLogger.accept(msg);
         }
         else {
-            LOGGER.warn("Tried to log message <{}> to UI for query <{}>, but messageLogger was not set!", queryName, msg);
+            LOGGER
+                    .warn(
+                            "Tried to log message <{}> to UI for query <{}>, but messageLogger was not set!", queryName,
+                            msg
+                    );
         }
     }
 

@@ -69,11 +69,19 @@ public class SearchTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitSearchTransformation(DPLParser.SearchTransformationContext ctx) {
-        LOGGER.info("SearchTransformation incoming: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
+        LOGGER
+                .info(
+                        "SearchTransformation incoming: children=<{}> text=<{}> query=<{}>", ctx.getChildCount(),
+                        ctx.getText(), catCtx.getQueryName()
+                );
 
         Node rv = searchTransformationEmitCatalyst(ctx);
 
-        LOGGER.info("searchTransformation return: class=<{}>", rv.getClass().getName());
+        LOGGER
+                .info(
+                        "searchTransformation return: class=<{}> query=<{}>", rv.getClass().getName(),
+                        catCtx.getQueryName()
+                );
         return rv;
     }
 
@@ -85,7 +93,7 @@ public class SearchTransformation extends DPLParserBaseVisitor<Node> {
             // isSearchCommand=true is used to skip generating archiveQuery as 'search' is used to filter existing dataset
             // rather than getting a new one and filtering it
             final LogicalStatementCatalyst logiStat = new LogicalStatementCatalyst(this.catCtx);
-            LOGGER.info("SearchTransformationRoot - skipping xml generation");
+            LOGGER.info("SearchTransformationRoot - skipping xml generation for query <{}>", catCtx.getQueryName());
             final ColumnNode filter = (ColumnNode) logiStat.visitSearchTransformationRoot(searchRootCtx);
             if (filter.getColumn() != null) {
                 searchStep.setFilteringColumn(filter.getColumn());

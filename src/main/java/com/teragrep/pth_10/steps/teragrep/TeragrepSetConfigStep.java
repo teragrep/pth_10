@@ -101,7 +101,7 @@ public final class TeragrepSetConfigStep extends AbstractStep {
             throw new IllegalArgumentException("Unknown config value type: " + oldValue.valueType());
         }
 
-        LOGGER.info("Set configuration <[{}]> to new value <[{}]>", key, value);
+        LOGGER.info("Set configuration <[{}]> to new value <[{}]> for query <{}>", key, value, catCtx.getQueryName());
 
         catCtx.setConfig(newConfig);
 

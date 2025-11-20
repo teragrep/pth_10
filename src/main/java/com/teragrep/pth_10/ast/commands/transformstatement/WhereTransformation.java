@@ -68,7 +68,7 @@ import org.slf4j.LoggerFactory;
 public class WhereTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WhereTransformation.class);
-    DPLParserCatalystContext catCtx = null;
+    private final DPLParserCatalystContext catCtx;
 
     public WhereStep whereStep = null;
 
@@ -91,7 +91,7 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
         ColumnNode cn = (ColumnNode) whereTransformationEmitCatalyst(ctx);
 
         this.whereStep.setWhereColumn(cn.getColumn());
-        LOGGER.info("Set whereStep column to: <{}>", cn.getColumn().expr().sql());
+        LOGGER.info("Set whereStep column to: <{}> for query <{}>", cn.getColumn().expr().sql(), catCtx.getQueryName());
 
         return new StepNode(whereStep);
     }
@@ -115,7 +115,11 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
                 n = new ColumnNode(functions.not(whereCol));
             }
             sql = whereCol.expr().sql();
-            LOGGER.info("WhereTransformation(Catalyst) out: children=<{}> sql=<{}>", ctx.getChildCount(), sql);
+            LOGGER
+                    .info(
+                            "WhereTransformation(Catalyst) out: children=<{}> sql=<{}> query=<{}>", ctx.getChildCount(),
+                            sql, catCtx.getQueryName()
+                    );
         }
         else {
             if (n != null)

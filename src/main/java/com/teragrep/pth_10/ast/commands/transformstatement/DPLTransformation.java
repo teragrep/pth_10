@@ -66,7 +66,7 @@ import java.util.*;
 public class DPLTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLTransformation.class);
-    DPLParserCatalystContext catCtx = null;
+    private final DPLParserCatalystContext catCtx;
 
     public DplStep dplStep = null;
 
@@ -75,7 +75,11 @@ public class DPLTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitDplTransformation(DPLParser.DplTransformationContext ctx) {
-        LOGGER.info("DPLTransformation: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
+        LOGGER
+                .info(
+                        "DPLTransformation: children=<{}> text=<{}> query=<{}>", ctx.getChildCount(), ctx.getText(),
+                        catCtx.getQueryName()
+                );
 
         return dplTransformationEmitCatalyst(ctx);
     }

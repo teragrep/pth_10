@@ -77,12 +77,16 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
     public TransformStatement(DPLParserCatalystContext catCtx, DPLParserCatalystVisitor catVisitor) {
         this.catVisitor = catVisitor;
         this.catCtx = catCtx;
-        LOGGER.info("Initializing TransformStatement with catCtx=<{}> catVisitor=<{}>", catCtx, catVisitor);
+        LOGGER
+                .info(
+                        "Initializing TransformStatement with catCtx=<{}> catVisitor=<{}> query=<{}>", catCtx,
+                        catVisitor, catCtx.getQueryName()
+                );
     }
 
     @Override
     public Node visitTransformStatement(DPLParser.TransformStatementContext ctx) {
-        LOGGER.info("visitTransformStatement incoming: text=<{}>", ctx.getText());
+        LOGGER.info("visitTransformStatement incoming: text=<{}> query=<{}>", ctx.getText(), catCtx.getQueryName());
         return transformStatementEmitCatalyst(ctx);
     }
 
@@ -94,7 +98,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
      */
     private Node transformStatementEmitCatalyst(DPLParser.TransformStatementContext ctx) {
         if (ctx.EOF() != null) {
-            LOGGER.info("TransformStatement <EOF>, return null");
+            LOGGER.info("TransformStatement <EOF>, return null for query <{}>", catCtx.getQueryName());
             return null;
         }
 
@@ -105,17 +109,17 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
 
         // Logging
         if (leftTree != null) {
-            LOGGER.info("-> Left tree: text=<{}>", leftTree.getText());
+            LOGGER.info("-> Left tree: text=<{}> query:<{}>", leftTree.getText(), catCtx.getQueryName());
         }
         else {
-            LOGGER.info("-> Left tree NULL");
+            LOGGER.info("-> Left tree NULL query:<{}>", catCtx.getQueryName());
         }
 
         if (rightTree != null) {
-            LOGGER.info("-> Right tree: text=<{}>", rightTree.getText());
+            LOGGER.info("-> Right tree: text=<{}> query:<{}>", rightTree.getText(), catCtx.getQueryName());
         }
         else {
-            LOGGER.info("-> Right tree NULL");
+            LOGGER.info("-> Right tree NULL query:<{}>", catCtx.getQueryName());
         }
 
         // Visit command transformations

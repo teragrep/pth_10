@@ -120,7 +120,7 @@ public class TimeStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitTimeFormatQualifier(DPLParser.TimeFormatQualifierContext ctx) {
-        LOGGER.info("visitTimeFormatQualifier incoming: text=<{}>", ctx.getText());
+        LOGGER.info("visitTimeFormatQualifier incoming: text=<{}> query=<{}>", ctx.getText(), catCtx.getQueryName());
         return new StringNode(new Token(Type.TIMEFORMAT_STATEMENT, ctx.getChild(1).getText()));
     }
 

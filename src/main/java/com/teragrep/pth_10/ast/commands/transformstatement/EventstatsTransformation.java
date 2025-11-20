@@ -63,7 +63,7 @@ import java.util.List;
 public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EventstatsTransformation.class);
-    private DPLParserCatalystContext catCtx;
+    private final DPLParserCatalystContext catCtx;
     private final String hdfsPath;
     private final List<Column> listOfAggregations = new ArrayList<>();
     public EventstatsStep eventstatsStep = null;
@@ -84,7 +84,11 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
         // FIXME implement allnum=bool parameter
         if (ctx.t_eventstats_allnumParameter() != null) {
-            LOGGER.warn("Detected allnum parameter in query <{}>; however, it is not yet implemented and will be skipped.", catCtx.getQueryName());
+            LOGGER
+                    .warn(
+                            "Detected allnum parameter in query <{}>; however, it is not yet implemented and will be skipped.",
+                            catCtx.getQueryName()
+                    );
             Node allNumParamNode = visit(ctx.t_eventstats_allnumParameter());
         }
 
@@ -148,7 +152,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_eventstats_byInstruction(DPLParser.T_eventstats_byInstructionContext ctx) {
         String byInst = ctx.getChild(1).getText();
 
-        LOGGER.info("byInst: text=<{}>", byInst);
+        LOGGER.info("byInst: text=<{}> query=<{}>", byInst, catCtx.getQueryName());
 
         return new StringNode(new Token(Token.Type.STRING, byInst));
     }
@@ -163,7 +167,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_eventstats_fieldRenameInstruction(DPLParser.T_eventstats_fieldRenameInstructionContext ctx) {
         String renameInst = ctx.getChild(1).getText();
 
-        LOGGER.info("renameInst: text=<{}>", renameInst);
+        LOGGER.info("renameInst: text=<{}> query=<{}>", renameInst, catCtx.getQueryName());
 
         return new StringNode(new Token(Token.Type.STRING, renameInst));
     }

@@ -120,7 +120,8 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                 if (overwrite) {
                     LOGGER
                             .info(
-                                    "TG HDFS Save: Pre-existing data was found in specified path. Deleting pre-existing data."
+                                    "TG HDFS Save: Pre-existing data was found in specified path. Deleting pre-existing data for query <{}>",
+                                    catCtx.getQueryName()
                             );
 
                     // path=fsPath, recursive=true
@@ -153,7 +154,8 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
                         // this is due to sequential mode visiting this multiple times -> metadata will exist after first batch and overwrite=false would block rest of the batches!
                         LOGGER
                                 .info(
-                                        "Previous HDFS save to this path was not streaming and appId matches last save; allowing overwrite and bypassing overwrite=false parameter."
+                                        "Previous HDFS save to this path was not streaming and appId matches last save; allowing overwrite and bypassing overwrite=false parameter for query <{}>",
+                                        catCtx.getQueryName()
                                 );
                     }
                     else {
@@ -217,7 +219,11 @@ public final class TeragrepHdfsSaveStep extends TeragrepHdfsStep {
             throw new RuntimeException("Saving metadata object failed due to: \n" + e);
         }
 
-        LOGGER.info("Dataset in HDFS save was streaming={}", dataset.isStreaming());
+        LOGGER
+                .info(
+                        "Dataset in HDFS save was streaming={} for query <{}>", dataset.isStreaming(),
+                        catCtx.getQueryName()
+                );
         if (!dataset.isStreaming()) {
             // Non-streaming dataset, e.g. inside forEachBatch (sequential stack mode)
             final String cpPath = pathStr + "/checkpoint";

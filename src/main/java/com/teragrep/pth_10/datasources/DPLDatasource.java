@@ -99,7 +99,11 @@ public class DPLDatasource {
      */
     private Dataset<Row> archiveStreamConsumerDataset(ArchiveQuery query, boolean isMetadataQuery) {
         DataStreamReader reader;
-        LOGGER.info("ArchiveStreamConsumerDatasource initialized with query <{}>: <[{}]>", catCtx.getQueryName(), query);
+        LOGGER
+                .info(
+                        "ArchiveStreamConsumerDatasource initialized with query <{}>: <[{}]>", catCtx.getQueryName(),
+                        query
+                );
 
         // setup s3 credentials
         final SparkContext sc = sparkSession.sparkContext();
@@ -160,7 +164,11 @@ public class DPLDatasource {
                 reader = reader.option("scheduler", schedulerType);
             }
             else {
-                LOGGER.warn("DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty for query <{}>", catCtx.getQueryName());
+                LOGGER
+                        .warn(
+                                "DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty for query <{}>",
+                                catCtx.getQueryName()
+                        );
             }
         }
 
