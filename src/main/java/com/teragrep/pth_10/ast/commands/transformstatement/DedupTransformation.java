@@ -161,9 +161,8 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
 
             LOGGER
                     .info(
-                            "Processing sortByClauses in dedup with params: sbc={}, limit={}, desc={}", Arrays
-                                    .toString(sortStep.getListOfSortByClauses().toArray()),
-                            sortStep.getLimit(), sortStep.isDesc()
+                            "Processing sortByClauses in dedup with params: sbc={}, limit={}, desc={}, query=<{}>",
+                            Arrays.toString(sortStep.getListOfSortByClauses().toArray()), sortStep.getLimit(), sortStep.isDesc(), catCtx.getQueryName()
                     );
 
         }
@@ -181,8 +180,8 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
 
         LOGGER
                 .info(
-                        "Processing dedup with params: limit={}, keepempty={}, keepevents={}, consecutive={}, cols={}",
-                        maxDuplicates, keepEmpty, keepEvents, consecutive, Arrays.toString(listOfFields.toArray())
+                        "Processing dedup with params: limit={}, keepempty={}, keepevents={}, consecutive={}, cols={}, query={}",
+                        maxDuplicates, keepEmpty, keepEvents, consecutive, Arrays.toString(listOfFields.toArray()), catCtx.getQueryName()
                 );
 
         // only return StepListNode if sort is used as they're two separate step objects (dedup & sort)

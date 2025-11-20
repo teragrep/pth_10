@@ -59,7 +59,7 @@ public class DPLErrorListenerTest {
     public void invalidQueryTest() { // should throw IllegalStateException, no NPEs
         DPLLexer lexer = new DPLLexer(CharStreams.fromString("| eval a=eval bc]"));
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        parser.addErrorListener(new DPLErrorListenerImpl("Parser"));
+        parser.addErrorListener(new DPLErrorListenerImpl("Parser", "QueryId"));
 
         IllegalStateException e = Assertions.assertThrows(IllegalStateException.class, parser::root);
         Assertions.assertTrue(e.getMessage().contains("Parser failure"));

@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplainTransformation.class);
-    DPLParserCatalystContext catCtx = null;
+    private final DPLParserCatalystContext catCtx;
 
     public ExplainStep explainStep = null;
 
@@ -71,7 +71,11 @@ public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitExplainTransformation(DPLParser.ExplainTransformationContext ctx) {
-        LOGGER.info("ExplainTransformation incoming: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
+        LOGGER
+                .info(
+                        "ExplainTransformation incoming: children=<{}> text=<{}> query=<{}>", ctx.getChildCount(),
+                        ctx.getText(), catCtx.getQueryName()
+                );
 
         return explainTransformationEmitCatalyst(ctx);
     }
