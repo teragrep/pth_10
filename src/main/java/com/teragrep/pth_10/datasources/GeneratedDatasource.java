@@ -49,10 +49,8 @@ import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.execution.streaming.MemoryStream;
 import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
@@ -106,21 +104,26 @@ public class GeneratedDatasource {
 
     public Dataset<Row> constructEmptyStream() throws StreamingQueryException {
         SQLContext sqlContext = sparkSession.sqlContext();
-        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        System.out.println("encoder");
+        Encoder<Row> encoder = ExpressionEncoder.apply(schema);
+        System.out.println("used : " + encoder);
         MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
 
         Dataset<Row> rowDataset = rowMemoryStream.toDF();
-        final String queryName = "construct_empty_" + ((int) (Math.random() * 100000));
-
+        /* final String queryName = "construct_empty_" + ((int) (Math.random() * 100000));
+        
         DataStreamWriter<Row> writer = rowDataset.writeStream().format("memory").outputMode(OutputMode.Append());
-
+        */
         // generate one row with practically no data
         // TODO: Not generating any rows stops any progress. Figure out a way to generate a empty *streaming* dataset!
         rowMemoryStream
                 .addData(makeRows(new java.sql.Timestamp(0L), Collections.singletonList(""), "", "", "", "", "", -1L, ""));
 
+        /* System.out.println("start streamingQuery");
         StreamingQuery sq = this.catCtx.getInternalStreamingQueryListener().registerQuery(queryName, writer);
+        System.out.println("awaiting termination");
         sq.awaitTermination();
+        System.out.println("done streamingQuery"); */
 
         // filter the one generated row out to have a truly empty dataset
         return rowDataset.where(functions.col("offset").geq(functions.lit(0)));
@@ -137,7 +140,7 @@ public class GeneratedDatasource {
             throws StreamingQueryException, InterruptedException, UnknownHostException {
         SQLContext sqlContext = sparkSession.sqlContext();
 
-        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        Encoder<Row> encoder = Encoders.row(schema);
         MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
 
         if (commandStr == null) {

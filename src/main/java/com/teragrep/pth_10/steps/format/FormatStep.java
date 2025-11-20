@@ -47,7 +47,7 @@ package com.teragrep.pth_10.steps.format;
 
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -138,7 +138,7 @@ public final class FormatStep extends AbstractFormatStep implements Serializable
             strBuilder.append(' ');
 
             return RowFactory.create(strBuilder.toString());
-        }, RowEncoder.apply(new StructType(new StructField[] {
+        }, ExpressionEncoder.apply(new StructType(new StructField[] {
                 StructField.apply("search", DataTypes.StringType, false, new MetadataBuilder().build())
         })));
 

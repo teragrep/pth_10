@@ -79,7 +79,7 @@ public class ColumnBinaryListingDatasetTest {
                 .config("spark.executor.heartbeatInterval", "2s") // should be "significantly less" than spark.network.timeout
                 .config("spark.driver.host", "localhost")
                 .config("spark.driver.bindAddress", "localhost")
-                .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.4.0") // added for kafka tests
+                .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") // added for kafka tests
                 .getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
     }

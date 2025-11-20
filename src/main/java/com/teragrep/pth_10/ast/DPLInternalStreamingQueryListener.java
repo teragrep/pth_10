@@ -214,6 +214,42 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
         sendMessageEvent(this._queryInfoMap);
     }
 
+    @Override
+    public void onQueryIdle(final QueryIdleEvent event) {
+        final String nameOfQuery = this._queryInfoMap.get(event.id().toString()).get("name");
+        final Map<String, String> internalKeyValueMap = new HashMap<>();
+
+        internalKeyValueMap.put("name", nameOfQuery);
+        internalKeyValueMap.put("status", "processing");
+
+        // completion checking
+        if (this.isRegisteredQuery(nameOfQuery)) {
+            DPLInternalStreamingQuery sq = this.getQuery(nameOfQuery);
+            if (this.checkCompletion(sq)) {
+                this.stopQuery(nameOfQuery);
+                boolean wasRemoved = this.removeQuery(nameOfQuery);
+
+                // status -> complete
+                internalKeyValueMap.put("status", "complete");
+
+                if (!wasRemoved) {
+                    LOGGER
+                            .error(
+                                    "Removing the query <{}> from the internal DPLStreamingQuery listener was unsuccessful!",
+                                    nameOfQuery
+                            );
+                }
+            }
+        }
+        else {
+            internalKeyValueMap.put("status", "notRegistered");
+        }
+
+        // update main map and send event
+        this._queryInfoMap.put(event.id().toString(), internalKeyValueMap);
+        sendMessageEvent(this._queryInfoMap);
+    }
+
     /**
      * Emit on query termination
      * 
@@ -386,22 +422,26 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
         boolean isMemoryStreamDone = true;
         for (int i = 0; i < sq.lastProgress().sources().length; i++) {
             SourceProgress progress = sq.lastProgress().sources()[i];
-
+            System.out.println(progress);
+            System.out.println(progress.description());
             if (progress.description() != null && !progress.description().startsWith("MemoryStream[")) {
                 // ignore others than MemoryStream
                 continue;
             }
 
             if (progress.startOffset() != null) {
+                System.out.println(progress.startOffset() + " " + progress.endOffset());
                 if (!progress.startOffset().equalsIgnoreCase(progress.endOffset())) {
                     isMemoryStreamDone = false;
                 }
             }
             else {
+                System.out.println("startOffset null");
                 isMemoryStreamDone = false;
             }
         }
 
+        System.out.println("isMemoryStreamDone: " + isMemoryStreamDone);
         return isMemoryStreamDone;
     }
 }

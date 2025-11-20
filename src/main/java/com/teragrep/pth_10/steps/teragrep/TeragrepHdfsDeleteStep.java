@@ -49,7 +49,6 @@ import com.teragrep.functions.dpf_02.AbstractStep;
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.execution.streaming.MemoryStream;
 import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.StreamingQuery;
@@ -113,7 +112,7 @@ public final class TeragrepHdfsDeleteStep extends AbstractStep {
         // make a streaming dataset
         SparkSession ss = catCtx.getSparkSession();
         SQLContext sqlCtx = ss.sqlContext();
-        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        Encoder<Row> encoder = ExpressionEncoder.apply(schema);
         MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlCtx, Option.apply(1), encoder);
 
         generated = rowMemoryStream.toDS();
