@@ -86,7 +86,9 @@ class TeragrepBloomFilterTest {
                 );
         Config config = ConfigFactory.parseProperties(properties);
         Assertions.assertDoesNotThrow(() -> {
-            conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
+            try (PreparedStatement statement = conn.prepareStatement("DROP ALL OBJECTS")) {
+                statement.execute(); // h2 clear database
+            }
         });
         Assertions.assertDoesNotThrow(() -> {
             Class.forName("org.h2.Driver");
@@ -104,20 +106,25 @@ class TeragrepBloomFilterTest {
                 + "    `partition_id` BIGINT(20) UNSIGNED NOT NULL,"
                 + "    `filter_type_id` BIGINT(20) UNSIGNED NOT NULL," + "    `filter` LONGBLOB NOT NULL" + ");";
         Assertions.assertDoesNotThrow(() -> {
-            conn.prepareStatement(createFilterType).execute();
-            conn.prepareStatement(createTable).execute();
+            try (PreparedStatement statement = conn.prepareStatement(createFilterType)) {
+                statement.execute();
+            }
+            try (PreparedStatement statement = conn.prepareStatement(createTable)) {
+                statement.execute();
+            }
         });
         int loops = 0;
         for (Map.Entry<Long, Double> entry : sizeMap.entrySet()) {
             loops++;
             Assertions.assertDoesNotThrow(() -> {
-                PreparedStatement stmt = conn.prepareStatement(insertSql);
-                stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
-                stmt.setDouble(2, entry.getValue()); // filtertype.targetFpp
-                stmt.setString(3, pattern);
-                stmt.executeUpdate();
-                stmt.clearParameters();
-                conn.commit();
+                try (PreparedStatement stmt = conn.prepareStatement(insertSql)) {
+                    stmt.setInt(1, entry.getKey().intValue()); // filtertype.expectedElements
+                    stmt.setDouble(2, entry.getValue()); // filtertype.targetFpp
+                    stmt.setString(3, pattern);
+                    stmt.executeUpdate();
+                    stmt.clearParameters();
+                    conn.commit();
+                }
             });
         }
         Assertions.assertEquals(3, loops);
@@ -126,9 +133,11 @@ class TeragrepBloomFilterTest {
     @AfterAll
     public void tearDown() {
         Assertions.assertDoesNotThrow(() -> {
-            conn.prepareStatement("DROP ALL OBJECTS").execute(); // h2 clear database
+            try (PreparedStatement statement = conn.prepareStatement("DROP ALL OBJECTS")) {
+                statement.execute();// h2 clear database
+            }
         });
-        Assertions.assertDoesNotThrow(conn::close);
+
     }
 
     // -- Tests --
@@ -153,23 +162,26 @@ class TeragrepBloomFilterTest {
         Map.Entry<Long, Double> entry = sizeMap.entrySet().iterator().next();
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = conn.prepareStatement(sql).executeQuery();
-            int cols = rs.getMetaData().getColumnCount();
-            BloomFilter resultFilter = emptyFilter;
-            int loops = 0;
-            while (rs.next()) {
-                byte[] bytes = rs.getBytes(1);
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                resultFilter = BloomFilter.readFrom(bais);
-                loops++;
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                ResultSet rs = stmt.executeQuery();
+                int cols = rs.getMetaData().getColumnCount();
+                BloomFilter resultFilter = emptyFilter;
+                int loops = 0;
+
+                while (rs.next()) {
+                    byte[] bytes = rs.getBytes(1);
+                    ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                    resultFilter = BloomFilter.readFrom(bais);
+                    loops++;
+                }
+                Assertions.assertEquals(4, loops);
+                Assertions.assertNotNull(resultFilter);
+                Assertions.assertEquals(1, cols);
+                Assertions.assertTrue(resultFilter.mightContain("one"));
+                Assertions.assertFalse(resultFilter.mightContain("neo"));
+                Assertions.assertTrue(resultFilter.expectedFpp() <= entry.getValue());
+                rs.close();
             }
-            Assertions.assertEquals(4, loops);
-            Assertions.assertNotNull(resultFilter);
-            Assertions.assertEquals(1, cols);
-            Assertions.assertTrue(resultFilter.mightContain("one"));
-            Assertions.assertFalse(resultFilter.mightContain("neo"));
-            Assertions.assertTrue(resultFilter.expectedFpp() <= entry.getValue());
-            rs.close();
         });
     }
 
@@ -193,19 +205,22 @@ class TeragrepBloomFilterTest {
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
             BloomFilter resultFilter = emptyFilter;
-            ResultSet rs = conn.prepareStatement(sql).executeQuery();
-            while (rs.next()) {
-                byte[] bytes = rs.getBytes(1);
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                resultFilter = BloomFilter.readFrom(bais);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    byte[] bytes = rs.getBytes(1);
+                    ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                    resultFilter = BloomFilter.readFrom(bais);
+                }
+
+                int cols = rs.getMetaData().getColumnCount();
+                Assertions.assertNotNull(resultFilter);
+                Assertions.assertEquals(1, cols);
+                Assertions.assertTrue(resultFilter.mightContain("one"));
+                Assertions.assertFalse(resultFilter.mightContain("neo"));
+                Assertions.assertTrue(resultFilter.expectedFpp() <= 0.01D);
+                Assertions.assertDoesNotThrow(rs::close);
             }
-            int cols = rs.getMetaData().getColumnCount();
-            Assertions.assertNotNull(resultFilter);
-            Assertions.assertEquals(1, cols);
-            Assertions.assertTrue(resultFilter.mightContain("one"));
-            Assertions.assertFalse(resultFilter.mightContain("neo"));
-            Assertions.assertTrue(resultFilter.expectedFpp() <= 0.01D);
-            Assertions.assertDoesNotThrow(rs::close);
         });
         // Create second filter that will overwrite first one
         List<String> secondTokens = new ArrayList<>(Collections.singletonList("neo"));
@@ -225,21 +240,23 @@ class TeragrepBloomFilterTest {
         secondFilter.saveFilter(true);
         String secondSql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet secondRs = conn.prepareStatement(secondSql).executeQuery();
-            BloomFilter secondResultFilter = emptyFilter;
-            while (secondRs.next()) {
-                byte[] bytes = secondRs.getBytes(1);
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                secondResultFilter = BloomFilter.readFrom(bais);
-            }
-            int secondCols = secondRs.getMetaData().getColumnCount();
+            try (PreparedStatement stmt = conn.prepareStatement(secondSql)) {
+                ResultSet secondRs = stmt.executeQuery();
+                BloomFilter secondResultFilter = emptyFilter;
+                while (secondRs.next()) {
+                    byte[] bytes = secondRs.getBytes(1);
+                    ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                    secondResultFilter = BloomFilter.readFrom(bais);
+                }
+                int secondCols = secondRs.getMetaData().getColumnCount();
 
-            Assertions.assertNotNull(secondResultFilter);
-            Assertions.assertEquals(1, secondCols);
-            Assertions.assertFalse(secondResultFilter.mightContain("one"));
-            Assertions.assertTrue(secondResultFilter.mightContain("neo"));
-            Assertions.assertTrue(secondResultFilter.expectedFpp() <= 0.01D);
-            Assertions.assertDoesNotThrow(secondRs::close);
+                Assertions.assertNotNull(secondResultFilter);
+                Assertions.assertEquals(1, secondCols);
+                Assertions.assertFalse(secondResultFilter.mightContain("one"));
+                Assertions.assertTrue(secondResultFilter.mightContain("neo"));
+                Assertions.assertTrue(secondResultFilter.expectedFpp() <= 0.01D);
+                Assertions.assertDoesNotThrow(secondRs::close);
+            }
         });
     }
 
@@ -273,23 +290,25 @@ class TeragrepBloomFilterTest {
         Double fpp = sizeMap.get(size);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = conn.prepareStatement(sql).executeQuery();
-            int cols = rs.getMetaData().getColumnCount();
-            BloomFilter resultFilter = emptyFilter;
-            int loops = 0;
-            while (rs.next()) {
-                loops++;
-                byte[] bytes = rs.getBytes(1);
-                ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-                resultFilter = BloomFilter.readFrom(bais);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                ResultSet rs = stmt.executeQuery();
+                int cols = rs.getMetaData().getColumnCount();
+                BloomFilter resultFilter = emptyFilter;
+                int loops = 0;
+                while (rs.next()) {
+                    loops++;
+                    byte[] bytes = rs.getBytes(1);
+                    ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+                    resultFilter = BloomFilter.readFrom(bais);
+                }
+                Assertions.assertEquals(1, loops);
+                Assertions.assertNotNull(resultFilter);
+                Assertions.assertEquals(1, cols);
+                Assertions.assertTrue(resultFilter.mightContain("one"));
+                Assertions.assertFalse(resultFilter.mightContain("neo"));
+                Assertions.assertTrue(resultFilter.expectedFpp() <= fpp);
+                Assertions.assertDoesNotThrow(rs::close);
             }
-            Assertions.assertEquals(1, loops);
-            Assertions.assertNotNull(resultFilter);
-            Assertions.assertEquals(1, cols);
-            Assertions.assertTrue(resultFilter.mightContain("one"));
-            Assertions.assertFalse(resultFilter.mightContain("neo"));
-            Assertions.assertTrue(resultFilter.expectedFpp() <= fpp);
-            Assertions.assertDoesNotThrow(rs::close);
         });
     }
 
@@ -297,12 +316,14 @@ class TeragrepBloomFilterTest {
     public void testPatternSavedToDatabase() {
         String sql = "SELECT `pattern` FROM `filtertype` GROUP BY `pattern`";
         Assertions.assertDoesNotThrow(() -> {
-            ResultSet rs = conn.prepareStatement(sql).executeQuery();
-            String pattern = "";
-            while (rs.next()) {
-                pattern = rs.getString(1);
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                ResultSet rs = stmt.executeQuery();
+                String pattern = "";
+                while (rs.next()) {
+                    pattern = rs.getString(1);
+                }
+                Assertions.assertEquals(this.pattern, pattern);
             }
-            Assertions.assertEquals(this.pattern, pattern);
         });
     }
 
