@@ -164,7 +164,7 @@ public class StreamingTestUtil {
                 .config("spark.driver.bindAddress", "localhost")
                 .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0") // added for kafka tests
                 .getOrCreate();
-        spark.sparkContext().setLogLevel("DEBUG");
+        spark.sparkContext().setLogLevel("ERROR");
     }
 
     /**
