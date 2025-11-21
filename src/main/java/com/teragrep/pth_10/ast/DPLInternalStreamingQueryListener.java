@@ -45,11 +45,9 @@
  */
 package com.teragrep.pth_10.ast;
 
-import com.teragrep.pth_06.ArchiveMicroStreamReader;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.streaming.DataStreamWriter;
-import org.apache.spark.sql.streaming.SourceProgress;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryListener;
 import org.slf4j.Logger;
@@ -58,8 +56,8 @@ import org.slf4j.LoggerFactory;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Consumer;
 
 /**
  * StreamingQueryListener used to handle stopping all the streaming queries used internally in the DPL translation layer
@@ -72,17 +70,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
     /**
      * Map containing all the queryName-DPLInternalStreamingQuery k,v pairs
      */
-    private final Map<String, DPLInternalStreamingQuery> _queries = new HashMap<>();
-
-    /**
-     * Used to send messages about the current streaming queries to the UI Map [K: String, V: Map[K:String, V:String]]
-     */
-    private Consumer<Map<String, Map<String, String>>> _msgHandler;
-
-    /**
-     * Contains information of all the queries Key = query id Value = map of query info key-value
-     */
-    private final Map<String, Map<String, String>> _queryInfoMap = new HashMap<>();
+    private final Map<UUID, DPLInternalStreamingQuery> _queries = new HashMap<>();
 
     public DPLInternalStreamingQueryListener() {
         super();
@@ -109,38 +97,13 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
     }
 
     /**
-     * Add message handler to this listener
-     * 
-     * @param handler Consumer of type String
-     */
-    public void registerHandler(Consumer<Map<String, Map<String, String>>> handler) {
-        LOGGER.info("Registering handler to DPLInternalStreamingQueryListener");
-        this._msgHandler = handler;
-    }
-
-    /**
-     * Remove message handler from this listener
-     */
-    public void unregisterHandler() {
-        LOGGER.info("Unregistering handler from DPLInternalStreamingQueryListener");
-        this._msgHandler = null;
-    }
-
-    /**
      * Emit on query start
      * 
      * @param queryStartedEvent Spark calls on query start
      */
     @Override
     public void onQueryStarted(QueryStartedEvent queryStartedEvent) {
-        final Map<String, String> internalKeyValueMap = new HashMap<>();
-
-        internalKeyValueMap.put("name", queryStartedEvent.name());
-        internalKeyValueMap.put("status", "started");
-
-        // update main map and send event
-        this._queryInfoMap.put(queryStartedEvent.id().toString(), internalKeyValueMap);
-        sendMessageEvent(this._queryInfoMap);
+        //no-op
     }
 
     /**
@@ -150,104 +113,26 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
      */
     @Override
     public void onQueryProgress(QueryProgressEvent queryProgressEvent) {
-        final String nameOfQuery = queryProgressEvent.progress().name();
-        final Map<String, String> internalKeyValueMap = new HashMap<>();
-
-        internalKeyValueMap.put("name", nameOfQuery);
-        internalKeyValueMap.put("status", "processing");
-
-        internalKeyValueMap
-                .put("processedRowsPerSecond", String.valueOf(queryProgressEvent.progress().processedRowsPerSecond()));
-        internalKeyValueMap.put("batchId", String.valueOf(queryProgressEvent.progress().batchId()));
-        internalKeyValueMap
-                .put("inputRowsPerSecond", String.valueOf(queryProgressEvent.progress().inputRowsPerSecond()));
-        internalKeyValueMap.put("id", String.valueOf(queryProgressEvent.progress().id()));
-        internalKeyValueMap.put("runId", String.valueOf(queryProgressEvent.progress().runId()));
-        internalKeyValueMap.put("timestamp", queryProgressEvent.progress().timestamp());
-
-        internalKeyValueMap.put("sinkDescription", queryProgressEvent.progress().sink().description());
-
-        // source info
-        if (queryProgressEvent.progress().sources().length != 0) {
-            internalKeyValueMap.put("sourceDescription", queryProgressEvent.progress().sources()[0].description());
-            internalKeyValueMap.put("sourceStartOffset", queryProgressEvent.progress().sources()[0].startOffset());
-            internalKeyValueMap.put("sourceEndOffset", queryProgressEvent.progress().sources()[0].endOffset());
-            internalKeyValueMap
-                    .put(
-                            "sourceInputRowsPerSecond",
-                            String.valueOf(queryProgressEvent.progress().sources()[0].inputRowsPerSecond())
-                    );
-            internalKeyValueMap
-                    .put(
-                            "sourceProcessedRowsPerSecond",
-                            String.valueOf(queryProgressEvent.progress().sources()[0].processedRowsPerSecond())
-                    );
-            internalKeyValueMap
-                    .put("sourceNumInputRows", String.valueOf(queryProgressEvent.progress().sources()[0].numInputRows()));
-        }
-
-        // completion checking
-        if (this.isRegisteredQuery(nameOfQuery)) {
-            DPLInternalStreamingQuery sq = this.getQuery(nameOfQuery);
-            if (this.checkCompletion(sq)) {
-                this.stopQuery(nameOfQuery);
-                boolean wasRemoved = this.removeQuery(nameOfQuery);
-
-                // status -> complete
-                internalKeyValueMap.put("status", "complete");
-
-                if (!wasRemoved) {
-                    LOGGER
-                            .error(
-                                    "Removing the query <{}> from the internal DPLStreamingQuery listener was unsuccessful!",
-                                    nameOfQuery
-                            );
-                }
-            }
-        }
-        else {
-            internalKeyValueMap.put("status", "notRegistered");
-        }
-
-        // update main map and send event
-        this._queryInfoMap.put(queryProgressEvent.progress().id().toString(), internalKeyValueMap);
-        sendMessageEvent(this._queryInfoMap);
+        //no-op
     }
 
     @Override
-    public void onQueryIdle(final QueryIdleEvent event) {
-        final String nameOfQuery = this._queryInfoMap.get(event.id().toString()).get("name");
-        final Map<String, String> internalKeyValueMap = new HashMap<>();
-
-        internalKeyValueMap.put("name", nameOfQuery);
-        internalKeyValueMap.put("status", "processing");
+    public void onQueryIdle(final QueryIdleEvent queryIdleEvent) {
+        final UUID queryId = queryIdleEvent.id();
 
         // completion checking
-        if (this.isRegisteredQuery(nameOfQuery)) {
-            DPLInternalStreamingQuery sq = this.getQuery(nameOfQuery);
-            if (this.checkCompletion(sq)) {
-                this.stopQuery(nameOfQuery);
-                boolean wasRemoved = this.removeQuery(nameOfQuery);
+        if (this.isRegisteredQuery(queryId)) {
+            this.stopQuery(queryId);
+            boolean wasRemoved = this.removeQuery(queryId);
 
-                // status -> complete
-                internalKeyValueMap.put("status", "complete");
-
-                if (!wasRemoved) {
-                    LOGGER
-                            .error(
-                                    "Removing the query <{}> from the internal DPLStreamingQuery listener was unsuccessful!",
-                                    nameOfQuery
-                            );
-                }
+            if (!wasRemoved) {
+                LOGGER
+                        .error(
+                                "Removing the query <{}> from the internal DPLStreamingQuery listener was unsuccessful!",
+                                queryId
+                        );
             }
         }
-        else {
-            internalKeyValueMap.put("status", "notRegistered");
-        }
-
-        // update main map and send event
-        this._queryInfoMap.put(event.id().toString(), internalKeyValueMap);
-        sendMessageEvent(this._queryInfoMap);
     }
 
     /**
@@ -257,18 +142,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
      */
     @Override
     public void onQueryTerminated(QueryTerminatedEvent queryTerminatedEvent) {
-        final Map<String, String> internalKeyValueMap = new HashMap<>();
-        internalKeyValueMap.put("status", "terminated");
-
-        // get name for query, QueryTerminatedEvent does not include the human readable name
-        if (this._queryInfoMap.containsKey(queryTerminatedEvent.id().toString())) {
-            final String name = this._queryInfoMap.get(queryTerminatedEvent.id().toString()).get("name");
-            internalKeyValueMap.put("name", name);
-        }
-
-        // put to main map and send event
-        this._queryInfoMap.put(queryTerminatedEvent.id().toString(), internalKeyValueMap);
-        sendMessageEvent(this._queryInfoMap);
+        // no-op
     }
 
     /**
@@ -279,30 +153,27 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
      * @return StreamingQuery; use its awaitTermination to block
      */
     public StreamingQuery registerQuery(final String name, DataStreamWriter<Row> dsw) {
-        if (this.isRegisteredQuery(name)) {
-            throw new RuntimeException("A query was already registered with the given name: " + name);
+        final StreamingQuery rv;
+        try {
+            rv = dsw.queryName(name).start();
+            this._queries.put(rv.id(), new DPLInternalStreamingQuery(rv));
         }
-        else {
-            try {
-                this._queries.put(name, new DPLInternalStreamingQuery(dsw.queryName(name).start()));
-            }
-            catch (TimeoutException e) {
-                LOGGER.error("Exception occurred on query start <{}>", e.getMessage(), e);
-                throw new RuntimeException("Could not register query: " + e.getMessage());
-            }
+        catch (final TimeoutException e) {
+            LOGGER.error("Exception occurred on query start <{}>", e.getMessage(), e);
+            throw new RuntimeException("Could not register query: " + e.getMessage());
         }
 
-        return this._queries.get(name).getQuery();
+        return rv;
     }
 
     /**
      * Remove query from the listener
      * 
-     * @param name queryName
+     * @param queryId id of the query
      * @return was removal successful (bool)
      */
-    public boolean removeQuery(String name) {
-        Object v = this._queries.remove(name);
+    private boolean removeQuery(final UUID queryId) {
+        final Object v = this._queries.remove(queryId);
 
         return v != null;
     }
@@ -310,13 +181,13 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
     /**
      * Stop query
      * 
-     * @param name Name of the query to stop
+     * @param queryId ID of the query to stop
      */
-    public void stopQuery(String name) {
+    private void stopQuery(final UUID queryId) {
         try {
-            this._queries.get(name).getQuery().stop();
+            this._queries.get(queryId).getQuery().stop();
         }
-        catch (TimeoutException e) {
+        catch (final TimeoutException e) {
             LOGGER.error("Exception occurred on query stop <{}>", e.getMessage(), e);
             throw new RuntimeException("Exception occurred on query stop: " + e.getMessage());
         }
@@ -325,123 +196,10 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
     /**
      * Does the internal map contain the specified query
      * 
-     * @param name queryName
+     * @param queryId id of the query
      * @return bool
      */
-    public boolean isRegisteredQuery(String name) {
-        return this._queries.containsKey(name);
-    }
-
-    /**
-     * Returns the internal DPLInternalStreamingQuery object based on queryName
-     * 
-     * @param name queryName
-     * @return DPLInternalStreamingQuery object
-     */
-    private DPLInternalStreamingQuery getQuery(String name) {
-        return this._queries.get(name);
-    }
-
-    /**
-     * Send message to messageHandler if it was registered
-     * 
-     * @param s message string
-     */
-    private void sendMessageEvent(Map<String, Map<String, String>> s) {
-        if (this._msgHandler != null) {
-            LOGGER.debug("Sending message event to registered messageHandler");
-            this._msgHandler.accept(s);
-        }
-        else {
-            LOGGER.debug("Message event cannot be sent because a MessageHandler has not been registered.");
-        }
-    }
-
-    /**
-     * Check if the stream has provided all the data or if it is still in progress
-     * 
-     * @return is the stream complete
-     */
-    private boolean checkCompletion(DPLInternalStreamingQuery sq) {
-        if (sq.getQuery().lastProgress() == null || sq.getQuery().status().message().equals("Initializing sources")) {
-            // Query has not started yet
-            return false;
-        }
-
-        boolean shouldStop = false;
-
-        if (sq.getQuery().lastProgress().batchId() != sq.getLastBatchId()) {
-            if (sq.getQuery().lastProgress().sources().length != 0) {
-                shouldStop = isMemoryStreamDone(sq.getQuery()) && isArchiveDone(sq.getQuery());
-            }
-        }
-        sq.setLastBatchId(sq.getQuery().lastProgress().batchId());
-
-        return shouldStop;
-    }
-
-    /**
-     * check if archive stream is done
-     * 
-     * @param sq StreamingQuery object
-     * @return done?
-     */
-    private boolean isArchiveDone(StreamingQuery sq) {
-        boolean isArchiveDone = true;
-        for (int i = 0; i < sq.lastProgress().sources().length; i++) {
-            SourceProgress progress = sq.lastProgress().sources()[i];
-
-            if (
-                progress.description() != null
-                        && !progress.description().startsWith(ArchiveMicroStreamReader.class.getName().concat("@"))
-            ) {
-                // ignore others than archive
-                continue;
-            }
-
-            if (progress.startOffset() != null) {
-                if (!progress.startOffset().equalsIgnoreCase(progress.endOffset())) {
-                    isArchiveDone = false;
-                }
-            }
-            else {
-                isArchiveDone = false;
-            }
-        }
-
-        return isArchiveDone;
-    }
-
-    /**
-     * check if memory stream is done
-     * 
-     * @param sq StreamingQuery object
-     * @return done?
-     */
-    private boolean isMemoryStreamDone(StreamingQuery sq) {
-        boolean isMemoryStreamDone = true;
-        for (int i = 0; i < sq.lastProgress().sources().length; i++) {
-            SourceProgress progress = sq.lastProgress().sources()[i];
-            System.out.println(progress);
-            System.out.println(progress.description());
-            if (progress.description() != null && !progress.description().startsWith("MemoryStream[")) {
-                // ignore others than MemoryStream
-                continue;
-            }
-
-            if (progress.startOffset() != null) {
-                System.out.println(progress.startOffset() + " " + progress.endOffset());
-                if (!progress.startOffset().equalsIgnoreCase(progress.endOffset())) {
-                    isMemoryStreamDone = false;
-                }
-            }
-            else {
-                System.out.println("startOffset null");
-                isMemoryStreamDone = false;
-            }
-        }
-
-        System.out.println("isMemoryStreamDone: " + isMemoryStreamDone);
-        return isMemoryStreamDone;
+    private boolean isRegisteredQuery(final UUID queryId) {
+        return this._queries.containsKey(queryId);
     }
 }
