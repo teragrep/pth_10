@@ -127,7 +127,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     @Override
     public void onQueryProgress(QueryProgressEvent queryProgress) {
-        LOGGER.info("queryId <{}> Query progressed: <{}>", queryId, queryProgress.progress().id());
+        LOGGER.debug("queryId <{}> Query progressed: <{}>", queryId, queryProgress.progress().id());
     }
 
     private boolean checkCompletion(StreamingQuery streamingQuery) {
