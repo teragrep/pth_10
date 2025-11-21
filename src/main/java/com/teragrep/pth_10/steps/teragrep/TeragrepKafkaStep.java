@@ -54,7 +54,7 @@ import com.typesafe.config.Config;
 import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
 import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQuery;
@@ -194,7 +194,7 @@ public final class TeragrepKafkaStep extends AbstractStep implements Flushable {
 
                                 // Return final row
                                 return RowFactory.create(json);
-                            }, RowEncoder.apply(new StructType(new StructField[] {
+                            }, ExpressionEncoder.apply(new StructType(new StructField[] {
                                     new StructField("value", DataTypes.StringType, true, new MetadataBuilder().build())
                             }))
                     );

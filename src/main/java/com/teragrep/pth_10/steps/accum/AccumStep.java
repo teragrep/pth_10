@@ -52,7 +52,6 @@ import com.teragrep.pth_10.steps.TypeParser;
 import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.streaming.GroupState;
 import org.apache.spark.sql.streaming.GroupStateTimeout;
 import org.apache.spark.sql.streaming.OutputMode;
@@ -85,17 +84,17 @@ public class AccumStep extends AbstractStep implements Serializable {
         Dataset<Row> dsWithGroupCol = dataset.withColumn(groupCol, functions.lit(0));
 
         // Create output encoder for results
-        ExpressionEncoder<Row> outputEncoder;
+        Encoder<Row> outputEncoder;
         if (renameField.isEmpty()) {
             // No rename field: Use source column for results
             dsWithGroupCol = dsWithGroupCol
                     .withColumn(sourceField, functions.col(sourceField).cast(DataTypes.StringType));
-            outputEncoder = RowEncoder.apply(dsWithGroupCol.schema());
+            outputEncoder = ExpressionEncoder.apply(dsWithGroupCol.schema());
         }
         else {
             // Rename field: Used 'as <new-field>', returns StringType
             final StructType st = dsWithGroupCol.schema().add(renameField, DataTypes.StringType);
-            outputEncoder = RowEncoder.apply(st);
+            outputEncoder = ExpressionEncoder.apply(st);
         }
 
         // group dataset by '0', creating one group

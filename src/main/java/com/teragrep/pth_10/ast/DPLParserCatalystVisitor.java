@@ -139,14 +139,7 @@ public class DPLParserCatalystVisitor extends DPLParserBaseVisitor<Node> {
     }
 
     public void setMessageHandler(Consumer<Map<String, Map<String, String>>> messageHandler) {
-        this.messageHandler = messageHandler;
-        // register messageHandler to DPLInternalStreamingQueryListener
-        if (this.catCtx != null && this.messageHandler != null) {
-            this.catCtx.getInternalStreamingQueryListener().registerHandler(this.messageHandler);
-        }
-        else {
-            LOGGER.error("Unable to set message handler successfully.");
-        }
+        //Deprecated
     }
 
     /**

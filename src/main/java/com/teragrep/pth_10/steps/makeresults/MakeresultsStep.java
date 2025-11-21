@@ -47,7 +47,6 @@ package com.teragrep.pth_10.steps.makeresults;
 
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.execution.streaming.MemoryStream;
 import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.StreamingQuery;
@@ -101,7 +100,7 @@ public final class MakeresultsStep extends AbstractMakeresultsStep {
         // make a streaming dataset
         SparkSession ss = SparkSession.builder().getOrCreate();
         SQLContext sqlCtx = ss.sqlContext();
-        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        Encoder<Row> encoder = ExpressionEncoder.apply(schema);
         MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlCtx, Option.apply(1), encoder);
         Dataset<Row> generated = rowMemoryStream.toDS();
 

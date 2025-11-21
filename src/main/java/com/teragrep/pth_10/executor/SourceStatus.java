@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth_10.executor;
 
-import com.teragrep.pth_06.ArchiveMicroStreamReader;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.streaming.StreamingQuery;
 import org.slf4j.Logger;
@@ -54,31 +53,18 @@ import org.slf4j.LoggerFactory;
 public final class SourceStatus {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SourceStatus.class);
+    private final Config config;
 
-    public static boolean isQueryDone(Config config, StreamingQuery outQ) {
+    public SourceStatus(final Config config) {
+        this.config = config;
+    }
+
+    public boolean isQueryDone(StreamingQuery outQ) {
         if (config.getBoolean("dpl.pth_06.archive.enabled") || config.getBoolean("dpl.pth_06.kafka.enabled")) {
             boolean queryDone = true;
             for (int i = 0; i < outQ.lastProgress().sources().length; i++) {
-                String startOffset = outQ.lastProgress().sources()[i].startOffset();
-                String endOffset = outQ.lastProgress().sources()[i].endOffset();
-                String description = outQ.lastProgress().sources()[i].description();
-
-                if (
-                    description != null && !description.startsWith(ArchiveMicroStreamReader.class.getName().concat("@"))
-                ) {
-                    LOGGER.debug("Ignoring description: {}", description);
-                    // ignore others than archive
-                    continue;
-                }
-
-                if (startOffset != null) {
-                    if (!startOffset.equalsIgnoreCase(endOffset)) {
-                        LOGGER.debug("Startoffset equals endoffset, setting queryDone to false");
-                        queryDone = false;
-                    }
-                }
-                else {
-                    LOGGER.debug("Startoffset was null, setting queryDone to false");
+                final String description = outQ.lastProgress().sources()[i].description();
+                if (!description.startsWith(com.teragrep.pth_06.ArchiveMicroStreamReader.class.getName().concat("@"))) {
                     queryDone = false;
                 }
             }
