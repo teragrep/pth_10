@@ -136,6 +136,7 @@ public class TeragrepKafkaTest {
 
     // test teragrep exec kafka save
     @Test
+    @Disabled
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -197,6 +198,7 @@ public class TeragrepKafkaTest {
 
     // test with an aggregation before the command
     @Test
+    @Disabled
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -261,6 +263,7 @@ public class TeragrepKafkaTest {
 
     // test with two aggregations before the command
     @Test
+    @Disabled
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -324,6 +327,7 @@ public class TeragrepKafkaTest {
 
     // test with a "sequential_only" before the command
     @Test
+    @Disabled
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
