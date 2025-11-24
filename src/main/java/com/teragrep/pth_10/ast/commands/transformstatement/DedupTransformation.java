@@ -161,7 +161,7 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
 
             LOGGER
                     .info(
-                            "Processing sortByClauses in dedup with params: sbc={}, limit={}, desc={}, query=<{}>",
+                            "Processing sortByClauses in dedup with params: sbc=<{}>, limit=<[{}]>, desc=<{}>, query=<{}>",
                             Arrays.toString(sortStep.getListOfSortByClauses().toArray()), sortStep.getLimit(), sortStep.isDesc(), catCtx.getQueryName()
                     );
 
@@ -180,7 +180,7 @@ public class DedupTransformation extends DPLParserBaseVisitor<Node> {
 
         LOGGER
                 .info(
-                        "Processing dedup with params: limit={}, keepempty={}, keepevents={}, consecutive={}, cols={}, query={}",
+                        "Processing dedup with params: limit=<[{}]>, keepempty=<[{}]>, keepevents=<[{}]>, consecutive=<[{}]>, cols=<{}>, query=<{}>",
                         maxDuplicates, keepEmpty, keepEvents, consecutive, Arrays.toString(listOfFields.toArray()), catCtx.getQueryName()
                 );
 
