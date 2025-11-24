@@ -106,7 +106,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
         batchCollect.clear(); // do not store old values // TODO remove from NotebookDatasetStore too
 
         LOGGER.info("DPL-interpreter initialized sparkInterpreter incoming query <{}> :<{}>", queryName, lines);
-        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config);
+        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config, queryName);
 
         LOGGER.debug("Adding audit information");
         catalystContext.setAuditInformation(setupAuditInformation(lines));
@@ -117,8 +117,6 @@ public final class DPLExecutorImpl implements DPLExecutor {
         catalystContext.setNotebookUrl(noteId);
         LOGGER.debug("Setting paragraph url");
         catalystContext.setParagraphUrl(paragraphId);
-        LOGGER.debug("Setting query name");
-        catalystContext.setQueryName(queryName);
 
         LOGGER.debug("Creating lexer");
         DPLLexer lexer = new DPLLexer(CharStreams.fromString(lines));

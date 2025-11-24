@@ -78,7 +78,7 @@ public class DedupTest {
         LOGGER.debug("Query: '{}'", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -100,7 +100,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -123,7 +123,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -146,7 +146,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -170,7 +170,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);
@@ -193,7 +193,7 @@ public class DedupTest {
         LOGGER.debug("Query: <[{}]>", query);
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         DedupTransformation dt = new DedupTransformation(ctx);

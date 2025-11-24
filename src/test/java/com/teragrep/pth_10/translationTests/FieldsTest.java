@@ -78,7 +78,7 @@ public class FieldsTest {
 
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         FieldsTransformation ct = new FieldsTransformation(ctx);
@@ -99,7 +99,7 @@ public class FieldsTest {
 
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         FieldsTransformation ct = new FieldsTransformation(ctx);

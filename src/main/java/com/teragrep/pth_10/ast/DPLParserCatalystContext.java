@@ -226,7 +226,7 @@ public class DPLParserCatalystContext implements Cloneable {
     private String baseUrl = null;
     private String paragraphUrl = null;
     private String notebookUrl = null;
-    private String queryName = null;
+    private final String queryName;
 
     /**
      * Sets the base url to be used for linking to the search results in sent emails
@@ -244,15 +244,6 @@ public class DPLParserCatalystContext implements Cloneable {
      */
     public void setParagraphUrl(String newValue) {
         this.paragraphUrl = newValue;
-    }
-
-    /**
-     * Sets the query name for use in logging
-     *
-     * @param newValue like <code>28935532348</code>
-     */
-    public void setQueryName(String newValue) {
-        this.queryName = newValue;
     }
 
     /**
@@ -376,12 +367,14 @@ public class DPLParserCatalystContext implements Cloneable {
 
     /**
      * Initialize context with spark session
-     * 
+     *
      * @param sparkSession active session
+     * @param queryName    query name in format {Spark app id}-{ordinal number of run}
      */
-    public DPLParserCatalystContext(SparkSession sparkSession) {
+    public DPLParserCatalystContext(SparkSession sparkSession, String queryName) {
         this.sparkSession = sparkSession;
         this.nullValue = new NullValue();
+        this.queryName = queryName;
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
     }
@@ -392,10 +385,11 @@ public class DPLParserCatalystContext implements Cloneable {
      * @param sparkSession active session
      * @param ds           {@literal DataSet<Row>}
      */
-    public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds) {
+    public DPLParserCatalystContext(SparkSession sparkSession, Dataset<Row> ds, String queryName) {
         this.sparkSession = sparkSession;
         this.inDs = ds;
         this.nullValue = new NullValue();
+        this.queryName = queryName;
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
     }
@@ -408,10 +402,11 @@ public class DPLParserCatalystContext implements Cloneable {
      * @param sparkSession active session
      * @param config       Zeppelin configuration object
      */
-    public DPLParserCatalystContext(SparkSession sparkSession, Config config) {
+    public DPLParserCatalystContext(SparkSession sparkSession, Config config, String queryName) {
         this.sparkSession = sparkSession;
         this.config = config;
         this.nullValue = new NullValue();
+        this.queryName = queryName;
         this.internalStreamingQueryListener = new DPLInternalStreamingQueryListener();
         this.internalStreamingQueryListener.init(this.sparkSession);
         if (config != null) {
@@ -501,12 +496,11 @@ public class DPLParserCatalystContext implements Cloneable {
         }
         catch (CloneNotSupportedException e) {
             LOGGER.debug("Clone not supported, create object copy");
-            ctx = new DPLParserCatalystContext(this.sparkSession);
+            ctx = new DPLParserCatalystContext(this.sparkSession, queryName);
             ctx.setParserConfig(parserConfig);
             ctx.setDs(inDs);
             ctx.setConfig(config);
             ctx.setAuditInformation(auditInformation);
-            ctx.setQueryName(queryName);
         }
         return ctx;
     }

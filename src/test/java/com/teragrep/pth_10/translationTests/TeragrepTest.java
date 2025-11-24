@@ -81,7 +81,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -105,7 +105,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -138,7 +138,7 @@ public class TeragrepTest {
         map.put("dpl.pth_10.transform.teragrep.syslog.parameter.port", port);
         Config c = ConfigFactory.parseMap(map);
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         ctx.setConfig(c);
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
@@ -163,7 +163,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -187,7 +187,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -213,7 +213,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -240,7 +240,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -263,7 +263,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -286,7 +286,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -309,7 +309,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -332,7 +332,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -359,7 +359,7 @@ public class TeragrepTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         final DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
