@@ -69,7 +69,7 @@ public class Rex4jTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         Rex4jTransformation ct = new Rex4jTransformation(ctx);
         ct.visitRex4jTransformation((DPLParser.Rex4jTransformationContext) tree.getChild(1).getChild(0));
@@ -89,7 +89,7 @@ public class Rex4jTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         Rex4jTransformation ct = new Rex4jTransformation(ctx);
@@ -110,7 +110,7 @@ public class Rex4jTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         Rex4jTransformation ct = new Rex4jTransformation(ctx);
@@ -132,7 +132,7 @@ public class Rex4jTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         Rex4jTransformation ct = new Rex4jTransformation(ctx);

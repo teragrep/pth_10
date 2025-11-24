@@ -215,7 +215,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         // sequential ops found
         for (int i = breakpoints.get(BreakpointType.SEQUENTIAL); i < this.list.size(); i++) {
             AbstractStep step = this.list.get(i);
-            LOGGER.info("Executing seq ops in batch: <{}>", step.toString());
+            LOGGER
+                    .info(
+                            "Executing seq ops in batch: <{}> for query <{}>", step.toString(),
+                            catVisitor.getCatalystContext().getQueryName()
+                    );
             ds = step.get(ds);
         }
         return ds;
@@ -231,17 +235,29 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
         for (int i = 0; i < this.list.size(); i++) {
             AbstractStep step = this.list.get(i);
-            LOGGER.info("Analyzing step: <{}>", step.toString());
+            LOGGER
+                    .info(
+                            "Analyzing step: <{}>  for query <[]>", step.toString(),
+                            catVisitor.getCatalystContext().getQueryName()
+                    );
             step.setAggregatesUsedBefore(aggregateCount > 0);
 
             if (step.hasProperty(AbstractStep.CommandProperty.USES_INTERNAL_BATCHCOLLECT)) {
-                LOGGER.info("[Analyze] Step uses internal batch collect: <{}>", step);
+                LOGGER
+                        .info(
+                                "[Analyze <{}>] Step uses internal batch collect: <{}>",
+                                catVisitor.getCatalystContext().getQueryName(), step
+                        );
                 this.useInternalBatchCollect = true;
                 this.batchCollect = null;
             }
 
             if (step.hasProperty(AbstractStep.CommandProperty.IGNORE_DEFAULT_SORTING)) {
-                LOGGER.info("[Analyze] Ignore default sorting: <{}>", step);
+                LOGGER
+                        .info(
+                                "[Analyze <{}>] Ignore default sorting: <{}>",
+                                catVisitor.getCatalystContext().getQueryName(), step
+                        );
                 this.ignoreDefaultSorting = true;
                 this.batchCollect = new BatchCollect(
                         null,
@@ -263,14 +279,22 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             }
 
             if (step.hasProperty(AbstractStep.CommandProperty.SEQUENTIAL_ONLY)) {
-                LOGGER.info("[Analyze] Sequential only command: <{}>", step);
+                LOGGER
+                        .info(
+                                "[Analyze <{}>] Sequential only command: <{}>",
+                                catVisitor.getCatalystContext().getQueryName(), step
+                        );
                 // set the breakpoint just once
                 if (!breakpoints.containsKey(BreakpointType.SEQUENTIAL)) {
                     breakpoints.put(BreakpointType.SEQUENTIAL, i);
                 }
             }
             else if (step.hasProperty(AbstractStep.CommandProperty.AGGREGATE)) {
-                LOGGER.info("[Analyze] Aggregate command: <{}>", step);
+                LOGGER
+                        .info(
+                                "[Analyze <{}>] Aggregate command: <{}>",
+                                catVisitor.getCatalystContext().getQueryName(), step
+                        );
                 aggregateCount++;
 
                 // set the breakpoint just once
@@ -284,7 +308,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             }
             else if (step.hasProperty(AbstractStep.CommandProperty.POST_BATCHCOLLECT)) {
                 if (!breakpoints.containsKey(BreakpointType.POST_BC)) {
-                    LOGGER.info("[Analyze] Post batch collect command: <{}>", step);
+                    LOGGER
+                            .info(
+                                    "[Analyze <{}>] Post batch collect command: <{}>",
+                                    catVisitor.getCatalystContext().getQueryName(), step
+                            );
                     breakpoints.put(BreakpointType.POST_BC, i);
                 }
             }
@@ -302,15 +330,27 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         boolean aggregatesUsed = aggregateCount > 0;
         if (this.batchHandler != null) {
             if (outputMode == OutputMode.Complete()) {
-                LOGGER.info("------------------ Aggregates (Complete Mode) used, sending batch event!");
+                LOGGER
+                        .info(
+                                "------------------ Aggregates (Complete Mode) used, sending batch event for query <{}>!",
+                                catVisitor.getCatalystContext().getQueryName()
+                        );
                 this.batchHandler.accept(ds, aggregatesUsed);
             }
             else if (this.batchCollect == null) {
-                LOGGER.info("------------------ No batchCollect present (no sorting column), sending batch event!");
+                LOGGER
+                        .info(
+                                "------------------ No batchCollect present (no sorting column), sending batch event for query <{}>!",
+                                catVisitor.getCatalystContext().getQueryName()
+                        );
                 this.batchHandler.accept(ds, aggregatesUsed);
             }
             else {
-                LOGGER.info("------------------ Aggregates NOT USED (before seq. switch), using batchCollect!");
+                LOGGER
+                        .info(
+                                "------------------ Aggregates NOT USED (before seq. switch), using batchCollect for query <{}>!",
+                                catVisitor.getCatalystContext().getQueryName()
+                        );
                 int index = this.list.size();
                 if (breakpoints.containsKey(BreakpointType.POST_BC)) {
                     index = breakpoints.get(BreakpointType.POST_BC);
@@ -322,7 +362,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
     }
 
     public void call(Dataset<Row> batchDF, Long batchId) throws StreamingQueryException {
-        LOGGER.info("StepList batch processing received a new batch <{}>", batchId);
+        LOGGER
+                .info(
+                        "StepList batch processing received a new batch <{}> for query <{}>", batchId,
+                        catVisitor.getCatalystContext().getQueryName()
+                );
 
         // timechart empty buckets
         if (
@@ -382,11 +426,19 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
 
         // Continue sub list of steps execution, if necessary
         if (!this.list.isEmpty()) {
-            LOGGER.info("StepList batch processing - Continuing execution to next ops after breakpoint index");
+            LOGGER
+                    .info(
+                            "StepList batch processing for query <{}> - Continuing execution to next ops after breakpoint index",
+                            catVisitor.getCatalystContext().getQueryName()
+                    );
 
             Dataset<Row> ret = this.executeInBatch(batchDF);
 
-            LOGGER.info("StepList batch processing - Executed the steps");
+            LOGGER
+                    .info(
+                            "StepList batch processing for query <{}> - Executed the steps",
+                            catVisitor.getCatalystContext().getQueryName()
+                    );
 
             if (ret != null) {
                 sendBatchEvent(ret, batchId);
@@ -394,7 +446,11 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
         }
         else {
             // No sequential steps left to execute, return batch as-is
-            LOGGER.info("StepList batch processing - No steps left to execute, continue to sending batch event");
+            LOGGER
+                    .info(
+                            "StepList batch processing for query <{}> - No steps left to execute, continue to sending batch event",
+                            catVisitor.getCatalystContext().getQueryName()
+                    );
             sendBatchEvent(batchDF, batchId);
         }
     }

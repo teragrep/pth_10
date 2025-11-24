@@ -71,7 +71,7 @@ public class TableTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         final TableTransformation ct = new TableTransformation();

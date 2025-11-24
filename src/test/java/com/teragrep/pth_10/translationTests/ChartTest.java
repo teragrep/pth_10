@@ -71,7 +71,7 @@ public class ChartTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         ChartTransformation ct = new ChartTransformation(ctx);
@@ -95,7 +95,7 @@ public class ChartTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         ChartTransformation ct = new ChartTransformation(ctx);
@@ -118,7 +118,7 @@ public class ChartTest {
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         ParseTree tree = parser.root();
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         ChartTransformation ct = new ChartTransformation(ctx);
