@@ -96,7 +96,7 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
         for (DPLParser.T_top_topOptParameterContext o : opts) {
             if (o.t_top_limitParameter() != null) {
                 LOGGER
-                        .info("param= <{}> query= <{}>", o.t_top_limitParameter().getChild(1).getText(), catCtx.getQueryName());
+                        .info("param=<{}> query=<{}>", o.t_top_limitParameter().getChild(1).getText(), catCtx.getQueryName());
                 limit = Integer.parseInt(o.t_top_limitParameter().integerType().getText());
             }
         }
