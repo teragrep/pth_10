@@ -64,7 +64,10 @@ public final class SourceStatus {
             boolean queryDone = true;
             for (int i = 0; i < outQ.lastProgress().sources().length; i++) {
                 final String description = outQ.lastProgress().sources()[i].description();
-                if (!description.startsWith(com.teragrep.pth_06.ArchiveMicroStreamReader.class.getName().concat("@"))) {
+                if (
+                    !description.startsWith(com.teragrep.pth_06.ArchiveMicroStreamReader.class.getName().concat("@"))
+                            && !description.startsWith("MemoryStream[")
+                ) {
                     queryDone = false;
                 }
             }
