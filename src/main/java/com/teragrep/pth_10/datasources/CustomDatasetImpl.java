@@ -48,7 +48,6 @@ package com.teragrep.pth_10.datasources;
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.execution.streaming.MemoryStream;
 import org.apache.spark.sql.types.StructType;
 import scala.Option;
@@ -80,7 +79,7 @@ public final class CustomDatasetImpl implements CustomDataset {
     @Override
     public Dataset<Row> asStreamingDataset() {
         final SQLContext sqlContext = catCtx.getSparkSession().sqlContext();
-        final ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        final Encoder<Row> encoder = ExpressionEncoder.apply(schema);
         final MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
 
         rowMemoryStream.addData(new Rows(values).asSeq());
