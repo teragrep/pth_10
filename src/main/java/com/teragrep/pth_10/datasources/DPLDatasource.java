@@ -177,10 +177,11 @@ public class DPLDatasource {
         }
 
         if (config.hasPath("dpl.pth_06.batch.size.totalObjectCountLimit")) {
+            final long totalObjectCountLimit = config.getLong("dpl.pth_06.batch.size.totalObjectCountLimit");
+
             reader = reader
-                    .option(
-                            "batch.size.totalObjectCountLimit",
-                            config.getString("dpl.pth_06.batch.size.totalObjectCountLimit")
+                    .option("batch.size.totalObjectCountLimit", String.valueOf(totalObjectCountLimit)
+
                     );
         }
 
