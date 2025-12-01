@@ -163,6 +163,27 @@ public class DPLDatasource {
             }
         }
 
+        if (config.hasPath("dpl.pth_06.batch.size.fileCompressionRatio")) {
+            reader = reader
+                    .option(
+                            "batch.size.fileCompressionRatio",
+                            config.getString("dpl.pth_06.batch.size.fileCompressionRatio")
+                    );
+        }
+
+        if (config.hasPath("dpl.pth_06.batch.size.processingSpeed")) {
+            reader = reader
+                    .option("batch.size.processingSpeed", config.getString("dpl.pth_06.batch.size.processingSpeed"));
+        }
+
+        if (config.hasPath("dpl.pth_06.batch.size.totalObjectCountLimit")) {
+            reader = reader
+                    .option(
+                            "batch.size.totalObjectCountLimit",
+                            config.getString("dpl.pth_06.batch.size.totalObjectCountLimit")
+                    );
+        }
+
         boolean bloomEnabled = false;
         if (config.hasPath("dpl.pth_06.bloom.enabled")) {
             bloomEnabled = config.getBoolean("dpl.pth_06.bloom.enabled");
