@@ -75,7 +75,7 @@ public class TimechartTest {
         ParseTree tree = parser.root();
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         // Use this file for  dataset initialization
         String testFile = "src/test/resources/timechartTestData.jsonl";
         ctx.setEarliest("-1w");
@@ -104,7 +104,7 @@ public class TimechartTest {
         ParseTree tree = parser.root();
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 
@@ -130,7 +130,7 @@ public class TimechartTest {
         ParseTree tree = parser.root();
         LOGGER.debug(tree.toStringTree(parser));
 
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(ctx);
 

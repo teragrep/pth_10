@@ -175,7 +175,7 @@ public class StreamingTestUtil {
             throw new NullPointerException("StreamingTestUtil's SparkSession is null: setEnv wasn't called");
         }
 
-        this.ctx = new DPLParserCatalystContext(spark);
+        this.ctx = new DPLParserCatalystContext(spark, "testQueryName");
         ctx.setEarliest("-1Y");
         ctx.setTestingMode(true);
         // force timezone to Helsinki
