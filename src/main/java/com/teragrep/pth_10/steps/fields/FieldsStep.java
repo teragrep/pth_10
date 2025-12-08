@@ -45,9 +45,15 @@
  */
 package com.teragrep.pth_10.steps.fields;
 
+import com.teragrep.pth_10.ast.FilteredColumns;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import scala.collection.JavaConversions;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.apache.log4j.builders.appender.SocketAppenderBuilder.LOGGER;
 
 public final class FieldsStep extends AbstractFieldsStep {
 
@@ -61,14 +67,31 @@ public final class FieldsStep extends AbstractFieldsStep {
             return null;
         }
 
-        if (this.mode.equals(FieldMode.KEEP_FIELDS)) {
-            return dataset.selectExpr(JavaConversions.asScalaBuffer(this.listOfFields));
+        // check for wildcards in columns
+        final List<String> wildcardColumns = new ArrayList<>();
+        for (String field : this.listOfFields) {
+            LOGGER.debug("Checking column <[{}]> for wildcards", field);
+            final FilteredColumns filteredFields = new FilteredColumns(field, dataset.columns());
+            wildcardColumns.addAll(filteredFields.filtered());
         }
-        else if (this.mode.equals(FieldMode.REMOVE_FIELDS)) {
-            return dataset.drop(JavaConversions.asScalaBuffer(this.listOfFields));
+
+        Dataset<Row> finalDataset;
+        if (!wildcardColumns.isEmpty()) {
+            if (this.mode.equals(FieldMode.KEEP_FIELDS)) {
+                finalDataset = dataset.selectExpr(JavaConversions.asScalaBuffer(wildcardColumns));
+            }
+            else if (this.mode.equals(FieldMode.REMOVE_FIELDS)) {
+                finalDataset = dataset.drop(JavaConversions.asScalaBuffer(wildcardColumns));
+            }
+            else {
+                throw new UnsupportedOperationException("Invalid FieldMode: " + this.mode);
+            }
         }
         else {
-            throw new UnsupportedOperationException("Invalid FieldMode: " + this.mode);
+            throw new IllegalStateException(
+                    "fields command is missing field names, it requires at least one valid field name."
+            );
         }
+        return finalDataset;
     }
 }
