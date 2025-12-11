@@ -45,52 +45,56 @@
  */
 package com.teragrep.pth_10.steps.teragrep.bloomfilter;
 
-import java.util.Comparator;
 import java.util.Objects;
 
-public final class BloomFilterConfiguration implements Comparable<BloomFilterConfiguration> {
+public final class ValidBloomFilterConfiguration {
 
-    // member field names must be exactly these so Gson can parse them from JSON
-    private final Long expected;
-    private final Double fpp;
+    private final BloomFilterConfiguration configuration;
 
-    public BloomFilterConfiguration(final Long expected, final Double fpp) {
-        this.expected = expected;
-        this.fpp = fpp;
+    public ValidBloomFilterConfiguration(final BloomFilterConfiguration configuration) {
+        this.configuration = configuration;
     }
 
-    public Long expectedNumOfItems() {
+    private void validate() {
+        if (configuration == null) {
+            throw new IllegalArgumentException(
+                    "Option 'dpl.pth_06.bloom.db.fields' contains a 'null' filter configuration entry"
+            );
+        }
+    }
+
+    public Long expected() {
+        validate();
+        final Long expected = configuration.expectedNumOfItems();
+        if (expected == null) {
+            throw new IllegalArgumentException("expected value in 'dpl.pth_06.bloom.db.fields' should not be 'null'");
+        }
         return expected;
     }
 
-    public Double falsePositiveProbability() {
+    public Double fpp() {
+        validate();
+        final Double fpp = configuration.falsePositiveProbability();
+        if (fpp == null) {
+            throw new IllegalArgumentException("fpp value in 'dpl.pth_06.bloom.db.fields' should not be 'null'");
+        }
         return fpp;
     }
 
     @Override
-    public boolean equals(final Object object) {
-        if (this == object)
-            return true;
-        if (object == null)
+    public boolean equals(final Object o) {
+        if (o == null) {
             return false;
-        if (object.getClass() != this.getClass())
+        }
+        if (getClass() != o.getClass()) {
             return false;
-        final BloomFilterConfiguration cast = (BloomFilterConfiguration) object;
-        return expected.equals(cast.expected) && fpp.equals(cast.fpp);
+        }
+        final ValidBloomFilterConfiguration that = (ValidBloomFilterConfiguration) o;
+        return Objects.equals(configuration, that.configuration);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(expected, fpp);
-    }
-
-    @Override
-    public int compareTo(final BloomFilterConfiguration other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Cannot compare against null");
-        }
-        return Comparator
-                .comparing((BloomFilterConfiguration cnf) -> cnf.expected, Comparator.nullsLast(Long::compareTo))
-                .thenComparing((BloomFilterConfiguration cnf) -> cnf.fpp, Comparator.nullsLast(Comparator.reverseOrder())).compare(this, other);
+        return Objects.hashCode(configuration);
     }
 }
