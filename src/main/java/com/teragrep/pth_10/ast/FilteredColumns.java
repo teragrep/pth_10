@@ -45,16 +45,18 @@
  */
 package com.teragrep.pth_10.ast;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.apache.log4j.builders.appender.SocketAppenderBuilder.LOGGER;
+public final class FilteredColumns {
 
-public class FilteredColumns {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(FilteredColumns.class);
     private final String[] columns;
     private final String wc;
 
@@ -65,7 +67,7 @@ public class FilteredColumns {
      * @param columns array of column names
      */
 
-    public FilteredColumns(String wc, String[] columns) {
+    public FilteredColumns(final String wc, final String[] columns) {
         this.columns = columns;
         this.wc = wc;
     }
@@ -79,7 +81,7 @@ public class FilteredColumns {
         final StringBuilder regexBuilder = new StringBuilder();
         final String regex;
 
-        for (char c : wc.toCharArray()) {
+        for (final char c : wc.toCharArray()) {
             if (c == '*') {
                 // On wildcard, get preceding content and quote it
                 // Also clear quotablePartBuilder and add regex any char wildcard
@@ -108,7 +110,7 @@ public class FilteredColumns {
         Matcher m;
         final List<String> matchedFields = new ArrayList<>();
 
-        for (String column : columns) {
+        for (final String column : columns) {
             m = p.matcher(column);
             if (m.matches()) {
                 LOGGER.debug("Field <[{}]> matches the wildcard rule: <[{}]>", column, wc);
@@ -121,12 +123,16 @@ public class FilteredColumns {
 
     @Override
     public boolean equals(Object o) {
+        final boolean isEquals;
         if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        FilteredColumns filteredColumns = (FilteredColumns) o;
-        return Objects.equals(wc, filteredColumns.wc);
+            isEquals = true;
+        else if (o == null || getClass() != o.getClass())
+            isEquals = false;
+        else {
+            final FilteredColumns filteredColumns = (FilteredColumns) o;
+            isEquals = Objects.equals(wc, filteredColumns.wc);
+        }
+        return isEquals;
     }
 
     @Override

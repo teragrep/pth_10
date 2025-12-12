@@ -78,27 +78,27 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
 
     public Node fieldsTransformationEmitCatalyst(DPLParser.FieldsTransformationContext ctx) {
         this.fieldsStep = new FieldsStep();
-        // if fields command has no arguments
-        if (ctx.getChildCount() == 1) {
+        if (ctx.fieldListType() != null && !ctx.fieldListType().fieldType().isEmpty()) {
+            if (ctx.COMMAND_FIELDS_MODE_MINUS() != null) {
+                final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
+                LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
+
+                this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
+                this.fieldsStep.setListOfFields(sln.asList());
+            }
+            else {
+                final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
+                this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
+                this.fieldsStep.setListOfFields(sln.asList());
+            }
+            return new StepNode(fieldsStep);
+        }
+        else {
+            // if fields command has no arguments
             throw new IllegalStateException(
                     "fields command is missing field names, it requires at least one valid field name."
             );
         }
-
-        final String oper = ctx.getChild(1).getText();
-        if ("-".equals(oper)) {
-            final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
-            LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
-
-            this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
-            this.fieldsStep.setListOfFields(sln.asList());
-        }
-        else {
-            final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
-            this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
-            this.fieldsStep.setListOfFields(sln.asList());
-        }
-        return new StepNode(fieldsStep);
     }
 
     @Override

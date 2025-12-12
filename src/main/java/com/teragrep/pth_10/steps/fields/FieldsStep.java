@@ -48,14 +48,16 @@ package com.teragrep.pth_10.steps.fields;
 import com.teragrep.pth_10.ast.FilteredColumns;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.log4j.builders.appender.SocketAppenderBuilder.LOGGER;
-
 public final class FieldsStep extends AbstractFieldsStep {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(FieldsStep.class);
 
     public FieldsStep() {
         super();
