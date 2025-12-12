@@ -266,6 +266,16 @@ public class DPLDatasource {
             reader = reader.option("logging.debug.enabled", isDebug);
         }
 
+        if (config.hasPath("dpl.pth_06.sql.log.enabled")) {
+            final boolean sqlLogEnabled = config.getBoolean("dpl.pth_06.sql.log.enabled");
+            reader = reader.option("sql.log.enabled", sqlLogEnabled);
+        }
+
+        if (config.hasPath("dpl.pth_06.sql.executeLogging.enabled")) {
+            final boolean sqlExecuteLoggingEnabled = config.getBoolean("dpl.pth_06.sql.executeLogging.enabled");
+            reader = reader.option("sql.executeLogging.enabled", sqlExecuteLoggingEnabled);
+        }
+
         LOGGER.debug("Loading reader");
         Dataset<Row> out = reader.load();
         LOGGER.debug("Reader loaded");
