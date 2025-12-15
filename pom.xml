@@ -101,6 +101,12 @@
       <artifactId>jue_01</artifactId>
       <version>${teragrep.jue_01.version}</version>
     </dependency>
+    <!-- jooq dynamic SQL -->
+    <dependency>
+      <groupId>org.jooq</groupId>
+      <artifactId>jooq</artifactId>
+      <version>3.20.10</version>
+    </dependency>
     <!-- connection pooling -->
     <dependency>
       <groupId>org.apache.commons</groupId>
