@@ -67,6 +67,7 @@ public class TeragrepSyslogStep extends AbstractStep {
         this.relpHost = relpHost;
         this.relpPort = relpPort;
         this.properties.add(CommandProperty.NO_PRECEDING_AGGREGATE);
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
     }
 
     @Override
@@ -74,7 +75,8 @@ public class TeragrepSyslogStep extends AbstractStep {
         LOGGER.info("Calling sendDataframeAsSyslog function");
         final SyslogStreamer syslogStreamer = new SyslogStreamer(relpHost, relpPort);
 
-        return dataset.map(syslogStreamer, dataset.exprEnc());
+        dataset.foreach(syslogStreamer);
+        return dataset;
     }
 
     @Override

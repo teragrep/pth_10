@@ -172,6 +172,28 @@ public class DPLDatasource {
             }
         }
 
+        if (config.hasPath("dpl.pth_06.batch.size.fileCompressionRatio")) {
+            reader = reader
+                    .option(
+                            "batch.size.fileCompressionRatio",
+                            config.getString("dpl.pth_06.batch.size.fileCompressionRatio")
+                    );
+        }
+
+        if (config.hasPath("dpl.pth_06.batch.size.processingSpeed")) {
+            reader = reader
+                    .option("batch.size.processingSpeed", config.getString("dpl.pth_06.batch.size.processingSpeed"));
+        }
+
+        if (config.hasPath("dpl.pth_06.batch.size.totalObjectCountLimit")) {
+            final long totalObjectCountLimit = config.getLong("dpl.pth_06.batch.size.totalObjectCountLimit");
+
+            reader = reader
+                    .option("batch.size.totalObjectCountLimit", String.valueOf(totalObjectCountLimit)
+
+                    );
+        }
+
         boolean bloomEnabled = false;
         if (config.hasPath("dpl.pth_06.bloom.enabled")) {
             bloomEnabled = config.getBoolean("dpl.pth_06.bloom.enabled");
@@ -245,6 +267,22 @@ public class DPLDatasource {
         // metadata query
         if (isMetadataQuery) {
             reader = reader.option("metadataQuery.enabled", "true");
+        }
+
+        // debug logging
+        if (config.hasPath("dpl.pth_06.logging.debug.enabled")) {
+            final boolean isDebug = config.getBoolean("dpl.pth_06.logging.debug.enabled");
+            reader = reader.option("logging.debug.enabled", isDebug);
+        }
+
+        if (config.hasPath("dpl.pth_06.sql.log.enabled")) {
+            final boolean sqlLogEnabled = config.getBoolean("dpl.pth_06.sql.log.enabled");
+            reader = reader.option("sql.log.enabled", sqlLogEnabled);
+        }
+
+        if (config.hasPath("dpl.pth_06.sql.executeLogging.enabled")) {
+            final boolean sqlExecuteLoggingEnabled = config.getBoolean("dpl.pth_06.sql.executeLogging.enabled");
+            reader = reader.option("sql.executeLogging.enabled", sqlExecuteLoggingEnabled);
         }
 
         LOGGER.debug("Loading reader");
