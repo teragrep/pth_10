@@ -66,7 +66,7 @@ import java.util.*;
 public class DPLTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLTransformation.class);
-    private final DPLParserCatalystContext catCtx;
+    DPLParserCatalystContext catCtx = null;
 
     public DplStep dplStep = null;
 

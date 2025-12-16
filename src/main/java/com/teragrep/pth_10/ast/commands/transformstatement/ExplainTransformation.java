@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplainTransformation.class);
-    private final DPLParserCatalystContext catCtx;
+    DPLParserCatalystContext catCtx = null;
 
     public ExplainStep explainStep = null;
 

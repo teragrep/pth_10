@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
 public class ChartTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ChartTransformation.class);
-    private final DPLParserCatalystContext catCtx;
+    DPLParserCatalystContext catCtx;
 
     EvalTransformation evalTransformation;
     AggregateFunction aggregateFunction;

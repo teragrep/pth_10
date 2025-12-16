@@ -65,7 +65,7 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TopTransformation.class);
 
-    private final DPLParserCatalystContext catCtx;
+    DPLParserCatalystContext catCtx = null;
 
     public TopStep topStep = null;
 

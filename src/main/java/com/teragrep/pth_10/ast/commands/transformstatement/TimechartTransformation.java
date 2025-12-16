@@ -73,7 +73,7 @@ import java.util.regex.Pattern;
 public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TimechartTransformation.class);
-    private final DPLParserCatalystContext catCtx;
+    private DPLParserCatalystContext catCtx = null;
     private DPLParserCatalystVisitor catVisitor;
     private Document doc;
 

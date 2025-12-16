@@ -63,7 +63,7 @@ import java.util.List;
 public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EventstatsTransformation.class);
-    private final DPLParserCatalystContext catCtx;
+    private DPLParserCatalystContext catCtx;
     private final String hdfsPath;
     private final List<Column> listOfAggregations = new ArrayList<>();
     public EventstatsStep eventstatsStep = null;

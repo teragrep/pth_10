@@ -91,7 +91,7 @@ import java.util.Collections;
 public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTransformation.class);
-    private final DPLParserCatalystContext catCtx;
+    DPLParserCatalystContext catCtx;
     DPLParserCatalystVisitor catVisitor;
 
     // host, port for relp connection

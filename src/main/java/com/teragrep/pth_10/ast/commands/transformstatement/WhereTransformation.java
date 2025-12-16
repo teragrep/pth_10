@@ -68,7 +68,7 @@ import org.slf4j.LoggerFactory;
 public class WhereTransformation extends DPLParserBaseVisitor<Node> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WhereTransformation.class);
-    private final DPLParserCatalystContext catCtx;
+    DPLParserCatalystContext catCtx = null;
 
     public WhereStep whereStep = null;
 
