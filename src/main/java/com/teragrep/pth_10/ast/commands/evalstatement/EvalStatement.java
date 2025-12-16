@@ -99,7 +99,10 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     public Node visitL_evalStatement_subEvalStatement(DPLParser.L_evalStatement_subEvalStatementContext ctx) {
         LOGGER
-                .info("VisitSubEvalStatements: children=<{}> text=<{}> query=<{}>", ctx.getChildCount(), ctx.getChild(0).getText(), catCtx.getQueryName());
+                .info(
+                        "queryId <{}> VisitSubEvalStatements: children=<{}> text=<{}>", catCtx.getQueryName(),
+                        ctx.getChildCount(), ctx.getChild(0).getText()
+                );
         // Consume parenthesis and return actual evalStatement
         Node rv = visit(ctx.getChild(0));
         LOGGER
@@ -403,7 +406,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         // searchmatch(x) : Returns TRUE if the search string (first and only argument) matches the event
 
         String searchStr = new UnquotedText(new TextString(ctx.getChild(2).getText())).read(); // strip quotes
-        LOGGER.info("Got search string <[{}]> in searchmatch in query <{}> .", searchStr, catCtx.getQueryName());
+        LOGGER.info("queryId <{}> Got search string <[{}]> in searchmatch.", catCtx.getQueryName(), searchStr);
 
         // fields array should contain x=... , y=..., etc.
         String[] fields = searchStr.split(" ");

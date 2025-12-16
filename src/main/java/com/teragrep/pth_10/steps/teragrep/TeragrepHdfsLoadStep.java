@@ -112,7 +112,7 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                 FileStatus[] statuses = fs.globStatus(new org.apache.hadoop.fs.Path(pathStr));
                 for (FileStatus status : statuses) {
                     String sPath = status.getPath().toUri().getPath();
-                    LOGGER.info("HDFS Load found a wildcard path <[{}]> for query <{}>", sPath, catCtx.getQueryName());
+                    LOGGER.info("queryId <{}> HDFS Load found a wildcard path <[{}]>", catCtx.getQueryName(), sPath);
 
                     if (rv == null) {
                         rv = processHdfsLoad(sPath, fs, false, schema);
@@ -130,7 +130,7 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                 // no wildcard char present
                 LOGGER
                         .info(
-                                "HDFS Load did not find a wildcard char, loading as single path for query <{}>",
+                                "queryId <{}> HDFS Load did not find a wildcard char, loading as single path",
                                 catCtx.getQueryName()
                         );
                 rv = processHdfsLoad(pathStr, fs, true, schema);
@@ -279,7 +279,7 @@ public final class TeragrepHdfsLoadStep extends TeragrepHdfsStep {
                             else {
                                 LOGGER
                                         .info(
-                                                "Avro file was empty, returning an empty dataset for query <{}>.",
+                                                "queryId <{}> Avro file was empty, returning an empty dataset.",
                                                 catCtx.getQueryName()
                                         );
                             }

@@ -79,14 +79,14 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         this.catCtx = catCtx;
         LOGGER
                 .info(
-                        "Initializing TransformStatement with catCtx=<{}> catVisitor=<{}> query=<{}>", catCtx,
-                        catVisitor, catCtx.getQueryName()
+                        "queryId <{}> Initializing TransformStatement with catCtx=<{}> catVisitor=<{}>",
+                        catCtx.getQueryName(), catCtx, catVisitor
                 );
     }
 
     @Override
     public Node visitTransformStatement(DPLParser.TransformStatementContext ctx) {
-        LOGGER.info("visitTransformStatement incoming: text=<{}> query=<{}>", ctx.getText(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> visitTransformStatement incoming: text=<{}>", catCtx.getQueryName(), ctx.getText());
         return transformStatementEmitCatalyst(ctx);
     }
 
@@ -98,7 +98,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
      */
     private Node transformStatementEmitCatalyst(DPLParser.TransformStatementContext ctx) {
         if (ctx.EOF() != null) {
-            LOGGER.info("TransformStatement <EOF>, return null for query <{}>", catCtx.getQueryName());
+            LOGGER.info("queryId <{}> TransformStatement <EOF>, return null", catCtx.getQueryName());
             return null;
         }
 
@@ -109,17 +109,17 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
 
         // Logging
         if (leftTree != null) {
-            LOGGER.info("-> Left tree: text=<{}> query:<{}>", leftTree.getText(), catCtx.getQueryName());
+            LOGGER.info("queryId <{}> -> Left tree: text=<{}>", catCtx.getQueryName(), leftTree.getText());
         }
         else {
-            LOGGER.info("-> Left tree NULL query:<{}>", catCtx.getQueryName());
+            LOGGER.info("queryId <{}> -> Left tree NULL", catCtx.getQueryName());
         }
 
         if (rightTree != null) {
-            LOGGER.info("-> Right tree: text=<{}> query:<{}>", rightTree.getText(), catCtx.getQueryName());
+            LOGGER.info("queryId <{}> -> Right tree: text=<{}>", catCtx.getQueryName(), rightTree.getText());
         }
         else {
-            LOGGER.info("-> Right tree NULL query:<{}>", catCtx.getQueryName());
+            LOGGER.info("queryId <{}> -> Right tree NULL", catCtx.getQueryName());
         }
 
         // Visit command transformations
@@ -137,8 +137,8 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
             else {
                 LOGGER
                         .error(
-                                "visit of leftTree did not return Step(List)Node, instead got: class=<{}>",
-                                left.getClass().getName()
+                                "queryId <{}> visit of leftTree did not return Step(List)Node, instead got: class=<{}>",
+                                catCtx.getQueryName(), left.getClass().getName()
                         );
             }
             // Add right branch

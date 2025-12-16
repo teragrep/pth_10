@@ -149,7 +149,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (LOGGER.isInfoEnabled()) {
             LOGGER
                     .info(
-                            "[SearchTransformationRoot CAT, query <{}>] Visiting: <{}> with <{}> children",
+                            "queryId <{}> [SearchTransformationRoot CAT] Visiting: <{}> with <{}> children",
                             catCtx.getQueryName(), ctx.getText(), ctx.getChildCount()
                     );
         }
@@ -184,7 +184,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (rv != null && rv.getColumn() != null) {
             this.catCtx.setSparkQuery(rv.getColumn().toString());
             if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Spark column: <{}> query: <{}>", rv.getColumn().toString(), catCtx.getQueryName());
+                LOGGER.info("queryId <{}> Spark column: <{}>", catCtx.getQueryName(), rv.getColumn().toString());
             }
         }
 
@@ -310,7 +310,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitLogicalStatement(DPLParser.LogicalStatementContext ctx) {
-        LOGGER.info("logicalStatement (Catalyst) incoming: <{}> query: <{}>", ctx.getText(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> logicalStatement (Catalyst) incoming: <{}>", catCtx.getQueryName(), ctx.getText());
         Node rv = null;
         Node left = null;
         TerminalNode leftIsTerminal = null;
@@ -367,7 +367,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (rv instanceof SubSearchNode) {
             LOGGER
                     .info(
-                            "[CAT] [LogiStat] Return value was SubsearchNode. Converting to ColumnNode! Query: <{}>",
+                            "queryId <{}> [CAT] [LogiStat] Return value was SubsearchNode. Converting to ColumnNode!",
                             catCtx.getQueryName()
                     );
             rv = new ColumnNode(((SubSearchNode) rv).getColumn());
@@ -388,7 +388,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             LOGGER.debug("Unescaped : <{}>", statement);
 
             statement = new UnquotedText(new TextString(statement)).read(); // strip outer quotes
-            LOGGER.info("Stripped quotes : <{}> query: <{}>", statement, catCtx.getQueryName());
+            LOGGER.info("queryId <{}> Stripped quotes : <{}>", catCtx.getQueryName(), statement);
 
             // remove leading and trailing wildcards, if present
             if (statement.startsWith("*")) {
@@ -405,7 +405,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             rv = rv.rlike(statement);
         }
 
-        LOGGER.info("[CAT] SearchIndexStatement return: <{}> query: <{}>", rv.toString(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> [CAT] SearchIndexStatement return: <{}>", catCtx.getQueryName(), rv.toString());
         return new ColumnNode(rv);
     }
 
@@ -555,11 +555,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         String value = new UnquotedText(new TextString(ctx.getChild(1).getText())).read();
         String field = new UnquotedText(new TextString(ctx.getChild(0).getText())).read();
 
-        LOGGER
-                .info(
-                        "[CAT] [ComparisonStmt] field <{}> = value <{}>, query = <{}>", field, value,
-                        catCtx.getQueryName()
-                );
+        LOGGER.info("queryId <{}> [CAT] [ComparisonStmt] field <{}> = value <{}>", catCtx.getQueryName(), field, value);
 
         boolean specialCase = false;
         if (ctx.getChild(0) instanceof TerminalNode) {
@@ -602,21 +598,21 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
-        LOGGER.info("visitSubsearchStatement with brackets: <{}> query: <{}>", ctx.getText(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> visitSubsearchStatement with brackets: <{}>", catCtx.getQueryName(), ctx.getText());
         if (catCtx == null) {
             throw new IllegalStateException("Catalyst context is null!");
         }
-        LOGGER.info("Cloning main visitor to subsearch for query <{}>", catCtx.getQueryName());
+        LOGGER.info("queryId <{}> Cloning main visitor to subsearch", catCtx.getQueryName());
         final DPLParserCatalystContext subCtx = catCtx.clone();
-        LOGGER.info("(Catalyst) subVisitor init with subCtx= <{}> for query <{}>", subCtx, catCtx.getQueryName());
+        LOGGER.info("queryId <{}> (Catalyst) subVisitor init with subCtx= <{}>", catCtx.getQueryName(), subCtx);
         DPLParserCatalystVisitor subVisitor = new DPLParserCatalystVisitor(subCtx);
 
         // Pass actual subsearch branch
         StepNode subSearchNode = (StepNode) subVisitor.visit(ctx);
         LOGGER
                 .info(
-                        "SubSearchTransformation (Catalyst) Result: class=<{}> query:<{}>",
-                        subSearchNode.getClass().getName(), catCtx.getQueryName()
+                        "queryId <{}> SubSearchTransformation (Catalyst) Result: class=<{}>", catCtx.getQueryName(),
+                        subSearchNode.getClass().getName()
                 );
 
         SubsearchStep subsearchStep = (SubsearchStep) subSearchNode.get();
@@ -652,8 +648,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (timeStatement.getStartTime() != null) {
             LOGGER
                     .info(
-                            "TimeStatement: Set minimum (earliest) time to: <{}> for query <{}>",
-                            timeStatement.getStartTime(), catCtx.getQueryName()
+                            "queryId <{}> TimeStatement: Set minimum (earliest) time to: <{}>", catCtx.getQueryName(),
+                            timeStatement.getStartTime()
                     );
             this.catCtx.setDplMinimumEarliest(timeStatement.getStartTime());
         }
@@ -661,8 +657,8 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (timeStatement.getEndTime() != null) {
             LOGGER
                     .info(
-                            "TimeStatement: Set maximum (latest) time to: <{}> for query <{}>",
-                            timeStatement.getEndTime(), catCtx.getQueryName()
+                            "queryId <{}> TimeStatement: Set maximum (latest) time to: <{}>", catCtx.getQueryName(),
+                            timeStatement.getEndTime()
                     );
             this.catCtx.setDplMaximumLatest(timeStatement.getEndTime());
         }

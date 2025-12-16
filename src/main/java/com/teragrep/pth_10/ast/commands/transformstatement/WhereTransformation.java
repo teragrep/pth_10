@@ -91,7 +91,7 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
         ColumnNode cn = (ColumnNode) whereTransformationEmitCatalyst(ctx);
 
         this.whereStep.setWhereColumn(cn.getColumn());
-        LOGGER.info("Set whereStep column to: <{}> for query <{}>", cn.getColumn().expr().sql(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> Set whereStep column to: <{}>", catCtx.getQueryName(), cn.getColumn().expr().sql());
 
         return new StepNode(whereStep);
     }
@@ -117,8 +117,8 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
             sql = whereCol.expr().sql();
             LOGGER
                     .info(
-                            "WhereTransformation(Catalyst) out: children=<{}> sql=<{}> query=<{}>", ctx.getChildCount(),
-                            sql, catCtx.getQueryName()
+                            "queryId <{}> WhereTransformation(Catalyst) out: children=<{}> sql=<{}>",
+                            catCtx.getQueryName(), ctx.getChildCount(), sql
                     );
         }
         else {

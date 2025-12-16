@@ -83,8 +83,8 @@ public class DPLDatasource {
 
     public Dataset<Row> constructStreams(ArchiveQuery archiveQuery, boolean isMetadataQuery) {
         // resolve archive Query which is then used with archiveDatasource
-        LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]> for query <{}>", archiveQuery, catCtx.getQueryName());
-        LOGGER.info("DPL Interpreter constructStream config=<[{}]> for query <{}>", config, catCtx.getQueryName());
+        LOGGER.info("queryId <{}> DPL Interpreter ArchiveQuery=<[{}]>", catCtx.getQueryName(), archiveQuery);
+        LOGGER.info("queryId <{}> DPL Interpreter constructStream config=<[{}]>", catCtx.getQueryName(), config);
         if (!config.getBoolean("dpl.pth_06.enabled")) {
             throw new RuntimeException("Teragrep datasource was disabled: <dpl.pth_06.enabled=false>");
         }
@@ -101,8 +101,8 @@ public class DPLDatasource {
         DataStreamReader reader;
         LOGGER
                 .info(
-                        "ArchiveStreamConsumerDatasource initialized with query <{}>: <[{}]>", catCtx.getQueryName(),
-                        query
+                        "queryId <{}> ArchiveStreamConsumerDatasource initialized with query: <[{}]>",
+                        catCtx.getQueryName(), query
                 );
 
         // setup s3 credentials
@@ -166,7 +166,7 @@ public class DPLDatasource {
             else {
                 LOGGER
                         .warn(
-                                "DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty for query <{}>",
+                                "queryId <{}> DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty",
                                 catCtx.getQueryName()
                         );
             }

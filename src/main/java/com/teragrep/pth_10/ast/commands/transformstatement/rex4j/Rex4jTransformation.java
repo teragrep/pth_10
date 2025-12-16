@@ -135,7 +135,7 @@ public class Rex4jTransformation extends DPLParserBaseVisitor<Node> {
         String s = ctx.getChild(1).getText();
         s = new UnquotedText(new TextString(s)).read();
         StringNode rv = new StringNode(new Token(Type.STRING, s));
-        LOGGER.info("visitT_rex4j_maxMatchParameter: return=<{}> query=<{}>", rv, catCtx.getQueryName());
+        LOGGER.info("queryId <{}> visitT_rex4j_maxMatchParameter: return=<{}>", catCtx.getQueryName(), rv);
         return rv;
     }
 

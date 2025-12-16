@@ -77,8 +77,8 @@ public class DPLTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitDplTransformation(DPLParser.DplTransformationContext ctx) {
         LOGGER
                 .info(
-                        "DPLTransformation: children=<{}> text=<{}> query=<{}>", ctx.getChildCount(), ctx.getText(),
-                        catCtx.getQueryName()
+                        "queryId <{}> DPLTransformation: children=<{}> text=<{}>", catCtx.getQueryName(),
+                        ctx.getChildCount(), ctx.getText()
                 );
 
         return dplTransformationEmitCatalyst(ctx);

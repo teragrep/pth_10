@@ -73,8 +73,8 @@ public class ExplainTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitExplainTransformation(DPLParser.ExplainTransformationContext ctx) {
         LOGGER
                 .info(
-                        "ExplainTransformation incoming: children=<{}> text=<{}> query=<{}>", ctx.getChildCount(),
-                        ctx.getText(), catCtx.getQueryName()
+                        "queryId <{}> ExplainTransformation incoming: children=<{}> text=<{}>", catCtx.getQueryName(),
+                        ctx.getChildCount(), ctx.getText()
                 );
 
         return explainTransformationEmitCatalyst(ctx);

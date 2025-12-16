@@ -181,7 +181,7 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
 
         if (archiveQuery != null)
             this.catCtx.setArchiveQuery(archiveQuery.toString());
-        LOGGER.info("XML archive query: <{}> queryName: <{}>", archiveQuery, catCtx.getQueryName());
+        LOGGER.info("queryId <{}> XML archive query: <{}>", catCtx.getQueryName(), archiveQuery);
 
         return archiveQuery;
     }
@@ -275,7 +275,7 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitLogicalStatement(DPLParser.LogicalStatementContext ctx) {
-        LOGGER.info("logicalStatement (XML) incoming: <{}> for query <{}>", ctx.getText(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> logicalStatement (XML) incoming: <{}>", catCtx.getQueryName(), ctx.getText());
         Node rv = new NullNode();
         Node left = new NullNode();
         TerminalNode leftIsTerminal = null;
@@ -343,7 +343,7 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         if (rv instanceof SubSearchNode) {
             LOGGER
                     .info(
-                            "[XML] [LogiStat] Return value was SubsearchNode. Converting to ElementNode! Query: <{}>",
+                            "queryId <{}> [XML] [LogiStat] Return value was SubsearchNode. Converting to ElementNode!",
                             catCtx.getQueryName()
                     );
             return new ElementNode(((SubSearchNode) rv).asElement(doc));
@@ -538,8 +538,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
 
         LOGGER
                 .info(
-                        "[XML] Comparison statement: <{}> with <{}> children for query <{}>", value,
-                        ctx.getChildCount(), catCtx.getQueryName()
+                        "queryId <{}> [XML] Comparison statement: <{}> with <{}> children", catCtx.getQueryName(),
+                        value, ctx.getChildCount()
                 );
         Element el = doc.createElement("comparisonstatement");
         el.setAttribute("field", field);
@@ -583,8 +583,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         if (timeStatement.getStartTime() != null) {
             LOGGER
                     .info(
-                            "TimeStatement: Set minimum (earliest) time to: <{}> for query: <{}>",
-                            timeStatement.getStartTime(), catCtx.getQueryName()
+                            "queryId <{}> TimeStatement: Set minimum (earliest) time to: <{}>", catCtx.getQueryName(),
+                            timeStatement.getStartTime()
                     );
             this.catCtx.setDplMinimumEarliest(timeStatement.getStartTime());
         }
@@ -592,8 +592,8 @@ public class LogicalStatementXML extends DPLParserBaseVisitor<Node> {
         if (timeStatement.getEndTime() != null) {
             LOGGER
                     .info(
-                            "TimeStatement: Set maximum (latest) time to: <{}> for query: <{}>",
-                            timeStatement.getEndTime(), catCtx.getQueryName()
+                            "queryId <{}> TimeStatement: Set maximum (latest) time to: <{}>", catCtx.getQueryName(),
+                            timeStatement.getEndTime()
                     );
             this.catCtx.setDplMaximumLatest(timeStatement.getEndTime());
         }

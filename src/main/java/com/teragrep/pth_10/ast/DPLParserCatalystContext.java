@@ -112,11 +112,7 @@ public class DPLParserCatalystContext implements Cloneable {
             this.messageLogger.accept(msg);
         }
         else {
-            LOGGER
-                    .warn(
-                            "Tried to log message <{}> to UI for query <{}>, but messageLogger was not set!", queryName,
-                            msg
-                    );
+            LOGGER.warn("queryId <{}> Tried to log message <{}> to UI, but messageLogger was not set!", queryName, msg);
         }
     }
 
@@ -129,7 +125,7 @@ public class DPLParserCatalystContext implements Cloneable {
             this.metricsLogger.accept(metricsDs);
         }
         else {
-            LOGGER.warn("Tried to send metrics via MetricsLogger for query <{}>, but it was not set.", queryName);
+            LOGGER.warn("queryId <{}> Tried to send metrics via MetricsLogger, but it was not set.", queryName);
         }
     }
 

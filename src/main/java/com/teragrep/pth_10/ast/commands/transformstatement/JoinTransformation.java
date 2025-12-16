@@ -100,7 +100,7 @@ public class JoinTransformation extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitJoinTransformation(DPLParser.JoinTransformationContext ctx) {
-        LOGGER.info("visitJoinTransformation incoming: text=<{}> query=<{}>", ctx.getText(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> visitJoinTransformation incoming: text=<{}>", catCtx.getQueryName(), ctx.getText());
         return joinTransformationEmitCatalyst(ctx);
     }
 

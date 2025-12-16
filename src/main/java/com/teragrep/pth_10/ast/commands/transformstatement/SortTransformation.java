@@ -97,7 +97,7 @@ public class SortTransformation extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitSortTransformation(DPLParser.SortTransformationContext ctx) {
-        LOGGER.info("Visiting sortTransformation: <{}> for query <{}>", ctx.getText(), catCtx.getQueryName());
+        LOGGER.info("queryId <{}> Visiting sortTransformation: <{}>", catCtx.getQueryName(), ctx.getText());
 
         limit = this.catVisitor.getDPLRecallSize(); // get default sort limit via dpl recall size
 

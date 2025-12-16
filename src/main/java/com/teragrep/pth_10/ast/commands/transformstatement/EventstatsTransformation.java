@@ -86,7 +86,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
         if (ctx.t_eventstats_allnumParameter() != null) {
             LOGGER
                     .warn(
-                            "Detected allnum parameter in query <{}>; however, it is not yet implemented and will be skipped.",
+                            "queryId <{}> Detected allnum parameter; however, it is not yet implemented and will be skipped.",
                             catCtx.getQueryName()
                     );
             Node allNumParamNode = visit(ctx.t_eventstats_allnumParameter());
@@ -152,7 +152,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_eventstats_byInstruction(DPLParser.T_eventstats_byInstructionContext ctx) {
         String byInst = ctx.getChild(1).getText();
 
-        LOGGER.info("byInst: text=<{}> query=<{}>", byInst, catCtx.getQueryName());
+        LOGGER.info("queryId <{}> byInst: text=<{}>", catCtx.getQueryName(), byInst);
 
         return new StringNode(new Token(Token.Type.STRING, byInst));
     }
@@ -167,7 +167,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_eventstats_fieldRenameInstruction(DPLParser.T_eventstats_fieldRenameInstructionContext ctx) {
         String renameInst = ctx.getChild(1).getText();
 
-        LOGGER.info("renameInst: text=<{}> query=<{}>", renameInst, catCtx.getQueryName());
+        LOGGER.info("queryId <{}> renameInst: text=<{}>", catCtx.getQueryName(), renameInst);
 
         return new StringNode(new Token(Token.Type.STRING, renameInst));
     }

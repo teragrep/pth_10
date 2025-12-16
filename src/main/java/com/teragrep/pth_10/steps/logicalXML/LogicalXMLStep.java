@@ -97,12 +97,15 @@ public final class LogicalXMLStep extends AbstractStep {
                 DPLDatasource datasource = new DPLDatasource(catCtx);
                 ds = datasource.constructStreams(this.archiveQuery, isMetadataQuery);
                 LOGGER
-                        .info("Received dataset with columns: <{}> for query <{}>", Arrays.toString(ds.columns()), catCtx.getQueryName());
+                        .info(
+                                "queryId <{}> Received dataset with columns: <{}>", catCtx.getQueryName(),
+                                Arrays.toString(ds.columns())
+                        );
             }
             else {
                 LOGGER
                         .info(
-                                "Archive query object was a stub! Generating empty streaming dataset for query <{}>.",
+                                "queryId <{}> Archive query object was a stub! Generating empty streaming dataset.",
                                 catCtx.getQueryName()
                         );
                 ds = new GeneratedDatasource(catCtx).constructEmptyStream();

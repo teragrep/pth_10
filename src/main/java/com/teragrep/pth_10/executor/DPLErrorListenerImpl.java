@@ -76,14 +76,10 @@ public final class DPLErrorListenerImpl extends BaseErrorListener {
             RecognitionException e
     ) {
         if (e == null) {
-            LOGGER.error("Got an exception from <{}> during query <{}>, no message", listenedTo, queryName);
+            LOGGER.error("queryId <{}> Got an exception from <{}>, no message", queryName, listenedTo);
         }
         else {
-            LOGGER
-                    .error(
-                            "Got an exception from <{}> during query <{}>: <[{}]>", listenedTo, queryName,
-                            e.getMessage(), e
-                    );
+            LOGGER.error("queryId <{}> Got an exception from <{}> : <[{}]>", queryName, listenedTo, e.getMessage(), e);
         }
         throw new IllegalStateException(
                 listenedTo + " failure on line " + line + ", column " + charPositionInLine + " due to " + msg + "\n"
