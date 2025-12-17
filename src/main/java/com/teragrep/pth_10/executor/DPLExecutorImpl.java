@@ -97,7 +97,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
     public DPLExecutorResult interpret(
             BiConsumer<Dataset<Row>, Boolean> batchHandler,
             SparkSession sparkSession,
-            String queryName,
+            String queryId,
             String noteId,
             String paragraphId,
             String lines
@@ -105,38 +105,38 @@ public final class DPLExecutorImpl implements DPLExecutor {
         LOGGER.debug("Running in interpret()");
         batchCollect.clear(); // do not store old values // TODO remove from NotebookDatasetStore too
 
-        LOGGER.info("queryId <{}> DPL-interpreter initialized sparkInterpreter incoming query :<{}>", queryName, lines);
-        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config, queryName);
+        LOGGER.info("queryId <{}> DPL-interpreter initialized sparkInterpreter incoming query :<{}>", queryId, lines);
+        DPLParserCatalystContext catalystContext = new DPLParserCatalystContext(sparkSession, config, queryId);
 
-        LOGGER.debug("queryId <{}> Adding audit information", queryName);
+        LOGGER.debug("queryId <{}> Adding audit information", queryId);
         catalystContext.setAuditInformation(setupAuditInformation(lines));
 
-        LOGGER.debug("queryId <{}> Setting baseurl", queryName);
+        LOGGER.debug("queryId <{}> Setting baseurl", queryId);
         catalystContext.setBaseUrl(config.getString("dpl.web.url"));
-        LOGGER.debug("queryId <{}> Setting notebook url", queryName);
+        LOGGER.debug("queryId <{}> Setting notebook url", queryId);
         catalystContext.setNotebookUrl(noteId);
-        LOGGER.debug("queryId <{}> Setting paragraph url", queryName);
+        LOGGER.debug("queryId <{}> Setting paragraph url", queryId);
         catalystContext.setParagraphUrl(paragraphId);
 
-        LOGGER.debug("queryId <{}> Creating lexer", queryName);
+        LOGGER.debug("queryId <{}> Creating lexer", queryId);
         DPLLexer lexer = new DPLLexer(CharStreams.fromString(lines));
         // Catch also lexer-errors i.e. missing '"'-chars and so on.
-        lexer.addErrorListener(new DPLErrorListenerImpl("Lexer", queryName));
+        lexer.addErrorListener(new DPLErrorListenerImpl("Lexer", queryId));
 
-        LOGGER.debug("queryId <{}> Creating parser", queryName);
+        LOGGER.debug("queryId <{}> Creating parser", queryId);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
-        LOGGER.debug("queryId <{}> Setting earliest", queryName);
+        LOGGER.debug("queryId <{}> Setting earliest", queryId);
         catalystContext.setEarliest("-1Y"); // TODO take from TimeSet
-        LOGGER.debug("queryId <{}> Creating visitor", queryName);
+        LOGGER.debug("queryId <{}> Creating visitor", queryId);
         DPLParserCatalystVisitor visitor = new DPLParserCatalystVisitor(catalystContext);
 
         // Get syntax errors and throw then to zeppelin before executing stream handling
-        LOGGER.debug("queryId <{}> Added error listener", queryName);
-        parser.addErrorListener(new DPLErrorListenerImpl("Parser", queryName));
+        LOGGER.debug("queryId <{}> Added error listener", queryId);
+        parser.addErrorListener(new DPLErrorListenerImpl("Parser", queryId));
 
         ParseTree tree;
         try {
-            LOGGER.debug("queryId <{}> Running parser tree root", queryName);
+            LOGGER.debug("queryId <{}> Running parser tree root", queryId);
             tree = parser.root();
         }
         catch (IllegalStateException e) {
@@ -149,14 +149,14 @@ public final class DPLExecutorImpl implements DPLExecutor {
         }
 
         // set output consumer
-        LOGGER.debug("queryId <{}> Creating consumer", queryName);
+        LOGGER.debug("queryId <{}> Creating consumer", queryId);
         visitor.setConsumer(batchHandler);
 
         // set BatchCollect size
-        LOGGER.debug("queryId <{}> Setting recall size", queryName);
+        LOGGER.debug("queryId <{}> Setting recall size", queryId);
         visitor.setDPLRecallSize(config.getInt("dpl.recall-size"));
 
-        LOGGER.debug("queryId <{}> Creating translationResultNode", queryName);
+        LOGGER.debug("queryId <{}> Creating translationResultNode", queryId);
         TranslationResultNode n = (TranslationResultNode) visitor.visit(tree);
         DataStreamWriter<Row> dsw;
         if (n == null) {
@@ -173,7 +173,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
             // This will also catch AnalysisExceptions, however Spark does not differentiate between
             // different types, they're all Exceptions.
             // log initial exception
-            LOGGER.error("queryId <{}>  got exception: <{}>:", queryName, e.getMessage(), e);
+            LOGGER.error("queryId <{}>  got exception: <{}>:", queryId, e.getMessage(), e);
 
             // get root cause of the exception
             Throwable exception = e;
@@ -183,16 +183,16 @@ public final class DPLExecutorImpl implements DPLExecutor {
             return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
         }
 
-        LOGGER.debug("queryId <{}> Checking if aggregates are used", queryName);
+        LOGGER.debug("queryId <{}> Checking if aggregates are used", queryId);
         boolean aggregatesUsed = visitor.getAggregatesUsed();
         LOGGER
                 .info(
-                        "queryId <{}> -------DPLExecutor aggregatesUsed: <{}> visitor: <{}>", queryName, aggregatesUsed,
+                        "queryId <{}> -------DPLExecutor aggregatesUsed: <{}> visitor: <{}>", queryId, aggregatesUsed,
                         visitor.getClass().getName()
                 );
 
-        LOGGER.debug("queryId <{}> Running startQuery", queryName);
-        streamingQuery = startQuery(dsw, queryName);
+        LOGGER.debug("queryId <{}> Running startQuery", queryId);
+        streamingQuery = startQuery(dsw, queryId);
         LOGGER.debug("queryId <{}> started", streamingQuery.name());
 
         //outQ.explain(); // debug output
@@ -229,7 +229,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
         }
         catch (StreamingQueryException e) {
             // log initial exception
-            LOGGER.error("queryId <{}> Query got exception: <{}>:", queryName, e.getMessage(), e);
+            LOGGER.error("queryId <{}> Query got exception: <{}>:", queryId, e.getMessage(), e);
 
             // get root cause of the exception
             Throwable exception = e;
@@ -239,7 +239,7 @@ public final class DPLExecutorImpl implements DPLExecutor {
             return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
         }
 
-        LOGGER.debug("queryId <{}> Returning from interpret()", queryName);
+        LOGGER.debug("queryId <{}> Returning from interpret()", queryId);
         return new DPLExecutorResultImpl(DPLExecutorResult.Code.SUCCESS, "");
     }
 
