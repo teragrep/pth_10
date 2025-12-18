@@ -97,7 +97,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
         if (sparkSession != null) {
             LOGGER
                     .info(
-                            "Registering DPLInternalStreamingQueryListener to SparkSession <{}>",
+                            "queryId <{}> Registering DPLInternalStreamingQueryListener to SparkSession",
                             sparkSession.sessionUUID()
                     );
             sparkSession.streams().addListener(this);
