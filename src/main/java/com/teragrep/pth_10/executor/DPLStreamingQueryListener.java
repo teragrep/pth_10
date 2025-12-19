@@ -62,7 +62,6 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
     private final UUID queryId;
     private final StreamingQuery streamingQuery;
     private final Config config;
-    private final SourceStatus sourceStatus;
     private final DPLParserCatalystContext catalystContext;
 
     public DPLStreamingQueryListener(
@@ -70,20 +69,18 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
             Config config,
             DPLParserCatalystContext catalystContext
     ) {
-        this(streamingQuery.id(), streamingQuery, config, new SourceStatus(config), catalystContext);
+        this(streamingQuery.id(), streamingQuery, config, catalystContext);
     }
 
     public DPLStreamingQueryListener(
             final UUID queryId,
             final StreamingQuery streamingQuery,
             final Config config,
-            final SourceStatus sourceStatus,
             final DPLParserCatalystContext catalystContext
     ) {
         this.queryId = queryId;
         this.streamingQuery = streamingQuery;
         this.config = config;
-        this.sourceStatus = sourceStatus;
         this.catalystContext = catalystContext;
     }
 
@@ -97,7 +94,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
             LOGGER.debug("ID of stream equals query ID");
 
             LOGGER.debug("Checking for completion");
-            if (checkCompletion(streamingQuery)) {
+            if (config.getBoolean("dpl.pth_07.checkCompletion")) {
                 LOGGER.debug("Flushing context");
                 // a flush call for post query actions to finish
                 catalystContext.flush();
@@ -129,18 +126,4 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
     public void onQueryProgress(QueryProgressEvent queryProgress) {
         LOGGER.debug("queryId <{}> Query progressed: <{}>", queryId, queryProgress.progress().id());
     }
-
-    private boolean checkCompletion(StreamingQuery streamingQuery) {
-        LOGGER.debug("Checking for checkCompletion");
-        if (!config.getBoolean("dpl.pth_07.checkCompletion")) {
-            LOGGER.debug("CheckCompletion was not enabled");
-            return false;
-        }
-
-        boolean shouldStop = sourceStatus.isQueryDone(streamingQuery);
-
-        LOGGER.debug("Returning shouldstop: {}", shouldStop);
-        return shouldStop;
-    }
-
 }
