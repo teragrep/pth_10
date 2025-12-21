@@ -71,7 +71,7 @@ public final class JoinStep extends AbstractJoinStep {
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
         if (dataset == null) {
-            LOGGER.error("JoinStep was given a null dataset");
+            LOGGER.error("queryId <{}> JoinStep was given a null dataset", catCtx.getQueryName());
             return null;
         }
 

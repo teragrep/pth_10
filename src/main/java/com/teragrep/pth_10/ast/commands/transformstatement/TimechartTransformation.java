@@ -113,7 +113,11 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
         Column span = null;
 
         if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty()) {
-            LOGGER.info("Timechart Optional parameters: <[{}]>", ctx.t_timechart_binOptParameter().get(0).getText());
+            LOGGER
+                    .info(
+                            "queryId <{}> Timechart Optional parameters: <[{}]>", catCtx.getQueryName(),
+                            ctx.t_timechart_binOptParameter().get(0).getText()
+                    );
 
             ColumnNode spanNode = (ColumnNode) visit(ctx.t_timechart_binOptParameter().get(0));
             if (spanNode != null) {
@@ -248,13 +252,13 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_timechart_binOptParameter(DPLParser.T_timechart_binOptParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binOptParameter:<{}>", ctx.getText());
+        LOGGER.info("queryId <{}> visitT_timechart_binOptParameter:<{}>", catCtx.getQueryName(), ctx.getText());
         return visitChildren(ctx);
     }
 
     @Override
     public Node visitT_timechart_binSpanParameter(DPLParser.T_timechart_binSpanParameterContext ctx) {
-        LOGGER.info("visitT_timechart_binSpanParameter:<{}>", ctx.getText());
+        LOGGER.info("queryId <{}> visitT_timechart_binSpanParameter:<{}>", catCtx.getQueryName(), ctx.getText());
         CalendarInterval ival = getSpanLength(ctx.getChild(1).getText());
         Column col = new Column("_time");
         Column span = functions.window(col, String.valueOf(ival));
@@ -343,7 +347,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                 timescale = parts[1].trim();
         }
         else {
-            LOGGER.error("Span length error: missing numerical value:<{}>", value);
+            LOGGER.error("queryId <{}> Span length error: missing numerical value:<{}>", catCtx.getQueryName(), value);
             throw new RuntimeException("getSpanLength, missing numerical value:" + value);
         }
         // Calculate value

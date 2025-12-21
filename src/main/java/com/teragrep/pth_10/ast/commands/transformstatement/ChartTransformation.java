@@ -112,7 +112,7 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
      * @return
      */
     private Node visitChartTransformationEmitCatalyst(DPLParser.ChartTransformationContext ctx) {
-        LOGGER.info("ChartTransformation incoming: text=<{}>", ctx.getText());
+        LOGGER.info("queryId <{}> ChartTransformation incoming: text=<{}>", catCtx.getQueryName(), ctx.getText());
 
         ArrayList<Column> listOfExpr = new ArrayList<>();
         // aggregate function and its field renaming instruction

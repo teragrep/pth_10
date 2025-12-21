@@ -118,10 +118,14 @@ public final class TeragrepSystemStep extends AbstractStep {
         final List<String> rv = new ArrayList<>();
 
         if (LOGGER.isInfoEnabled()) {
-            LOGGER.info("programmatically resolved package: <{}>", TeragrepSystemStep.class.getPackage());
             LOGGER
                     .info(
-                            "programmatically resolved: <{}>",
+                            "queryId <{}> programmatically resolved package: <{}>", catCtx.getQueryName(),
+                            TeragrepSystemStep.class.getPackage()
+                    );
+            LOGGER
+                    .info(
+                            "queryId <{}> programmatically resolved: <{}>", catCtx.getQueryName(),
                             TeragrepSystemStep.class.getPackage().getImplementationVersion()
                     );
         }
@@ -145,7 +149,7 @@ public final class TeragrepSystemStep extends AbstractStep {
             });
         }
         catch (IOException e) {
-            LOGGER.error("Failed to load InputStream: ", e);
+            LOGGER.error("queryId <{}> Failed to load InputStream: ", catCtx.getQueryName(), e);
             throw new UncheckedIOException("Failed to load InputStream: ", e);
         }
         return rv;

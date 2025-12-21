@@ -66,7 +66,7 @@ public final class SourceStatus {
                 if (
                     description != null && !description.startsWith(ArchiveMicroStreamReader.class.getName().concat("@"))
                 ) {
-                    LOGGER.debug("Ignoring description: {}", description);
+                    LOGGER.debug("Ignoring description: <{}>", description);
                     // ignore others than archive
                     continue;
                 }
@@ -82,7 +82,7 @@ public final class SourceStatus {
                     queryDone = false;
                 }
             }
-            LOGGER.debug("Returning queryDone: {}", queryDone);
+            LOGGER.debug("Returning queryDone: <{}>", queryDone);
             return queryDone;
         }
         else {

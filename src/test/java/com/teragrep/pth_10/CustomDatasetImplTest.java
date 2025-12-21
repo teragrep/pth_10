@@ -86,7 +86,10 @@ public final class CustomDatasetImplTest {
         final SparkSession sparkSession = streamingTestUtil.getCtx().getSparkSession();
         EqualsVerifier
                 .forClass(CustomDatasetImpl.class)
-                .withPrefabValues(DPLParserCatalystContext.class, new DPLParserCatalystContext(sparkSession), new DPLParserCatalystContext(sparkSession)).verify();
+                .withPrefabValues(
+                        DPLParserCatalystContext.class, new DPLParserCatalystContext(sparkSession, "testQueryName"), new DPLParserCatalystContext(sparkSession, "testQueryName")
+                )
+                .verify();
     }
 
     @Test

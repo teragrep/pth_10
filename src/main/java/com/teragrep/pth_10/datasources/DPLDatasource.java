@@ -83,8 +83,8 @@ public class DPLDatasource {
 
     public Dataset<Row> constructStreams(ArchiveQuery archiveQuery, boolean isMetadataQuery) {
         // resolve archive Query which is then used with archiveDatasource
-        LOGGER.info("DPL Interpreter ArchiveQuery=<[{}]>", archiveQuery);
-        LOGGER.info("DPL Interpreter constructStream config=<[{}]>", config);
+        LOGGER.info("queryId <{}> DPL Interpreter ArchiveQuery=<[{}]>", catCtx.getQueryName(), archiveQuery);
+        LOGGER.info("queryId <{}> DPL Interpreter constructStream config=<[{}]>", catCtx.getQueryName(), config);
         if (!config.getBoolean("dpl.pth_06.enabled")) {
             throw new RuntimeException("Teragrep datasource was disabled: <dpl.pth_06.enabled=false>");
         }
@@ -99,7 +99,11 @@ public class DPLDatasource {
      */
     private Dataset<Row> archiveStreamConsumerDataset(ArchiveQuery query, boolean isMetadataQuery) {
         DataStreamReader reader;
-        LOGGER.info("ArchiveStreamConsumerDatasource initialized with query: <[{}]>", query);
+        LOGGER
+                .info(
+                        "queryId <{}> ArchiveStreamConsumerDatasource initialized with query: <[{}]>",
+                        catCtx.getQueryName(), query
+                );
 
         // setup s3 credentials
         final SparkContext sc = sparkSession.sparkContext();
@@ -129,7 +133,8 @@ public class DPLDatasource {
                 .option("DBjournaldbname", config.getString("dpl.pth_06.archive.db.journaldb.name"))
                 .option("hideDatabaseExceptions", config.getString("dpl.pth_06.archive.db.hideDatabaseExceptions"))
                 .option("skipNonRFC5424Files", config.getString("dpl.pth_06.archive.s3.skipNonRFC5424Files"))
-                .option("queryXML", query.queryString);
+                .option("queryXML", query.queryString)
+                .option("queryName", catCtx.getQueryName());
         // Add auditInformation options if exists
         if (catCtx != null && catCtx.getAuditInformation() != null) {
             LOGGER.debug("Adding auditInformation");
@@ -159,7 +164,11 @@ public class DPLDatasource {
                 reader = reader.option("scheduler", schedulerType);
             }
             else {
-                LOGGER.warn("DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty");
+                LOGGER
+                        .warn(
+                                "queryId <{}> DPLDatasource> dpl.pth_06.archive.scheduler given value was null or empty",
+                                catCtx.getQueryName()
+                        );
             }
         }
 

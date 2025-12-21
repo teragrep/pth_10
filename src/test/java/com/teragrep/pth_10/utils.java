@@ -72,10 +72,15 @@ public class utils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(utils.class);
 
-    public static Dataset<Row> executeQueryWithCatalystOutput(String str, SparkSession spark, Dataset<Row> testSet) {
+    public static Dataset<Row> executeQueryWithCatalystOutput(
+            String str,
+            SparkSession spark,
+            Dataset<Row> testSet,
+            String testQueryName
+    ) {
         // TODO change to streaming mode
         // initializing DPLParserCatalystContext with existing dataset -> processing will not be streaming
-        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark, testSet);
+        DPLParserCatalystContext ctx = new DPLParserCatalystContext(spark, testSet, testQueryName);
         CharStream inputStream = CharStreams.fromString(str);
         DPLLexer lexer = new DPLLexer(inputStream);
         DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
@@ -150,7 +155,10 @@ public class utils {
         sparkSession = sparkSession.newSession();
         sparkSession.sparkContext().setLogLevel("ERROR");
         Dataset<Row> rowDataset = sparkSession.createDataFrame(rowArrayList, exampleSchema);
-        Dataset<Row> rv = executeQueryWithCatalystOutput(str, sparkSession, rowDataset);
+
+        String exampleQueryName = sparkSession.sparkContext().appName() + "-" + 0;
+
+        Dataset<Row> rv = executeQueryWithCatalystOutput(str, sparkSession, rowDataset, exampleQueryName);
 
         // returning canonicalized plan because the one with column names
         // contains references to column instance which increment on each

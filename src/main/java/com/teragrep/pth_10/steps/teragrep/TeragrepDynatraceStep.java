@@ -194,13 +194,18 @@ public class TeragrepDynatraceStep extends AbstractStep implements Flushable {
             if (!hasValidElem) {
                 throw new RuntimeException("Unexpected JSON: Could not find linesValid element.");
             }
-            LOGGER.info("Valid lines: <[{}]>", jsonResp.get("linesValid"));
+            LOGGER
+                    .info("queryId <{}> Query has valid lines: <[{}]>", catCtx.getQueryName(), jsonResp.get("linesValid"));
 
             final boolean hasInvalidElem = jsonResp.has("linesInvalid");
             if (!hasInvalidElem) {
                 throw new RuntimeException("Unexpected JSON: Could not find linesInvalid element.");
             }
-            LOGGER.warn("Invalid lines: <[{}]>", jsonResp.get("linesInvalid"));
+            LOGGER
+                    .warn(
+                            "queryId <{}> Query has invalid lines: <[{}]>", catCtx.getQueryName(),
+                            jsonResp.get("linesInvalid")
+                    );
 
             if (statusCode != 202 && statusCode != 400) {
                 throw new RuntimeException("Error! Response code: <[" + statusCode + "]>. Expected 202 or 400.");

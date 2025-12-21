@@ -135,18 +135,18 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
         if (zplnConfig != null) {
             // host and port for syslog stream
             if (zplnConfig.hasPath(hostCfgItem) && !zplnConfig.getString(hostCfgItem).equals("")) {
-                LOGGER.info("Host set via zeppelin config item");
+                LOGGER.info("queryId <{}> Host set via zeppelin config item", catCtx.getQueryName());
                 this.host = zplnConfig.getString(hostCfgItem);
             }
 
             if (zplnConfig.hasPath(portCfgItem)) {
-                LOGGER.info("Port set via zeppelin config item");
+                LOGGER.info("queryId <{}> Port set via zeppelin config item", catCtx.getQueryName());
                 this.port = zplnConfig.getInt(portCfgItem);
             }
 
             // enforce destination for syslog stream
             if (zplnConfig.hasPath(enforceDestinationCfgItem)) {
-                LOGGER.info("Enforce destination set via zeppelin config item");
+                LOGGER.info("queryId <{}> Enforce destination set via zeppelin config item", catCtx.getQueryName());
                 this.enforceDestination = zplnConfig.getBoolean(enforceDestinationCfgItem);
             }
         }
@@ -240,7 +240,11 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             this.port = Integer.parseUnsignedInt(ctx.getChild(3).getText());
         }
 
-        LOGGER.info("Teragrep command: Host and port set to <[{}]>:<[{}]>", host, port);
+        LOGGER
+                .info(
+                        "queryId <{}> Teragrep command: Host and port set to <[{}]>:<[{}]>", catCtx.getQueryName(),
+                        host, port
+                );
         return null;
     }
 
@@ -472,7 +476,11 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
             hdfsPath = visit(ctx.t_pathParameter()).toString();
         }
         else {
-            LOGGER.info("Defaulting to home directory: Path was not provided to the hdfs list operation.");
+            LOGGER
+                    .info(
+                            "queryId <{}> Defaulting to home directory: Path was not provided to the hdfs list operation.",
+                            catCtx.getQueryName()
+                    );
         }
 
         return new StepNode(new TeragrepHdfsListStep(this.catCtx, hdfsPath));
@@ -580,7 +588,7 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
         if (ctx.t_regexParameter() != null) {
             regex = new UnquotedText(new TextString(ctx.t_regexParameter().stringType().getText())).read();
-            LOGGER.info("regexextract regex: <[{}]>", regex);
+            LOGGER.info("queryId <{}> regexextract regex: <[{}]>", catCtx.getQueryName(), regex);
         }
         else {
             // maybe default or empty regex?

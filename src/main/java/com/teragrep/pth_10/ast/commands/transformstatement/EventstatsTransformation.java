@@ -84,7 +84,11 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
         // FIXME implement allnum=bool parameter
         if (ctx.t_eventstats_allnumParameter() != null) {
-            LOGGER.warn("Detected allnum parameter; however, it is not yet implemented and will be skipped.");
+            LOGGER
+                    .warn(
+                            "queryId <{}> Detected allnum parameter; however, it is not yet implemented and will be skipped.",
+                            catCtx.getQueryName()
+                    );
             Node allNumParamNode = visit(ctx.t_eventstats_allnumParameter());
         }
 
@@ -148,7 +152,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_eventstats_byInstruction(DPLParser.T_eventstats_byInstructionContext ctx) {
         String byInst = ctx.getChild(1).getText();
 
-        LOGGER.info("byInst: text=<{}>", byInst);
+        LOGGER.info("queryId <{}> byInst: text=<{}>", catCtx.getQueryName(), byInst);
 
         return new StringNode(new Token(Token.Type.STRING, byInst));
     }
@@ -163,7 +167,7 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
     public Node visitT_eventstats_fieldRenameInstruction(DPLParser.T_eventstats_fieldRenameInstructionContext ctx) {
         String renameInst = ctx.getChild(1).getText();
 
-        LOGGER.info("renameInst: text=<{}>", renameInst);
+        LOGGER.info("queryId <{}> renameInst: text=<{}>", catCtx.getQueryName(), renameInst);
 
         return new StringNode(new Token(Token.Type.STRING, renameInst));
     }

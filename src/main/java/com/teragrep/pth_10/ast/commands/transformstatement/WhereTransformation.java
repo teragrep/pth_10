@@ -91,7 +91,7 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
         ColumnNode cn = (ColumnNode) whereTransformationEmitCatalyst(ctx);
 
         this.whereStep.setWhereColumn(cn.getColumn());
-        LOGGER.info("Set whereStep column to: <{}>", cn.getColumn().expr().sql());
+        LOGGER.info("queryId <{}> Set whereStep column to: <{}>", catCtx.getQueryName(), cn.getColumn().expr().sql());
 
         return new StepNode(whereStep);
     }
@@ -115,7 +115,11 @@ public class WhereTransformation extends DPLParserBaseVisitor<Node> {
                 n = new ColumnNode(functions.not(whereCol));
             }
             sql = whereCol.expr().sql();
-            LOGGER.info("WhereTransformation(Catalyst) out: children=<{}> sql=<{}>", ctx.getChildCount(), sql);
+            LOGGER
+                    .info(
+                            "queryId <{}> WhereTransformation(Catalyst) out: children=<{}> sql=<{}>",
+                            catCtx.getQueryName(), ctx.getChildCount(), sql
+                    );
         }
         else {
             if (n != null)

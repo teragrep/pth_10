@@ -70,7 +70,7 @@ public class EvalTest {
     void setEnv() {
         spark = SparkSession.builder().appName("Java Spark SQL basic example").master("local[2]").getOrCreate();
         spark.sparkContext().setLogLevel("ERROR");
-        ctx = new DPLParserCatalystContext(spark);
+        ctx = new DPLParserCatalystContext(spark, "testQueryName");
     }
 
     @Test
@@ -81,7 +81,7 @@ public class EvalTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);
@@ -101,7 +101,7 @@ public class EvalTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);
@@ -120,7 +120,7 @@ public class EvalTest {
         final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         final ParseTree tree = parser.root();
 
-        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null);
+        final DPLParserCatalystContext ctx = new DPLParserCatalystContext(null, "testQueryName");
         ctx.setEarliest("-1w");
 
         final EvalTransformation ct = new EvalTransformation(ctx);

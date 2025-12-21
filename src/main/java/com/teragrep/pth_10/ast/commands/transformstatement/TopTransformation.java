@@ -74,7 +74,11 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitTopTransformation(DPLParser.TopTransformationContext ctx) {
-        LOGGER.info("TopTransformation incoming: children=<{}> text=<{}>", ctx.getChildCount(), ctx.getText());
+        LOGGER
+                .info(
+                        "queryId <{}> TopTransformation incoming: children=<{}> text=<{}>", catCtx.getQueryName(),
+                        ctx.getChildCount(), ctx.getText()
+                );
         return topTransformationEmitCatalyst(ctx);
     }
 
@@ -91,7 +95,8 @@ public class TopTransformation extends DPLParserBaseVisitor<Node> {
         List<DPLParser.T_top_topOptParameterContext> opts = ctx.t_top_topOptParameter();
         for (DPLParser.T_top_topOptParameterContext o : opts) {
             if (o.t_top_limitParameter() != null) {
-                LOGGER.info("param= <{}>", o.t_top_limitParameter().getChild(1).getText());
+                LOGGER
+                        .info("queryId <{}> param=<{}>", catCtx.getQueryName(), o.t_top_limitParameter().getChild(1).getText());
                 limit = Integer.parseInt(o.t_top_limitParameter().integerType().getText());
             }
         }

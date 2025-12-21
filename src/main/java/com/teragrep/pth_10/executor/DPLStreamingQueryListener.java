@@ -77,12 +77,12 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     @Override
     public void onQueryStarted(QueryStartedEvent queryStarted) {
-        LOGGER.info("Query started: {}", queryStarted.id());
+        LOGGER.info("queryId <{}> Query started: id: <{}>", queryName, queryStarted.id());
     }
 
     @Override
     public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-        LOGGER.info("Query terminated: {}", queryTerminated.id());
+        LOGGER.info("queryId <{}> Query terminated: id: <{}>", queryName, queryTerminated.id());
         streamingQuery.sparkSession().streams().removeListener(this);
     }
 
@@ -90,8 +90,8 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
     public void onQueryProgress(QueryProgressEvent queryProgress) {
         LOGGER.debug("onQueryProgress() called");
         String nameOfStream = queryProgress.progress().name();
-        LOGGER.debug("Name of stream: {}", nameOfStream);
-        LOGGER.debug("Query name: {}", nameOfStream);
+        LOGGER.debug("Name of stream: <{}>", nameOfStream);
+        LOGGER.debug("Query name: <{}>", nameOfStream);
 
         if (queryName.equals(nameOfStream)) {
             LOGGER.debug("Name of stream equals query name");
@@ -102,7 +102,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
                 // a flush call for post query actions to finish
                 catalystContext.flush();
                 try {
-                    LOGGER.info("Stopping streaming query");
+                    LOGGER.info("queryId <{}> Stopping streaming query", queryName);
                     streamingQuery.stop();
                 }
                 catch (TimeoutException e) {
@@ -140,7 +140,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
             shouldStop = false;
         }
          */
-        LOGGER.debug("Returning shouldstop: {}", shouldStop);
+        LOGGER.debug("Returning shouldstop: <{}>", shouldStop);
         return shouldStop;
     }
 

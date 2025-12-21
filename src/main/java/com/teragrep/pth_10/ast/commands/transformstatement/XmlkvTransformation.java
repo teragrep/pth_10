@@ -68,7 +68,7 @@ public class XmlkvTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitXmlkvTransformation(DPLParser.XmlkvTransformationContext ctx) {
-        LOGGER.info("xmlKvTransformation incoming: text=<{}>", ctx.getText());
+        LOGGER.info("queryId <{}> xmlKvTransformation incoming: text=<{}>", catCtx.getQueryName(), ctx.getText());
 
         xmlkvStep = new XmlkvStep();
 
