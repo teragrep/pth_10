@@ -52,7 +52,6 @@ import com.teragrep.pth_10.steps.eventstats.EventstatsStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,32 +119,40 @@ public class EventstatsTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_eventstats_aggregationInstruction(DPLParser.T_eventstats_aggregationInstructionContext ctx) {
-        ParseTree cmd = ctx.getChild(0);
-        AggregateFunction aggFunction = new AggregateFunction(catCtx);
-        Column aggCol = null;
+        final ParseTree cmd;
 
-        if (cmd instanceof TerminalNode) {
-            /* if (((TerminalNode)cmd).getSymbol().getType() == DPLLexer.COMMAND_EVENTSTATS_MODE_COUNT) {
-                LOGGER.info("Implied wildcard COUNT mode - count({}", ds.columns()[0] + ")");
-                aggCol = functions.count(ds.columns()[0]).as("count");
-            }*/
+        final DPLParser.AggregateFunctionContext aggregateFunctionContext = ctx.aggregateFunction();
+        if (aggregateFunctionContext != null) {
+            cmd = aggregateFunctionContext;
         }
-        else if (cmd instanceof DPLParser.AggregateFunctionContext) {
-            // visit agg function
-            LOGGER.debug("Aggregate function: text=<{}>", cmd.getText());
-            Node aggNode = aggFunction.visit((DPLParser.AggregateFunctionContext) cmd);
-            aggCol = ((ColumnNode) aggNode).getColumn();
+        else {
+            throw new IllegalArgumentException("Expected eventstats aggregation instruction was not provided");
         }
 
-        ParseTree fieldRenameInst = ctx.getChild(1);
-        if (fieldRenameInst instanceof DPLParser.T_eventstats_fieldRenameInstructionContext) {
-            LOGGER.debug("Field rename instruction: text=<{}>", fieldRenameInst.getText());
+        final AggregateFunction aggFunction = new AggregateFunction(catCtx);
+        final Node aggNode = aggFunction.visit(cmd);
+        final Column aggCol = ((ColumnNode) aggNode).getColumn();
+
+        // check for rename instruction
+        final DPLParser.T_eventstats_fieldRenameInstructionContext fieldRenameContext = ctx
+                .t_eventstats_fieldRenameInstruction();
+        if (fieldRenameContext != null) {
+            final String renameColumnName = fieldRenameContext.fieldType().getText();
+            LOGGER.debug("Rename column as <{}>", renameColumnName);
             // AS new-fieldname
-            aggCol = aggCol.as(fieldRenameInst.getChild(1).getText());
+            listOfAggregations.add(aggCol.as(renameColumnName));
+        }
+        else {
+            LOGGER.debug("No rename instruction found");
+            listOfAggregations.add(aggCol);
         }
 
-        listOfAggregations.add(aggCol);
-        return null;
+        // visit agg function
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Aggregate function: text=<{}>", cmd.getText());
+        }
+
+        return new NullNode();
     }
 
     @Override
