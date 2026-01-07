@@ -125,7 +125,11 @@ public final class FilterTypesTest {
         Exception exception = assertThrows(RuntimeException.class, () -> {
             filterTypes.sortedMap();
         });
-        Assertions.assertEquals("Bloom filter size fields was not configured.", exception.getMessage());
+        Assertions
+                .assertEquals(
+                        "Option 'dpl.pth_06.bloom.db.fields' expected an JSON object but was 'null'",
+                        exception.getMessage()
+                );
     }
 
     @Test
@@ -195,6 +199,50 @@ public final class FilterTypesTest {
         final FilterTypes filterTypes = new FilterTypes(config);
         final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
         final String expectedMessage = "Found duplicate values in 'dpl.pth_06.bloom.db.fields'";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testNullExpectedValue() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "[{expected: 1000, fpp: 0.01},{expected: null, fpp: 0.01}]");
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "expected value in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testNullFppValue() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "[{expected: 1000, fpp: 0.01},{expected: 2000, fpp: null}]");
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "fpp value in 'dpl.pth_06.bloom.db.fields' should not be 'null'";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testNullFieldJson() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "[{expected: 1000, fpp: 0.01},null]");
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "Option 'dpl.pth_06.bloom.db.fields' contains a 'null' filter configuration entry";
+        Assertions.assertEquals(expectedMessage, exception.getMessage());
+    }
+
+    @Test
+    public void testNullFilterTypeValueJson() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_06.bloom.db.fields", "null");
+        final Config config = ConfigFactory.parseProperties(properties);
+        final FilterTypes filterTypes = new FilterTypes(config);
+        final IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, filterTypes::sortedMap);
+        final String expectedMessage = "Option 'dpl.pth_06.bloom.db.fields' expected an JSON object but was 'null'";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
