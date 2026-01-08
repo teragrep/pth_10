@@ -625,28 +625,32 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitSubsearchStatement(DPLParser.SubsearchStatementContext ctx) {
         if (LOGGER.isInfoEnabled()) {
-        LOGGER.info("queryId <{}> visitSubsearchStatement with brackets: <{}>", catCtx.getQueryName(), ctx.getText());
+            LOGGER
+                    .info(
+                            "queryId <{}> visitSubsearchStatement with brackets: <{}>", catCtx.getQueryName(),
+                            ctx.getText()
+                    );
         }
         if (catCtx == null) {
             throw new IllegalStateException("DPL parser catalyst context is missing");
         }
         if (LOGGER.isInfoEnabled()) {
-        LOGGER.info("queryId <{}> Cloning main visitor to subsearch", catCtx.getQueryName());
+            LOGGER.info("queryId <{}> Cloning main visitor to subsearch", catCtx.getQueryName());
         }
         final DPLParserCatalystContext subCtx = catCtx.clone();
         if (LOGGER.isInfoEnabled()) {
-        LOGGER.info("queryId <{}> (Catalyst) subVisitor init with subCtx= <{}>", catCtx.getQueryName(), subCtx);
+            LOGGER.info("queryId <{}> (Catalyst) subVisitor init with subCtx= <{}>", catCtx.getQueryName(), subCtx);
         }
         final DPLParserCatalystVisitor subVisitor = new DPLParserCatalystVisitor(subCtx);
 
         // Pass actual subsearch branch
         final StepNode subSearchNode = (StepNode) subVisitor.visit(ctx);
         if (LOGGER.isInfoEnabled()) {
-        LOGGER
-                .info(
-                        "queryId <{}> SubSearchTransformation (Catalyst) Result: class=<{}>", catCtx.getQueryName(),
-                        subSearchNode.getClass().getName()
-                );
+            LOGGER
+                    .info(
+                            "queryId <{}> SubSearchTransformation (Catalyst) Result: class=<{}>", catCtx.getQueryName(),
+                            subSearchNode.getClass().getName()
+                    );
         }
 
         final SubsearchStep subsearchStep = (SubsearchStep) subSearchNode.get();
