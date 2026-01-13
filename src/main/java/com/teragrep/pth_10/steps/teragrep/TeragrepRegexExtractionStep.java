@@ -49,6 +49,7 @@ import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.ml.feature.RegexTokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.functions;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,12 +75,23 @@ public final class TeragrepRegexExtractionStep extends AbstractStep {
                         "TeragrepRegexExtractionStep using regex pattern: <[{}]> from input col <[{}]> to output col <[{}]>",
                         regex, inputCol, outputCol
                 );
+
+        final String nullSafeColumn = "nullSafe_" + inputCol;
+
+        // create a column where null values are replaced with empty string
+        final Dataset<Row> withNullSafeCol = dataset
+                .withColumn(nullSafeColumn, functions.when(functions.col(inputCol).isNull(), functions.lit("")).otherwise(functions.col(inputCol)));
+
         final RegexTokenizer tokenizer = new RegexTokenizer()
-                .setInputCol(inputCol)
+                .setInputCol(nullSafeColumn)
                 .setOutputCol(outputCol)
                 .setPattern(regex)
                 .setGaps(false);
 
-        return tokenizer.transform(dataset);
+        // create tokens column
+        final Dataset<Row> withTokens = tokenizer.transform(withNullSafeCol);
+
+        // remove null safe column from result
+        return withTokens.drop(nullSafeColumn);
     }
 }

@@ -70,6 +70,7 @@ public class TeragrepTransformationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepTransformationTest.class);
 
     private final String testFile = "src/test/resources/IplocationTransformationTest_data*.jsonl"; // * to make the path into a directory path
+
     private String testResourcesPath;
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
@@ -711,6 +712,37 @@ public class TeragrepTransformationTest {
                             Assertions.assertEquals(1, result.size());
                             Assertions.assertTrue(result.stream().allMatch(s -> pattern.matcher(s).matches()));
                             Assertions.assertTrue(result.stream().allMatch(s -> s.equals("5")));
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tgRegexExtractInputWithNullValuesTest() {
+        // _raw is null for the first 4 rows and last one is "47.2"
+        final String regex = "\\d+";
+        final String nullValueFile = "src/test/resources/teragrep_regexextract_null_safe*.jsonl";
+        streamingTestUtil
+                .performDPLTest(
+                        "index=abc | teragrep exec regexextract regex " + regex + " output strTokens", nullValueFile,
+                        ds -> {
+
+                            final List<List<Object>> rowTokensList = ds
+                                    .select("strTokens")
+                                    .collectAsList()
+                                    .stream()
+                                    .map(row -> row.getList(0))
+                                    .collect(Collectors.toList());
+
+                            final List<List<Object>> expectedList = List
+                                    .of(
+                                            Collections.emptyList(), Collections.emptyList(), Collections.emptyList(),
+                                            Collections.emptyList(), List.of("47", "2")
+                                    );
+                            Assertions.assertEquals(expectedList, rowTokensList);
                         }
                 );
     }
