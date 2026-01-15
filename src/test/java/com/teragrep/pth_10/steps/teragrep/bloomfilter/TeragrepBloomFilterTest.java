@@ -264,12 +264,9 @@ class TeragrepBloomFilterTest {
     void testCorrectFilterSizeSelection() {
         final List<String> tokens = new ArrayList<>();
         tokens.add("one");
-        int executedLoops = 0;
         for (int i = 1; i < 1500; i++) {
             tokens.add("token:" + i);
-            executedLoops++;
         }
-        Assertions.assertEquals(1499, executedLoops);
         Assertions.assertEquals(1500, tokens.size());
 
         Row row = generatedRow(sizeMap, tokens);
