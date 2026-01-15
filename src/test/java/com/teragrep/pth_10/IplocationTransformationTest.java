@@ -450,7 +450,6 @@ public class IplocationTransformationTest {
                     Assertions.assertEquals(2, expectedCols.length);
                     int executedLoops = 0;
                     int executedLoops2 = 0;
-                    System.out.println(expectedCols.length);
                     for (Row ip : ips) {
                         Map<String, String> result = Assertions
                                 .assertDoesNotThrow(() -> mapper.call(ip.getAs(ip.fieldIndex(ipColumn)), "en", true));
