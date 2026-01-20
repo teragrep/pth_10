@@ -54,6 +54,8 @@ import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.*;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -65,6 +67,7 @@ import org.junit.jupiter.api.Assertions;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -181,6 +184,17 @@ public class StreamingTestUtil {
         // force timezone to Helsinki
         TimeZone.setDefault(TimeZone.getTimeZone("Europe/Helsinki"));
         this.catalystVisitor = new DPLParserCatalystVisitor(ctx);
+    }
+
+    /**
+     * Allows adding custom options to the zeppelin config which is otherwise left null this is helpful for some of the
+     * commands that require values from that Config
+     * 
+     * @param opts key value pairs that you want to add to the Config
+     */
+    public void setCustomConfigOptions(final Map<String, String> opts) {
+        final Config config = ConfigFactory.parseMap(opts);
+        ctx.setConfig(config);
     }
 
     /**

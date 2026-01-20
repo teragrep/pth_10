@@ -49,11 +49,11 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -62,11 +62,16 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class EpochMigrationStepTest {
+public final class EpochMigrationStepTest {
 
-    private final String testFile = "src/test/resources/IplocationTransformationTest_data*.jsonl"; // * to make the path into a directory path
+    private final String testFile = "src/test/resources/epochMigrationData*.jsonl"; // * to make the path into a directory path
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("id", DataTypes.LongType, false, new MetadataBuilder().build()),
@@ -78,43 +83,52 @@ public class EpochMigrationStepTest {
             new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
             new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
     });
-
     private StreamingTestUtil streamingTestUtil;
-
-    private final String tableName = "epoch_migration_test";
     private final String username = "sa";
-    private final String password = "";
-    private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
-    private final Connection conn = Assertions
-            .assertDoesNotThrow(() -> DriverManager.getConnection(url, username, password));
+    private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private Connection conn;
+    private Map<String, String> opts;
 
     @BeforeAll
     void setEnv() {
-        this.streamingTestUtil = new StreamingTestUtil(this.testSchema);
-        this.streamingTestUtil.setEnv();
-        String createLogfileTable = "CREATE TABLE IF NOT EXISTS " + tableName + "( " + "id BIGINT UNSIGNED NOT NULL,"
-                + " epoch_hour BIGINT UNSIGNED NULL," + " PRIMARY KEY(id" + ")";
-        Assertions.assertDoesNotThrow(() -> {
-            try (PreparedStatement ps = conn.prepareStatement(createLogfileTable)) {
-                Assertions.assertEquals(1, ps.executeUpdate());
-            }
-        });
-        String insertIDs = "INSERT INTO" + tableName + "(id) VALUES (1),(2),(3),(4),(5);";
-        Assertions.assertDoesNotThrow(() -> {
-            try (PreparedStatement ps = conn.prepareStatement(insertIDs)) {
-                Assertions.assertEquals(5, ps.executeUpdate());
-            }
-        });
+        conn = Assertions.assertDoesNotThrow(() -> DriverManager.getConnection(url, username, ""));
+        opts = new HashMap<>();
+        opts.put("dpl.pth_06.bloom.db.url", url);
+        opts.put("dpl.pth_10.bloom.db.password", "");
+        opts.put("dpl.pth_10.bloom.db.username", username);
+        opts.put("dpl.archive.db.journaldb.name", "journaldb");
+        streamingTestUtil = new StreamingTestUtil(testSchema);
+        streamingTestUtil.setEnv();
     }
 
     @BeforeEach
     void setUp() {
+        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
+        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("USE journaldb").execute());
+        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS logfile").execute());
+        final String createLogfileTable = "CREATE TABLE logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, PRIMARY KEY(id))";
+        Assertions.assertDoesNotThrow(() -> {
+            try (final PreparedStatement ps = conn.prepareStatement(createLogfileTable)) {
+                ps.execute();
+            }
+        });
+        final String insertIDs = "INSERT INTO logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
+        Assertions.assertDoesNotThrow(() -> {
+            try (final PreparedStatement ps = conn.prepareStatement(insertIDs)) {
+                Assertions.assertEquals(10, ps.executeUpdate());
+            }
+        });
         streamingTestUtil.setUp();
+        streamingTestUtil.setCustomConfigOptions(opts);
     }
 
     @AfterEach
     void tearDown() {
         streamingTestUtil.tearDown();
+    }
+
+    @AfterAll
+    public void close() {
         Assertions.assertDoesNotThrow(conn::close);
     }
 
@@ -123,24 +137,59 @@ public class EpochMigrationStepTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    @Disabled("pth_03 support for command missing")
-    public void testEpochMigrationStep() {
-        streamingTestUtil
-                .performDPLTest("index=index_A | teragrep exec epochMigration table " + tableName, testFile, ds -> {
-                    String selectOffsets = "SELECT id, epoch_hour FROM " + tableName + " ORDER BY id";
-                    Assertions.assertDoesNotThrow(() -> {
-                        try (PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
-                            ResultSet resultSet = preparedStatement.executeQuery();
-                            int loops = 0;
-                            while (resultSet.next()) {
-                                loops++;
-                                long id = resultSet.getLong("id");
-                                long epochHour = resultSet.getObject("epoch_hour", Long.class);
-                                // TODO add assertions for epoch_hour values
-                            }
-                            Assertions.assertEquals(5, loops);
-                        }
-                    });
-                });
+    public void testMigrateEpochCommandUpdatesEpochValuesToSQLMetadata() {
+        streamingTestUtil.performDPLTest("index=index_A | teragrep exec migrate epoch", testFile, ds -> {
+            final String selectOffsets = "SELECT id, epoch_hour FROM logfile ORDER BY id";
+            final List<Long> updatedEpochs = new ArrayList<>();
+            Assertions.assertDoesNotThrow(() -> {
+                try (PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
+                    final ResultSet resultSet = preparedStatement.executeQuery();
+                    int loops = 0;
+                    while (resultSet.next()) {
+                        final Long epochHour = resultSet.getObject("epoch_hour", Long.class);
+                        updatedEpochs.add(epochHour);
+                        loops++;
+                    }
+                    Assertions.assertEquals(10, loops);
+                }
+            });
+            final List<Long> expectedEpochs = Arrays
+                    .asList(
+                            1693904400L, 1693908000L, 1693911600L, 1693915200L, 1693918800L, 1693922400L, 1693926000L,
+                            1693929600L, 1693933200L, 1693936800L
+                    );
+            Assertions.assertEquals(expectedEpochs, updatedEpochs);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testMigrateEpochCommandIgnoresNonSyslogMetadata() {
+        streamingTestUtil.performDPLTest("index=index_B | teragrep exec migrate epoch", testFile, ds -> {
+            final String selectOffsets = "SELECT id, epoch_hour FROM logfile ORDER BY id";
+            final List<Long> updatedEpochs = new ArrayList<>();
+            Assertions.assertDoesNotThrow(() -> {
+                try (PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
+                    final ResultSet resultSet = preparedStatement.executeQuery();
+                    int loops = 0;
+                    while (resultSet.next()) {
+                        final Long epochHour = resultSet.getObject("epoch_hour", Long.class);
+                        updatedEpochs.add(epochHour);
+                        loops++;
+                    }
+                    Assertions.assertEquals(10, loops);
+                }
+            });
+            // non-syslog event is left null in SQL as no epoch could be determined
+            final List<Long> expectedEpochs = Arrays
+                    .asList(
+                            1693904400L, 1693908000L, null, 1693915200L, 1693918800L, 1693922400L, 1693926000L,
+                            1693929600L, 1693933200L, 1693936800L
+                    );
+            Assertions.assertEquals(expectedEpochs, updatedEpochs);
+        });
     }
 }
