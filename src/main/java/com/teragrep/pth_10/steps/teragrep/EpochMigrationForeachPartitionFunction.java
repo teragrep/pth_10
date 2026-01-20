@@ -54,7 +54,10 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Param;
 import org.jooq.Query;
+import org.jooq.Record;
 import org.jooq.SQLDialect;
+import org.jooq.UpdateSetFirstStep;
+import org.jooq.UpdateSetMoreStep;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -70,26 +73,26 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     private final static Logger LOGGER = LoggerFactory.getLogger(EpochMigrationForeachPartitionFunction.class);
 
     private final LazyConnection lazyConnection;
-    private final String tableName;
+    private final String journalDBName;
     private final long batchSize;
     private final Settings settings;
 
-    EpochMigrationForeachPartitionFunction(final Config config, final String tableName) {
-        this(config, tableName, new Settings());
+    EpochMigrationForeachPartitionFunction(final Config config, final String journalDBName) {
+        this(config, journalDBName, new Settings());
     }
 
-    EpochMigrationForeachPartitionFunction(final Config config, final String tableName, final Settings settings) {
-        this(new LazyConnection(config), tableName, 500L, settings);
+    EpochMigrationForeachPartitionFunction(final Config config, final String journalDBName, final Settings settings) {
+        this(new LazyConnection(config), journalDBName, 500L, settings);
     }
 
     EpochMigrationForeachPartitionFunction(
             final LazyConnection lazyConnection,
-            final String tableName,
+            final String journalDBName,
             final long batchSize,
             final Settings settings
     ) {
         this.lazyConnection = lazyConnection;
-        this.tableName = tableName;
+        this.journalDBName = journalDBName;
         this.batchSize = batchSize;
         this.settings = settings;
     }
@@ -97,8 +100,8 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     @Override
     public void call(final Iterator<Row> iter) {
         final long start = System.nanoTime();
-
-        try (final Connection conn = lazyConnection.get()) {
+        final Connection conn = lazyConnection.get();
+        try {
             conn.setAutoCommit(false);
             final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL, settings);
             BatchBindStep currentBatch = ctx.batch(baseQuery(ctx));
@@ -106,22 +109,35 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
             int totalRows = 0;
             while (iter.hasNext()) {
                 final Row row = iter.next();
-                final long epochHour = Long.parseLong(row.getAs("_time"));
-                final long id = Long.parseLong(row.getAs("partition"));
-                currentBatch.bind(epochHour, id);
-                batchCount++;
-                if (batchCount >= batchSize) {
-                    if (LOGGER.isDebugEnabled()) {
-                        final long batchDuration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-                        LOGGER
-                                .debug(
-                                        "executing batch update: table=<{}> batchSize=<{}> duration=<{}>", tableName,
-                                        batchSize, batchDuration
-                                );
+                final String raw = row.getString(row.fieldIndex("_raw"));
+                final EventMetadata metadata = new EventMetadataFromString(raw);
+                final boolean isSyslogFormat = metadata.isSyslog();
+                if (isSyslogFormat) {
+                    // _time is interpreted as a timestamp in spark
+                    final long epochHour = row.getTimestamp(row.fieldIndex("_time")).toInstant().getEpochSecond();
+                    final long id = Long.parseLong(row.getString(row.fieldIndex("partition")));
+                    currentBatch.bind(epochHour, id);
+                    batchCount++;
+                    if (batchCount >= batchSize) {
+                        if (LOGGER.isDebugEnabled()) {
+                            final long batchDuration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+                            LOGGER
+                                    .debug(
+                                            "executing batch update: table=<{}> batchSize=<{}> duration=<{}>",
+                                            journalDBName, batchSize, batchDuration
+                                    );
+                        }
+                        currentBatch = executeAndReset(currentBatch, ctx, conn);
+                        totalRows += batchCount;
+                        batchCount = 0;
                     }
-                    currentBatch = executeAndReset(currentBatch, ctx, conn);
-                    totalRows += batchCount;
-                    batchCount = 0;
+                }
+                else {
+                    LOGGER
+                            .info(
+                                    "Ignored invalid (non epoch migration mode or non-syslog) row, with metadata <{}>",
+                                    metadata
+                            );
                 }
             }
             if (batchCount > 0) {
@@ -132,15 +148,25 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
             final long duration = TimeUnit.NANOSECONDS.toMillis(end - start);
             LOGGER
                     .info(
-                            "epoch migration for each function finished. Updated total rows=<{}> duration=<{}>ms",
+                            "epoch migration for each partition function finished. Updated total rows=<{}> duration=<{}>ms",
                             totalRows, duration
                     );
 
         }
-        catch (SQLException e) {
+        catch (final SQLException e) {
             throw new RuntimeException(
                     "Exception running epoch migration for each partition function: " + e.getMessage()
             );
+        }
+        finally {
+            try {
+                if (!conn.isClosed()) {
+                    conn.setAutoCommit(true);
+                }
+            }
+            catch (final SQLException e) {
+                LOGGER.error("Error turning auto-commit true");
+            }
         }
     }
 
@@ -162,10 +188,11 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         final Field<Long> idField = DSL.field(DSL.name("id"), Long.class);
         final Param<Long> epochParam = DSL.param("epoch_hour", Long.class);
         final Param<Long> idParam = DSL.param("id", Long.class);
-        final Query baseQuery = ctx
-                .update(DSL.table(DSL.name(tableName)))
-                .set(epochField, epochParam)
-                .where(idField.eq(idParam).and(epochField.isNull()));
+        final UpdateSetFirstStep<Record> updateSetFirstStep = ctx.update(DSL.table(DSL.name(journalDBName, "logfile")));
+        final Query baseQuery;
+        try (final UpdateSetMoreStep<Record> updateSetMoreStep = updateSetFirstStep.set(epochField, epochParam)) {
+            baseQuery = updateSetMoreStep.where(idField.eq(idParam).and(epochField.isNull()));
+        }
         LOGGER.trace("epoch migration for each partition function: batch query <{}>", baseQuery);
         return baseQuery;
     }
