@@ -73,20 +73,20 @@
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
-      <version>3.5.7</version>
+      <version>3.4.0</version>
       <scope>provided</scope>
     </dependency>
     <!-- Spark filters and queries -->
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-sql_2.12</artifactId>
-      <version>3.5.7</version>
+      <version>3.4.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-mllib_2.12</artifactId>
-      <version>3.5.7</version>
+      <version>3.4.0</version>
       <scope>provided</scope>
     </dependency>
     <!-- Configuration lib -->
@@ -190,7 +190,7 @@
     <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-avro_2.12</artifactId>
-      <version>3.5.7</version>
+      <version>3.4.0</version>
     </dependency>
     <!-- string escape -->
     <dependency>
@@ -222,20 +222,6 @@
       <groupId>com.maxmind.geoip2</groupId>
       <artifactId>geoip2</artifactId>
       <version>2.16.1</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-databind</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-annotations</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>com.fasterxml.jackson.core</groupId>
-          <artifactId>jackson-core</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <!-- PCRE java lib -->
     <dependency>
@@ -244,13 +230,32 @@
       <version>${teragrep.jpr_01.version}</version>
     </dependency>
     <!-- for testing teragrep exec kafka save command -->
-    <!-- <dependency>
+    <dependency>
       <groupId>com.salesforce.kafka.test</groupId>
       <artifactId>kafka-junit5</artifactId>
       <version>3.2.3</version>
       <scope>test</scope>
-    </dependency> -->
+    </dependency>
     <!-- kafka junit needs kafka dependency -->
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka_2.12</artifactId>
+      <version>3.4.0</version>
+      <scope>test</scope>
+      <exclusions>
+        <!-- jackson-module-scala_2.12 needs to be excluded, otherwise breaks everything -->
+        <exclusion>
+          <groupId>com.fasterxml.jackson.module</groupId>
+          <artifactId>jackson-module-scala_2.12</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.kafka</groupId>
+      <artifactId>kafka-clients</artifactId>
+      <version>3.4.0</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>org.mock-server</groupId>
       <artifactId>mockserver-netty-no-dependencies</artifactId>
@@ -425,7 +430,7 @@
             <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
               <notes>Also allow the license url to be https.</notes>
               <patterns>
-                <pattern>Copyright (C) 2019-2026 Suomen Kanuuna Oy</pattern>
+                <pattern>Copyright (C) 2019-2025 Suomen Kanuuna Oy</pattern>
               </patterns>
             </license>
           </licenses>
