@@ -3917,18 +3917,22 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             final Dataset<Row> resA = res.select("a").orderBy("offset");
-            final List<Row> lstA = resA.distinct().collectAsList();
+            final List<Row> lstA = resA.collectAsList();
 
             final Dataset<Row> resB = res.select("b").orderBy("offset");
-            final List<Row> lstB = resB.distinct().collectAsList();
+            final List<Row> lstB = resB.collectAsList();
 
             // Assert equals with expected
-            Assertions.assertEquals(19, resA.count());
-            Assertions.assertEquals(19, resB.count());
-            Assertions.assertEquals(1, lstA.size());
-            Assertions.assertEquals(1, lstB.size());
-            Assertions.assertEquals("10", lstA.get(0).getString(0));
-            Assertions.assertEquals("foo", lstB.get(0).getString(0));
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, lstB.size());
+            int executedLoops = 0;
+            for (int i = 0; i < lstA.size(); i++) {
+                Assertions.assertEquals("10", lstA.get(i).getString(0));
+                Assertions.assertEquals("foo", lstB.get(i).getString(0));
+                executedLoops++;
+            }
+
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -3957,18 +3961,22 @@ public class evalTest {
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             final Dataset<Row> resA = res.select("a").orderBy("offset");
-            final List<Row> lstA = resA.distinct().collectAsList();
+            final List<Row> lstA = resA.collectAsList();
 
             final Dataset<Row> resB = res.select("b").orderBy("offset");
-            final List<Row> lstB = resB.distinct().collectAsList();
+            final List<Row> lstB = resB.collectAsList();
 
             // Assert equals with expected
-            Assertions.assertEquals(19, resA.count());
-            Assertions.assertEquals(19, resB.count());
-            Assertions.assertEquals(1, lstA.size());
-            Assertions.assertEquals(1, lstB.size());
-            Assertions.assertEquals("4.7", lstA.get(0).getString(0));
-            Assertions.assertEquals("10.0", lstB.get(0).getString(0));
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, lstB.size());
+
+            int executedLoops = 0;
+            for (int i = 0; i < lstA.size(); i++) {
+                Assertions.assertEquals("4.7", lstA.get(i).getString(0));
+                Assertions.assertEquals("10.0", lstB.get(i).getString(0));
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
         });
     }
 
@@ -4150,36 +4158,38 @@ public class evalTest {
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'test'
             final Dataset<Row> resA = res.select("test").orderBy("offset");
-            final List<Row> lst = resA.distinct().collectAsList();
+            final List<Row> lstA = resA.collectAsList();
 
             // Get column 'test2'
             final Dataset<Row> resB = res.select("test2").orderBy("offset");
-            final List<Row> lstB = resB.distinct().collectAsList();
+            final List<Row> lstB = resB.collectAsList();
 
             // Get column 'test3', values with offset < 4 are TRUE, otherwise FALSE
-            final Dataset<Row> resC = res.select("test3").orderBy("offset").where("offset < 4");
-            final Dataset<Row> resD = res.select("test3").orderBy("offset").where("offset >= 4");
-            final List<Row> lstTrue = resC.distinct().collectAsList();
-            final List<Row> lstFalse = resD.distinct().collectAsList();
+            final Dataset<Row> resC = res.select("test3").orderBy("offset");
+            final List<Row> lstC = resC.collectAsList();
 
-            // assert row counts
-            Assertions.assertEquals(19, resA.count());
-            Assertions.assertEquals(19, resB.count());
-            Assertions.assertEquals(6, resC.count());
-            Assertions.assertEquals(13, resD.count());
-            Assertions.assertEquals(1, lst.size());
-            Assertions.assertEquals(1, lstB.size());
-            Assertions.assertEquals(1, lstTrue.size());
-            Assertions.assertEquals(1, lstFalse.size());
+            // assert that all rows are kept
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, lstB.size());
+            Assertions.assertEquals(19, lstC.size());
 
-            // eval test results in all TRUE
-            Assertions.assertTrue(lst.get(0).getBoolean(0));
-            // eval test2 results in all FALSE
-            Assertions.assertFalse(lstB.get(0).getBoolean(0));
+            int loopCount = 0;
+            for (int i = 0; i < lstA.size(); i++) {
+                // eval test results in all TRUE
+                Assertions.assertTrue(lstA.get(i).getBoolean(0));
+                // eval test2 results in all FALSE
+                Assertions.assertFalse(lstB.get(i).getBoolean(0));
 
-            // eval test3, values with offset < 4 are TRUE, otherwise FALSE
-            Assertions.assertTrue(lstTrue.get(0).getBoolean(0));
-            Assertions.assertFalse(lstFalse.get(0).getBoolean(0));
+                // eval test3, values between i=0..6 are TRUE, otherwise FALSE
+                if (i < 6) {
+                    Assertions.assertTrue(lstC.get(i).getBoolean(0));
+                }
+                else {
+                    Assertions.assertFalse(lstC.get(i).getBoolean(0));
+                }
+                loopCount++;
+            }
+            Assertions.assertEquals(19, loopCount);
         });
     }
 

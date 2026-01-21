@@ -293,6 +293,7 @@ class TeragrepBloomFilterTest {
             executedLoops2++;
         }
         Assertions.assertEquals(3, executedLoops2);
+        Assertions.assertNotEquals(size, Long.MAX_VALUE);
 
         final Double fpp = sizeMap.get(size);
         String sql = "SELECT `filter` FROM `" + tableName + "`";
