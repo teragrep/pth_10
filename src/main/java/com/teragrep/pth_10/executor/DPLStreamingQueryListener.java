@@ -86,9 +86,9 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     @Override
     public void onQueryIdle(final QueryIdleEvent event) {
-        LOGGER.debug("queryId <{}> onQueryIdle() called", queryId);
+        LOGGER.debug("queryId <{}> onQueryIdle() called", streamingQuery.name());
         final UUID streamId = event.id();
-        LOGGER.debug("queryId <{}> ID of stream: <{}>", queryId, streamId);
+        LOGGER.debug("queryId <{}> ID of stream: <{}>", streamingQuery.name(), streamId);
 
         if (queryId.equals(streamId)) {
             LOGGER.debug("ID of stream equals query ID");
@@ -99,7 +99,7 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
                 // a flush call for post query actions to finish
                 catalystContext.flush();
                 try {
-                    LOGGER.info("queryId <{}> Stopping streaming query", queryId);
+                    LOGGER.info("queryId <{}> Stopping streaming query", streamingQuery.name());
                     streamingQuery.stop();
                 }
                 catch (final TimeoutException e) {
@@ -111,12 +111,12 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     @Override
     public void onQueryStarted(QueryStartedEvent queryStarted) {
-        LOGGER.info("queryId <{}> Query started: <{}>", queryId, queryStarted.id());
+        LOGGER.info("queryId <{}> Query started: <{}>", streamingQuery.name(), queryStarted.id());
     }
 
     @Override
     public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-        LOGGER.info("queryId <{}> Query terminated: <{}>", queryId, queryTerminated.id());
+        LOGGER.info("queryId <{}> Query terminated: <{}>", streamingQuery.name(), queryTerminated.id());
         if (queryTerminated.id().equals(queryId)) {
             streamingQuery.sparkSession().streams().removeListener(this);
         }
@@ -124,6 +124,6 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     @Override
     public void onQueryProgress(QueryProgressEvent queryProgress) {
-        LOGGER.debug("queryId <{}> Query progressed: <{}>", queryId, queryProgress.progress().id());
+        LOGGER.debug("queryId <{}> Query progressed: <{}>", streamingQuery.name(), queryProgress.progress().id());
     }
 }
