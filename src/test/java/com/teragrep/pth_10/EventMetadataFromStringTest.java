@@ -45,8 +45,8 @@
  */
 package com.teragrep.pth_10;
 
-import com.teragrep.pth_10.steps.teragrep.EventMetadata;
-import com.teragrep.pth_10.steps.teragrep.EventMetadataFromString;
+import com.teragrep.pth_10.steps.teragrep.migrate.EventMetadata;
+import com.teragrep.pth_10.steps.teragrep.migrate.EventMetadataFromString;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

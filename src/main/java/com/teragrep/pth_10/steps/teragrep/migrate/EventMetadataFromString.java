@@ -43,7 +43,7 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.steps.teragrep;
+package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
