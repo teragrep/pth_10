@@ -43,13 +43,12 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.steps.teragrep;
+package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import com.teragrep.pth_10.steps.teragrep.bloomfilter.LazyConnection;
 import com.typesafe.config.Config;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Row;
-import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Param;
@@ -66,7 +65,6 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 
 final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFunction<Row> {
 
@@ -99,88 +97,45 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
     @Override
     public void call(final Iterator<Row> iter) {
-        final long start = System.nanoTime();
         final Connection conn = lazyConnection.get();
+        long totalRows = 0;
         try {
             conn.setAutoCommit(false);
             final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL, settings);
-            BatchBindStep currentBatch = ctx.batch(baseQuery(ctx));
-            int batchCount = 0;
-            int totalRows = 0;
+            EpochMigrationBatch batch = new EpochMigrationBatch(ctx.batch(baseQuery(ctx)), batchSize);
             while (iter.hasNext()) {
-                final Row row = iter.next();
-                final String raw = row.getString(row.fieldIndex("_raw"));
-                final EventMetadata metadata = new EventMetadataFromString(raw);
-                final boolean isSyslogFormat = metadata.isSyslog();
-                if (isSyslogFormat) {
-                    // _time is interpreted as a timestamp in spark
-                    final long epochHour = row.getTimestamp(row.fieldIndex("_time")).toInstant().getEpochSecond();
-                    final long id = Long.parseLong(row.getString(row.fieldIndex("partition")));
-                    currentBatch.bind(epochHour, id);
-                    batchCount++;
-                    if (batchCount >= batchSize) {
-                        if (LOGGER.isDebugEnabled()) {
-                            final long batchDuration = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
-                            LOGGER
-                                    .debug(
-                                            "executing batch update: table=<{}> batchSize=<{}> duration=<{}>",
-                                            journalDBName, batchSize, batchDuration
-                                    );
-                        }
-                        currentBatch = executeAndReset(currentBatch, ctx, conn);
-                        totalRows += batchCount;
-                        batchCount = 0;
-                    }
-                }
-                else {
-                    LOGGER
-                            .info(
-                                    "Ignored invalid (non epoch migration mode or non-syslog) row, with metadata <{}>",
-                                    metadata
-                            );
+                batch = batch.accept(iter.next());
+                if (batch.shouldFlushRows()) {
+                    totalRows += executeBatch(batch, conn);
+                    batch = batch.reset(ctx.batch(baseQuery(ctx)));
                 }
             }
-            if (batchCount > 0) {
-                LOGGER.debug("executing batch update flush for remaining rows=<{}>", batchCount);
-                executeAndReset(currentBatch, ctx, conn);
+            if (batch.hasPendingRows()) {
+                totalRows += executeBatch(batch, conn);
             }
-            final long end = System.nanoTime();
-            final long duration = TimeUnit.NANOSECONDS.toMillis(end - start);
-            LOGGER
-                    .info(
-                            "epoch migration for each partition function finished. Updated total rows=<{}> duration=<{}>ms",
-                            totalRows, duration
-                    );
+            LOGGER.debug("epoch migration for each partition function finished total rows=<{}>", totalRows);
 
         }
         catch (final SQLException e) {
-            throw new RuntimeException(
-                    "Exception running epoch migration for each partition function: " + e.getMessage()
-            );
+            throw new RuntimeException("Exception during epoch migration", e);
         }
         finally {
-            try {
-                if (!conn.isClosed()) {
-                    conn.setAutoCommit(true);
-                }
-            }
-            catch (final SQLException e) {
-                LOGGER.error("Error turning auto-commit true");
-            }
+            resetAutoCommit(conn);
         }
     }
 
-    private BatchBindStep executeAndReset(final BatchBindStep batch, final DSLContext ctx, final Connection conn)
-            throws SQLException {
+    private long executeBatch(final EpochMigrationBatch batch, final Connection conn) throws SQLException {
+        final long executedRows = batch.acceptedRows();
+        LOGGER.trace("Executing epoch migration batch batch with rows <{}>", executedRows);
         try {
-            batch.execute();
+            batch.batch().execute();
             conn.commit();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
             conn.rollback();
             throw new SQLException(e);
         }
-        return ctx.batch(baseQuery(ctx));
+        return executedRows;
     }
 
     private Query baseQuery(final DSLContext ctx) {
@@ -195,5 +150,16 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         }
         LOGGER.trace("epoch migration for each partition function: batch query <{}>", baseQuery);
         return baseQuery;
+    }
+
+    private void resetAutoCommit(final Connection conn) {
+        try {
+            if (!conn.isClosed()) {
+                conn.setAutoCommit(true);
+            }
+        }
+        catch (final SQLException e) {
+            LOGGER.error("Error turning auto commit true");
+        }
     }
 }
