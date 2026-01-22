@@ -43,20 +43,48 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.steps.teragrep;
+package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public interface EventMetadata {
+import com.teragrep.functions.dpf_02.AbstractStep;
+import com.typesafe.config.Config;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    public abstract boolean isSyslog();
+public final class TeragrepEpochMigrationStep extends AbstractStep {
 
-    public abstract String format();
+    private final Logger LOGGER = LoggerFactory.getLogger(TeragrepEpochMigrationStep.class);
+    private final Config config;
+    final String journaldbNameConfigItem;
 
-    public abstract String bucket();
+    public TeragrepEpochMigrationStep(final Config config) {
+        this.config = config;
+        this.journaldbNameConfigItem = "dpl.archive.db.journaldb.name";
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
+    }
 
-    public abstract String path();
+    @Override
+    public Dataset<Row> get(final Dataset<Row> dataset) {
+        final String journalDBName;
+        if (!config.hasPath(journaldbNameConfigItem)) {
+            LOGGER.info("Using default journaldb name <{}>", "journaldb");
+            journalDBName = "journaldb";
+        }
+        else {
+            journalDBName = config.getString(journaldbNameConfigItem);
+            LOGGER
+                    .info(
+                            "Using journaldb name from config option <{}>, value <{}>", journaldbNameConfigItem,
+                            journalDBName
+                    );
+        }
+        EpochMigrationForeachPartitionFunction migrationFunction = new EpochMigrationForeachPartitionFunction(
+                config,
+                journalDBName
+        );
+        dataset.foreachPartition(migrationFunction);
+        return dataset;
 
-    public abstract String epoch();
-
-    public abstract String originalTimestamp();
-
+    }
 }

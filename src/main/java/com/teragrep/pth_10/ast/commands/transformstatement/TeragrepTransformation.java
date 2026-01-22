@@ -66,6 +66,7 @@ import com.teragrep.pth_10.steps.CustomResultStep;
 import com.teragrep.pth_10.steps.teragrep.*;
 import com.teragrep.pth_10.steps.teragrep.AbstractTokenizerStep;
 import com.teragrep.pth_10.steps.teragrep.TeragrepTokenizerStep;
+import com.teragrep.pth_10.steps.teragrep.migrate.TeragrepEpochMigrationStep;
 import com.typesafe.config.Config;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
