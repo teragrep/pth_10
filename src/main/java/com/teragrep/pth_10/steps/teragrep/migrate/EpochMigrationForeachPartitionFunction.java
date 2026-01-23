@@ -53,10 +53,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Param;
 import org.jooq.Query;
-import org.jooq.Record;
 import org.jooq.SQLDialect;
-import org.jooq.UpdateSetFirstStep;
-import org.jooq.UpdateSetMoreStep;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
@@ -98,22 +95,22 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     @Override
     public void call(final Iterator<Row> iter) {
         final Connection conn = lazyConnection.get();
-        long totalRows = 0;
         try {
             conn.setAutoCommit(false);
             final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL, settings);
-            EpochMigrationBatch batch = new EpochMigrationBatch(ctx.batch(baseQuery(ctx)), batchSize);
+            EpochMigrationBatchState batch = new EpochMigrationBatchState(ctx.batch(baseQuery(ctx)), batchSize);
             while (iter.hasNext()) {
                 batch = batch.accept(iter.next());
                 if (batch.shouldFlushRows()) {
-                    totalRows += executeBatch(batch, conn);
+                    executeBatch(batch, conn);
                     batch = batch.reset(ctx.batch(baseQuery(ctx)));
                 }
             }
             if (batch.hasPendingRows()) {
-                totalRows += executeBatch(batch, conn);
+                executeBatch(batch, conn);
             }
-            LOGGER.debug("epoch migration for each partition function finished total rows=<{}>", totalRows);
+            final long totalRows = batch.totalAccepted();
+            LOGGER.info("epoch migration for each partition function finished total rows=<{}>", totalRows);
 
         }
         catch (final SQLException e) {
@@ -124,9 +121,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         }
     }
 
-    private long executeBatch(final EpochMigrationBatch batch, final Connection conn) throws SQLException {
-        final long executedRows = batch.acceptedRows();
-        LOGGER.trace("Executing epoch migration batch batch with rows <{}>", executedRows);
+    private void executeBatch(final EpochMigrationBatchState batch, final Connection conn) throws SQLException {
         try {
             batch.batch().execute();
             conn.commit();
@@ -135,7 +130,6 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
             conn.rollback();
             throw new SQLException(e);
         }
-        return executedRows;
     }
 
     private Query baseQuery(final DSLContext ctx) {
@@ -143,11 +137,10 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         final Field<Long> idField = DSL.field(DSL.name("id"), Long.class);
         final Param<Long> epochParam = DSL.param("epoch_hour", Long.class);
         final Param<Long> idParam = DSL.param("id", Long.class);
-        final UpdateSetFirstStep<Record> updateSetFirstStep = ctx.update(DSL.table(DSL.name(journalDBName, "logfile")));
-        final Query baseQuery;
-        try (final UpdateSetMoreStep<Record> updateSetMoreStep = updateSetFirstStep.set(epochField, epochParam)) {
-            baseQuery = updateSetMoreStep.where(idField.eq(idParam).and(epochField.isNull()));
-        }
+        final Query baseQuery = ctx
+                .update(DSL.table(DSL.name(journalDBName, "logfile")))
+                .set(epochField, epochParam)
+                .where(idField.eq(idParam).and(epochField.isNull()));
         LOGGER.trace("epoch migration for each partition function: batch query <{}>", baseQuery);
         return baseQuery;
     }
