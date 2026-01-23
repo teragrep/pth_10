@@ -43,10 +43,8 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10;
+package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import com.teragrep.pth_10.steps.teragrep.migrate.EventMetadata;
-import com.teragrep.pth_10.steps.teragrep.migrate.EventMetadataFromString;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
