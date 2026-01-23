@@ -47,25 +47,26 @@ package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import org.apache.spark.sql.Row;
 import org.jooq.BatchBindStep;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
+final class EpochMigrationBatchState {
 
-public final class EpochMigrationBatch {
-
+    private final Logger LOGGER = LoggerFactory.getLogger(EpochMigrationBatchState.class);
     private final BatchBindStep batch;
     private final long batchSize;
-    private final int batchCount;
-    private final int acceptedRows;
+    private final long batchCount;
+    private final long acceptedRows;
 
-    public EpochMigrationBatch(final BatchBindStep batch, final long batchSize) {
+    EpochMigrationBatchState(final BatchBindStep batch, final long batchSize) {
         this(batch, batchSize, 0, 0);
     }
 
-    public EpochMigrationBatch(
+    private EpochMigrationBatchState(
             final BatchBindStep batch,
             final long batchSize,
-            final int batchCount,
-            final int acceptedRows
+            final long batchCount,
+            final long acceptedRows
     ) {
         this.batch = batch;
         this.batchSize = batchSize;
@@ -73,51 +74,36 @@ public final class EpochMigrationBatch {
         this.acceptedRows = acceptedRows;
     }
 
-    public EpochMigrationBatch accept(final Row row) {
-        final EventMetadata metadata = new EventMetadataFromString(row.getString(row.fieldIndex("_raw")));
+    EpochMigrationBatchState accept(final Row row) {
+        final String rawString = row.getString(row.fieldIndex("_raw"));
+        final EventMetadata metadata = new EventMetadataFromString(rawString);
         if (!metadata.isSyslog()) {
+            LOGGER.debug("Skipping non syslog row");
             return this;
         }
         final long epoch = row.getTimestamp(row.fieldIndex("_time")).toInstant().getEpochSecond();
-        final long id = Long.parseLong(row.getString(row.fieldIndex("partition")));
-        return new EpochMigrationBatch(batch.bind(epoch, id), batchSize, batchCount + 1, acceptedRows + 1);
+        final String partitionString = row.getString(row.fieldIndex("partition"));
+        final long id = Long.parseLong(partitionString);
+        return new EpochMigrationBatchState(batch.bind(epoch, id), batchSize, batchCount + 1, acceptedRows + 1);
     }
 
-    public boolean shouldFlushRows() {
+    boolean shouldFlushRows() {
         return batchCount >= batchSize;
     }
 
-    public boolean hasPendingRows() {
+    boolean hasPendingRows() {
         return batchCount > 0;
     }
 
-    public BatchBindStep batch() {
+    BatchBindStep batch() {
         return batch;
     }
 
-    public int acceptedRows() {
+    long totalAccepted() {
         return acceptedRows;
     }
 
-    public EpochMigrationBatch reset(final BatchBindStep newBatch) {
-        return new EpochMigrationBatch(newBatch, batchSize, 0, acceptedRows);
-    }
-
-    @Override
-    public boolean equals(final Object object) {
-        if (object == null) {
-            return false;
-        }
-        if (getClass() != object.getClass()) {
-            return false;
-        }
-        final EpochMigrationBatch that = (EpochMigrationBatch) object;
-        return batchSize == that.batchSize && batchCount == that.batchCount && acceptedRows == that.acceptedRows
-                && Objects.equals(batch, that.batch);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(batch, batchSize, batchCount, acceptedRows);
+    EpochMigrationBatchState reset(final BatchBindStep newBatch) {
+        return new EpochMigrationBatchState(newBatch, batchSize, 0, acceptedRows);
     }
 }
