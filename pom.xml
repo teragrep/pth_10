@@ -419,7 +419,7 @@
             <license implementation="org.apache.rat.analysis.license.SimplePatternBasedLicense">
               <notes>Also allow the license url to be https.</notes>
               <patterns>
-                <pattern>Copyright (C) 2019-2025 Suomen Kanuuna Oy</pattern>
+                <pattern>Copyright (C) 2019-2026 Suomen Kanuuna Oy</pattern>
               </patterns>
             </license>
           </licenses>
