@@ -49,7 +49,6 @@ import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import com.typesafe.config.Config;
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.catalyst.encoders.ExpressionEncoder;
-import org.apache.spark.sql.catalyst.encoders.RowEncoder;
 import org.apache.spark.sql.execution.streaming.MemoryStream;
 import org.apache.spark.sql.streaming.DataStreamWriter;
 import org.apache.spark.sql.streaming.OutputMode;
@@ -106,7 +105,7 @@ public class GeneratedDatasource {
 
     public Dataset<Row> constructEmptyStream() throws StreamingQueryException {
         SQLContext sqlContext = sparkSession.sqlContext();
-        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        Encoder<Row> encoder = ExpressionEncoder.apply(schema);
         MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
 
         Dataset<Row> rowDataset = rowMemoryStream.toDF();
@@ -137,7 +136,7 @@ public class GeneratedDatasource {
             throws StreamingQueryException, InterruptedException, UnknownHostException {
         SQLContext sqlContext = sparkSession.sqlContext();
 
-        ExpressionEncoder<Row> encoder = RowEncoder.apply(schema);
+        Encoder<Row> encoder = ExpressionEncoder.apply(schema);
         MemoryStream<Row> rowMemoryStream = new MemoryStream<>(1, sqlContext, Option.apply(1), encoder);
 
         if (commandStr == null) {

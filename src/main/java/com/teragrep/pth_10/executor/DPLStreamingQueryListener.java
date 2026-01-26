@@ -52,16 +52,16 @@ import org.apache.spark.sql.streaming.StreamingQueryListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
 import java.util.concurrent.TimeoutException;
 
 public class DPLStreamingQueryListener extends StreamingQueryListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DPLStreamingQueryListener.class);
 
-    private final String queryName;
+    private final UUID queryId;
     private final StreamingQuery streamingQuery;
     private final Config config;
-
     private final DPLParserCatalystContext catalystContext;
 
     public DPLStreamingQueryListener(
@@ -69,79 +69,61 @@ public class DPLStreamingQueryListener extends StreamingQueryListener {
             Config config,
             DPLParserCatalystContext catalystContext
     ) {
-        this.queryName = streamingQuery.name();
+        this(streamingQuery.id(), streamingQuery, config, catalystContext);
+    }
+
+    public DPLStreamingQueryListener(
+            final UUID queryId,
+            final StreamingQuery streamingQuery,
+            final Config config,
+            final DPLParserCatalystContext catalystContext
+    ) {
+        this.queryId = queryId;
         this.streamingQuery = streamingQuery;
         this.config = config;
         this.catalystContext = catalystContext;
     }
 
     @Override
-    public void onQueryStarted(QueryStartedEvent queryStarted) {
-        LOGGER.info("queryId <{}> Query started: id: <{}>", queryName, queryStarted.id());
-    }
+    public void onQueryIdle(final QueryIdleEvent event) {
+        LOGGER.debug("queryId <{}> onQueryIdle() called", streamingQuery.name());
+        final UUID streamId = event.id();
+        LOGGER.debug("queryId <{}> ID of stream: <{}>", streamingQuery.name(), streamId);
 
-    @Override
-    public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
-        LOGGER.info("queryId <{}> Query terminated: id: <{}>", queryName, queryTerminated.id());
-        streamingQuery.sparkSession().streams().removeListener(this);
-    }
-
-    @Override
-    public void onQueryProgress(QueryProgressEvent queryProgress) {
-        LOGGER.debug("onQueryProgress() called");
-        String nameOfStream = queryProgress.progress().name();
-        LOGGER.debug("Name of stream: <{}>", nameOfStream);
-        LOGGER.debug("Query name: <{}>", nameOfStream);
-
-        if (queryName.equals(nameOfStream)) {
-            LOGGER.debug("Name of stream equals query name");
+        if (queryId.equals(streamId)) {
+            LOGGER.debug("ID of stream equals query ID");
 
             LOGGER.debug("Checking for completion");
-            if (checkCompletion(streamingQuery)) {
+            if (config.getBoolean("dpl.pth_07.checkCompletion")) {
                 LOGGER.debug("Flushing context");
                 // a flush call for post query actions to finish
                 catalystContext.flush();
                 try {
-                    LOGGER.info("queryId <{}> Stopping streaming query", queryName);
+                    LOGGER.info("queryId <{}> Stopping streaming query", streamingQuery.name());
                     streamingQuery.stop();
                 }
-                catch (TimeoutException e) {
+                catch (final TimeoutException e) {
                     throw new RuntimeException(e);
                 }
             }
         }
     }
 
-    private boolean checkCompletion(StreamingQuery streamingQuery) {
-        LOGGER.debug("Checking for checkCompletion");
-        if (!config.getBoolean("dpl.pth_07.checkCompletion")) {
-            LOGGER.debug("CheckCompletion was not enabled");
-            return false;
-        }
-
-        LOGGER.debug("Checking last progress || initializing sources");
-        if (streamingQuery.lastProgress() == null || streamingQuery.status().message().equals("Initializing sources")) {
-            // query has not started
-            LOGGER.debug("Query has not started");
-            return false;
-        }
-
-        boolean shouldStop = false;
-        LOGGER.debug("Checking if sources exist");
-        if (streamingQuery.lastProgress().sources().length != 0) {
-            // sources have started
-            LOGGER.debug("Sources exist, checking if query is done");
-            shouldStop = SourceStatus.isQueryDone(config, streamingQuery);
-        }
-
-        /*
-        if (streamingQuery.status().isTriggerActive()) {
-            // if trigger is still processing
-            shouldStop = false;
-        }
-         */
-        LOGGER.debug("Returning shouldstop: <{}>", shouldStop);
-        return shouldStop;
+    @Override
+    public void onQueryStarted(QueryStartedEvent queryStarted) {
+        LOGGER.info("queryId <{}> Query started: <{}>", streamingQuery.name(), queryStarted.id());
     }
 
+    @Override
+    public void onQueryTerminated(QueryTerminatedEvent queryTerminated) {
+        LOGGER.info("queryId <{}> Query terminated: <{}>", streamingQuery.name(), queryTerminated.id());
+        if (queryTerminated.id().equals(queryId)) {
+            streamingQuery.sparkSession().streams().removeListener(this);
+        }
+    }
+
+    @Override
+    public void onQueryProgress(QueryProgressEvent queryProgress) {
+        LOGGER.debug("queryId <{}> Query progressed: <{}>", streamingQuery.name(), queryProgress.progress().id());
+    }
 }
