@@ -50,7 +50,6 @@ import com.typesafe.config.ConfigFactory;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.*;
 
-import java.net.ConnectException;
 import java.sql.*;
 import java.util.Properties;
 
