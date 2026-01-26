@@ -144,20 +144,20 @@ public class TeragrepKafkaTest {
                             .getKafkaTestUtils()
                             .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
             ) {
-
+            
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
                 for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
                 kafkaConsumer.seekToBeginning(topicPartitionList);
-
+            
                 // Pull records from kafka, keep polling until we get nothing back
                 ConsumerRecords<String, String> records;
                 int i = 0;
                 do {
                     records = kafkaConsumer.poll(2000L);
-
+            
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka
                         Assertions
@@ -168,7 +168,7 @@ public class TeragrepKafkaTest {
                     }
                 }
                 while (!records.isEmpty());
-
+            
                 // rows of data saved to kafka
                 Assertions.assertEquals(5, i);
             }*/
@@ -209,33 +209,33 @@ public class TeragrepKafkaTest {
                             .getKafkaTestUtils()
                             .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
             ) {
-
+            
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
                 for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
                 kafkaConsumer.seekToBeginning(topicPartitionList);
-
+            
                 // Pull records from kafka, keep polling until we get nothing back
                 ConsumerRecords<String, String> records;
                 int i = 0;
                 int executedLoops = 0;
                 do {
                     records = kafkaConsumer.poll(2000L);
-
+            
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (all offsets)
                         for (int j = 1; j < 6; j++) {
                             Assertions.assertTrue(record.value().contains("\"offset\":" + j));
                             executedLoops++;
                         }
-
+            
                         i++;
                     }
                 }
                 while (!records.isEmpty());
-
+            
                 // rows of data saved to kafka (aggregation should result into one row of data containing an array)
                 Assertions.assertEquals(5, executedLoops);
                 Assertions.assertEquals(1, i);
@@ -277,21 +277,21 @@ public class TeragrepKafkaTest {
                             .getKafkaTestUtils()
                             .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
             ) {
-
+            
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
                 for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
                 kafkaConsumer.seekToBeginning(topicPartitionList);
-
+            
                 // Pull records from kafka, keep polling until we get nothing back
                 ConsumerRecords<String, String> records;
                 int i = 0;
                 int executedLoops = 0;
                 do {
                     records = kafkaConsumer.poll(2000L);
-
+            
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (all offsets)
                         for (int j = 1; j < 6; j++) {
@@ -302,7 +302,7 @@ public class TeragrepKafkaTest {
                     }
                 }
                 while (!records.isEmpty());
-
+            
                 // rows of data saved to kafka (aggregation should result into one row of data containing an array)
                 Assertions.assertEquals(1, i);
                 Assertions.assertEquals(5, executedLoops); //it should execute 5 loops
@@ -343,20 +343,20 @@ public class TeragrepKafkaTest {
                             .getKafkaTestUtils()
                             .getKafkaConsumer(StringDeserializer.class, StringDeserializer.class)
             ) {
-
+            
                 final List<TopicPartition> topicPartitionList = new ArrayList<>();
                 for (final PartitionInfo partitionInfo : kafkaConsumer.partitionsFor(topic)) {
                     topicPartitionList.add(new TopicPartition(partitionInfo.topic(), partitionInfo.partition()));
                 }
                 kafkaConsumer.assign(topicPartitionList);
                 kafkaConsumer.seekToBeginning(topicPartitionList);
-
+            
                 // Pull records from kafka, keep polling until we get nothing back
                 ConsumerRecords<String, String> records;
                 int i = 0;
                 do {
                     records = kafkaConsumer.poll(2000L);
-
+            
                     for (ConsumerRecord<String, String> record : records) {
                         // Assert that there are correct values in kafka (test the source column)
                         Assertions
@@ -367,7 +367,7 @@ public class TeragrepKafkaTest {
                     }
                 }
                 while (!records.isEmpty());
-
+            
                 // rows of data saved to kafka
                 Assertions.assertEquals(1, i);
             }*/
