@@ -54,9 +54,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -70,7 +70,7 @@ public class DPLInternalStreamingQueryListener extends StreamingQueryListener im
     /**
      * Map containing all the queryName-DPLInternalStreamingQuery k,v pairs
      */
-    private final Map<UUID, DPLInternalStreamingQuery> _queries = new HashMap<>();
+    private final Map<UUID, DPLInternalStreamingQuery> _queries = new ConcurrentHashMap<>();
 
     public DPLInternalStreamingQueryListener() {
         super();
