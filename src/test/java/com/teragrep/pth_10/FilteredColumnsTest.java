@@ -46,6 +46,7 @@
 package com.teragrep.pth_10;
 
 import com.teragrep.pth_10.ast.FilteredColumns;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -107,14 +108,8 @@ public class FilteredColumnsTest {
     }
 
     @Test
-    public void testEquals() {
-        String field = "foo";
-        String[] cols = new String[] {
-                "foo", "bar"
-        };
-        Assertions
-                .assertEquals(new FilteredColumns(field, cols).filtered(), new FilteredColumns(field, cols).filtered());
-
+    public void testEqualsContract() {
+        EqualsVerifier.forClass(FilteredColumns.class).verify();
     }
 
     @Test

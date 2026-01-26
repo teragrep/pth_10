@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -130,13 +131,13 @@ public final class FilteredColumns {
             isEquals = false;
         else {
             final FilteredColumns filteredColumns = (FilteredColumns) o;
-            isEquals = Objects.equals(wc, filteredColumns.wc);
+            isEquals = Objects.equals(wc, filteredColumns.wc) && Arrays.equals(columns, filteredColumns.columns);
         }
         return isEquals;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(wc);
+        return Objects.hash(wc, Arrays.hashCode(columns));
     }
 }
