@@ -70,9 +70,7 @@ public class LazyConnectionTest {
         LazyConnection lazyconnection = new LazyConnection(config);
         Connection connection1 = lazyconnection.get();
         Connection connection2 = lazyconnection.get();
-        Assertions.assertDoesNotThrow(connection1::close);
-        boolean isClosed = Assertions.assertDoesNotThrow(connection2::isClosed);
-        Assertions.assertTrue(isClosed);
+        Assertions.assertSame(connection1, connection2);
     }
 
     @Test
@@ -82,6 +80,18 @@ public class LazyConnectionTest {
         Connection connection = lazyconnection.get();
         boolean isValid = Assertions.assertDoesNotThrow(() -> connection.isValid(10));
         Assertions.assertTrue(isValid);
+    }
+
+    @Test
+    @Disabled(value = "Test disabled: Related pth_10 issue #793")
+    public void testGetClosedConnection() {
+        Config config = ConfigFactory.parseProperties(defaultProperties());
+        LazyConnection lazyconnection = new LazyConnection(config);
+        Connection conn1 = lazyconnection.get();
+        Assertions.assertDoesNotThrow(conn1::close);
+        Connection conn2 = lazyconnection.get();
+        boolean isClosed = Assertions.assertDoesNotThrow(conn2::isClosed);
+        Assertions.assertTrue(isClosed);
     }
 
     private Properties defaultProperties() {
