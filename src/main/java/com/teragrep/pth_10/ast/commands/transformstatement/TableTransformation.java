@@ -93,24 +93,15 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
         ctx.t_table_fieldType().forEach(fieldType -> {
             String fieldName = ((StringNode) visit(fieldType)).toString();
 
-            if (!fieldName.equals("")) {
+            if (!fieldName.isEmpty()) {
                 listOfFields.addAll(Arrays.asList(fieldName.split(",")));
             }
-        });
-
-        if (listOfFields.isEmpty()) {
-            try {
-                // check if table command has just a wildcard
-                final String wc = ctx.COMMAND_TABLE_MODE_WILDCARD().get(0).toString();
-                listOfFields.add(wc);
-            }
-            catch (Exception e) {
-                // table command must be given field name(s) or wildcard
+            else {
                 throw new IllegalStateException(
                         "table command is missing field names, it requires at least one valid field name."
                 );
             }
-        }
+        });
 
         return new StringListNode(listOfFields);
     }
