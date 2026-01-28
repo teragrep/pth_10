@@ -52,7 +52,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.sql.*;
+import java.sql.Connection;
 import java.util.Properties;
 
 public class LazyConnectionTest {
