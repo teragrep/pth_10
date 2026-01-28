@@ -48,7 +48,9 @@ package com.teragrep.pth_10.steps.teragrep.bloomfilter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.sql.*;
 import java.util.Properties;
@@ -66,36 +68,36 @@ public class LazyConnectionTest {
 
     @Test
     public void testOnlyOneConnectionInstance() {
-        Config config = ConfigFactory.parseProperties(defaultProperties());
-        LazyConnection lazyconnection = new LazyConnection(config);
-        Connection connection1 = lazyconnection.get();
-        Connection connection2 = lazyconnection.get();
+        final Config config = ConfigFactory.parseProperties(defaultProperties());
+        final LazyConnection lazyConnection = new LazyConnection(config);
+        final Connection connection1 = lazyConnection.get();
+        final Connection connection2 = lazyConnection.get();
         Assertions.assertSame(connection1, connection2);
     }
 
     @Test
     public void testValidConnectionWithDefaultProperties() {
         Config config = ConfigFactory.parseProperties(defaultProperties());
-        LazyConnection lazyconnection = new LazyConnection(config);
-        Connection connection = lazyconnection.get();
-        boolean isValid = Assertions.assertDoesNotThrow(() -> connection.isValid(10));
+        final LazyConnection lazyConnection = new LazyConnection(config);
+        final Connection connection = lazyConnection.get();
+        final boolean isValid = Assertions.assertDoesNotThrow(() -> connection.isValid(10));
         Assertions.assertTrue(isValid);
     }
 
     @Test
-    @Disabled(value = "Test disabled: Related pth_10 issue #793")
+    @Disabled(value = "Test disabled: pth_10 issue #793")
     public void testGetClosedConnection() {
-        Config config = ConfigFactory.parseProperties(defaultProperties());
-        LazyConnection lazyconnection = new LazyConnection(config);
-        Connection conn1 = lazyconnection.get();
+        final Config config = ConfigFactory.parseProperties(defaultProperties());
+        final LazyConnection lazyConnection = new LazyConnection(config);
+        final Connection conn1 = lazyConnection.get();
         Assertions.assertDoesNotThrow(conn1::close);
-        Connection conn2 = lazyconnection.get();
-        boolean isClosed = Assertions.assertDoesNotThrow(conn2::isClosed);
-        Assertions.assertTrue(isClosed);
+        final Connection conn2 = lazyConnection.get();
+        final boolean isClosed = Assertions.assertDoesNotThrow(conn2::isClosed);
+        Assertions.assertFalse(isClosed);
     }
 
     private Properties defaultProperties() {
-        Properties properties = new Properties();
+        final Properties properties = new Properties();
         properties.put("dpl.pth_10.bloom.db.username", username);
         properties.put("dpl.pth_10.bloom.db.password", password);
         properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
