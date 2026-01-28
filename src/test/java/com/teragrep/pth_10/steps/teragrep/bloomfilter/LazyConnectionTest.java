@@ -45,13 +45,68 @@
  */
 package com.teragrep.pth_10.steps.teragrep.bloomfilter;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import nl.jqno.equalsverifier.EqualsVerifier;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.util.Properties;
+
 public class LazyConnectionTest {
+
+    final String username = "sa";
+    final String password = "";
+    final String connectionUrl = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
 
     @Test
     public void testEqualsVerifier() {
         EqualsVerifier.forClass(LazyConnection.class).withNonnullFields("config").verify();
+    }
+
+    @Test
+    public void testOnlyOneConnectionInstance() {
+        final Config config = ConfigFactory.parseProperties(defaultProperties());
+        final LazyConnection lazyConnection = new LazyConnection(config);
+        final Connection connection1 = lazyConnection.get();
+        final Connection connection2 = lazyConnection.get();
+        Assertions.assertSame(connection1, connection2);
+    }
+
+    @Test
+    public void testValidConnectionWithDefaultProperties() {
+        Config config = ConfigFactory.parseProperties(defaultProperties());
+        final LazyConnection lazyConnection = new LazyConnection(config);
+        final Connection connection = lazyConnection.get();
+        final boolean isValid = Assertions.assertDoesNotThrow(() -> connection.isValid(10));
+        Assertions.assertTrue(isValid);
+    }
+
+    @Test
+    @Disabled(value = "Test disabled: pth_10 issue #793")
+    public void testGetClosedConnection() {
+        final Config config = ConfigFactory.parseProperties(defaultProperties());
+        final LazyConnection lazyConnection = new LazyConnection(config);
+        final Connection conn1 = lazyConnection.get();
+        Assertions.assertDoesNotThrow(conn1::close);
+        final Connection conn2 = lazyConnection.get();
+        final boolean isClosed = Assertions.assertDoesNotThrow(conn2::isClosed);
+        Assertions.assertFalse(isClosed);
+    }
+
+    private Properties defaultProperties() {
+        final Properties properties = new Properties();
+        properties.put("dpl.pth_10.bloom.db.username", username);
+        properties.put("dpl.pth_10.bloom.db.password", password);
+        properties.put("dpl.pth_06.bloom.db.url", connectionUrl);
+        properties
+                .put(
+                        "dpl.pth_06.bloom.db.fields",
+                        "[" + "{expected: 1000, fpp: 0.01}," + "{expected: 2000, fpp: 0.02},"
+                                + "{expected: 3000, fpp: 0.03}" + "]"
+                );
+        return properties;
     }
 }
