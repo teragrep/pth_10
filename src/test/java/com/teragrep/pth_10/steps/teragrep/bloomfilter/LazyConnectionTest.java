@@ -90,8 +90,8 @@ public class LazyConnectionTest {
         final Config config = ConfigFactory.parseProperties(defaultProperties());
         final LazyConnection lazyConnection = new LazyConnection(config);
         final Connection conn1 = lazyConnection.get();
-        Assertions.assertDoesNotThrow(conn1::close);
         final Connection conn2 = lazyConnection.get();
+        Assertions.assertDoesNotThrow(conn1::close);
         final boolean isClosed = Assertions.assertDoesNotThrow(conn2::isClosed);
         Assertions.assertFalse(isClosed);
     }
