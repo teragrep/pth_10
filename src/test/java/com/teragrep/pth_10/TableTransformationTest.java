@@ -192,4 +192,45 @@ public class TableTransformationTest {
                     );
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testTableWithOnlyWildcard() {
+        streamingTestUtil.performDPLTest("index=index_A | table *", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build())
+            });
+            Assertions
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testTableWithoutFieldNames() {
+        String q = "index=index_A | table";
+        String e = "table command is missing field names, it requires at least one valid field name.";
+        IllegalStateException exception = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalStateException.class, q, this.testFile, res -> {
+                });
+
+        Assertions.assertEquals(e, exception.getMessage());
+    }
 }

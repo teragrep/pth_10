@@ -88,13 +88,18 @@ public class TableTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_table_wcfieldListParameter(DPLParser.T_table_wcfieldListParameterContext ctx) {
-        List<String> listOfFields = new ArrayList<>();
+        final List<String> listOfFields = new ArrayList<>();
 
         ctx.t_table_fieldType().forEach(fieldType -> {
             String fieldName = ((StringNode) visit(fieldType)).toString();
 
-            if (!fieldName.equals("")) {
+            if (!fieldName.isEmpty()) {
                 listOfFields.addAll(Arrays.asList(fieldName.split(",")));
+            }
+            else {
+                throw new IllegalStateException(
+                        "table command is missing field names, it requires at least one valid field name."
+                );
             }
         });
 
