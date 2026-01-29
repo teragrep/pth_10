@@ -279,13 +279,12 @@ public final class DPLExecutorImpl implements DPLExecutor {
 
     @Override
     public void stop() throws TimeoutException {
-        LOGGER.debug("queryId <{}> Request to stop streaming query", streamingQuery.name());
-        if (
-            streamingQuery != null && !streamingQuery.sparkSession().sparkContext().isStopped()
-                    && streamingQuery.isActive()
-        ) {
-            LOGGER.info("queryId <{}> Stopping streaming query", streamingQuery.name());
-            streamingQuery.stop();
+        if (streamingQuery != null) {
+            LOGGER.debug("queryId <{}> Request to stop streaming query", streamingQuery.name());
+            if (!streamingQuery.sparkSession().sparkContext().isStopped() && streamingQuery.isActive()) {
+                LOGGER.info("queryId <{}> Stopping streaming query", streamingQuery.name());
+                streamingQuery.stop();
+            }
         }
     }
 }
