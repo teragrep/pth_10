@@ -46,6 +46,6 @@ jobs:
         with:
           from_repository: "${{ github.repository }}"
           from_version: "${{ github.event.release.tag_name }}"
-          to_repository: StrongestNumber9/pkg_01
-          deploy_key: ${{ secrets.DEPLOY_KEY }}
+          to_repository: teragrep/pkg_01
+          deploy_key: ${{ secrets.PKG_01_DEPLOY_KEY }}
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
