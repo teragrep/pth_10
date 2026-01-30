@@ -58,4 +58,9 @@ public class NullNode extends Node {
     public String toString() {
         return "";
     }
+
+    @Override
+    public boolean isStub() {
+        return true;
+    }
 }
