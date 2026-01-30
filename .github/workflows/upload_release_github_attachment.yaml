@@ -40,3 +40,12 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
+
+      - name: Update teragrep/pkg_01
+        uses: teragrep/dfg_01@1.0.0
+        with:
+          from_repository: "${{ github.repository }}"
+          from_version: "${{ github.event.release.tag_name }}"
+          to_repository: StrongestNumber9/pkg_01
+          token: ${{ secrets.PAT_TOKEN }}
+          files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
