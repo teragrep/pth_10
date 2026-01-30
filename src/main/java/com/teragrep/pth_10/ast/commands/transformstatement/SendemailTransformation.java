@@ -181,17 +181,17 @@ public class SendemailTransformation extends DPLParserBaseVisitor<Node> {
         }
 
         if (zplnConfig != null && zplnConfig.hasPath(smtpEncryptionParameterCfgItem)) {
-            String value = zplnConfig.getString(smtpEncryptionParameterCfgItem);
+            final String value = zplnConfig.getString(smtpEncryptionParameterCfgItem);
 
-            if (value.equals("PLAIN")) {
+            if ("PLAIN".equalsIgnoreCase(value)) {
                 use_ssl = false;
                 use_tls = false;
             }
-            else if (value.equals("SSL")) {
+            else if ("SSL".equalsIgnoreCase(value)) {
                 use_ssl = true;
                 use_tls = false;
             }
-            else if (value.equals("TLS")) {
+            else if ("TLS".equalsIgnoreCase(value)) {
                 use_ssl = false;
                 use_tls = true;
             }
