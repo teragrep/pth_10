@@ -40,6 +40,7 @@ jobs:
           printf "RPM_SIGNING_KEYNAME=%q\n" "$(gpg --show-keys --with-colons "${RPM_SIGNING_TMPDIR}/signing.pub" | awk -F':' '/uid/{print $10}')" >> $GITHUB_ENV;
           gpg --batch --import "${RPM_SIGNING_TMPDIR}/signing.key";
           rm -rfv "${RPM_SIGNING_TMPDIR}/";
+          echo "%_gpg_sign_cmd_extra_args --pinentry-mode loopback" >> "${HOME}/.rpmmacros";
 
       - name: Build a jar and rpm for release
         run: mvn -Dmaven.test.skip=true --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
