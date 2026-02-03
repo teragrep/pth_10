@@ -33,7 +33,7 @@ jobs:
 
       - name: Prepare RPM GPG signing
         run: |
-          sudo apt-get install expect pinentry;
+          sudo apt-get install expect pinentry-tty;
           export RPM_SIGNING_TMPDIR="$(mktemp --directory --tmpdir=${{ runner.temp }})";
           echo "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.pub";
           echo "${{ secrets.RPM_SIGNING_PRIVATE_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.key";
