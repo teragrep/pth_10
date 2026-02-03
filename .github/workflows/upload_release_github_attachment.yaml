@@ -33,7 +33,7 @@ jobs:
 
       - name: Prepare RPM GPG signing
         run: |
-          sudo apt-get install expect;
+          sudo apt-get install expect pinentry;
           export RPM_SIGNING_TMPDIR="$(mktemp --directory --tmpdir=${{ runner.temp }})";
           echo "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.pub";
           echo "${{ secrets.RPM_SIGNING_PRIVATE_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.key";
@@ -42,7 +42,7 @@ jobs:
           rm -rfv "${RPM_SIGNING_TMPDIR}/";
 
       - name: Build a jar and rpm for release
-        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
+        run: mvn -Dmaven.test.skip=true --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RPM_SIGNING_KEYNAME: ${{ env.RPM_SIGNING_KEYNAME }}
