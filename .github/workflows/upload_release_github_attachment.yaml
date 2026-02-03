@@ -43,7 +43,7 @@ jobs:
           echo "%_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase \"${{ secrets.RPM_SIGNING_PASSPHRASE }}\"" >> "${HOME}/.rpmmacros";
 
       - name: Build a jar and rpm for release
-        run: mvn -Dmaven.test.skip=true --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
+        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RPM_SIGNING_KEYNAME: ${{ env.RPM_SIGNING_KEYNAME }}
