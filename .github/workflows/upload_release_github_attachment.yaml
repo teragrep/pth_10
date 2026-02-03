@@ -37,8 +37,7 @@ jobs:
           export RPM_SIGNING_TMPDIR="$(mktemp --directory --tmpdir=${{ runner.temp }})";
           echo "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.pub";
           echo "${{ secrets.RPM_SIGNING_PRIVATE_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.key";
-          printf "GPG_SIGNING_KEYNAME=%q\n" "$(gpg --show-keys --with-colons "${RPM_SIGNING_TMPDIR}/signing.pub" | awk -F':' '/uid/{print $10}')" >> $GITHUB_ENV;
-          gpg --import "${RPM_SIGNING_TMPDIR}/signing.pub";
+          printf "RPM_SIGNING_KEYNAME=%q\n" "$(gpg --show-keys --with-colons "${RPM_SIGNING_TMPDIR}/signing.pub" | awk -F':' '/uid/{print $10}')" >> $GITHUB_ENV;
           gpg --batch --import "${RPM_SIGNING_TMPDIR}/signing.key";
           rm -rfv "${RPM_SIGNING_TMPDIR}/";
 
