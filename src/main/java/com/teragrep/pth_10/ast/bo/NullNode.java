@@ -60,7 +60,7 @@ public class NullNode extends Node {
     }
 
     @Override
-    public boolean isStub() {
+    public boolean isNull() {
         return true;
     }
 }

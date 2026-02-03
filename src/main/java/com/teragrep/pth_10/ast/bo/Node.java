@@ -145,7 +145,7 @@ public abstract class Node {
         }
     }
 
-    public boolean isStub() {
+    public boolean isNull() {
         return false;
     }
 }

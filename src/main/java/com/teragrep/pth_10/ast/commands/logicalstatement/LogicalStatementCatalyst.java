@@ -123,7 +123,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
     public AbstractStep visitLogicalStatementCatalyst(DPLParser.SearchTransformationRootContext ctx) {
         if (ctx != null) {
             final Node ret = visitSearchTransformationRoot(ctx);
-            if (!ret.isStub()) {
+            if (!ret.isNull()) {
                 final Column filterColumn = ((ColumnNode) visitSearchTransformationRoot(ctx)).getColumn();
                 return new LogicalCatalystStep(filterColumn);
             }
@@ -154,7 +154,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         if (ctx.getChildCount() == 1) {
             // just a single directoryStatement -or- logicalStatement
             final Node singleNode = visit(ctx.getChild(0));
-            if (singleNode.isStub()) {
+            if (singleNode.isNull()) {
                 LOGGER.info("Child node was a NullNode");
                 rv = singleNode;
             }
@@ -170,11 +170,11 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
                 // case: directoryStmt OR logicalStmt
                 final Node directoryNode = visit(ctx.directoryStatement());
                 final Node logicalNode = visit(ctx.logicalStatement(0));
-                if (directoryNode.isStub()) {
+                if (directoryNode.isNull()) {
                     LOGGER.info("Directory statement node was a NullNode");
                     rv = directoryNode;
                 }
-                else if (logicalNode.isStub()) {
+                else if (logicalNode.isNull()) {
                     LOGGER.info("Logical statement node was a NullNode");
                     rv = logicalNode;
                 }
@@ -187,7 +187,7 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
             else {
                 // case: (logicalStmt AND?)*? directoryStmt (AND? logicalStmt)*?
                 final Node finalNode = visit(ctx.directoryStatement());
-                if (finalNode.isStub()) {
+                if (finalNode.isNull()) {
                     LOGGER.info("Directory statement node was a NullNode");
                     rv = finalNode;
                 }
