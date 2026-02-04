@@ -36,7 +36,7 @@ jobs:
           sudo apt-get install expect pinentry-tty;
           printf "RPM_SIGNING_KEYNAME=%q\n" "$(echo "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}" | gpg --show-keys --with-colons | awk -F':' '/uid/{print $10}')" >> $GITHUB_ENV;
           echo "${{ secrets.RPM_SIGNING_PRIVATE_KEY }}" | gpg --batch --import;
-          echo "%_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase \"${{ secrets.RPM_SIGNING_PASSPHRASE }}\"" >> "${HOME}/.rpmmacros";
+          echo "%_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase \"%{getenv:RPM_SIGNING_PASSPHRASE}\"" >> "${HOME}/.rpmmacros";
 
       - name: Build a jar and rpm for release
         run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
