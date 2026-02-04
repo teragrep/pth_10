@@ -57,6 +57,10 @@
           <defaultGroupname>root</defaultGroupname>
           <defaultFilemode>0644</defaultFilemode>
           <defaultDirmode>0755</defaultDirmode>
+          <keyname>${env.RPM_SIGNING_KEYNAME}</keyname>
+          <keyPassphrase>
+	          <passphrase>${env.RPM_SIGNING_PASSPHRASE}</passphrase>
+          </keyPassphrase>
           <defineStatements>
             <defineStatement>_build_id_links none</defineStatement>
             <defineStatement>__provides_exclude ^osgi\\(.*$</defineStatement>
