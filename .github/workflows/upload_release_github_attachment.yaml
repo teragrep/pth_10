@@ -39,7 +39,7 @@ jobs:
           echo "%_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase \"%{getenv:RPM_SIGNING_PASSPHRASE}\"" >> "${HOME}/.rpmmacros";
 
       - name: Build a jar and rpm for release
-        run: mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
+        run: mvn -Dmaven.test.skip=true --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= clean package -Pbuild-shaded-jar && cd rpm/ && mvn --batch-mode -Drevision=${{ github.event.release.tag_name }} -Dsha1= -Dchangelist= -f rpm.pom.xml package
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RPM_SIGNING_KEYNAME: ${{ env.RPM_SIGNING_KEYNAME }}
@@ -51,12 +51,12 @@ jobs:
         with:
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
 
-      - name: Update teragrep/pkg_01 releases repository
-        uses: teragrep/dfg_01@2.0.0
+      - name: Update pkg_01 releases repository
+        uses: StrongestNumber9/dfg_01@with_gpg_public_key
         with:
           from_repository: "${{ github.repository }}"
           from_version: "${{ github.event.release.tag_name }}"
-          to_repository: teragrep/pkg_01
+          to_repository: "${{ github.repository_owner }}/pkg_01"
           deploy_key: ${{ secrets.PKG_01_DEPLOY_KEY }}
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
-        if: ${{ startsWith(github.repository, 'teragrep/') }}
+          gpg_public_key: "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}"
