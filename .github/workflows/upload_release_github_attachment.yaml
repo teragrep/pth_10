@@ -34,12 +34,8 @@ jobs:
       - name: Prepare RPM GPG signing
         run: |
           sudo apt-get install expect pinentry-tty;
-          export RPM_SIGNING_TMPDIR="$(mktemp --directory --tmpdir=${{ runner.temp }})";
-          echo "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.pub";
-          echo "${{ secrets.RPM_SIGNING_PRIVATE_KEY }}" > "${RPM_SIGNING_TMPDIR}/signing.key";
-          printf "RPM_SIGNING_KEYNAME=%q\n" "$(gpg --show-keys --with-colons "${RPM_SIGNING_TMPDIR}/signing.pub" | awk -F':' '/uid/{print $10}')" >> $GITHUB_ENV;
-          gpg --batch --import "${RPM_SIGNING_TMPDIR}/signing.key";
-          rm -rfv "${RPM_SIGNING_TMPDIR}/";
+          printf "RPM_SIGNING_KEYNAME=%q\n" "$(echo "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}" | gpg --show-keys --with-colons | awk -F':' '/uid/{print $10}')" >> $GITHUB_ENV;
+          echo "${{ secrets.RPM_SIGNING_PRIVATE_KEY }}" | gpg --batch --import;
           echo "%_gpg_sign_cmd_extra_args --pinentry-mode loopback --passphrase \"${{ secrets.RPM_SIGNING_PASSPHRASE }}\"" >> "${HOME}/.rpmmacros";
 
       - name: Build a jar and rpm for release
