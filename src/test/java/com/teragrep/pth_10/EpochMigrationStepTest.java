@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10;
 
+import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -167,29 +168,12 @@ public final class EpochMigrationStepTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testMigrateEpochCommandIgnoresNonSyslogMetadata() {
-        streamingTestUtil.performDPLTest("index=index_B | teragrep exec migrate epoch", testFile, ds -> {
-            final String selectOffsets = "SELECT id, epoch_hour FROM logfile ORDER BY id";
-            final List<Long> updatedEpochs = new ArrayList<>();
-            Assertions.assertDoesNotThrow(() -> {
-                try (PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
-                    final ResultSet resultSet = preparedStatement.executeQuery();
-                    int loops = 0;
-                    while (resultSet.next()) {
-                        final Long epochHour = resultSet.getObject("epoch_hour", Long.class);
-                        updatedEpochs.add(epochHour);
-                        loops++;
-                    }
-                    Assertions.assertEquals(10, loops);
-                }
-            });
-            // non-syslog event is left null in SQL as no epoch could be determined
-            final List<Long> expectedEpochs = Arrays
-                    .asList(
-                            1693904400L, 1693908000L, null, 1693915200L, 1693918800L, 1693922400L, 1693926000L,
-                            1693929600L, 1693933200L, 1693936800L
-                    );
-            Assertions.assertEquals(expectedEpochs, updatedEpochs);
-        });
+    public void testMigrateNullTimeColumnThrowsException() {
+        // tests that rows with null _time value are not silently accepted
+        streamingTestUtil
+                .performThrowingDPLTest(
+                        StreamingQueryException.class, "index=index_B | teragrep exec migrate epoch", testFile, ds -> {
+                        }
+                );
     }
 }
