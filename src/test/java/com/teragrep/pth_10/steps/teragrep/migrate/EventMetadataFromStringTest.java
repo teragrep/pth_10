@@ -49,35 +49,52 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+/**
+ * expected _raw data from PTH_06 on epoch migration mode
+ */
 public final class EventMetadataFromStringTest {
 
     @Test
     void testParsesSyslogEventMetadata() {
-        final String validSyslog = "{" + "\"epochMigration\":true," + "\"format\":\"rfc5424\"," + "\"object\":{"
-                + "\"bucket\":\"bucket\"," + "\"path\":\"path/file.gz\"," + "\"partition\":\"1\"," + "\"offset\":1"
-                + "}," + "\"timestamp\":{" + "\"source\":\"syslog\"," + "\"original\":\"2023-09-05T09:00:00Z\","
-                + "\"epoch\":1693904400" + "}" + "}";
-        final EventMetadata metadata = new EventMetadataFromString(validSyslog);
+        final String syslogResult = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"2007/10-08/epoch/migration/test.logGLOB-2007100814.log.gz\",\"partition\":\"id\"},\"timestamp\":{\"rfc5242timestamp\":\"2014-06-20T09:14:07.12345+00:00\",\"epoch\":1403255647123450,\"path-extracted\":\"2007-10-08T14:00+03:00[Europe/Helsinki]\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
+        final EventMetadata metadata = new EventMetadataFromString(syslogResult);
         Assertions.assertTrue(metadata.isSyslog());
         Assertions.assertEquals("rfc5424", metadata.format());
         Assertions.assertEquals("bucket", metadata.bucket());
-        Assertions.assertEquals("path/file.gz", metadata.path());
-        Assertions.assertEquals("2023-09-05T09:00:00Z", metadata.originalTimestamp());
-        Assertions.assertEquals("1693904400", metadata.epoch());
+        Assertions.assertEquals("id", metadata.partition());
+        Assertions.assertEquals("2007/10-08/epoch/migration/test.logGLOB-2007100814.log.gz", metadata.path());
+        Assertions.assertEquals("2014-06-20T09:14:07.12345+00:00", metadata.rfc5242Timestamp());
+        Assertions.assertEquals("1403255647123450", metadata.epoch());
+        Assertions.assertEquals("2007-10-08T14:00+03:00[Europe/Helsinki]", metadata.pathExtracted());
+        Assertions.assertEquals("hourly", metadata.pathExtractedPrecision());
+        Assertions.assertEquals("syslog", metadata.source());
+        Assertions.assertDoesNotThrow(metadata::toString);
     }
 
     @Test
     void testParsesNonSyslogEventMetadata() {
-        final String validNonSyslog = "{" + "\"epochMigration\":true," + "\"format\":\"non-rfc5424\"," + "\"object\":{"
-                + "\"bucket\":\"bucket\"," + "\"path\":\"path/file.gz\"" + "}," + "\"timestamp\":{"
-                + "\"original\":\"unavailable\"," + "\"epoch\":\"unavailable\"" + "}" + "}";
-        final EventMetadata metadata = new EventMetadataFromString(validNonSyslog);
+        final String nonSyslogResult = "{\"epochMigration\":true,\"format\":\"non-rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"2007/10-08/epoch/migration/test.logGLOB-2007100814.log.gz\",\"partition\":\"id\"},\"timestamp\":{\"path-extracted\":\"2007-10-08T14:00+03:00[Europe/Helsinki]\",\"path-extracted-precision\":\"hourly\",\"source\":\"object-path\"}}";
+        final EventMetadata metadata = new EventMetadataFromString(nonSyslogResult);
         Assertions.assertFalse(metadata.isSyslog());
         Assertions.assertEquals("non-rfc5424", metadata.format());
         Assertions.assertEquals("bucket", metadata.bucket());
-        Assertions.assertEquals("path/file.gz", metadata.path());
-        Assertions.assertEquals("unavailable", metadata.originalTimestamp());
-        Assertions.assertEquals("unavailable", metadata.epoch());
+        Assertions.assertEquals("id", metadata.partition());
+        Assertions.assertEquals("2007/10-08/epoch/migration/test.logGLOB-2007100814.log.gz", metadata.path());
+        Assertions.assertEquals("2007-10-08T14:00+03:00[Europe/Helsinki]", metadata.pathExtracted());
+        Assertions.assertEquals("hourly", metadata.pathExtractedPrecision());
+        Assertions.assertEquals("object-path", metadata.source());
+
+        final UnsupportedOperationException timestampException = Assertions
+                .assertThrows(UnsupportedOperationException.class, metadata::rfc5242Timestamp);
+        final UnsupportedOperationException epochException = Assertions
+                .assertThrows(UnsupportedOperationException.class, metadata::epoch);
+        Assertions
+                .assertEquals(
+                        "rfc5242Timestamp() not available for non-syslog metadata", timestampException.getMessage()
+                );
+        Assertions.assertEquals("epoch() not available for non-syslog metadata", epochException.getMessage());
+
+        Assertions.assertDoesNotThrow(metadata::toString);
     }
 
     @Test

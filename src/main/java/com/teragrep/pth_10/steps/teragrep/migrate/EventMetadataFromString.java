@@ -80,12 +80,38 @@ public final class EventMetadataFromString implements EventMetadata {
     }
 
     @Override
-    public String originalTimestamp() {
-        return jsonObject().getAsJsonObject("timestamp").get("original").getAsString();
+    public String partition() {
+        return jsonObject().getAsJsonObject("object").get("partition").getAsString();
+    }
+
+    @Override
+    public String rfc5242Timestamp() {
+        if (!isSyslog()) {
+            throw new UnsupportedOperationException("rfc5242Timestamp() not available for non-syslog metadata");
+        }
+        return jsonObject().getAsJsonObject("timestamp").get("rfc5242timestamp").getAsString();
+    }
+
+    @Override
+    public String pathExtracted() {
+        return jsonObject().getAsJsonObject("timestamp").get("path-extracted").getAsString();
+    }
+
+    @Override
+    public String pathExtractedPrecision() {
+        return jsonObject().getAsJsonObject("timestamp").get("path-extracted-precision").getAsString();
+    }
+
+    @Override
+    public String source() {
+        return jsonObject().getAsJsonObject("timestamp").get("source").getAsString();
     }
 
     @Override
     public String epoch() {
+        if (!isSyslog()) {
+            throw new UnsupportedOperationException("epoch() not available for non-syslog metadata");
+        }
         return jsonObject().getAsJsonObject("timestamp").get("epoch").getAsString();
     }
 

@@ -77,13 +77,24 @@ final class EpochMigrationBatchState {
     EpochMigrationBatchState accept(final Row row) {
         final String rawString = row.getString(row.fieldIndex("_raw"));
         final EventMetadata metadata = new EventMetadataFromString(rawString);
-        if (!metadata.isSyslog()) {
-            LOGGER.debug("Skipping non syslog row");
-            return this;
-        }
         final long epoch = row.getTimestamp(row.fieldIndex("_time")).toInstant().getEpochSecond();
         final String partitionString = row.getString(row.fieldIndex("partition"));
         final long id = Long.parseLong(partitionString);
+
+        if (!metadata.isSyslog() && LOGGER.isInfoEnabled()) {
+            LOGGER
+                    .info(
+                            "Encountered non-syslog row id=<{}> using path extracted time value <{}> with precision of <{}> resulting epoch <{}>",
+                            id, metadata.pathExtracted(), metadata.pathExtractedPrecision(), epoch
+                    );
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Non-syslog row metadata: <{}>", metadata);
+            }
+        }
+        else if (LOGGER.isDebugEnabled()) {
+            LOGGER.trace("Updating partition id <{}> with epoch value <{}>", id, epoch);
+        }
+
         return new EpochMigrationBatchState(batch.bind(epoch, id), batchSize, batchCount + 1, acceptedRows + 1);
     }
 
