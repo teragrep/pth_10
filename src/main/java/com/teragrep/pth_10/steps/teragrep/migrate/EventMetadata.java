@@ -55,8 +55,16 @@ public interface EventMetadata {
 
     public abstract String path();
 
+    public abstract String partition();
+
     public abstract String epoch();
 
-    public abstract String originalTimestamp();
+    public abstract String rfc5242Timestamp();
+
+    public abstract String pathExtracted();
+
+    public abstract String pathExtractedPrecision();
+
+    public abstract String source();
 
 }
