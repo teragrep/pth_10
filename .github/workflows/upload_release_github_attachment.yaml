@@ -52,7 +52,7 @@ jobs:
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
 
       - name: Update pkg_01 releases repository
-        uses: teragrep/dfg_01@3.1.0
+        uses: teragrep/dfg_01@3.2.0
         with:
           from_repository: "${{ github.repository }}"
           from_version: "${{ github.event.release.tag_name }}"
