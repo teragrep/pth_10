@@ -50,6 +50,8 @@ import org.jooq.BatchBindStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 final class EpochMigrationBatchState {
 
     private final Logger LOGGER = LoggerFactory.getLogger(EpochMigrationBatchState.class);
@@ -116,5 +118,27 @@ final class EpochMigrationBatchState {
 
     EpochMigrationBatchState reset(final BatchBindStep newBatch) {
         return new EpochMigrationBatchState(newBatch, batchSize, 0, acceptedRows);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final EpochMigrationBatchState that = (EpochMigrationBatchState) o;
+            rv = batchSize == that.batchSize && batchCount == that.batchCount && acceptedRows == that.acceptedRows
+                    && Objects.equals(LOGGER, that.LOGGER) && Objects.equals(batch, that.batch);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(LOGGER, batch, batchSize, batchCount, acceptedRows);
     }
 }
