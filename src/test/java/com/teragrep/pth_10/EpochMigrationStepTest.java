@@ -45,6 +45,8 @@
  */
 package com.teragrep.pth_10;
 
+import com.teragrep.pth_10.steps.teragrep.migrate.TeragrepEpochMigrationStep;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
@@ -175,5 +177,14 @@ public final class EpochMigrationStepTest {
                         StreamingQueryException.class, "index=index_B | teragrep exec migrate epoch", testFile, ds -> {
                         }
                 );
+    }
+
+    @Test
+    public void testContract() {
+        // ignore fields from superclass dpf_02 AbstractStep that are not part of the equality
+        EqualsVerifier
+                .forClass(TeragrepEpochMigrationStep.class)
+                .withIgnoredFields("LOGGER", "properties", "aggregatesUsedBefore")
+                .verify();
     }
 }
