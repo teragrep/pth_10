@@ -46,12 +46,123 @@
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.expressions.GenericRowWithSchema;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+import org.jooq.BatchBindStep;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Param;
+import org.jooq.Query;
+import org.jooq.SQLDialect;
+import org.jooq.impl.DSL;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.sql.Timestamp;
+import java.util.Arrays;
 
 public final class EpochMigrationBatchStateTest {
 
+    private final DSLContext ctx = DSL.using(SQLDialect.MYSQL);
+    private final StructType testSchema = new StructType(new StructField[] {
+            new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+            new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+            new StructField("index", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("sourcetype", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("source", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("partition", DataTypes.StringType, false, new MetadataBuilder().build()),
+            new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
+    });
+
     @Test
-    public void testBatchSize() {
+    public void testAcceptsValidRow() {
+        final EpochMigrationBatchState batchState = new EpochMigrationBatchState(baseBatch(ctx), 1);
+        final EpochMigrationBatchState nextBatchState = Assertions
+                .assertDoesNotThrow(() -> batchState.accept(genericResultRow()));
+        Assertions.assertTrue(nextBatchState.isBatchFull());
+        Assertions.assertTrue(nextBatchState.hasPendingRows());
+        Assertions.assertEquals(1, nextBatchState.totalAccepted());
+    }
+
+    @Test
+    public void testBatchBoundValues() {
+        final EpochMigrationBatchState batchState = new EpochMigrationBatchState(
+                new RecordingBatchBindStep(baseBatch(ctx)),
+                1
+        );
+        Assertions.assertEquals(0, batchState.batch().size());
+        final EpochMigrationBatchState nextBatchState = Assertions
+                .assertDoesNotThrow(() -> batchState.accept(genericResultRow()));
+        RecordingBatchBindStep step = (RecordingBatchBindStep) nextBatchState.batch();
+        Assertions.assertIterableEquals(Arrays.asList(1580551994L, 1L), step.boundValuesList());
+    }
+
+    @Test
+    public void testTotalAcceptedRowsIsIncremented() {
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch(ctx), 1);
+        Assertions.assertEquals(0, startState.totalAccepted());
+        final EpochMigrationBatchState firstState = Assertions
+                .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
+        Assertions.assertEquals(1, firstState.totalAccepted());
+        final EpochMigrationBatchState secondState = Assertions
+                .assertDoesNotThrow(() -> firstState.accept(genericResultRow()));
+        Assertions.assertEquals(2, secondState.totalAccepted());
+    }
+
+    @Test
+    public void testBatchIsFull() {
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch(ctx), 2);
+        final EpochMigrationBatchState firstState = Assertions
+                .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
+        Assertions.assertFalse(firstState.isBatchFull());
+        final EpochMigrationBatchState secondState = Assertions
+                .assertDoesNotThrow(() -> firstState.accept(genericResultRow()));
+        Assertions.assertTrue(secondState.isBatchFull());
+    }
+
+    @Test
+    public void testResetDoesNotAffectTotalAccepted() {
+        final BatchBindStep baseBatch = baseBatch(ctx);
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch, 1);
+        final EpochMigrationBatchState firstState = Assertions
+                .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
+        final EpochMigrationBatchState resetBatch = firstState.reset(baseBatch);
+        Assertions.assertNotEquals(startState.hasPendingRows(), firstState.hasPendingRows());
+        Assertions.assertNotEquals(startState.isBatchFull(), firstState.isBatchFull());
+        Assertions.assertEquals(startState.hasPendingRows(), resetBatch.hasPendingRows());
+        Assertions.assertEquals(startState.isBatchFull(), resetBatch.isBatchFull());
+        Assertions.assertEquals(1, resetBatch.totalAccepted());
+    }
+
+    private BatchBindStep baseBatch(final DSLContext ctx) {
+        final Field<Long> epochField = DSL.field(DSL.name("epoch_hour"), Long.class);
+        final Field<Long> idField = DSL.field(DSL.name("id"), Long.class);
+        final Param<Long> epochParam = DSL.param("epoch_hour", Long.class);
+        final Param<Long> idParam = DSL.param("id", Long.class);
+        final Query baseQuery = ctx
+                .update(DSL.table(DSL.name("journaldb", "logfile")))
+                .set(epochField, epochParam)
+                .where(idField.eq(idParam).and(epochField.isNull()));
+        return ctx.batch(baseQuery);
+    }
+
+    private Row genericResultRow() {
+        final String syslogJsonResult = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"2007/10-08/epoch/migration/test.logGLOB-2007100814.log.gz\",\"partition\":\"id\"},\"timestamp\":{\"rfc5242timestamp\":\"2014-06-20T09:14:07.12345+00:00\",\"epoch\":1403255647123450,\"path-extracted\":\"2007-10-08T14:00+03:00[Europe/Helsinki]\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
+        return new GenericRowWithSchema(new Object[] {
+                Timestamp.valueOf("2020-02-01 12:13:14"),
+                syslogJsonResult,
+                "index",
+                "sourcetype",
+                "host",
+                "source",
+                "1",
+                1L
+        }, testSchema);
     }
 
     @Test
