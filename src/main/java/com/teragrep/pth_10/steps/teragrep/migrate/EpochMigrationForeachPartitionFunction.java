@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Iterator;
+import java.util.Objects;
 
 final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFunction<Row> {
 
@@ -114,7 +115,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
         }
         catch (final SQLException e) {
-            throw new RuntimeException("Exception during epoch migration", e);
+            throw new RuntimeException("Exception during epoch migration: " + e.getMessage(), e);
         }
         finally {
             resetAutoCommit(conn);
@@ -154,5 +155,27 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         catch (final SQLException e) {
             LOGGER.error("Error turning auto commit true");
         }
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final EpochMigrationForeachPartitionFunction that = (EpochMigrationForeachPartitionFunction) o;
+            rv = batchSize == that.batchSize && Objects.equals(lazyConnection, that.lazyConnection)
+                    && Objects.equals(journalDBName, that.journalDBName) && Objects.equals(settings, that.settings);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(lazyConnection, journalDBName, batchSize, settings);
     }
 }

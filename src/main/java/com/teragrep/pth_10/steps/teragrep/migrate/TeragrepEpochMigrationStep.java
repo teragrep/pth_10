@@ -52,11 +52,13 @@ import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
+
 public final class TeragrepEpochMigrationStep extends AbstractStep {
 
     private final Logger LOGGER = LoggerFactory.getLogger(TeragrepEpochMigrationStep.class);
     private final Config config;
-    final String journaldbNameConfigItem;
+    private final String journaldbNameConfigItem;
 
     public TeragrepEpochMigrationStep(final Config config) {
         this.config = config;
@@ -86,5 +88,27 @@ public final class TeragrepEpochMigrationStep extends AbstractStep {
         dataset.foreachPartition(migrationFunction);
         return dataset;
 
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final TeragrepEpochMigrationStep that = (TeragrepEpochMigrationStep) o;
+            rv = Objects.equals(config, that.config)
+                    && Objects.equals(journaldbNameConfigItem, that.journaldbNameConfigItem);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(config, journaldbNameConfigItem);
     }
 }
