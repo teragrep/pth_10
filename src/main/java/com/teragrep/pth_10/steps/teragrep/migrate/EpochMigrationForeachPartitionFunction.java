@@ -102,7 +102,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
             EpochMigrationBatchState batch = new EpochMigrationBatchState(ctx.batch(baseQuery(ctx)), batchSize);
             while (iter.hasNext()) {
                 batch = batch.accept(iter.next());
-                if (batch.shouldFlushRows()) {
+                if (batch.isBatchFull()) {
                     executeBatch(batch, conn);
                     batch = batch.reset(ctx.batch(baseQuery(ctx)));
                 }
