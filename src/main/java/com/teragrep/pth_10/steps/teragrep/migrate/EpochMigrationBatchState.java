@@ -100,7 +100,7 @@ final class EpochMigrationBatchState {
         return new EpochMigrationBatchState(batch.bind(epoch, id), batchSize, batchCount + 1, acceptedRows + 1);
     }
 
-    boolean shouldFlushRows() {
+    boolean isBatchFull() {
         return batchCount >= batchSize;
     }
 
