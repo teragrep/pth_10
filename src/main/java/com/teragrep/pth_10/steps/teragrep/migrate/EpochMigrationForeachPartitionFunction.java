@@ -95,9 +95,17 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
     @Override
     public void call(final Iterator<Row> iter) {
+        // connection is shared
         final Connection conn = lazyConnection.get();
         try {
-            conn.setAutoCommit(false);
+            if (conn.getAutoCommit()) {
+                conn.setAutoCommit(false);
+            }
+        }
+        catch (final SQLException exception) {
+            LOGGER.error("Error setting connection auto commit=<false>");
+        }
+        try {
             final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL, settings);
             EpochMigrationBatchState batch = new EpochMigrationBatchState(ctx.batch(baseQuery(ctx)), batchSize);
             while (iter.hasNext()) {
@@ -117,17 +125,16 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         catch (final SQLException e) {
             throw new RuntimeException("Exception during epoch migration: " + e.getMessage(), e);
         }
-        finally {
-            resetAutoCommit(conn);
-        }
     }
 
     private void executeBatch(final EpochMigrationBatchState batch, final Connection conn) throws SQLException {
         try {
             batch.batch().execute();
             conn.commit();
+            LOGGER.debug("Commited full batch");
         }
         catch (final Exception e) {
+            LOGGER.error("Error executing batch with message: <{}>", e.getMessage());
             conn.rollback();
             throw new SQLException(e);
         }
@@ -144,17 +151,6 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
                 .where(idField.eq(idParam).and(epochField.isNull()));
         LOGGER.trace("epoch migration for each partition function: batch query <{}>", baseQuery);
         return baseQuery;
-    }
-
-    private void resetAutoCommit(final Connection conn) {
-        try {
-            if (!conn.isClosed()) {
-                conn.setAutoCommit(true);
-            }
-        }
-        catch (final SQLException e) {
-            LOGGER.error("Error turning auto commit true");
-        }
     }
 
     @Override

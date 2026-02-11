@@ -55,21 +55,21 @@ import java.util.Map;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 
-public class RecordingBatchBindStep implements BatchBindStep {
+final class RecordingBatchBindStep implements BatchBindStep {
 
     private final BatchBindStep origin;
     private final List<Object> bindValuesList;
 
-    public RecordingBatchBindStep(BatchBindStep origin) {
+    RecordingBatchBindStep(final BatchBindStep origin) {
         this(origin, new ArrayList<>());
     }
 
-    public RecordingBatchBindStep(BatchBindStep origin, List<Object> bindValuesList) {
+    RecordingBatchBindStep(final BatchBindStep origin, final List<Object> bindValuesList) {
         this.origin = origin;
         this.bindValuesList = bindValuesList;
     }
 
-    public List<Object> boundValuesList() {
+    List<Object> boundValuesList() {
         return bindValuesList;
     }
 
