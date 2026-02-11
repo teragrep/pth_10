@@ -192,6 +192,11 @@
       <artifactId>commons-text</artifactId>
       <version>1.10.0</version>
     </dependency>
+    <dependency>
+      <groupId>com.zaxxer</groupId>
+      <artifactId>HikariCP</artifactId>
+      <version>4.0.3</version>
+    </dependency>
     <!-- teragrep exec syslog stream command dependencies -->
     <dependency>
       <groupId>com.teragrep</groupId>
