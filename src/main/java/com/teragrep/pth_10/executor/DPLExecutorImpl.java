@@ -180,7 +180,16 @@ public final class DPLExecutorImpl implements DPLExecutor {
             while (exception.getCause() != null) {
                 exception = exception.getCause();
             }
-            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
+
+            final String message;
+            if (exception.getMessage() == null) {
+                message = "";
+            }
+            else {
+                message = exception.getMessage();
+            }
+
+            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, message);
         }
 
         LOGGER.debug("queryId <{}> Checking if aggregates are used", queryId);
@@ -236,7 +245,16 @@ public final class DPLExecutorImpl implements DPLExecutor {
             while (exception.getCause() != null) {
                 exception = exception.getCause();
             }
-            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, exception.getMessage());
+
+            final String message;
+            if (exception.getMessage() == null) {
+                message = "";
+            }
+            else {
+                message = exception.getMessage();
+            }
+
+            return new DPLExecutorResultImpl(DPLExecutorResult.Code.ERROR, message);
         }
 
         LOGGER.debug("queryId <{}> Returning from interpret()", queryId);
