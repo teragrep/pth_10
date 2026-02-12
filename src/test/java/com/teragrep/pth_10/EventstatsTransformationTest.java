@@ -266,4 +266,17 @@ public class EventstatsTransformationTest {
                     Assertions.assertEquals(1, listOfStdevp.size());
                 });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEventstatsWithoutAggregationFunction() {
+        final String query = "index=index_A | eventstats";
+        RuntimeException e = this.streamingTestUtil
+                .performThrowingDPLTest(RuntimeException.class, query, testFile, ds -> {
+                });
+        Assertions.assertEquals("EventstatsStep did not receive the expected aggregation function(s)", e.getMessage());
+    }
 }
