@@ -22,10 +22,6 @@
         <Bug pattern="HARD_CODE_PASSWORD"/>
     </Match>
     <Match>
-        <Class name="com.teragrep.pth_10.EpochMigrationStepTest"/>
-        <Bug pattern="HARD_CODE_PASSWORD"/>
-    </Match>
-    <Match>
         <Class name="com.teragrep.pth_10.steps.teragrep.migrate.EpochMigrationForeachPartitionFunctionTest"/>
         <Bug pattern="HARD_CODE_PASSWORD"/>
     </Match>
