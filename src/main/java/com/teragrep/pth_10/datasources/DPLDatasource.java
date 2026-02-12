@@ -218,6 +218,12 @@ public class DPLDatasource {
             reader = reader.option("bloom.withoutFilterPattern", withoutFilterPattern);
         }
 
+        if (config.hasPath("dpl.pth_06.archive.epochMigrationMode")) {
+            final boolean isEpochMigrationMode = config.getBoolean("dpl.pth_06.archive.epochMigrationMode");
+            LOGGER.debug("Found config dpl.pth_06.archive.epochMigrationMode=<[{}]>", isEpochMigrationMode);
+            reader = reader.option("epochMigrationMode", isEpochMigrationMode);
+        }
+
         if (config.getBoolean("dpl.pth_06.kafka.enabled")) {
             LOGGER.debug("Kafka is enabled");
             String s3identityWithoutDomain = s3identity;
