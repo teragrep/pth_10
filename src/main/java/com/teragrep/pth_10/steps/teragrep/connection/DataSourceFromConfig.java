@@ -66,7 +66,7 @@ final class DataSourceFromConfig {
         this.config = config;
     }
 
-    public HikariDataSource dataSource() {
+    HikariDataSource dataSource() {
         final HikariConfig hikariConfig = new HikariConfig();
         // credentials
         hikariConfig.setJdbcUrl(connectionURL());
