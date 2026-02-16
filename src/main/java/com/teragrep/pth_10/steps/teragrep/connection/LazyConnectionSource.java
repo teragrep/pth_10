@@ -52,14 +52,16 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.atomic.AtomicReference;
 
-public final class LazyHikariConnectionSource implements ConnectionSource {
+public final class LazyConnectionSource implements ConnectionSource {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(LazyHikariConnectionSource.class);
-    private static HikariDataSource DATA_SOURCE = null; // null used for lazy init
+    private final static Logger LOGGER = LoggerFactory.getLogger(LazyConnectionSource.class);
+    // static for only one per executor JVM, atomic references to pool across threads
+    private static final AtomicReference<HikariDataSource> dataSourceCache = new AtomicReference<>();
     private final Config config;
 
-    public LazyHikariConnectionSource(final Config config) {
+    public LazyConnectionSource(final Config config) {
         this.config = config;
     }
 
@@ -70,24 +72,28 @@ public final class LazyHikariConnectionSource implements ConnectionSource {
      * @throws SQLException when cannot get connection from datasource
      */
     @Override
-    public synchronized Connection get() throws SQLException {
-        if (DATA_SOURCE == null) {
-            DATA_SOURCE = new HikariDataSourceFromConfig(config).dataSource();
+    public synchronized Connection connection() throws SQLException {
+        HikariDataSource dataSource = dataSourceCache.get();
+        if (dataSource == null) {
+            dataSource = new DataSourceFromConfig(config).dataSource();
             LOGGER.info("HikariDataSource initialized");
+            dataSourceCache.set(dataSource);
         }
         LOGGER.debug("getting new connection from datasource");
-        return DATA_SOURCE.getConnection();
+        return dataSource.getConnection();
     }
 
     /**
-     * Executors should only close connections not the executor,
+     * Closes the underlying HikariDataSource and removes it from cache
+     *
+     * @see HikariDataSource#close()
      */
     @Override
-    public void close() {
-        if (DATA_SOURCE != null) {
-            DATA_SOURCE.close();
-            DATA_SOURCE = null;
+    public void closeSource() {
+        final HikariDataSource dataSource = dataSourceCache.getAndSet(null);
+        if (dataSource != null) {
+            dataSource.close();
         }
-        LOGGER.info("HikariDataSource closed");
+        LOGGER.warn("HikariDataSource was closed by calling close() manually");
     }
 }

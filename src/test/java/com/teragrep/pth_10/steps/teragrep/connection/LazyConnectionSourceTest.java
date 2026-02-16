@@ -64,24 +64,24 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public final class LazyHikariConnectionSourceTest {
+public final class LazyConnectionSourceTest {
 
-    private final String username = "sa";
-    private final String password = "";
+    private final String username = "testuser";
+    private final String password = "testpass";
     private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
 
     @AfterEach
     public void reset() {
         final Config config = ConfigFactory.parseProperties(defaultProperties());
-        new LazyHikariConnectionSource(config).close();
+        new LazyConnectionSource(config).closeSource();
     }
 
     @Test
     public void testInitialization() {
         final Config config = ConfigFactory.parseProperties(defaultProperties());
-        final ConnectionSource source = new LazyHikariConnectionSource(config);
+        final ConnectionSource source = new LazyConnectionSource(config);
         Assertions.assertDoesNotThrow(() -> {
-            try (Connection conn = source.get()) {
+            try (Connection conn = source.connection()) {
                 Assertions.assertDoesNotThrow(conn::close);
                 final boolean isConn1Closed = Assertions.assertDoesNotThrow(conn::isClosed);
                 Assertions.assertTrue(isConn1Closed);
@@ -93,9 +93,9 @@ public final class LazyHikariConnectionSourceTest {
     @Test
     public void testReturnsDistinctConnections() {
         final Config config = ConfigFactory.parseProperties(defaultProperties());
-        final LazyHikariConnectionSource source = new LazyHikariConnectionSource(config);
+        final LazyConnectionSource source = new LazyConnectionSource(config);
         Assertions.assertDoesNotThrow(() -> {
-            try (final Connection c1 = source.get(); final Connection c2 = source.get()) {
+            try (final Connection c1 = source.connection(); final Connection c2 = source.connection()) {
                 Assertions.assertNotSame(c1, c2);
                 Assertions.assertFalse(c1.isClosed());
                 Assertions.assertFalse(c2.isClosed());
@@ -104,14 +104,14 @@ public final class LazyHikariConnectionSourceTest {
     }
 
     @Test
-    public void testConcurrentGetDoesNotFail() {
+    public void testConcurrentConnectionDoesNotFail() {
         final Config config = ConfigFactory.parseProperties(defaultProperties());
-        final LazyHikariConnectionSource source = new LazyHikariConnectionSource(config);
+        final LazyConnectionSource source = new LazyConnectionSource(config);
         final int threads = 10;
         final ExecutorService executor = Executors.newFixedThreadPool(threads);
         final List<Callable<Connection>> tasks = IntStream
                 .range(0, threads)
-                .mapToObj(i -> (Callable<Connection>) source::get)
+                .mapToObj(i -> (Callable<Connection>) source::connection)
                 .collect(Collectors.toList());
         final List<Future<Connection>> futures = Assertions.assertDoesNotThrow(() -> executor.invokeAll(tasks));
         Assertions.assertDoesNotThrow(() -> {
@@ -132,8 +132,8 @@ public final class LazyHikariConnectionSourceTest {
         final Properties props = defaultProperties();
         props.remove("dpl.pth_06.bloom.db.url");
         final Config config = ConfigFactory.parseProperties(props);
-        final LazyHikariConnectionSource source = new LazyHikariConnectionSource(config);
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::get);
+        final LazyConnectionSource source = new LazyConnectionSource(config);
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::connection);
         String expected = "Missing configuration item: 'dpl.pth_06.bloom.db.url'.";
         Assertions.assertEquals(expected, exception.getMessage());
     }
@@ -143,8 +143,8 @@ public final class LazyHikariConnectionSourceTest {
         final Properties props = defaultProperties();
         props.remove("dpl.pth_10.bloom.db.username");
         final Config config = ConfigFactory.parseProperties(props);
-        final LazyHikariConnectionSource source = new LazyHikariConnectionSource(config);
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::get);
+        final LazyConnectionSource source = new LazyConnectionSource(config);
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::connection);
         String expected = "Missing configuration item: 'dpl.pth_10.bloom.db.username'.";
         Assertions.assertEquals(expected, exception.getMessage());
     }
@@ -154,8 +154,8 @@ public final class LazyHikariConnectionSourceTest {
         final Properties props = defaultProperties();
         props.remove("dpl.pth_10.bloom.db.password");
         final Config config = ConfigFactory.parseProperties(props);
-        final LazyHikariConnectionSource source = new LazyHikariConnectionSource(config);
-        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::get);
+        final LazyConnectionSource source = new LazyConnectionSource(config);
+        RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::connection);
         String expected = "Missing configuration item: 'dpl.pth_10.bloom.db.password'.";
         Assertions.assertEquals(expected, exception.getMessage());
     }

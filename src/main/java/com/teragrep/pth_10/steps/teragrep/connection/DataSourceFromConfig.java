@@ -52,16 +52,16 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.util.Objects;
 import java.util.UUID;
 
-final class HikariDataSourceFromConfig {
+final class DataSourceFromConfig {
 
     private final String sourceName;
     private final Config config;
 
-    HikariDataSourceFromConfig(final Config config) {
+    DataSourceFromConfig(final Config config) {
         this("pth_10-pool-" + UUID.randomUUID(), config);
     }
 
-    HikariDataSourceFromConfig(final String sourceName, final Config config) {
+    DataSourceFromConfig(final String sourceName, final Config config) {
         this.sourceName = sourceName;
         this.config = config;
     }
@@ -138,7 +138,7 @@ final class HikariDataSourceFromConfig {
             rv = false;
         }
         else {
-            final HikariDataSourceFromConfig that = (HikariDataSourceFromConfig) o;
+            final DataSourceFromConfig that = (DataSourceFromConfig) o;
             rv = Objects.equals(sourceName, that.sourceName) && Objects.equals(config, that.config);
         }
         return rv;

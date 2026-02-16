@@ -50,7 +50,7 @@ import java.sql.SQLException;
 
 public interface ConnectionSource {
 
-    public abstract Connection get() throws SQLException;
+    public abstract Connection connection() throws SQLException;
 
-    public abstract void close();
+    public abstract void closeSource();
 }
