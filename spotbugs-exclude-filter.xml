@@ -17,6 +17,10 @@
         <Class name="com.teragrep.pth_10.steps.teragrep.bloomfilter.TeragrepBloomFilterTest"/>
         <Bug pattern="HARD_CODE_PASSWORD"/>
     </Match>
+    <Match>
+        <Class name="com.teragrep.pth_10.steps.teragrep.connection.LazyConnectionSourceTest"/>
+        <Bug pattern="HARD_CODE_PASSWORD"/>
+    </Match>
     <!-- Ignore MD5 hashing function in tests, only used to test md5() function, not for security purposes. -->
     <Match>
         <Class name="com.teragrep.pth_10.evalTest"/>

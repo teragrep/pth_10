@@ -47,7 +47,6 @@ package com.teragrep.pth_10.steps.teragrep.connection;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -70,12 +69,6 @@ public final class LazyConnectionSourceTest {
     private final String password = "testpass";
     private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
 
-    @AfterEach
-    public void reset() {
-        final Config config = ConfigFactory.parseProperties(defaultProperties());
-        new LazyConnectionSource(config).closeSource();
-    }
-
     @Test
     public void testInitialization() {
         final Config config = ConfigFactory.parseProperties(defaultProperties());
@@ -87,7 +80,7 @@ public final class LazyConnectionSourceTest {
                 Assertions.assertTrue(isConn1Closed);
             }
         });
-
+        Assertions.assertDoesNotThrow(source::closeSource);
     }
 
     @Test
@@ -101,6 +94,7 @@ public final class LazyConnectionSourceTest {
                 Assertions.assertFalse(c2.isClosed());
             }
         });
+        Assertions.assertDoesNotThrow(source::closeSource);
     }
 
     @Test
@@ -125,6 +119,7 @@ public final class LazyConnectionSourceTest {
             executor.shutdown();
             Assertions.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
         });
+        Assertions.assertDoesNotThrow(source::closeSource);
     }
 
     @Test
@@ -136,6 +131,7 @@ public final class LazyConnectionSourceTest {
         RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::connection);
         String expected = "Missing configuration item: 'dpl.pth_06.bloom.db.url'.";
         Assertions.assertEquals(expected, exception.getMessage());
+        Assertions.assertDoesNotThrow(source::closeSource);
     }
 
     @Test
@@ -147,6 +143,7 @@ public final class LazyConnectionSourceTest {
         RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::connection);
         String expected = "Missing configuration item: 'dpl.pth_10.bloom.db.username'.";
         Assertions.assertEquals(expected, exception.getMessage());
+        Assertions.assertDoesNotThrow(source::closeSource);
     }
 
     @Test
@@ -158,6 +155,7 @@ public final class LazyConnectionSourceTest {
         RuntimeException exception = Assertions.assertThrows(RuntimeException.class, source::connection);
         String expected = "Missing configuration item: 'dpl.pth_10.bloom.db.password'.";
         Assertions.assertEquals(expected, exception.getMessage());
+        Assertions.assertDoesNotThrow(source::closeSource);
     }
 
     private Properties defaultProperties() {
