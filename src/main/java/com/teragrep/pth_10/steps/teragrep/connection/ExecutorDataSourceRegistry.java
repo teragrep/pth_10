@@ -46,36 +46,52 @@
 package com.teragrep.pth_10.steps.teragrep.connection;
 
 import com.typesafe.config.Config;
+import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Provides connections from a static ExecutorDataSourceRegistry initalized from a given Config
+ * Provides a JVM shared HikariDatasource for a spark executor
  */
-public final class LazyConnectionSource implements ConnectionSource {
+public final class ExecutorDataSourceRegistry {
 
-    private final Config config;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutorDataSourceRegistry.class);
+    private static HikariDataSource dataSource;
+    private static Config initializedWith;
 
-    public LazyConnectionSource(final Config config) {
-        this.config = config;
+    private ExecutorDataSourceRegistry() {
+        // blocks initialization
     }
 
-    @Override
-    public Connection get() {
-        final Connection connection;
-        try {
-            connection = ExecutorDataSourceRegistry.connection(config);
+    /**
+     * Initializes HikariDatasource if not yet created and provides a connection from the pool
+     *
+     * @param config config to set HikariCP values, once a connection is build once the config cannot change
+     * @return Connection from the pool
+     * @throws SQLException thrown if there is a problem getting a connection
+     */
+    public static synchronized Connection connection(final Config config) throws SQLException {
+        LOGGER.debug("thread entered lock block");
+        if (dataSource == null) {
+            dataSource = new DataSourceFromConfig(config).get();
+            initializedWith = config;
         }
-        catch (final SQLException e) {
-            throw new RuntimeException("Error getting connection from source: " + e.getMessage(), e);
+        else if (!initializedWith.equals(config)) {
+            throw new IllegalStateException("Datasource was already initialized with a different configuration");
         }
-        return connection;
+        return dataSource.getConnection();
     }
 
-    @Override
-    public void close() throws IOException {
-        // no-op
+    // only for testing
+    static synchronized void resetForTest() {
+        LOGGER.warn("resetForTest() called, this should only happen in a test case");
+        if (dataSource != null) {
+            dataSource.close();
+        }
+        dataSource = null;
+        initializedWith = null;
     }
 }

@@ -51,8 +51,9 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Supplier;
 
-final class DataSourceFromConfig {
+final class DataSourceFromConfig implements Supplier<HikariDataSource> {
 
     private final String sourceName;
     private final Config config;
@@ -66,20 +67,20 @@ final class DataSourceFromConfig {
         this.config = config;
     }
 
-    HikariDataSource dataSource() {
+    @Override
+    public HikariDataSource get() {
         final HikariConfig hikariConfig = new HikariConfig();
         // credentials
         hikariConfig.setJdbcUrl(connectionURL());
         hikariConfig.setUsername(connectionUsername());
         hikariConfig.setPassword(connectionPassword());
         // pool configuration
-        hikariConfig.setMaximumPoolSize(16);
-        hikariConfig.setMinimumIdle(1);
+        hikariConfig.setMaximumPoolSize(256); // limit for safety, should not be reached
+        hikariConfig.setMinimumIdle(0); // no hanging connections inside executor
         hikariConfig.setAutoCommit(true);
         hikariConfig.setConnectionTimeout(30000);
         hikariConfig.setValidationTimeout(5000);
-        hikariConfig.setLeakDetectionThreshold(60000);
-        hikariConfig.setPoolName(sourceName); // name does not have to be unique
+        hikariConfig.setPoolName(sourceName);
         return new HikariDataSource(hikariConfig);
     }
 

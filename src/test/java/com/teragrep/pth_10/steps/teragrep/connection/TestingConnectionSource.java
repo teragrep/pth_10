@@ -46,27 +46,33 @@
 package com.teragrep.pth_10.steps.teragrep.connection;
 
 import com.typesafe.config.Config;
+import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Provides connections from a static ExecutorDataSourceRegistry initalized from a given Config
+ * Test object to provide a thread safe, non-static version of a ConnectionSource if required for unit testing, avoids
+ * concurrency issues. Can be closed and opened but a new instance is recommended.
  */
-public final class LazyConnectionSource implements ConnectionSource {
+public final class TestingConnectionSource implements ConnectionSource {
 
+    private final Logger LOGGER = LoggerFactory.getLogger(TestingConnectionSource.class);
+    private HikariDataSource dataSource;
     private final Config config;
 
-    public LazyConnectionSource(final Config config) {
+    public TestingConnectionSource(final Config config) {
         this.config = config;
     }
 
     @Override
     public Connection get() {
+        LOGGER.debug("connection() called");
         final Connection connection;
         try {
-            connection = ExecutorDataSourceRegistry.connection(config);
+            connection = source().getConnection();
         }
         catch (final SQLException e) {
             throw new RuntimeException("Error getting connection from source: " + e.getMessage(), e);
@@ -74,8 +80,25 @@ public final class LazyConnectionSource implements ConnectionSource {
         return connection;
     }
 
+    public synchronized boolean isInitialized() {
+        return dataSource != null;
+    }
+
+    private synchronized HikariDataSource source() {
+        if (dataSource == null) {
+            dataSource = new DataSourceFromConfig(config).get();
+            LOGGER.debug("datasource initialized");
+        }
+        return dataSource;
+    }
+
     @Override
-    public void close() throws IOException {
-        // no-op
+    public synchronized void close() {
+        LOGGER.debug("close() called");
+        if (dataSource != null) {
+            LOGGER.debug("Closing datasource");
+            dataSource.close();
+            dataSource = null;
+        }
     }
 }

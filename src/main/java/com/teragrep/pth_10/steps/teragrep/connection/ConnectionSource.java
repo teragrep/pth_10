@@ -46,11 +46,7 @@
 package com.teragrep.pth_10.steps.teragrep.connection;
 
 import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.function.Supplier;
 
-public interface ConnectionSource {
-
-    public abstract Connection connection() throws SQLException;
-
-    public abstract void closeSource();
+public interface ConnectionSource extends AutoCloseable, Supplier<Connection> {
 }
