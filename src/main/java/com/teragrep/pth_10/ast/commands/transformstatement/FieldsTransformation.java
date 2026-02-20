@@ -78,22 +78,27 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
 
     public Node fieldsTransformationEmitCatalyst(DPLParser.FieldsTransformationContext ctx) {
         this.fieldsStep = new FieldsStep();
+        if (ctx.fieldListType() != null && !ctx.fieldListType().fieldType().isEmpty()) {
+            if (ctx.COMMAND_FIELDS_MODE_MINUS() != null) {
+                final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
+                LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
 
-        String oper = ctx.getChild(1).getText();
-
-        if ("-".equals(oper)) {
-            StringListNode sln = (StringListNode) visit(ctx.fieldListType());
-            LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
-
-            this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
-            this.fieldsStep.setListOfFields(sln.asList());
+                this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
+                this.fieldsStep.setListOfFields(sln.asList());
+            }
+            else {
+                final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
+                this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
+                this.fieldsStep.setListOfFields(sln.asList());
+            }
+            return new StepNode(fieldsStep);
         }
         else {
-            StringListNode sln = (StringListNode) visit(ctx.fieldListType());
-            this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
-            this.fieldsStep.setListOfFields(sln.asList());
+            // if fields command has no arguments
+            throw new IllegalStateException(
+                    "fields command is missing field names, it requires at least one valid field name."
+            );
         }
-        return new StepNode(fieldsStep);
     }
 
     @Override
@@ -113,7 +118,13 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitFieldType(DPLParser.FieldTypeContext ctx) {
-        String sql = ctx.getChild(0).getText();
+        // if fields command has just a field mode and no field names
+        if (ctx.getChildCount() < 1) {
+            throw new IllegalStateException(
+                    "fields command is missing field names, it requires at least one valid field name."
+            );
+        }
+        final String sql = ctx.getChild(0).getText();
         return new StringNode(new Token(Type.STRING, sql));
     }
 }

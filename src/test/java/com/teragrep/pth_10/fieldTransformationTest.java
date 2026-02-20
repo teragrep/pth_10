@@ -55,7 +55,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -220,18 +219,99 @@ public class fieldTransformationTest {
     }
 
     @Test
-    @Disabled(value = "wildcard functionality not implemented, pth-10 issue #275")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
-    void testFieldsWithWildcard() {
+    void testFieldsWithWildcardDrop() {
         String query = "index = index_B | fields - _*"; // remove internal fields
         this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
             Assertions.assertEquals(5, ds.count());
-            Assertions
-                    .assertEquals("[index, sourcetype, source, host, partition, offset]", Arrays.toString(ds.columns())); //check schema is correct
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema is correct
         });
 
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void testFieldsWithMultipleWildCards() {
+        String query = "index = index_B | fields *_t*e s*";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(5, ds.count());
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema is correct
+        });
+
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void testFieldsWithLonelyWildCard() {
+        String query = "index = index_B | fields *";
+        this.streamingTestUtil.performDPLTest(query, this.testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(5, ds.count());
+            Assertions.assertEquals(expectedSchema, ds.schema()); //check schema is correct
+        });
+
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void testFieldsCommandWithoutFieldNames() {
+        String q = "index=index_B | fields";
+        String e = "fields command is missing field names, it requires at least one valid field name.";
+        IllegalStateException exception = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalStateException.class, q, this.testFile, ds -> {
+                });
+
+        Assertions.assertEquals(e, exception.getMessage());
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    void testFieldsCommandWithMinusAndNoFieldNames() {
+        String q = "index=index_B | fields -";
+        String e = "fields command is missing field names, it requires at least one valid field name.";
+        IllegalStateException exception = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalStateException.class, q, this.testFile, ds -> {
+                });
+
+        Assertions.assertEquals(e, exception.getMessage());
     }
 }
