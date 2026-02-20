@@ -80,6 +80,9 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
         if (ctx.fieldType() != null) {
             this.rangemapStep.sourceField = new UnquotedText(new TextString(ctx.fieldType().getText())).read();
         }
+        else {
+            throw new IllegalArgumentException("rangemap command is missing required field parameter");
+        }
         return new NullNode();
     }
 
@@ -96,6 +99,11 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
         // left side of range contains a trailing '-' character which needs to be removed
         if (valueLeft.endsWith("-")) {
             valueLeft = valueLeft.substring(0, valueLeft.length() - 1);
+        }
+        else {
+            throw new IllegalArgumentException(
+                    "Invalid range for rangemap command, the range should have both start and end values"
+            );
         }
 
         this.rangemapStep.attributeRangeMap.put(key, new String[] {
