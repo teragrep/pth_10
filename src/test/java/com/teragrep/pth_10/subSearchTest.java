@@ -83,13 +83,14 @@ public class subSearchTest {
             matches = "true"
     )
     void testSubSearchLimitOne() {
-        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host]";
-        String testFile = "src/test/resources/subsearchData*.jsonl";
+        final String q = "index = index_A [ search sourcetype= A:X:0 | top limit=1 host | fields + host]";
+        final String testFile = "src/test/resources/subsearchData*.jsonl";
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e = "RLIKE(index, (?i)^index_A$)";
+            final String expected = "RLIKE(index, (?i)^\\Qindex_A\\E$)";
+            final String actual = streamingTestUtil.getCtx().getSparkQuery();
             // Check that sub-query get executed and result is used as query parameter
-            Assertions.assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(expected, actual);
 
             // Should have all the columns, fields command in subsearch shouldn't affect the main search
             Assertions.assertEquals(9, res.columns().length);
@@ -105,19 +106,20 @@ public class subSearchTest {
             matches = "true"
     )
     void testSubSearchLimitGTOne() {
-        String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]";
-        String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
+        final String q = "index = index_A [ search sourcetype= A:X:0 | top limit=3 host | fields + host]";
+        final String testFile = "src/test/resources/subsearchData*.jsonl"; // * to make the path into a directory path
 
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
-            String e = "RLIKE(index, (?i)^index_A$)";
+            final String expected = "RLIKE(index, (?i)^\\Qindex_A\\E$)";
+            final String actual = streamingTestUtil.getCtx().getSparkQuery();
 
             // Check that sub-query get executed and result is used as query parameter
-            Assertions.assertEquals(e, this.streamingTestUtil.getCtx().getSparkQuery());
+            Assertions.assertEquals(expected, actual);
 
             // Should have all the columns, fields command in subsearch shouldn't affect the main search
             Assertions.assertEquals(9, res.columns().length);
 
-            List<String> lst = res
+            final List<String> lst = res
                     .select("host")
                     .distinct()
                     .orderBy("host")

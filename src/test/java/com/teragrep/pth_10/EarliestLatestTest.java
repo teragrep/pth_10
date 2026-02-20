@@ -882,10 +882,11 @@ public class EarliestLatestTest {
     public void searchIssue383Test() {
         // test issue 383
         // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
-        String query = " index=abc earliest=\"01/01/2022:00:00:00\" latest=\"01/02/2022:00:00:00\" \"XYZ=\\\"yes asd\\\"\" ";
+        final String query = " index=abc earliest=\"01/01/2022:00:00:00\" latest=\"01/02/2022:00:00:00\" \"XYZ=\\\"yes asd\\\"\" ";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND (((_time >= from_unixtime(1640988000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1641074400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
-            Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+            final String expectedSpark = "(RLIKE(index, (?i)^\\Qabc\\E$) AND (((_time >= from_unixtime(1640988000, yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(1641074400, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*)))";
+            final String result = this.streamingTestUtil.getCtx().getSparkQuery();
+            Assertions.assertEquals(expectedSpark, result);
         });
     }
 
@@ -897,13 +898,14 @@ public class EarliestLatestTest {
     public void searchIssue383_2Test() {
         // test issue 383
         // Case: can't match XYZ="yes asd" _raw column, except by omitting double quotes entirely
-        String query = " index=abc \"XYZ=\\\"yes asd\\\"\" ";
+        final String query = " index=abc \"XYZ=\\\"yes asd\\\"\" ";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
 
         });
 
-        final String expectedSpark = "(RLIKE(index, (?i)^abc$) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*))";
-        Assertions.assertEquals(expectedSpark, this.streamingTestUtil.getCtx().getSparkQuery());
+        final String expectedSpark = "(RLIKE(index, (?i)^\\Qabc\\E$) AND RLIKE(_raw, (?i)^.*\\QXYZ=\"yes asd\"\\E.*))";
+        final String result = this.streamingTestUtil.getCtx().getSparkQuery();
+        Assertions.assertEquals(expectedSpark, result);
     }
 
     @Test

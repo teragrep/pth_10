@@ -50,8 +50,8 @@
     <sha1></sha1>
     <teragrep.dpf_02.version>4.0.0</teragrep.dpf_02.version>
     <teragrep.dpf_03.version>11.0.1</teragrep.dpf_03.version>
+    <teragrep.glb_01.version>1.0.0</teragrep.glb_01.version>
     <teragrep.jpr_01.version>3.1.1</teragrep.jpr_01.version>
-    <teragrep.jue_01.version>0.4.3</teragrep.jue_01.version>
     <teragrep.pth_03.version>9.4.1</teragrep.pth_03.version>
     <teragrep.pth_06.version>4.5.0</teragrep.pth_06.version>
     <teragrep.pth_15.version>2.0.0</teragrep.pth_15.version>
@@ -98,8 +98,8 @@
     <!-- unix-utils -->
     <dependency>
       <groupId>com.teragrep</groupId>
-      <artifactId>jue_01</artifactId>
-      <version>${teragrep.jue_01.version}</version>
+      <artifactId>glb_01</artifactId>
+      <version>${teragrep.glb_01.version}</version>
     </dependency>
     <!-- connection pooling -->
     <dependency>

@@ -46,7 +46,8 @@
 package com.teragrep.pth_10.ast.commands.logicalstatement;
 
 import com.teragrep.functions.dpf_02.AbstractStep;
-import com.teragrep.jue_01.GlobToRegEx;
+import com.teragrep.glb_01.Glob;
+import com.teragrep.glb_01.GlobImpl;
 import com.teragrep.pth_10.ast.*;
 import com.teragrep.pth_10.ast.bo.*;
 import com.teragrep.pth_10.ast.bo.Token.Type;
@@ -522,15 +523,16 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         TerminalNode index = (TerminalNode) ctx.getChild(0);
         String value = new UnquotedText(new TextString(ctx.getChild(1).getText())).read();
 
-        Column indexCol = null;
+        Column indexCol;
+        final Glob glob = new GlobImpl(value);
         switch (index.getSymbol().getType()) {
             case DPLLexer.INDEX_EQ:
             case DPLLexer.INDEX_SPACE:
-                indexCol = new Column("index").rlike("(?i)".concat(GlobToRegEx.regexify(value)));
+                indexCol = new Column("index").rlike("(?i)".concat(glob.asRegex()));
                 break;
             case DPLLexer.INDEX_NEG:
             case DPLLexer.INDEX_SPACE_NEG:
-                indexCol = functions.not(new Column("index").rlike("(?i)".concat(GlobToRegEx.regexify(value))));
+                indexCol = functions.not(new Column("index").rlike("(?i)".concat(glob.asRegex())));
                 break;
             default:
                 throw new UnsupportedOperationException("Index type not supported");
@@ -560,18 +562,19 @@ public class LogicalStatementCatalyst extends DPLParserBaseVisitor<Node> {
         boolean specialCase = false;
         if (ctx.getChild(0) instanceof TerminalNode) {
             TerminalNode specialLefthandSide = (TerminalNode) ctx.getChild(0);
+            final Glob glob = new GlobImpl(value);
             switch (specialLefthandSide.getSymbol().getType()) {
                 case DPLLexer.INDEX_SPACE:
                 case DPLLexer.INDEX_EQ:
                     field = "index";
                     specialCase = true;
-                    rv = new Column(field).rlike(GlobToRegEx.regexify(value));
+                    rv = new Column(field).rlike(glob.asRegex());
                     break;
                 case DPLLexer.INDEX_SPACE_NEG:
                 case DPLLexer.INDEX_NEG:
                     field = "index";
                     specialCase = true;
-                    rv = functions.not(new Column(field).rlike(GlobToRegEx.regexify(value)));
+                    rv = functions.not(new Column(field).rlike(glob.asRegex()));
                     break;
             }
         }
