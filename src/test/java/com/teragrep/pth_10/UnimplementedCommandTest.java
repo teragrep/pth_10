@@ -106,7 +106,8 @@ public class UnimplementedCommandTest {
                 });
         Assertions
                 .assertEquals(
-                        "The provided command 'dumpbasefilename=\"test\"' is not yet implemented.", iae.getMessage()
+                        "The provided transformation command 'dumpbasefilename=\"test\"' is not yet implemented.",
+                        iae.getMessage()
                 );
     }
 
@@ -122,7 +123,8 @@ public class UnimplementedCommandTest {
                 });
         Assertions
                 .assertEquals(
-                        "The provided command 'dumpbasefilename=\"test\"' is not yet implemented.", iae.getMessage()
+                        "The provided transformation command 'dumpbasefilename=\"test\"' is not yet implemented.",
+                        iae.getMessage()
                 );
     }
 }
