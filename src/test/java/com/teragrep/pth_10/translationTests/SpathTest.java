@@ -46,6 +46,7 @@
 package com.teragrep.pth_10.translationTests;
 
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
+import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.Spath;
 import com.teragrep.pth_10.ast.commands.transformstatement.SpathTransformation;
 import com.teragrep.pth_10.steps.spath.SpathStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
@@ -57,6 +58,8 @@ import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import java.util.Map;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class SpathTest {
@@ -103,5 +106,26 @@ public class SpathTest {
 
         // internal column name used for auto-extraction
         Assertions.assertEquals("$$dpl_pth10_internal_column_spath_output$$", cs.getOutputColumn());
+    }
+
+    @Test
+    void testSpathNullJsonInput() {
+        final Spath spath = new Spath(null);
+        Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call(null, "test", "test", "test"));
+        Assertions.assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testSpathNullStringJsonInput() {
+        final Spath spath = new Spath(null);
+        Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call("null", "test", "test", "test"));
+        Assertions.assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testSpathEmptyStringJsonInput() {
+        final Spath spath = new Spath(null);
+        Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call("", "test", "test", "test"));
+        Assertions.assertTrue(result.isEmpty());
     }
 }
