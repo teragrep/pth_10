@@ -45,7 +45,8 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import com.teragrep.pth_10.steps.teragrep.bloomfilter.LazyConnection;
+import com.teragrep.pth_10.steps.teragrep.connection.ConnectionSource;
+import com.teragrep.pth_10.steps.teragrep.connection.LazyConnectionSource;
 import com.typesafe.config.Config;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Row;
@@ -68,7 +69,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
     private final static Logger LOGGER = LoggerFactory.getLogger(EpochMigrationForeachPartitionFunction.class);
 
-    private final LazyConnection lazyConnection;
+    private final ConnectionSource connectionSource;
     private final String journalDBName;
     private final long batchSize;
     private final Settings settings;
@@ -78,16 +79,16 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     }
 
     EpochMigrationForeachPartitionFunction(final Config config, final String journalDBName, final Settings settings) {
-        this(new LazyConnection(config), journalDBName, 500L, settings);
+        this(new LazyConnectionSource(config), journalDBName, 500L, settings);
     }
 
     EpochMigrationForeachPartitionFunction(
-            final LazyConnection lazyConnection,
+            final ConnectionSource connectionSource,
             final String journalDBName,
             final long batchSize,
             final Settings settings
     ) {
-        this.lazyConnection = lazyConnection;
+        this.connectionSource = connectionSource;
         this.journalDBName = journalDBName;
         this.batchSize = batchSize;
         this.settings = settings;
@@ -96,7 +97,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     @Override
     public void call(final Iterator<Row> iter) {
         // connection is shared
-        final Connection conn = lazyConnection.get();
+        final Connection conn = connectionSource.get();
         try {
             if (conn.getAutoCommit()) {
                 conn.setAutoCommit(false);
@@ -164,7 +165,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         }
         else {
             final EpochMigrationForeachPartitionFunction that = (EpochMigrationForeachPartitionFunction) o;
-            rv = batchSize == that.batchSize && Objects.equals(lazyConnection, that.lazyConnection)
+            rv = batchSize == that.batchSize && Objects.equals(connectionSource, that.connectionSource)
                     && Objects.equals(journalDBName, that.journalDBName) && Objects.equals(settings, that.settings);
         }
         return rv;
@@ -172,6 +173,6 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
     @Override
     public int hashCode() {
-        return Objects.hash(lazyConnection, journalDBName, batchSize, settings);
+        return Objects.hash(connectionSource, journalDBName, batchSize, settings);
     }
 }
