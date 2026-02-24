@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import com.teragrep.pth_10.steps.teragrep.bloomfilter.LazyConnection;
+import com.teragrep.pth_10.steps.teragrep.connection.TestingConnectionSource;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import nl.jqno.equalsverifier.EqualsVerifier;
@@ -63,6 +63,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -80,7 +81,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     private final String user = "testuser";
     private final String password = "testpass";
     private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
-    private LazyConnection lazyConnection;
+    private Config config;
 
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
@@ -99,13 +100,12 @@ public final class EpochMigrationForeachPartitionFunctionTest {
         optsMap.put("dpl.pth_10.bloom.db.username", user);
         optsMap.put("dpl.pth_10.bloom.db.password", password);
         optsMap.put("dpl.pth_06.bloom.db.url", url);
-        final Config config = ConfigFactory.parseMap(optsMap);
-        lazyConnection = new LazyConnection(config);
+        this.config = ConfigFactory.parseMap(optsMap);
     }
 
     @BeforeEach
     public void populateDatabase() {
-        Connection conn = Assertions.assertDoesNotThrow(() -> lazyConnection.get());
+        final Connection conn = Assertions.assertDoesNotThrow(() -> DriverManager.getConnection(url, user, password));
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("USE journaldb").execute());
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS logfile").execute());
@@ -126,7 +126,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     @Test
     public void testPartialBatchIsExecuted() {
         final EpochMigrationForeachPartitionFunction foreachPartitionFunction = new EpochMigrationForeachPartitionFunction(
-                lazyConnection,
+                new TestingConnectionSource(config),
                 "journaldb",
                 100,
                 new Settings()
@@ -142,7 +142,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     @Test
     public void testFullBatchesExecuted() {
         final EpochMigrationForeachPartitionFunction foreachPartitionFunction = new EpochMigrationForeachPartitionFunction(
-                lazyConnection,
+                new TestingConnectionSource(config),
                 "journaldb",
                 3,
                 new Settings()
@@ -157,7 +157,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     @Test
     public void testMultipleBatchesExecuted() {
         final EpochMigrationForeachPartitionFunction foreachPartitionFunction = new EpochMigrationForeachPartitionFunction(
-                lazyConnection,
+                new TestingConnectionSource(config),
                 "journaldb",
                 2,
                 new Settings()
@@ -172,7 +172,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     @Test
     public void testRollbackOnException() {
         final EpochMigrationForeachPartitionFunction foreachPartitionFunction = new EpochMigrationForeachPartitionFunction(
-                lazyConnection,
+                new TestingConnectionSource(config),
                 "journaldb",
                 2,
                 new Settings()
@@ -203,7 +203,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
         final Map<Long, Long> resultsBefore = Assertions.assertDoesNotThrow(this::nonNullLogfilesMap);
         Assertions.assertTrue(resultsBefore.isEmpty());
         final EpochMigrationForeachPartitionFunction foreachPartitionFunction = new EpochMigrationForeachPartitionFunction(
-                lazyConnection,
+                new TestingConnectionSource(config),
                 "journaldb",
                 3,
                 new Settings()
@@ -237,10 +237,12 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     private Map<Long, Long> nonNullLogfilesMap() throws SQLException {
         final Map<Long, Long> resultMap = new HashMap<>();
         final String selectEpochs = "SELECT id, epoch_hour FROM journaldb.logfile WHERE epoch_hour IS NOT NULL";
-        try (final PreparedStatement statement = lazyConnection.get().prepareStatement(selectEpochs)) {
-            final ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                resultMap.put(resultSet.getLong(1), resultSet.getLong(2));
+        try (final Connection connection = DriverManager.getConnection(url, user, password)) {
+            try (final PreparedStatement statement = connection.prepareStatement(selectEpochs)) {
+                final ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    resultMap.put(resultSet.getLong(1), resultSet.getLong(2));
+                }
             }
         }
         return resultMap;
