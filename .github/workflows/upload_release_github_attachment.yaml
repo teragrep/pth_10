@@ -52,7 +52,7 @@ jobs:
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
 
       - name: Update pkg_01 releases repository
-        uses: teragrep/dfg_01@3.3.0
+        uses: teragrep/dfg_01@4.0.0
         with:
           from_repository: "${{ github.repository }}"
           from_version: "${{ github.event.release.tag_name }}"
@@ -60,7 +60,7 @@ jobs:
           deploy_key: ${{ secrets.PKG_01_DEPLOY_KEY }}
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
           gpg_public_key: "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}"
-          repo_baseurl: "${{ vars.PKG_01_CENTRAL_BASEURL }}"
+          repo_baseurl: "${{ vars.PKG_01_BASEURL }}"
         env:
           has_deploy_key: ${{ secrets.PKG_01_DEPLOY_KEY != '' }}
         if: ${{ env.has_deploy_key == 'true' }}
