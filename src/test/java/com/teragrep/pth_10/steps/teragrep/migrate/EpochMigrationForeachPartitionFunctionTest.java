@@ -80,7 +80,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
 
     private final String user = "testuser";
     private final String password = "testpass";
-    private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1";
     private TestingConnectionSource connectionSource;
 
     private final StructType testSchema = new StructType(new StructField[] {
@@ -113,15 +113,14 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     public void populateDatabase() {
         final Connection conn = Assertions.assertDoesNotThrow(() -> connectionSource.get());
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
-        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("USE journaldb").execute());
-        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS logfile").execute());
-        final String createLogfileTable = "CREATE TABLE logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, PRIMARY KEY(id))";
+        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.logfile").execute());
+        final String createLogfileTable = "CREATE TABLE journaldb.logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, PRIMARY KEY(id))";
         Assertions.assertDoesNotThrow(() -> {
             try (final PreparedStatement ps = conn.prepareStatement(createLogfileTable)) {
                 ps.execute();
             }
         });
-        final String insertIDs = "INSERT INTO logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
+        final String insertIDs = "INSERT INTO journaldb.logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
         Assertions.assertDoesNotThrow(() -> {
             try (final PreparedStatement ps = conn.prepareStatement(insertIDs)) {
                 Assertions.assertEquals(10, ps.executeUpdate());
