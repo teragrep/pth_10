@@ -91,7 +91,8 @@ public final class EpochMigrationStepTest {
     private StreamingTestUtil streamingTestUtil;
     private final String username = "testuser";
     private final String password = "testpass";
-    private final String url = "jdbc:h2:mem:test_" + UUID.randomUUID() + ";MODE=MariaDB;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final String url = "jdbc:h2:mem:test_" + UUID.randomUUID()
+            + ";MODE=MariaDB;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
     private Connection conn;
     private Map<String, String> opts;
 
