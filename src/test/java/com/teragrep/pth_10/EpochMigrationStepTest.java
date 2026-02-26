@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10;
 
+import com.teragrep.pth_10.steps.teragrep.connection.ConnectionPoolSingleton;
 import com.teragrep.pth_10.steps.teragrep.migrate.TeragrepEpochMigrationStep;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.streaming.StreamingQueryException;
@@ -70,6 +71,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class EpochMigrationStepTest {
@@ -87,18 +89,19 @@ public final class EpochMigrationStepTest {
             new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
     });
     private StreamingTestUtil streamingTestUtil;
-    private final String username = "sa";
-    private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
+    private final String username = "testuser";
+    private final String password = "testpass";
+    private final String url = "jdbc:h2:mem:test_" + UUID.randomUUID() + ";MODE=MariaDB;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
     private Connection conn;
     private Map<String, String> opts;
 
     @BeforeAll
     void setEnv() {
-        conn = Assertions.assertDoesNotThrow(() -> DriverManager.getConnection(url, username, ""));
+        conn = Assertions.assertDoesNotThrow(() -> DriverManager.getConnection(url, username, password));
         opts = new HashMap<>();
         opts.put("dpl.pth_06.bloom.db.url", url);
-        opts.put("dpl.pth_10.bloom.db.password", "");
         opts.put("dpl.pth_10.bloom.db.username", username);
+        opts.put("dpl.pth_10.bloom.db.password", password);
         opts.put("dpl.archive.db.journaldb.name", "journaldb");
         streamingTestUtil = new StreamingTestUtil(testSchema);
         streamingTestUtil.setEnv();
@@ -123,6 +126,7 @@ public final class EpochMigrationStepTest {
         });
         streamingTestUtil.setUp();
         streamingTestUtil.setCustomConfigOptions(opts);
+        ConnectionPoolSingleton.resetForTest();
     }
 
     @AfterEach
