@@ -74,13 +74,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class EpochMigrationForeachPartitionFunctionTest {
 
     private final String user = "testuser";
     private final String password = "testpass";
-    private final String url = "jdbc:h2:mem:test;MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1";
+    private final String url = "jdbc:h2:mem:test_" + UUID.randomUUID() + ";MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1";
     private TestingConnectionSource connectionSource;
 
     private final StructType testSchema = new StructType(new StructField[] {
