@@ -86,7 +86,7 @@ public final class ConnectionPoolSingleton {
     }
 
     // only for testing
-    static synchronized void resetForTest() {
+    public static synchronized void resetForTest() {
         LOGGER.warn("resetForTest() called, this should only happen in a test case");
         if (!state.isStub()) {
             state.dataSource().close();
