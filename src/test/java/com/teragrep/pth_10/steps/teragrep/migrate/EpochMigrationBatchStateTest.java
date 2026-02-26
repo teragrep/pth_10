@@ -84,7 +84,7 @@ public final class EpochMigrationBatchStateTest {
         final EpochMigrationBatchState batchState = new EpochMigrationBatchState(baseBatch(ctx), 1);
         final EpochMigrationBatchState nextBatchState = Assertions
                 .assertDoesNotThrow(() -> batchState.accept(genericResultRow()));
-        Assertions.assertTrue(nextBatchState.isBatchFull());
+        Assertions.assertTrue(nextBatchState.isFull());
         Assertions.assertTrue(nextBatchState.hasPendingRows());
         Assertions.assertEquals(1, nextBatchState.totalAccepted());
     }
@@ -119,10 +119,10 @@ public final class EpochMigrationBatchStateTest {
         final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch(ctx), 2);
         final EpochMigrationBatchState firstState = Assertions
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
-        Assertions.assertFalse(firstState.isBatchFull());
+        Assertions.assertFalse(firstState.isFull());
         final EpochMigrationBatchState secondState = Assertions
                 .assertDoesNotThrow(() -> firstState.accept(genericResultRow()));
-        Assertions.assertTrue(secondState.isBatchFull());
+        Assertions.assertTrue(secondState.isFull());
     }
 
     @Test
@@ -133,9 +133,9 @@ public final class EpochMigrationBatchStateTest {
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
         final EpochMigrationBatchState resetBatch = firstState.reset(baseBatch);
         Assertions.assertNotEquals(startState.hasPendingRows(), firstState.hasPendingRows());
-        Assertions.assertNotEquals(startState.isBatchFull(), firstState.isBatchFull());
+        Assertions.assertNotEquals(startState.isFull(), firstState.isFull());
         Assertions.assertEquals(startState.hasPendingRows(), resetBatch.hasPendingRows());
-        Assertions.assertEquals(startState.isBatchFull(), resetBatch.isBatchFull());
+        Assertions.assertEquals(startState.isFull(), resetBatch.isFull());
         Assertions.assertEquals(1, resetBatch.totalAccepted());
     }
 
