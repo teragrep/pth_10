@@ -50,6 +50,7 @@ import com.teragrep.pth_10.steps.teragrep.connection.LazyConnectionSource;
 import com.typesafe.config.Config;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Row;
+import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Param;
@@ -96,41 +97,33 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
     @Override
     public void call(final Iterator<Row> iter) {
-        // connection is shared
-        final Connection conn = connectionSource.get();
-        try {
+        try (final Connection conn = connectionSource.get()) {
             if (conn.getAutoCommit()) {
                 conn.setAutoCommit(false);
             }
-        }
-        catch (final SQLException exception) {
-            LOGGER.error("Error setting connection auto commit=<false>");
-        }
-        try {
             final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL, settings);
-            EpochMigrationBatchState batch = new EpochMigrationBatchState(ctx.batch(baseQuery(ctx)), batchSize);
+            EpochMigrationBatchState batchState = new EpochMigrationBatchState(baseBatch(ctx), batchSize);
             while (iter.hasNext()) {
-                batch = batch.accept(iter.next());
-                if (batch.isBatchFull()) {
-                    executeBatch(batch, conn);
-                    batch = batch.reset(ctx.batch(baseQuery(ctx)));
+                batchState = batchState.accept(iter.next());
+                if (batchState.isFull()) {
+                    executeBatch(batchState, conn);
+                    batchState = batchState.reset(baseBatch(ctx));
                 }
             }
-            if (batch.hasPendingRows()) {
-                executeBatch(batch, conn);
+            if (batchState.hasPendingRows()) {
+                executeBatch(batchState, conn);
             }
-            final long totalRows = batch.totalAccepted();
+            final long totalRows = batchState.totalAccepted();
             LOGGER.info("epoch migration for each partition function finished total rows=<{}>", totalRows);
-
         }
         catch (final SQLException e) {
             throw new RuntimeException("Exception during epoch migration: " + e.getMessage(), e);
         }
     }
 
-    private void executeBatch(final EpochMigrationBatchState batch, final Connection conn) throws SQLException {
+    private void executeBatch(final EpochMigrationBatchState batchState, final Connection conn) throws SQLException {
         try {
-            batch.batch().execute();
+            batchState.batch().execute();
             conn.commit();
             LOGGER.debug("Commited full batch");
         }
@@ -141,7 +134,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
         }
     }
 
-    private Query baseQuery(final DSLContext ctx) {
+    private BatchBindStep baseBatch(final DSLContext ctx) {
         final Field<Long> epochField = DSL.field(DSL.name("epoch_hour"), Long.class);
         final Field<Long> idField = DSL.field(DSL.name("id"), Long.class);
         final Param<Long> epochParam = DSL.param("epoch_hour", Long.class);
@@ -151,7 +144,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
                 .set(epochField, epochParam)
                 .where(idField.eq(idParam).and(epochField.isNull()));
         LOGGER.trace("epoch migration for each partition function: batch query <{}>", baseQuery);
-        return baseQuery;
+        return ctx.batch(baseQuery);
     }
 
     @Override
