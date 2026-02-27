@@ -87,45 +87,45 @@ final class DataSourceFromConfig implements Supplier<HikariDataSource> {
 
     private String connectionUsername() {
         final String username;
-        final String BLOOMDB_USERNAME_CONFIG_ITEM = "dpl.pth_10.bloom.db.username";
-        if (config.hasPath(BLOOMDB_USERNAME_CONFIG_ITEM)) {
-            username = config.getString(BLOOMDB_USERNAME_CONFIG_ITEM);
+        final String archiveUsernameConfigurationItem = "dpl.pth_06.archive.db.username";
+        if (config.hasPath(archiveUsernameConfigurationItem)) {
+            username = config.getString(archiveUsernameConfigurationItem);
             if (username == null || username.isEmpty()) {
                 throw new RuntimeException("Database username not set.");
             }
         }
         else {
-            throw new RuntimeException("Missing configuration item: '" + BLOOMDB_USERNAME_CONFIG_ITEM + "'.");
+            throw new RuntimeException("Missing configuration item: '" + archiveUsernameConfigurationItem + "'.");
         }
         return username;
     }
 
     private String connectionPassword() {
         final String password;
-        final String BLOOMDB_PASSWORD_CONFIG_ITEM = "dpl.pth_10.bloom.db.password";
-        if (config.hasPath(BLOOMDB_PASSWORD_CONFIG_ITEM)) {
-            password = config.getString(BLOOMDB_PASSWORD_CONFIG_ITEM);
+        final String archivePasswordConfigurationItem = "dpl.pth_06.archive.db.password";
+        if (config.hasPath(archivePasswordConfigurationItem)) {
+            password = config.getString(archivePasswordConfigurationItem);
             if (password == null) {
                 throw new RuntimeException("Database password not set.");
             }
         }
         else {
-            throw new RuntimeException("Missing configuration item: '" + BLOOMDB_PASSWORD_CONFIG_ITEM + "'.");
+            throw new RuntimeException("Missing configuration item: '" + archivePasswordConfigurationItem + "'.");
         }
         return password;
     }
 
     private String connectionURL() {
         final String databaseUrl;
-        final String BLOOMDB_URL_CONFIG_ITEM = "dpl.pth_06.bloom.db.url";
-        if (config.hasPath(BLOOMDB_URL_CONFIG_ITEM)) {
-            databaseUrl = config.getString(BLOOMDB_URL_CONFIG_ITEM);
+        final String archiveDBConfigurationItem = "dpl.pth_06.archive.db.url";
+        if (config.hasPath(archiveDBConfigurationItem)) {
+            databaseUrl = config.getString(archiveDBConfigurationItem);
             if (databaseUrl == null || databaseUrl.isEmpty()) {
                 throw new RuntimeException("Database url not set.");
             }
         }
         else {
-            throw new RuntimeException("Missing configuration item: '" + BLOOMDB_URL_CONFIG_ITEM + "'.");
+            throw new RuntimeException("Missing configuration item: '" + archiveDBConfigurationItem + "'.");
         }
         return databaseUrl;
     }
