@@ -98,33 +98,33 @@ public final class DataSourceFromConfigTest {
     @Test
     public void missingUrlThrows() {
         final Properties props = defaultProperties();
-        props.remove("dpl.pth_06.bloom.db.url");
+        props.remove("dpl.pth_06.archive.db.url");
         final Config config = ConfigFactory.parseProperties(props);
         final RuntimeException exception = Assertions
                 .assertThrows(RuntimeException.class, new DataSourceFromConfig(config)::get);
-        final String expected = "Missing configuration item: 'dpl.pth_06.bloom.db.url'.";
+        final String expected = "Missing configuration item: 'dpl.pth_06.archive.db.url'.";
         Assertions.assertEquals(expected, exception.getMessage());
     }
 
     @Test
     public void missingUsernameThrows() {
         final Properties props = defaultProperties();
-        props.remove("dpl.pth_10.bloom.db.username");
+        props.remove("dpl.pth_06.archive.db.username");
         final Config config = ConfigFactory.parseProperties(props);
         final RuntimeException exception = Assertions
                 .assertThrows(RuntimeException.class, new DataSourceFromConfig(config)::get);
-        final String expected = "Missing configuration item: 'dpl.pth_10.bloom.db.username'.";
+        final String expected = "Missing configuration item: 'dpl.pth_06.archive.db.username'.";
         Assertions.assertEquals(expected, exception.getMessage());
     }
 
     @Test
     public void missingPasswordThrows() {
         final Properties props = defaultProperties();
-        props.remove("dpl.pth_10.bloom.db.password");
+        props.remove("dpl.pth_06.archive.db.password");
         final Config config = ConfigFactory.parseProperties(props);
         final RuntimeException exception = Assertions
                 .assertThrows(RuntimeException.class, new DataSourceFromConfig(config)::get);
-        final String expected = "Missing configuration item: 'dpl.pth_10.bloom.db.password'.";
+        final String expected = "Missing configuration item: 'dpl.pth_06.archive.db.password'.";
         Assertions.assertEquals(expected, exception.getMessage());
 
     }
@@ -136,9 +136,9 @@ public final class DataSourceFromConfigTest {
 
     private Properties defaultProperties() {
         final Properties properties = new Properties();
-        properties.put("dpl.pth_10.bloom.db.username", username);
-        properties.put("dpl.pth_10.bloom.db.password", password);
-        properties.put("dpl.pth_06.bloom.db.url", url);
+        properties.put("dpl.pth_06.archive.db.username", username);
+        properties.put("dpl.pth_06.archive.db.password", password);
+        properties.put("dpl.pth_06.archive.db.url", url);
         return properties;
     }
 }
