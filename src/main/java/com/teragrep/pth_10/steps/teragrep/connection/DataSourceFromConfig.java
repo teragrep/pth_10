@@ -71,11 +71,15 @@ final class DataSourceFromConfig implements Supplier<HikariDataSource> {
     public HikariDataSource get() {
         final HikariConfig hikariConfig = new HikariConfig();
         // credentials
-        hikariConfig.setJdbcUrl(connectionURL());
+        final String url = connectionURL();
+        hikariConfig.setJdbcUrl(url);
         hikariConfig.setUsername(connectionUsername());
         hikariConfig.setPassword(connectionPassword());
         // pool configuration
-        hikariConfig.setDriverClassName("org.mariadb.jdbc.Driver");
+        if (url.startsWith("jdbc:mariadb:")) {
+            hikariConfig.setDriverClassName("org.mariadb.jdbc.Driver");
+        }
+        hikariConfig.setJdbcUrl(url);
         hikariConfig.setMaximumPoolSize(256); // limit for safety, should not be reached
         hikariConfig.setMinimumIdle(0); // no hanging connections inside executor
         hikariConfig.setAutoCommit(true);

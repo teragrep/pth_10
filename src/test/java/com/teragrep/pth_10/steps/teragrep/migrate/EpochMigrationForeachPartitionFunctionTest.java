@@ -99,9 +99,9 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     @BeforeAll
     void setup() {
         final Map<String, String> optsMap = new HashMap<>();
-        optsMap.put("dpl.pth_10.bloom.db.username", user);
-        optsMap.put("dpl.pth_10.bloom.db.password", password);
-        optsMap.put("dpl.pth_06.bloom.db.url", url);
+        optsMap.put("dpl.pth_06.archive.db.username", user);
+        optsMap.put("dpl.pth_06.archive.db.password", password);
+        optsMap.put("dpl.pth_06.archive.db.url", url);
         final Config config = ConfigFactory.parseMap(optsMap);
         this.connectionSource = new TestingConnectionSource(config);
     }
