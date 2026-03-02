@@ -96,7 +96,7 @@ public final class ConvertStep extends AbstractConvertStep {
             fields.forEach(field -> {
                 if (fieldsToConvert.contains(field)) {
                     throw new IllegalArgumentException(
-                            "Convert command allows converting a field with convert functions only once, the column < "
+                            "Convert command allows converting a field with convert functions only once, the column <"
                                     + field + "> was used more than once"
                     );
                 }

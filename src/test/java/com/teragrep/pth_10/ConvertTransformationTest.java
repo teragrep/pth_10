@@ -976,7 +976,7 @@ public class ConvertTransformationTest {
                 );
         Assertions
                 .assertEquals(
-                        "Convert command allows converting a field with convert functions only once, the column < _time> was used more than once",
+                        "Convert command allows converting a field with convert functions only once, the column <_time> was used more than once",
                         iae.getMessage()
                 );
     }
