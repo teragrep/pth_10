@@ -53,7 +53,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,7 +83,7 @@ public final class ConvertStep extends AbstractConvertStep {
         sparkSession = SparkSession.builder().getOrCreate();
         Dataset<Row> rv = dataset;
 
-        final List<String> fieldsToConvert = new ArrayList<>();
+        final Set<String> fieldsToConvert = new HashSet<>();
         // Process all of the convert commands
         for (ConvertCommand cmd : this.listOfCommands) {
             LOGGER
@@ -94,14 +96,11 @@ public final class ConvertStep extends AbstractConvertStep {
             final List<String> fields = getWildcardFields(cmd.getFieldParam(), rv.columns(), this.listOfFieldsToOmit);
 
             fields.forEach(field -> {
-                if (fieldsToConvert.contains(field)) {
+                if (!fieldsToConvert.add(field)) {
                     throw new IllegalArgumentException(
                             "Convert command allows converting a field with convert functions only once, the column <"
                                     + field + "> was used more than once"
                     );
-                }
-                else {
-                    fieldsToConvert.add(field);
                 }
             });
 
