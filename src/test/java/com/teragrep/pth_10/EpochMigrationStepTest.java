@@ -100,9 +100,9 @@ public final class EpochMigrationStepTest {
     void setEnv() {
         conn = Assertions.assertDoesNotThrow(() -> DriverManager.getConnection(url, username, password));
         opts = new HashMap<>();
-        opts.put("dpl.pth_06.bloom.db.url", url);
-        opts.put("dpl.pth_10.bloom.db.username", username);
-        opts.put("dpl.pth_10.bloom.db.password", password);
+        opts.put("dpl.pth_06.archive.db.url", url);
+        opts.put("dpl.pth_06.archive.db.username", username);
+        opts.put("dpl.pth_06.archive.db.password", password);
         opts.put("dpl.archive.db.journaldb.name", "journaldb");
         streamingTestUtil = new StreamingTestUtil(testSchema);
         streamingTestUtil.setEnv();
