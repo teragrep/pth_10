@@ -681,6 +681,16 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
 
     @Override
     public Node visitT_migrateParameter(DPLParser.T_migrateParameterContext ctx) {
-        return new StepNode(new TeragrepEpochMigrationStep(zplnConfig));
+        // Create a step, that returns a Custom dataset containing the result message
+        // instead of the whole dataset
+        final CustomResultStep completedResultStep = new CustomResultStep(
+                new CustomDatasetImpl(new StructType(new StructField[] {
+                        StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                        StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
+                }), Collections.singletonList(new Object[] {
+                        Instant.now(), "Epoch migration was completed."
+                }), catCtx)
+        );
+        return new StepListNode(Arrays.asList(new TeragrepEpochMigrationStep(zplnConfig), completedResultStep));
     }
 }
