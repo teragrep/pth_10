@@ -112,15 +112,14 @@ public final class EpochMigrationStepTest {
     @BeforeEach
     void setUp() {
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
-        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("USE journaldb").execute());
-        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS logfile").execute());
-        final String createLogfileTable = "CREATE TABLE logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, PRIMARY KEY(id))";
+        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.logfile").execute());
+        final String createLogfileTable = "CREATE TABLE journaldb.logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, PRIMARY KEY(id))";
         Assertions.assertDoesNotThrow(() -> {
             try (final PreparedStatement ps = conn.prepareStatement(createLogfileTable)) {
                 ps.execute();
             }
         });
-        final String insertIDs = "INSERT INTO logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
+        final String insertIDs = "INSERT INTO journaldb.logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
         Assertions.assertDoesNotThrow(() -> {
             try (final PreparedStatement ps = conn.prepareStatement(insertIDs)) {
                 Assertions.assertEquals(10, ps.executeUpdate());
@@ -148,10 +147,10 @@ public final class EpochMigrationStepTest {
     )
     public void testMigrateEpochCommandUpdatesEpochValuesToSQLMetadata() {
         streamingTestUtil.performDPLTest("index=index_A | teragrep exec migrate epoch", testFile, ds -> {
-            final String selectOffsets = "SELECT id, epoch_hour FROM logfile ORDER BY id";
+            final String selectOffsets = "SELECT id, epoch_hour FROM journaldb.logfile ORDER BY id";
             final List<Long> updatedEpochs = new ArrayList<>();
             Assertions.assertDoesNotThrow(() -> {
-                try (PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
+                try (final PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
                     final ResultSet resultSet = preparedStatement.executeQuery();
                     int loops = 0;
                     while (resultSet.next()) {
