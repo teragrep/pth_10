@@ -72,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class EpochMigrationStepTest {
@@ -167,6 +168,17 @@ public final class EpochMigrationStepTest {
                             1693929600L, 1693933200L, 1693936800L
                     );
             Assertions.assertEquals(expectedEpochs, updatedEpochs);
+            // assert only completion message visible in results
+            final List<String> resultPrint = ds
+                    .select("_raw")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(1, resultPrint.size());
+            final String result = resultPrint.get(0);
+            final String expected = "Epoch migration was completed.";
+            Assertions.assertEquals(expected, result);
         });
     }
 
