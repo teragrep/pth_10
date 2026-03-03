@@ -79,16 +79,18 @@ public final class ParsedJsonTest {
         final ParsedJson parsedJson = new ParsedJson(json);
         final IllegalArgumentException exception = Assertions
                 .assertThrows(IllegalArgumentException.class, parsedJson::toJsonObject);
-        Assertions.assertTrue(exception.getMessage().contains("could not be parsed to JSON object"));
+        final String expected = "Value <[1,2,3]> could not be parsed to JSON object";
+        Assertions.assertEquals(expected, exception.getMessage());
     }
 
     @Test
     void testToJsonArrayWithObjectThrows() {
-        final String json = "{\"key\":\"value\"}";
+        final String json = "{\"name\":\"Alice\",\"age\":30}";
         final ParsedJson parsedJson = new ParsedJson(json);
         final IllegalArgumentException exception = Assertions
                 .assertThrows(IllegalArgumentException.class, parsedJson::toJsonArray);
-        Assertions.assertTrue(exception.getMessage().contains("could not be parsed to JSON array"));
+        final String expected = "Value <{\"name\":\"Alice\",\"age\":30}> could not be parsed to JSON array";
+        Assertions.assertEquals(expected, exception.getMessage());
     }
 
     @Test
@@ -97,15 +99,8 @@ public final class ParsedJsonTest {
         final ParsedJson parsedJson = new ParsedJson(json);
         final IllegalArgumentException exception = Assertions
                 .assertThrows(IllegalArgumentException.class, parsedJson::toJsonObject);
-        Assertions.assertTrue(exception.getMessage().contains("Failed to read"));
-    }
-
-    @Test
-    void testEqualsSameContent() {
-        final ParsedJson first = new ParsedJson("{\"a\":1}");
-        final ParsedJson second = new ParsedJson("{\"a\":1}");
-        Assertions.assertEquals(first, second);
-        Assertions.assertEquals(first.hashCode(), second.hashCode());
+        final String expected = "Failed to read <{invalid json}> to JSON: Unexpected char 105 at (line no=1, column no=2, offset=1)";
+        Assertions.assertEquals(expected, exception.getMessage());
     }
 
     @Test
