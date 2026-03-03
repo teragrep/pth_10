@@ -45,43 +45,49 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import jakarta.json.JsonObject;
 
 import java.util.Objects;
 
 public final class EventMetadataFromString implements EventMetadata {
 
-    private final String value;
+    private final JsonObject jsonObject;
 
-    public EventMetadataFromString(final String value) {
-        this.value = value;
+    public EventMetadataFromString(final String jsonString) {
+        this(new ParsedJson(jsonString));
+    }
+
+    public EventMetadataFromString(final ParsedJson parsedJson) {
+        this(parsedJson.toJsonObject());
+    }
+
+    public EventMetadataFromString(final JsonObject jsonObject) {
+        this.jsonObject = jsonObject;
     }
 
     @Override
     public boolean isSyslog() {
-        return "rfc5424".equalsIgnoreCase(jsonObject().get("format").getAsString());
+        return "rfc5424".equalsIgnoreCase(jsonObject.getString("format"));
     }
 
     @Override
     public String format() {
-        return jsonObject().get("format").getAsString();
+        return jsonObject.getString("format");
     }
 
     @Override
     public String bucket() {
-        return jsonObject().getAsJsonObject("object").get("bucket").getAsString();
+        return jsonObject.getJsonObject("object").getString("bucket");
     }
 
     @Override
     public String path() {
-        return jsonObject().getAsJsonObject("object").get("path").getAsString();
+        return jsonObject.getJsonObject("object").getString("path");
     }
 
     @Override
     public String partition() {
-        return jsonObject().getAsJsonObject("object").get("partition").getAsString();
+        return jsonObject.getJsonObject("object").getString("partition");
     }
 
     @Override
@@ -89,22 +95,22 @@ public final class EventMetadataFromString implements EventMetadata {
         if (!isSyslog()) {
             throw new UnsupportedOperationException("rfc5242Timestamp() not available for non-syslog metadata");
         }
-        return jsonObject().getAsJsonObject("timestamp").get("rfc5242timestamp").getAsString();
+        return jsonObject.getJsonObject("timestamp").getString("rfc5242timestamp");
     }
 
     @Override
     public String pathExtracted() {
-        return jsonObject().getAsJsonObject("timestamp").get("path-extracted").getAsString();
+        return jsonObject.getJsonObject("timestamp").getString("path-extracted");
     }
 
     @Override
     public String pathExtractedPrecision() {
-        return jsonObject().getAsJsonObject("timestamp").get("path-extracted-precision").getAsString();
+        return jsonObject.getJsonObject("timestamp").getString("path-extracted-precision");
     }
 
     @Override
     public String source() {
-        return jsonObject().getAsJsonObject("timestamp").get("source").getAsString();
+        return jsonObject.getJsonObject("timestamp").getString("source");
     }
 
     @Override
@@ -112,44 +118,24 @@ public final class EventMetadataFromString implements EventMetadata {
         if (!isSyslog()) {
             throw new UnsupportedOperationException("epoch() not available for non-syslog metadata");
         }
-        return jsonObject().getAsJsonObject("timestamp").get("epoch").getAsString();
-    }
-
-    private JsonObject jsonObject() {
-        final JsonObject jsonObject;
-        try {
-            final JsonElement element = JsonParser.parseString(value);
-            if (!element.isJsonObject()) {
-                // to catch
-                throw new IllegalArgumentException();
-            }
-            jsonObject = element.getAsJsonObject();
-        }
-        catch (final RuntimeException exception) {
-            throw new IllegalArgumentException(
-                    "could not parse epoch migration even metadata JSON from _raw column, ensure that archive is set to epoch migration mode",
-                    exception
-            );
-        }
-
-        return jsonObject;
+        return String.valueOf(jsonObject.getJsonObject("timestamp").getJsonNumber("epoch").longValue());
     }
 
     @Override
     public String toString() {
-        return jsonObject().toString();
+        return jsonObject.toString();
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (o == null || getClass() != o.getClass())
             return false;
-        EventMetadataFromString that = (EventMetadataFromString) o;
-        return Objects.equals(value, that.value);
+        final EventMetadataFromString that = (EventMetadataFromString) o;
+        return Objects.equals(jsonObject, that.jsonObject);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(value);
+        return Objects.hashCode(jsonObject);
     }
 }

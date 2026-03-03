@@ -101,7 +101,7 @@ public final class EventMetadataFromStringTest {
     void testThrowsExceptionOnInvalidInput() {
         final IllegalArgumentException exception = Assertions
                 .assertThrows(IllegalArgumentException.class, () -> new EventMetadataFromString("invalid-input").format());
-        final String expectedMessage = "could not parse epoch migration even metadata JSON from _raw column, ensure that archive is set to epoch migration mode";
+        final String expectedMessage = "Failed to read <invalid-input> to JSON: Unexpected char 105 at (line no=1, column no=1, offset=0)";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
 
