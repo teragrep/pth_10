@@ -166,7 +166,25 @@ public class RangemapTransformationTest {
         IllegalArgumentException iae = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, "index=* | rangemap", testFile, ds -> {
                 });
-        Assertions.assertEquals("Field parameter is required!", iae.getMessage());
+        Assertions.assertEquals("rangemap command is missing required field parameter", iae.getMessage());
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testRangemapInvalidRange() {
+        IllegalArgumentException iae = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        IllegalArgumentException.class, "index=* | rangemap field=_raw low=0", testFile, ds -> {
+                        }
+                );
+        Assertions
+                .assertEquals(
+                        "Invalid range for rangemap command, the range should have both start and end values",
+                        iae.getMessage()
+                );
     }
 
     @Test
