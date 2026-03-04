@@ -45,7 +45,8 @@
  */
 package com.teragrep.pth_10.ast.commands.logicalstatement.UDFs;
 
-import com.teragrep.jue_01.GlobToRegEx;
+import com.teragrep.glb_01.Glob;
+import com.teragrep.glb_01.GlobImpl;
 import com.teragrep.pth_10.steps.ParsedResult;
 import com.teragrep.pth_10.steps.TypeParser;
 import com.teragrep.pth_03.antlr.DPLLexer;
@@ -101,22 +102,20 @@ public class SearchComparison implements UDF3<Object, Integer, Object, Boolean> 
                 rightString = BigDecimal.valueOf(right.getLong()).stripTrailingZeros().toPlainString();
             }
 
+            final Glob glob = new GlobImpl(rightString);
+            rightString = glob.asRegex(); //wildcard support
             switch (operationType) {
                 case DPLLexer.EQ:
                 case DPLLexer.EVAL_LANGUAGE_MODE_EQ: {
-                    //rv = source.equalTo(value);
-                    rightString = GlobToRegEx.regexify(rightString); //wildcard support
-                    Pattern p = Pattern.compile(rightString);
-                    Matcher m = p.matcher(leftString);
+                    final Pattern p = Pattern.compile(rightString);
+                    final Matcher m = p.matcher(leftString);
                     rv = m.matches();
                     break;
                 }
                 case DPLLexer.NEQ:
                 case DPLLexer.EVAL_LANGUAGE_MODE_NEQ: {
-                    //rv = source.notEqual(value);
-                    rightString = GlobToRegEx.regexify(rightString); //wildcard support
-                    Pattern p = Pattern.compile(rightString);
-                    Matcher m = p.matcher(leftString);
+                    final Pattern p = Pattern.compile(rightString);
+                    final Matcher m = p.matcher(leftString);
                     rv = !m.matches();
                     break;
                 }
