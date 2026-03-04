@@ -43,54 +43,72 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.steps.teragrep.connection;
+package com.teragrep.pth_10.steps.teragrep.migrate;
 
+import com.teragrep.functions.dpf_02.AbstractStep;
 import com.typesafe.config.Config;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.util.Objects;
 
-/**
- * Provides Connection objects from a static HikariCP datasource.
- * <p>
- * Methods connection() and resetForTesting() are thread locked on the class level
- */
-public final class ConnectionPoolSingleton {
+public final class TeragrepEpochMigrationStep extends AbstractStep {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionPoolSingleton.class);
-    private static DataSourceState state = new StubDataSourceState();
+    private final Logger LOGGER = LoggerFactory.getLogger(TeragrepEpochMigrationStep.class);
+    private final Config config;
+    private final String journaldbNameConfigItem;
 
-    private ConnectionPoolSingleton() {
-        // blocks accidental initialization
+    public TeragrepEpochMigrationStep(final Config config) {
+        this.config = config;
+        this.journaldbNameConfigItem = "dpl.archive.db.journaldb.name";
+        this.properties.add(CommandProperty.SEQUENTIAL_ONLY);
     }
 
-    /**
-     * Gets a Connection instance using a given config to instantiate a static connection pool.
-     *
-     * @param config config that is used to configure the connection pool, cannot change after initialization
-     * @return Connection instance form the pool
-     * @throws SQLException          if there is an exception getting an SQL connection from the pool
-     * @throws IllegalStateException if the config is changed after initialization
-     */
-    public static synchronized Connection connection(final Config config) throws SQLException, IllegalStateException {
-        LOGGER.debug("thread entered lock block");
-        if (state.isStub()) {
-            state = new InitializedDataSourceState(config);
+    @Override
+    public Dataset<Row> get(final Dataset<Row> dataset) {
+        final String journalDBName;
+        if (!config.hasPath(journaldbNameConfigItem)) {
+            LOGGER.info("Using default journaldb name <{}>", "journaldb");
+            journalDBName = "journaldb";
         }
-        else if (!state.config().equals(config)) {
-            throw new IllegalStateException("Datasource was already initialized with a different config");
+        else {
+            journalDBName = config.getString(journaldbNameConfigItem);
+            LOGGER
+                    .info(
+                            "Using journaldb name from config option <{}>, value <{}>", journaldbNameConfigItem,
+                            journalDBName
+                    );
         }
-        return state.dataSource().getConnection();
+        EpochMigrationForeachPartitionFunction migrationFunction = new EpochMigrationForeachPartitionFunction(
+                config,
+                journalDBName
+        );
+        dataset.foreachPartition(migrationFunction);
+        return dataset;
+
     }
 
-    // only for testing
-    public static synchronized void resetForTest() {
-        LOGGER.warn("resetForTest() called, this should only happen in a test case");
-        if (!state.isStub()) {
-            state.dataSource().close();
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
         }
-        state = new StubDataSourceState();
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final TeragrepEpochMigrationStep that = (TeragrepEpochMigrationStep) o;
+            rv = Objects.equals(config, that.config)
+                    && Objects.equals(journaldbNameConfigItem, that.journaldbNameConfigItem);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(config, journaldbNameConfigItem);
     }
 }

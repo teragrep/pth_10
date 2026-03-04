@@ -66,6 +66,7 @@ import com.teragrep.pth_10.steps.CustomResultStep;
 import com.teragrep.pth_10.steps.teragrep.*;
 import com.teragrep.pth_10.steps.teragrep.AbstractTokenizerStep;
 import com.teragrep.pth_10.steps.teragrep.TeragrepTokenizerStep;
+import com.teragrep.pth_10.steps.teragrep.migrate.TeragrepEpochMigrationStep;
 import com.typesafe.config.Config;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
@@ -676,5 +677,20 @@ public class TeragrepTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_forEachBatchParameter(DPLParser.T_forEachBatchParameterContext ctx) {
         return new StepNode(new TeragrepForEachBatchStep());
+    }
+
+    @Override
+    public Node visitT_migrateParameter(DPLParser.T_migrateParameterContext ctx) {
+        // Create a step, that returns a Custom dataset containing the result message
+        // instead of the whole dataset
+        final CustomResultStep completedResultStep = new CustomResultStep(
+                new CustomDatasetImpl(new StructType(new StructField[] {
+                        StructField.apply("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                        StructField.apply("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
+                }), Collections.singletonList(new Object[] {
+                        Instant.now(), "Epoch migration was completed."
+                }), catCtx)
+        );
+        return new StepListNode(Arrays.asList(new TeragrepEpochMigrationStep(zplnConfig), completedResultStep));
     }
 }
