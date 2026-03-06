@@ -93,9 +93,7 @@ public final class TimechartStep extends AbstractTimechartStep {
                 .orderBy("_time");
 
         final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
-        if (Arrays.asList(resultDataset.schema().fieldNames()).contains("_time")) {
-            resultDataset = resultDataset.withMetadata("_time", metadata);
-        }
+        resultDataset = resultDataset.withMetadata("_time", metadata);
         if (divByInsts != null) {
             for (String groupByColumn : divByInsts) {
                 resultDataset = resultDataset.withMetadata(groupByColumn, metadata);
