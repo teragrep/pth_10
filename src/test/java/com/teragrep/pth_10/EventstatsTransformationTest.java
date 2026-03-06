@@ -47,6 +47,7 @@ package com.teragrep.pth_10;
 
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
@@ -80,6 +81,10 @@ public class EventstatsTransformationTest {
     });
 
     private StreamingTestUtil streamingTestUtil;
+
+    private final Metadata groupByMetadata = new MetadataBuilder()
+            .putBoolean("dpl_internal_isGroupByColumn", true)
+            .build();
 
     @BeforeAll
     void setEnv() {
@@ -150,7 +155,7 @@ public class EventstatsTransformationTest {
                             new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
                             new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
                             new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
-                            new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                            new StructField("sourcetype", DataTypes.StringType, true, groupByMetadata),
                             new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
                             new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                             new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
