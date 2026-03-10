@@ -60,7 +60,7 @@ jobs:
           deploy_key: ${{ secrets.PKG_01_DEPLOY_KEY }}
           files: rpm/target/rpm/com.teragrep-pth_10/RPMS/noarch/com.teragrep-pth_10-*.noarch.rpm
           gpg_public_key: "${{ secrets.RPM_SIGNING_PUBLIC_KEY }}"
-          repo_baseurl: "${{ vars.PKG_01_BASEURL }}"
+          repo_baseurl: "${{ vars.PKG_01_CENTRAL_BASEURL }}"
           location_prefix: "${{ vars.PKG_01_LOCATION_PREFIX }}"
         env:
           has_deploy_key: ${{ secrets.PKG_01_DEPLOY_KEY != '' }}
