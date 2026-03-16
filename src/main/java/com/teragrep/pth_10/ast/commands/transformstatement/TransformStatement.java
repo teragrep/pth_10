@@ -108,7 +108,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
         final ParseTree rightTree = ctx.getChild(2);
 
         if (leftTree != null) {
-            LOGGER.info("-> Left tree: text=<{}>", leftTree.getText());
+            LOGGER.info("queryId <{}> -> Left tree: text=<{}>", catCtx.getQueryName(), leftTree.getText());
             // Visit command transformations
             left = visit(leftTree);
             if (left != null) {
@@ -148,7 +148,7 @@ public class TransformStatement extends DPLParserBaseVisitor<Node> {
             else {
                 // If null is returned, the command is not implemented.
                 // All implemented commands return a StepNode or a StepListNode.
-                LOGGER.error("-> Visit of LeftTree returned NULL");
+                LOGGER.error("queryId <{}> -> Visit of LeftTree returned NULL", catCtx.getQueryName());
                 throw new IllegalArgumentException(
                         "The provided transformation command '" + ctx.getText() + "' is not yet implemented."
                 );
