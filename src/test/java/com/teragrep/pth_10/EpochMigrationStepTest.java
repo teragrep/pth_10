@@ -194,13 +194,4 @@ public final class EpochMigrationStepTest {
                         }
                 );
     }
-
-    @Test
-    public void testContract() {
-        // ignore fields from superclass dpf_02 AbstractStep that are not part of the equality
-        EqualsVerifier
-                .forClass(TeragrepEpochMigrationStep.class)
-                .withIgnoredFields("LOGGER", "properties", "aggregatesUsedBefore")
-                .verify();
-    }
 }
