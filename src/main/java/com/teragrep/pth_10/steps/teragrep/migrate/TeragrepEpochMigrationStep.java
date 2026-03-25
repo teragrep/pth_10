@@ -89,26 +89,4 @@ public final class TeragrepEpochMigrationStep extends AbstractStep {
         return dataset;
 
     }
-
-    @Override
-    public boolean equals(final Object o) {
-        final boolean rv;
-        if (o == null) {
-            rv = false;
-        }
-        else if (getClass() != o.getClass()) {
-            rv = false;
-        }
-        else {
-            final TeragrepEpochMigrationStep that = (TeragrepEpochMigrationStep) o;
-            rv = Objects.equals(config, that.config)
-                    && Objects.equals(journaldbNameConfigItem, that.journaldbNameConfigItem);
-        }
-        return rv;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(config, journaldbNameConfigItem);
-    }
 }
