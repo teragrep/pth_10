@@ -59,15 +59,21 @@ import org.jooq.Param;
 import org.jooq.Query;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.Timestamp;
 import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 
 public final class EpochMigrationBatchStateTest {
 
-    private final DSLContext ctx = DSL.using(SQLDialect.MYSQL);
+    private Connection conn;
     private final StructType testSchema = new StructType(new StructField[] {
             new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
             new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
@@ -79,9 +85,39 @@ public final class EpochMigrationBatchStateTest {
             new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
     });
 
+    @BeforeEach
+    public void setup() {
+        conn = Assertions
+                .assertDoesNotThrow(
+                        () -> DriverManager
+                                .getConnection(
+                                        "jdbc:h2:mem:test_" + UUID.randomUUID() + ";MODE=MySQL;DATABASE_TO_LOWER=TRUE",
+                                        "sa", ""
+                                )
+                );
+        Assertions.assertDoesNotThrow(() -> {
+            conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute();
+            conn
+                    .prepareStatement(
+                            " CREATE TABLE journaldb.object_format ( id BIGINT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, UNIQUE (name)) "
+                    )
+                    .execute();
+        });
+    }
+
+    @AfterEach
+    public void close() {
+        Assertions.assertDoesNotThrow(conn::close);
+    }
+
     @Test
     public void testAcceptsValidRow() {
-        final EpochMigrationBatchState batchState = new EpochMigrationBatchState(baseBatch(ctx), 1);
+        final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
+        final EpochMigrationBatchState batchState = new EpochMigrationBatchState(
+                baseBatch(ctx),
+                new ResolvedObjectFormats(ctx),
+                1
+        );
         final EpochMigrationBatchState nextBatchState = Assertions
                 .assertDoesNotThrow(() -> batchState.accept(genericResultRow()));
         Assertions.assertTrue(nextBatchState.isFull());
@@ -91,20 +127,31 @@ public final class EpochMigrationBatchStateTest {
 
     @Test
     public void testBatchBoundValues() {
+        final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
         final EpochMigrationBatchState batchState = new EpochMigrationBatchState(
                 new RecordingBatchBindStep(baseBatch(ctx)),
+                new ResolvedObjectFormats(ctx),
                 1
         );
         Assertions.assertEquals(0, batchState.batch().size());
         final EpochMigrationBatchState nextBatchState = Assertions
                 .assertDoesNotThrow(() -> batchState.accept(genericResultRow()));
-        RecordingBatchBindStep step = (RecordingBatchBindStep) nextBatchState.batch();
-        Assertions.assertIterableEquals(Arrays.asList(1580551994L, 1L), step.boundValuesList());
+        final RecordingBatchBindStep step = (RecordingBatchBindStep) nextBatchState.batch();
+        long expectedEpoch = 1580551994L;
+        long expectedLogfileId = 1L;
+        long expectedObjectFormatId = 1L;
+        final List<Long> expectedList = Arrays.asList(expectedEpoch, expectedLogfileId, expectedObjectFormatId);
+        Assertions.assertIterableEquals(expectedList, step.boundValuesList());
     }
 
     @Test
     public void testTotalAcceptedRowsIsIncremented() {
-        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch(ctx), 1);
+        final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(
+                baseBatch(ctx),
+                new ResolvedObjectFormats(ctx),
+                1
+        );
         Assertions.assertEquals(0, startState.totalAccepted());
         final EpochMigrationBatchState firstState = Assertions
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
@@ -116,7 +163,12 @@ public final class EpochMigrationBatchStateTest {
 
     @Test
     public void testBatchIsFull() {
-        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch(ctx), 2);
+        final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(
+                baseBatch(ctx),
+                new ResolvedObjectFormats(ctx),
+                2
+        );
         final EpochMigrationBatchState firstState = Assertions
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
         Assertions.assertFalse(firstState.isFull());
@@ -127,8 +179,13 @@ public final class EpochMigrationBatchStateTest {
 
     @Test
     public void testResetDoesNotAffectTotalAccepted() {
+        final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
         final BatchBindStep baseBatch = baseBatch(ctx);
-        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch, 1);
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(
+                baseBatch,
+                new ResolvedObjectFormats(ctx),
+                1
+        );
         final EpochMigrationBatchState firstState = Assertions
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
         final EpochMigrationBatchState resetBatch = firstState.reset(baseBatch);
@@ -151,6 +208,11 @@ public final class EpochMigrationBatchStateTest {
         return ctx.batch(baseQuery);
     }
 
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(EpochMigrationBatchState.class).withIgnoredFields("LOGGER").verify();
+    }
+
     private Row genericResultRow() {
         final String syslogJsonResult = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"2007/10-08/epoch/migration/test.logGLOB-2007100814.log.gz\",\"partition\":\"id\"},\"timestamp\":{\"rfc5242timestamp\":\"2014-06-20T09:14:07.12345+00:00\",\"epoch\":1403255647123450,\"path-extracted\":\"2007-10-08T14:00+03:00[Europe/Helsinki]\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
         return new GenericRowWithSchema(new Object[] {
@@ -163,10 +225,5 @@ public final class EpochMigrationBatchStateTest {
                 "1",
                 1L
         }, testSchema);
-    }
-
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(EpochMigrationBatchState.class).verify();
     }
 }

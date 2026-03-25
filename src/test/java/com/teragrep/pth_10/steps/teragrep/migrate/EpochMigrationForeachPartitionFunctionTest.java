@@ -116,10 +116,16 @@ public final class EpochMigrationForeachPartitionFunctionTest {
         final Connection conn = Assertions.assertDoesNotThrow(() -> connectionSource.get());
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.logfile").execute());
-        final String createLogfileTable = "CREATE TABLE journaldb.logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, PRIMARY KEY(id))";
+        Assertions
+                .assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.object_format").execute());
+        final String createLogfileTable = "CREATE TABLE journaldb.logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, object_format_id BIGINT NULL, PRIMARY KEY(id))";
+        final String createObjectFormatTable = "CREATE TABLE journaldb.object_format (id BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NULL, PRIMARY KEY(id))";
         Assertions.assertDoesNotThrow(() -> {
-            try (final PreparedStatement ps = conn.prepareStatement(createLogfileTable)) {
-                ps.execute();
+            try (
+                    final PreparedStatement logfilePreparedStatement = conn.prepareStatement(createLogfileTable); final PreparedStatement objectFormatPreparedStatement = conn.prepareStatement(createObjectFormatTable)
+            ) {
+                logfilePreparedStatement.execute();
+                objectFormatPreparedStatement.execute();
             }
         });
         final String insertIDs = "INSERT INTO journaldb.logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";

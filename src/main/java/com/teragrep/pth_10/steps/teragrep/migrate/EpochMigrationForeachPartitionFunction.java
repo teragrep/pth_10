@@ -98,11 +98,12 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     @Override
     public void call(final Iterator<Row> iter) {
         try (final Connection conn = connectionSource.get()) {
-            if (conn.getAutoCommit()) {
-                conn.setAutoCommit(false);
-            }
             final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL, settings);
-            EpochMigrationBatchState batchState = new EpochMigrationBatchState(baseBatch(ctx), batchSize);
+            EpochMigrationBatchState batchState = new EpochMigrationBatchState(
+                    baseBatch(ctx),
+                    new ResolvedObjectFormats(ctx, journalDBName),
+                    batchSize
+            );
             while (iter.hasNext()) {
                 batchState = batchState.accept(iter.next());
                 if (batchState.isFull()) {
@@ -136,13 +137,16 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
     private BatchBindStep baseBatch(final DSLContext ctx) {
         final Field<Long> epochField = DSL.field(DSL.name("epoch_hour"), Long.class);
+        final Field<Long> objectFormatField = DSL.field(DSL.name("object_format_id"), Long.class);
         final Field<Long> idField = DSL.field(DSL.name("id"), Long.class);
         final Param<Long> epochParam = DSL.param("epoch_hour", Long.class);
+        final Param<Long> objectFormatIdParam = DSL.param("object_format_id", Long.class);
         final Param<Long> idParam = DSL.param("id", Long.class);
         final Query baseQuery = ctx
                 .update(DSL.table(DSL.name(journalDBName, "logfile")))
                 .set(epochField, epochParam)
-                .where(idField.eq(idParam).and(epochField.isNull()));
+                .set(objectFormatField, objectFormatIdParam)
+                .where(idField.eq(idParam).and(epochField.isNull().or(objectFormatField.isNull())));
         LOGGER.trace("epoch migration for each partition function: batch query <{}>", baseQuery);
         return ctx.batch(baseQuery);
     }
