@@ -46,9 +46,6 @@
 package com.teragrep.pth_10;
 
 import com.teragrep.pth_10.steps.teragrep.connection.ConnectionPoolSingleton;
-import com.teragrep.pth_10.steps.teragrep.migrate.TeragrepEpochMigrationStep;
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -113,16 +110,26 @@ public final class EpochMigrationStepTest {
     void setUp() {
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.logfile").execute());
-        final String createLogfileTable = "CREATE TABLE journaldb.logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, PRIMARY KEY(id))";
+        Assertions
+                .assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.object_format").execute());
+        final String createLogfileTable = "CREATE TABLE journaldb.logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, object_format_id BIGINT NULL, PRIMARY KEY(id))";
+        final String createObjectFormatTable = "CREATE TABLE journaldb.object_format (id BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NULL, PRIMARY KEY(id))";
         Assertions.assertDoesNotThrow(() -> {
-            try (final PreparedStatement ps = conn.prepareStatement(createLogfileTable)) {
-                ps.execute();
+            try (
+                    final PreparedStatement logfilePreparedStatement = conn.prepareStatement(createLogfileTable); final PreparedStatement objectFormatPreparedStatement = conn.prepareStatement(createObjectFormatTable)
+            ) {
+                logfilePreparedStatement.execute();
+                objectFormatPreparedStatement.execute();
             }
         });
         final String insertIDs = "INSERT INTO journaldb.logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
+        final String insertObjectFormats = "INSERT INTO journaldb.object_format (id, name) VALUES (1, 'rfc5452'),(2,'non-rfc5252')";
         Assertions.assertDoesNotThrow(() -> {
-            try (final PreparedStatement ps = conn.prepareStatement(insertIDs)) {
-                Assertions.assertEquals(10, ps.executeUpdate());
+            try (
+                    final PreparedStatement insertLogfilePreparedStatement = conn.prepareStatement(insertIDs); final PreparedStatement insertObjectFormatsPreparedStatement = conn.prepareStatement(insertObjectFormats)
+            ) {
+                Assertions.assertEquals(10, insertLogfilePreparedStatement.executeUpdate());
+                Assertions.assertEquals(2, insertObjectFormatsPreparedStatement.executeUpdate());
             }
         });
         streamingTestUtil.setUp();
@@ -147,15 +154,18 @@ public final class EpochMigrationStepTest {
     )
     public void testMigrateEpochCommandUpdatesEpochValuesToSQLMetadata() {
         streamingTestUtil.performDPLTest("index=index_A | teragrep exec migrate epoch", testFile, ds -> {
-            final String selectOffsets = "SELECT id, epoch_hour FROM journaldb.logfile ORDER BY id";
+            final String selectOffsets = "SELECT id, epoch_hour, object_format_id FROM journaldb.logfile ORDER BY id";
             final List<Long> updatedEpochs = new ArrayList<>();
+            final List<Long> updatedObjectFormatIDs = new ArrayList<>();
             Assertions.assertDoesNotThrow(() -> {
                 try (final PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
                     final ResultSet resultSet = preparedStatement.executeQuery();
                     int loops = 0;
                     while (resultSet.next()) {
                         final Long epochHour = resultSet.getObject("epoch_hour", Long.class);
+                        final Long objectFormatId = resultSet.getObject("object_format_id", Long.class);
                         updatedEpochs.add(epochHour);
+                        updatedObjectFormatIDs.add(objectFormatId);
                         loops++;
                     }
                     Assertions.assertEquals(10, loops);
@@ -166,6 +176,8 @@ public final class EpochMigrationStepTest {
                             1693904400L, 1693908000L, 1693911600L, 1693915200L, 1693918800L, 1693922400L, 1693926000L,
                             1693929600L, 1693933200L, 1693936800L
                     );
+            Assertions.assertEquals(expectedEpochs, updatedEpochs);
+            final List<Long> expectedObjectFormatIds = Arrays.asList(1L, 2L);
             Assertions.assertEquals(expectedEpochs, updatedEpochs);
             // assert only completion message visible in results
             final List<String> resultPrint = ds
@@ -188,10 +200,12 @@ public final class EpochMigrationStepTest {
     )
     public void testMigrateNullTimeColumnThrowsException() {
         // tests that rows with null _time value are not silently accepted
-        streamingTestUtil
+        final RuntimeException exception = streamingTestUtil
                 .performThrowingDPLTest(
-                        StreamingQueryException.class, "index=index_B | teragrep exec migrate epoch", testFile, ds -> {
+                        RuntimeException.class, "index=index_B | teragrep exec migrate epoch", testFile, ds -> {
                         }
                 );
+        final String expected = "Column '_time' was null, cannot convert to epoch seconds";
+        Assertions.assertTrue(exception.getMessage().contains(expected));
     }
 }

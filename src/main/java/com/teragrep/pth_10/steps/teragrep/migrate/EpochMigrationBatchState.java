@@ -50,27 +50,35 @@ import org.jooq.BatchBindStep;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Timestamp;
 import java.util.Objects;
 
 final class EpochMigrationBatchState {
 
     private final Logger LOGGER = LoggerFactory.getLogger(EpochMigrationBatchState.class);
     private final BatchBindStep batch;
+    private final ResolvedObjectFormats resolvedObjectFormats;
     private final long batchSize;
     private final long batchCount;
     private final long acceptedRows;
 
-    EpochMigrationBatchState(final BatchBindStep batch, final long batchSize) {
-        this(batch, batchSize, 0, 0);
+    EpochMigrationBatchState(
+            final BatchBindStep batch,
+            final ResolvedObjectFormats resolvedObjectFormats,
+            final long batchSize
+    ) {
+        this(batch, resolvedObjectFormats, batchSize, 0, 0);
     }
 
     private EpochMigrationBatchState(
             final BatchBindStep batch,
+            final ResolvedObjectFormats resolvedObjectFormats,
             final long batchSize,
             final long batchCount,
             final long acceptedRows
     ) {
         this.batch = batch;
+        this.resolvedObjectFormats = resolvedObjectFormats;
         this.batchSize = batchSize;
         this.batchCount = batchCount;
         this.acceptedRows = acceptedRows;
@@ -79,7 +87,12 @@ final class EpochMigrationBatchState {
     EpochMigrationBatchState accept(final Row row) {
         final String rawString = row.getString(row.fieldIndex("_raw"));
         final EventMetadata metadata = new EventMetadataFromString(rawString);
-        final long epoch = row.getTimestamp(row.fieldIndex("_time")).toInstant().getEpochSecond();
+        final Timestamp ts = row.getTimestamp(row.fieldIndex("_time"));
+        if (ts == null) {
+            throw new RuntimeException("Column '_time' was null, cannot convert to epoch seconds");
+        }
+        final long epoch = ts.toInstant().getEpochSecond();
+        final long objectFormatId = resolvedObjectFormats.resolve(metadata.format());
         final String partitionString = row.getString(row.fieldIndex("partition"));
         final long id = Long.parseLong(partitionString);
 
@@ -89,15 +102,21 @@ final class EpochMigrationBatchState {
                             "Encountered non-syslog row id=<{}> using path extracted time value <{}> with precision of <{}> resulting epoch <{}>",
                             id, metadata.pathExtracted(), metadata.pathExtractedPrecision(), epoch
                     );
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Non-syslog row metadata: <{}>", metadata);
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace("non-syslog row metadata: <{}>", metadata);
             }
         }
-        else if (LOGGER.isDebugEnabled()) {
+        else if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Updating partition id <{}> with epoch value <{}>", id, epoch);
         }
 
-        return new EpochMigrationBatchState(batch.bind(epoch, id), batchSize, batchCount + 1, acceptedRows + 1);
+        return new EpochMigrationBatchState(
+                batch.bind(epoch, objectFormatId, id),
+                resolvedObjectFormats,
+                batchSize,
+                batchCount + 1,
+                acceptedRows + 1
+        );
     }
 
     boolean isFull() {
@@ -117,7 +136,7 @@ final class EpochMigrationBatchState {
     }
 
     EpochMigrationBatchState reset(final BatchBindStep newBatch) {
-        return new EpochMigrationBatchState(newBatch, batchSize, 0, acceptedRows);
+        return new EpochMigrationBatchState(newBatch, resolvedObjectFormats, batchSize, 0, acceptedRows);
     }
 
     @Override
@@ -131,14 +150,16 @@ final class EpochMigrationBatchState {
         }
         else {
             final EpochMigrationBatchState that = (EpochMigrationBatchState) o;
-            rv = batchSize == that.batchSize && batchCount == that.batchCount && acceptedRows == that.acceptedRows
-                    && Objects.equals(LOGGER, that.LOGGER) && Objects.equals(batch, that.batch);
+            rv = batchSize == that.batchSize
+                    && batchCount == that.batchCount && acceptedRows == that.acceptedRows && Objects
+                            .equals(batch, that.batch)
+                    && Objects.equals(resolvedObjectFormats, that.resolvedObjectFormats);
         }
         return rv;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(LOGGER, batch, batchSize, batchCount, acceptedRows);
+        return Objects.hash(batch, resolvedObjectFormats, batchSize, batchCount, acceptedRows);
     }
 }
