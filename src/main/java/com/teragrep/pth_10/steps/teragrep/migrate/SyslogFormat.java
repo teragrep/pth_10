@@ -45,71 +45,45 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import com.google.gson.JsonParseException;
-import jakarta.json.Json;
-import jakarta.json.JsonArray;
-import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
-import jakarta.json.JsonReader;
-import jakarta.json.JsonStructure;
-import jakarta.json.JsonValue;
 
-import java.io.StringReader;
-import java.util.Objects;
+final class SyslogFormat implements CandidateFormat {
 
-public final class ParsedJson {
+    private final String json;
 
-    private final String jsonString;
-
-    public ParsedJson(final String jsonString) {
-        this.jsonString = jsonString;
-    }
-
-    public JsonObject toJsonObject() throws IllegalArgumentException {
-        final JsonStructure jsonStructure = toJsonStructure();
-        if (!jsonStructure.getValueType().equals(JsonValue.ValueType.OBJECT)) {
-            throw new IllegalArgumentException("Value <" + jsonString + "> could not be parsed to JSON object");
-        }
-        return toJsonStructure().asJsonObject();
-    }
-
-    public JsonArray toJsonArray() throws IllegalArgumentException {
-        final JsonStructure jsonStructure = toJsonStructure();
-        if (!jsonStructure.getValueType().equals(JsonValue.ValueType.ARRAY)) {
-            throw new IllegalArgumentException("Value <" + jsonString + "> could not be parsed to JSON array");
-        }
-        return jsonStructure.asJsonArray();
-    }
-
-    private JsonStructure toJsonStructure() throws IllegalArgumentException {
-        try (
-                final StringReader reader = new StringReader(jsonString); final JsonReader jsonReader = Json.createReader(reader)
-        ) {
-            return jsonReader.read();
-        }
-        catch (final JsonException | JsonParseException | IllegalStateException e) {
-            throw new IllegalArgumentException("Failed to read <" + jsonString + "> to JSON: " + e.getMessage(), e);
-        }
+    SyslogFormat(final String json) {
+        this.json = json;
     }
 
     @Override
-    public boolean equals(final Object object) {
+    public EventMetadata get() {
+        return new SyslogEvent(json);
+    }
+
+    @Override
+    public boolean matches() {
         final boolean rv;
-        if (object == null) {
+        final JsonObject root = new ParsedJson(json).toJsonObject();
+        final String format = root.getString("format", "");
+        final JsonObject object = root.getJsonObject("object");
+        final JsonObject timestamp = root.getJsonObject("timestamp");
+
+        if (!"rfc5424".equalsIgnoreCase(format)) {
             rv = false;
         }
-        else if (getClass() != object.getClass()) {
+        else if (object == null || timestamp == null) {
             rv = false;
         }
         else {
-            final ParsedJson parsedJson = (ParsedJson) object;
-            rv = Objects.equals(jsonString, parsedJson.jsonString);
+            final boolean hasValidObject = object.containsKey("bucket") && object.containsKey("path")
+                    && object.containsKey("partition");
+
+            final boolean hasValidTimestamp = timestamp.containsKey("epoch") && timestamp
+                    .containsKey("rfc5424timestamp") && timestamp.containsKey("path-extracted")
+                    && timestamp.containsKey("path-extracted-precision") && timestamp.containsKey("source");
+
+            rv = hasValidObject && hasValidTimestamp;
         }
         return rv;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(jsonString);
     }
 }

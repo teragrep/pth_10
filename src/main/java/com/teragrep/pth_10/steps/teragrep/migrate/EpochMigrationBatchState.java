@@ -86,7 +86,7 @@ final class EpochMigrationBatchState {
 
     EpochMigrationBatchState accept(final Row row) {
         final String rawString = row.getString(row.fieldIndex("_raw"));
-        final EventMetadata metadata = new EventMetadataFromString(rawString);
+        final EventMetadata metadata = new EventMetadataFactory(rawString).get();
         final Timestamp ts = row.getTimestamp(row.fieldIndex("_time"));
         if (ts == null) {
             throw new RuntimeException("Column '_time' was null, cannot convert to epoch seconds");

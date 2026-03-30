@@ -45,26 +45,38 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public interface EventMetadata {
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-    public abstract boolean isSyslog();
+public final class NonSyslogEventTest {
 
-    public abstract String format();
+    private final String nonSyslogJsonString = "{" + "\"object\":{" + "\"bucket\":\"my-bucket\","
+            + "\"path\":\"logs/file.gz\"," + "\"partition\":\"partition-1\"" + "}," + "\"timestamp\":{"
+            + "\"path-extracted\":\"2023-09-05T10:00:00Z\"," + "\"path-extracted-precision\":\"daily\","
+            + "\"source\":\"path\"" + "}" + "}";
 
-    public abstract String bucket();
+    @Test
+    public void testValues() {
+        final EventMetadata event = new NonSyslogEvent(nonSyslogJsonString);
+        Assertions.assertEquals("my-bucket", event.bucket());
+        Assertions.assertEquals("logs/file.gz", event.path());
+        Assertions.assertEquals("partition-1", event.partition());
+        Assertions.assertEquals("2023-09-05T10:00:00Z", event.pathExtracted());
+        Assertions.assertEquals("daily", event.pathExtractedPrecision());
+        Assertions.assertEquals("path", event.source());
+        Assertions.assertFalse(event.isSyslog());
+        Assertions.assertEquals("non-rfc5424", event.format());
+    }
 
-    public abstract String path();
+    @Test
+    public void testIsSyslogAlwaysFalse() {
+        final EventMetadata event = new NonSyslogEvent(nonSyslogJsonString);
+        Assertions.assertFalse(event.isSyslog());
+    }
 
-    public abstract String partition();
-
-    public abstract String epoch();
-
-    public abstract String rfc5424Timestamp();
-
-    public abstract String pathExtracted();
-
-    public abstract String pathExtractedPrecision();
-
-    public abstract String source();
-
+    @Test
+    public void testFormatAlwaysNonRfc5424() {
+        final EventMetadata event = new NonSyslogEvent(nonSyslogJsonString);
+        Assertions.assertEquals("non-rfc5424", event.format());
+    }
 }

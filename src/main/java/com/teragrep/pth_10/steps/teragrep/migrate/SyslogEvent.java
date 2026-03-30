@@ -47,95 +47,105 @@ package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import jakarta.json.JsonObject;
 
-import java.util.Objects;
+final class SyslogEvent implements EventMetadata {
 
-public final class EventMetadataFromString implements EventMetadata {
+    private final String bucket;
+    private final String path;
+    private final String partition;
+    private final String epoch;
+    private final String rfc5424timestamp;
+    private final String pathExtracted;
+    private final String pathExtractedPrecision;
+    private final String source;
 
-    private final JsonObject jsonObject;
-
-    public EventMetadataFromString(final String jsonString) {
-        this(new ParsedJson(jsonString));
+    SyslogEvent(final String json) {
+        this(new ParsedJson(json).toJsonObject());
     }
 
-    public EventMetadataFromString(final ParsedJson parsedJson) {
-        this(parsedJson.toJsonObject());
+    SyslogEvent(final JsonObject root) {
+        this(root.getJsonObject("object"), root.getJsonObject("timestamp"));
     }
 
-    public EventMetadataFromString(final JsonObject jsonObject) {
-        this.jsonObject = jsonObject;
+    SyslogEvent(final JsonObject object, final JsonObject timestamp) {
+        this(
+                object.getString("bucket"),
+                object.getString("path"),
+                object.getString("partition"),
+                String.valueOf(timestamp.getJsonNumber("epoch").longValue()),
+                timestamp.getString("rfc5424timestamp"),
+                timestamp.getString("path-extracted"),
+                timestamp.getString("path-extracted-precision"),
+                timestamp.getString("source")
+        );
+    }
+
+    SyslogEvent(
+            final String bucket,
+            final String path,
+            final String partition,
+            final String epoch,
+            final String rfc5424timestamp,
+            final String pathExtracted,
+            final String pathExtractedPrecision,
+            final String source
+    ) {
+        this.bucket = bucket;
+        this.path = path;
+        this.partition = partition;
+        this.epoch = epoch;
+        this.rfc5424timestamp = rfc5424timestamp;
+        this.pathExtracted = pathExtracted;
+        this.pathExtractedPrecision = pathExtractedPrecision;
+        this.source = source;
     }
 
     @Override
     public boolean isSyslog() {
-        return "rfc5424".equalsIgnoreCase(jsonObject.getString("format"));
+        return true;
     }
 
     @Override
     public String format() {
-        return jsonObject.getString("format");
+        return "rfc5424";
     }
 
     @Override
     public String bucket() {
-        return jsonObject.getJsonObject("object").getString("bucket");
+        return bucket;
     }
 
     @Override
     public String path() {
-        return jsonObject.getJsonObject("object").getString("path");
+        return path;
     }
 
     @Override
     public String partition() {
-        return jsonObject.getJsonObject("object").getString("partition");
-    }
-
-    @Override
-    public String rfc5242Timestamp() {
-        if (!isSyslog()) {
-            throw new UnsupportedOperationException("rfc5242Timestamp() not available for non-syslog metadata");
-        }
-        return jsonObject.getJsonObject("timestamp").getString("rfc5242timestamp");
-    }
-
-    @Override
-    public String pathExtracted() {
-        return jsonObject.getJsonObject("timestamp").getString("path-extracted");
-    }
-
-    @Override
-    public String pathExtractedPrecision() {
-        return jsonObject.getJsonObject("timestamp").getString("path-extracted-precision");
-    }
-
-    @Override
-    public String source() {
-        return jsonObject.getJsonObject("timestamp").getString("source");
+        return partition;
     }
 
     @Override
     public String epoch() {
-        if (!isSyslog()) {
-            throw new UnsupportedOperationException("epoch() not available for non-syslog metadata");
-        }
-        return String.valueOf(jsonObject.getJsonObject("timestamp").getJsonNumber("epoch").longValue());
+        return epoch;
     }
 
     @Override
-    public String toString() {
-        return jsonObject.toString();
+    public String rfc5424Timestamp() {
+        return rfc5424timestamp;
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == null || getClass() != o.getClass())
-            return false;
-        final EventMetadataFromString that = (EventMetadataFromString) o;
-        return Objects.equals(jsonObject, that.jsonObject);
+    public String pathExtracted() {
+        return pathExtracted;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(jsonObject);
+    public String pathExtractedPrecision() {
+        return pathExtractedPrecision;
+    }
+
+    @Override
+    public String source() {
+        return source;
     }
 }

@@ -45,26 +45,9 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public interface EventMetadata {
+import java.util.function.Supplier;
 
-    public abstract boolean isSyslog();
+public interface CandidateFormat extends Supplier<EventMetadata> {
 
-    public abstract String format();
-
-    public abstract String bucket();
-
-    public abstract String path();
-
-    public abstract String partition();
-
-    public abstract String epoch();
-
-    public abstract String rfc5424Timestamp();
-
-    public abstract String pathExtracted();
-
-    public abstract String pathExtractedPrecision();
-
-    public abstract String source();
-
+    public abstract boolean matches();
 }
