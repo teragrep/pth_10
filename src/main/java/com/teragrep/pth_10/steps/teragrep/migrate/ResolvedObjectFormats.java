@@ -111,7 +111,7 @@ final class ResolvedObjectFormats {
     @Override
     public boolean equals(final Object o) {
         // mutable internal cache ignored
-        boolean rv;
+        final boolean rv;
         if (o == null) {
             rv = false;
         }

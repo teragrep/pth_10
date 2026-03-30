@@ -45,26 +45,41 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public interface EventMetadata {
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-    public abstract boolean isSyslog();
+public final class SyslogEventTest {
 
-    public abstract String format();
+    private final String syslogJsonString = "{" + "\"object\":{" + "\"bucket\":\"bucket1\","
+            + "\"path\":\"path/to/file.gz\"," + "\"partition\":\"part1\"" + "}," + "\"timestamp\":{"
+            + "\"epoch\":1693904400," + "\"rfc5424timestamp\":\"2023-09-05T09:00:00Z\","
+            + "\"path-extracted\":\"2023-09-05T09:00:00Z\"," + "\"path-extracted-precision\":\"hourly\","
+            + "\"source\":\"syslog\"" + "}" + "}";
 
-    public abstract String bucket();
+    @Test
+    public void testValues() {
+        final EventMetadata event = new SyslogEvent(syslogJsonString);
+        Assertions.assertTrue(event.isSyslog());
+        Assertions.assertEquals("rfc5424", event.format());
+        Assertions.assertEquals("bucket1", event.bucket());
+        Assertions.assertEquals("path/to/file.gz", event.path());
+        Assertions.assertEquals("part1", event.partition());
+        Assertions.assertEquals("1693904400", event.epoch());
+        Assertions.assertEquals("2023-09-05T09:00:00Z", event.rfc5424Timestamp());
+        Assertions.assertEquals("2023-09-05T09:00:00Z", event.pathExtracted());
+        Assertions.assertEquals("hourly", event.pathExtractedPrecision());
+        Assertions.assertEquals("syslog", event.source());
+    }
 
-    public abstract String path();
+    @Test
+    public void testIsSyslog() {
+        final EventMetadata event = new SyslogEvent(syslogJsonString);
+        Assertions.assertTrue(event.isSyslog());
+    }
 
-    public abstract String partition();
-
-    public abstract String epoch();
-
-    public abstract String rfc5424Timestamp();
-
-    public abstract String pathExtracted();
-
-    public abstract String pathExtractedPrecision();
-
-    public abstract String source();
-
+    @Test
+    public void testFormat() {
+        final EventMetadata event = new SyslogEvent(syslogJsonString);
+        Assertions.assertEquals("rfc5424", event.format());
+    }
 }

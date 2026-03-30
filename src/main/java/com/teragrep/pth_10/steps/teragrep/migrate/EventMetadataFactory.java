@@ -45,26 +45,43 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public interface EventMetadata {
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-    public abstract boolean isSyslog();
+final class EventMetadataFactory implements Supplier<EventMetadata> {
 
-    public abstract String format();
+    private final List<Supplier<CandidateFormat>> formats;
 
-    public abstract String bucket();
+    EventMetadataFactory(final String JSONString) {
+        this(Arrays.asList(() -> new SyslogFormat(JSONString), () -> new NonSyslogFormat(JSONString)));
+    }
 
-    public abstract String path();
+    EventMetadataFactory(final List<Supplier<CandidateFormat>> formats) {
+        this.formats = formats;
+    }
 
-    public abstract String partition();
-
-    public abstract String epoch();
-
-    public abstract String rfc5424Timestamp();
-
-    public abstract String pathExtracted();
-
-    public abstract String pathExtractedPrecision();
-
-    public abstract String source();
-
+    @Override
+    public EventMetadata get() {
+        final List<EventMetadata> validEvents = formats
+                .stream()
+                .map(Supplier::get)
+                .filter(CandidateFormat::matches)
+                .map(Supplier::get)
+                .collect(Collectors.toList());
+        final EventMetadata rv;
+        if (validEvents.size() == 1) {
+            rv = validEvents.get(0);
+        }
+        else if (validEvents.isEmpty()) {
+            throw new IllegalStateException("No matching format found.");
+        }
+        else {
+            throw new IllegalStateException(
+                    "Multiple matching formats found <" + validEvents.size() + ">, expected 1."
+            );
+        }
+        return rv;
+    }
 }
