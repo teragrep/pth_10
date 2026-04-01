@@ -85,13 +85,13 @@ final class EpochMigrationBatchState {
     }
 
     EpochMigrationBatchState accept(final Row row) {
-        final String rawString = row.getString(row.fieldIndex("_raw"));
-        final EventMetadata metadata = new EventMetadataFactory(rawString).get();
         final Timestamp ts = row.getTimestamp(row.fieldIndex("_time"));
         if (ts == null) {
             throw new RuntimeException("Column '_time' was null, cannot convert to epoch seconds");
         }
         final long epoch = ts.toInstant().getEpochSecond();
+        final String rawString = row.getString(row.fieldIndex("_raw"));
+        final EventMetadata metadata = new EventMetadataFactory(rawString).get();
         final long objectFormatId = resolvedObjectFormats.resolve(metadata.format());
         final String partitionString = row.getString(row.fieldIndex("partition"));
         final long id = Long.parseLong(partitionString);
