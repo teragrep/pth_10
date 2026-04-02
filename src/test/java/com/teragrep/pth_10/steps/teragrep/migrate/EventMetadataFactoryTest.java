@@ -83,7 +83,7 @@ public final class EventMetadataFactoryTest {
         final EventMetadata result = factory.get();
 
         Assertions.assertFalse(result.isSyslog());
-        Assertions.assertEquals("non-rfc5424", result.format());
+        Assertions.assertEquals("unknown", result.format());
         Assertions.assertEquals("bucket", result.bucket());
         Assertions.assertEquals("path/file.gz", result.path());
         Assertions.assertEquals("2", result.partition());

@@ -98,7 +98,7 @@ final class NonSyslogEvent implements EventMetadata {
 
     @Override
     public String format() {
-        return "non-rfc5424";
+        return "unknown";
     }
 
     @Override
