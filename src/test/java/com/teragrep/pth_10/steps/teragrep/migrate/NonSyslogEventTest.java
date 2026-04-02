@@ -65,7 +65,7 @@ public final class NonSyslogEventTest {
         Assertions.assertEquals("daily", event.pathExtractedPrecision());
         Assertions.assertEquals("path", event.source());
         Assertions.assertFalse(event.isSyslog());
-        Assertions.assertEquals("non-rfc5424", event.format());
+        Assertions.assertEquals("unknown", event.format());
     }
 
     @Test
@@ -75,8 +75,8 @@ public final class NonSyslogEventTest {
     }
 
     @Test
-    public void testFormatAlwaysNonRfc5424() {
+    public void testFormat() {
         final EventMetadata event = new NonSyslogEvent(nonSyslogJsonString);
-        Assertions.assertEquals("non-rfc5424", event.format());
+        Assertions.assertEquals("unknown", event.format());
     }
 }

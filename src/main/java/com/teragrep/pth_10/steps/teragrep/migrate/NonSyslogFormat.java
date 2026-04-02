@@ -68,7 +68,7 @@ final class NonSyslogFormat implements CandidateFormat {
         final JsonObject timestamp = root.getJsonObject("timestamp");
         final String format = root.getString("format", "");
 
-        if (!"non-rfc5424".equalsIgnoreCase(format)) {
+        if ("rfc5424".equalsIgnoreCase(format)) {
             rv = false;
         }
         else if (object == null || timestamp == null) {

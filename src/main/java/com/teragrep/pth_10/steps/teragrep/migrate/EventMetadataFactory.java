@@ -52,13 +52,13 @@ import java.util.stream.Collectors;
 
 final class EventMetadataFactory implements Supplier<EventMetadata> {
 
-    private final List<Supplier<CandidateFormat>> formats;
+    private final List<CandidateFormat> formats;
 
     EventMetadataFactory(final String JSONString) {
-        this(Arrays.asList(() -> new SyslogFormat(JSONString), () -> new NonSyslogFormat(JSONString)));
+        this(Arrays.asList(new SyslogFormat(JSONString), new NonSyslogFormat(JSONString)));
     }
 
-    EventMetadataFactory(final List<Supplier<CandidateFormat>> formats) {
+    EventMetadataFactory(final List<CandidateFormat> formats) {
         this.formats = formats;
     }
 
@@ -66,7 +66,6 @@ final class EventMetadataFactory implements Supplier<EventMetadata> {
     public EventMetadata get() {
         final List<EventMetadata> validEvents = formats
                 .stream()
-                .map(Supplier::get)
                 .filter(CandidateFormat::matches)
                 .map(Supplier::get)
                 .collect(Collectors.toList());
