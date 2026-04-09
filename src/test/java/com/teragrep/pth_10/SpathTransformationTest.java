@@ -353,7 +353,7 @@ public class SpathTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void spathTestJsonInvalidInput() {
+    public void spathTestJsonInvalidNumericInput() {
         streamingTestUtil.performDPLTest("index=index_A | eval a = \"12.34\" | spath input=a", JSON_DATA_1, ds -> {
             final StructType expectedSchema = new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
@@ -365,7 +365,7 @@ public class SpathTransformationTest {
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
-                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, ds.schema());
 
@@ -515,7 +515,7 @@ public class SpathTransformationTest {
             matches = "true"
     )
     public void spathTestNestedJsonData() {
-        streamingTestUtil.performDPLTest("index=index_A | spath output=log path=.log", JSON_DATA_NESTED, ds -> {
+        streamingTestUtil.performDPLTest("index=index_A | spath output=log path=log", JSON_DATA_NESTED, ds -> {
             final StructType expectedSchema = new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
                     new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
@@ -646,7 +646,7 @@ public class SpathTransformationTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void spathTest_invalidInputManualExtraction() {
+    public void testSpathInvalidPathManualExtraction() {
         streamingTestUtil
                 .performDPLTest("index=index_A | spath path=\"randomPathThatDoesNotExist\"", INVALID_DATA, ds -> {
                     final StructType expectedSchema = new StructType(new StructField[] {
@@ -761,4 +761,284 @@ public class SpathTransformationTest {
             Assertions.assertEquals("", invalidJsonresult.get(0).getAs("lil"));
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSpathJsonArrayAutoExtraction() {
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=1 | eval _raw = \"[{\\\"a\\\":\\\"b\\\", \\\"c\\\":{\\\"d\\\":\\\"e\\\"}}, {\\\"f\\\":\\\"g\\\"}]\" | spath",
+                        "", ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+                                    new StructField("c.d", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("f", DataTypes.StringType, true, new MetadataBuilder().build()),
+                                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
+                            List<Row> result = ds.select("`c.d`", "f", "a").dropDuplicates().collectAsList();
+                            Assertions.assertEquals(1, result.size());
+                            Assertions.assertEquals("e", result.get(0).getAs("c.d"));
+                            Assertions.assertEquals("g", result.get(0).getAs("f"));
+                            Assertions.assertEquals("b", result.get(0).getAs("a"));
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSpathJsonArrayWithPath() {
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=1 | eval _raw = \"[{\\\"a\\\":\\\"b\\\", \\\"c\\\":{\\\"d\\\":\\\"e\\\"}}]\" | spath path=c.d",
+                        "", ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+                                    new StructField("c.d", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
+                            String result = ds
+                                    .select("`c.d`")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList())
+                                    .get(0);
+                            Assertions.assertEquals("e", result);
+                        }
+                );
+    }
+
+    @Test
+    @Disabled
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSpathJsonWithIncompletePathParameter() {
+        streamingTestUtil.performDPLTest("index=index_A | spath path=", JSON_DATA_NESTED, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("log", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
+            String result = ds
+                    .select("log")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            Assertions
+                    .assertEquals(
+                            "{\"auditID\":\"x\",\"requestURI\":\"/path\",\"user\":{\"name\":\"sys\",\"group\":[\"admins\",\"nosucherror\"]},\"method\":\"GET\",\"remoteAddr\":\"127.0.0.123:1025\",\"requestTimestamp\":\"2022-12-14T11:56:13Z\",\"responseTimestamp\":\"2022-12-14T11:56:13Z\",\"responseCode\":503,\"requestHeader\":{\"Accept-Encoding\":[\"gzip\"],\"User-Agent\":[\"Go-http-client/2.0\"]}}",
+                            result
+                    );
+        });
+    }
+
+    @Test
+    @Disabled
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+
+    public void testSpathJsonWithIncompleteInputParameter() {
+        streamingTestUtil.performDPLTest("index=index_A | spath input=", JSON_DATA_NESTED, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("log", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
+            String result = ds
+                    .select("log")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            Assertions
+                    .assertEquals(
+                            "{\"auditID\":\"x\",\"requestURI\":\"/path\",\"user\":{\"name\":\"sys\",\"group\":[\"admins\",\"nosucherror\"]},\"method\":\"GET\",\"remoteAddr\":\"127.0.0.123:1025\",\"requestTimestamp\":\"2022-12-14T11:56:13Z\",\"responseTimestamp\":\"2022-12-14T11:56:13Z\",\"responseCode\":503,\"requestHeader\":{\"Accept-Encoding\":[\"gzip\"],\"User-Agent\":[\"Go-http-client/2.0\"]}}",
+                            result
+                    );
+        });
+    }
+
+    @Test
+    @Disabled
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSpathJsonWithIncompleteOutputParameter() {
+        streamingTestUtil.performDPLTest("index=index_A | spath output=", JSON_DATA_NESTED, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("id", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("log", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
+            String result = ds
+                    .select("log")
+                    .dropDuplicates()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList())
+                    .get(0);
+            Assertions
+                    .assertEquals(
+                            "{\"auditID\":\"x\",\"requestURI\":\"/path\",\"user\":{\"name\":\"sys\",\"group\":[\"admins\",\"nosucherror\"]},\"method\":\"GET\",\"remoteAddr\":\"127.0.0.123:1025\",\"requestTimestamp\":\"2022-12-14T11:56:13Z\",\"responseTimestamp\":\"2022-12-14T11:56:13Z\",\"responseCode\":503,\"requestHeader\":{\"Accept-Encoding\":[\"gzip\"],\"User-Agent\":[\"Go-http-client/2.0\"]}}",
+                            result
+                    );
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSpathNestedJsonWithNestedJson() {
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=1 | eval _raw = \"{\\\"a\\\":\\\"b\\\", \\\"c\\\":{\\\"d\\\":\\\"e\\\", \\\"f\\\":{\\\"g\\\":\\\"h\\\"}}}\" | spath output=g path=c.f.g",
+                        "", ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+                                    new StructField("g", DataTypes.StringType, true, new MetadataBuilder().build())
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
+                            String result = ds
+                                    .select("g")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList())
+                                    .get(0);
+                            Assertions.assertEquals("h", result);
+                        }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSpathWithMultipleNestedJson() {
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=1 | eval _raw= \"{\\\"log\\\":{\\\"auditID\\\":\\\"x\\\",\\\"requestURI\\\":\\\"/path\\\",\\\"user\\\":{\\\"name\\\":\\\"sys\\\",\\\"group\\\":[\\\"admins\\\",\\\"nosucherror\\\"]},\\\"method\\\":\\\"GET\\\",\\\"remoteAddr\\\":\\\"127.0.0.123:1025\\\",\\\"requestTimestamp\\\":\\\"2022-12-14T11:56:13Z\\\",\\\"responseTimestamp\\\":\\\"2022-12-14T11:56:13Z\\\",\\\"responseCode\\\":503,\\\"requestHeader\\\":{\\\"Accept-Encoding\\\":[\\\"gzip\\\"],\\\"User-Agent\\\":[\\\"Go-http-client/2.0\\\"]}}}\" | spath output=Accept-Encoding path=log.requestHeader.Accept-Encoding",
+                        "", ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build()),
+                                    new StructField(
+                                            "Accept-Encoding",
+                                            DataTypes.StringType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
+                            String result = ds
+                                    .select("Accept-Encoding")
+                                    .dropDuplicates()
+                                    .collectAsList()
+                                    .stream()
+                                    .map(r -> r.getAs(0).toString())
+                                    .collect(Collectors.toList())
+                                    .get(0);
+                            Assertions.assertEquals("gzip", result);
+                        }
+                );
+    }
+
 }
