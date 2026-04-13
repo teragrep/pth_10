@@ -80,7 +80,8 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
         this.fieldsStep = new FieldsStep();
         // if fields command has no arguments
         if (
-            ctx.fieldListType() == null || ctx.fieldListType().fieldType() == null
+            ctx.fieldListType() == null
+                    || ctx.fieldListType().fieldType() == null || ctx.fieldListType().fieldType().isEmpty()
                     || ctx.fieldListType().fieldType().get(0).getText().isEmpty()
         ) {
             throw new IllegalStateException(
