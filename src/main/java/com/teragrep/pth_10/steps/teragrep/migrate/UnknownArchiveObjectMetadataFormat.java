@@ -57,13 +57,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
 
-final class UnknownFormat implements Format {
+final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataFormat {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(UnknownFormat.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UnknownArchiveObjectMetadataFormat.class);
 
     @Override
-    public ArchiveObjectMetadata parsed(final String json) {
-        ArchiveObjectMetadata result;
+    public ResolvedFormat parsed(final String json) {
+        ResolvedFormat result;
         try {
             final JsonObject root = toJsonObject(json);
             final JsonObject object = root.getJsonObject("object");
@@ -73,13 +73,11 @@ final class UnknownFormat implements Format {
                 result = new StubArchiveObjectMetadata();
             }
             else {
-                result = new ArchiveObjectMetadataImpl(
+                result = new ResolvedFormatImpl(
                         format,
                         object.getString("bucket"),
                         object.getString("path"),
                         object.getString("partition"),
-                        "unknown",
-                        "unknown",
                         timestamp.getString("path-extracted"),
                         timestamp.getString("path-extracted-precision"),
                         timestamp.getString("source")

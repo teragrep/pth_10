@@ -47,7 +47,7 @@ package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import com.teragrep.stb_01.Stubable;
 
-public interface ArchiveObjectMetadata extends Stubable {
+public interface ResolvedFormat extends Stubable {
 
     public abstract String format();
 

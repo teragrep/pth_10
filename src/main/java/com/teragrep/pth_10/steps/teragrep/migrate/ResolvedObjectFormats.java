@@ -87,7 +87,6 @@ final class ResolvedObjectFormats {
 
     private long resolveFromDatabase(final String objectFormat) {
         try {
-            // plain SQL since jooq can't insert into a generic table
             ctx
                     .execute(
                             " INSERT INTO " + journalDBName
@@ -100,7 +99,6 @@ final class ResolvedObjectFormats {
             // this is a workaround since the .onDuplicateKeyIgnoe() method doesn't work with generic tables
         }
 
-        // get id object format
         final Table<Record> objectFormatTable = DSL.table(DSL.name(journalDBName, "object_format"));
         final Field<String> nameField = DSL
                 .field(DSL.name(journalDBName, objectFormatTable.getName(), "name"), String.class);

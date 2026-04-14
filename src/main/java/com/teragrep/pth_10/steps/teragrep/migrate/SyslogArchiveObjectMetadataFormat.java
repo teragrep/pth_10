@@ -57,13 +57,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
 
-final class SyslogFormat implements Format {
+final class SyslogArchiveObjectMetadataFormat implements ArchiveObjectMetadataFormat {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SyslogFormat.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SyslogArchiveObjectMetadataFormat.class);
 
     @Override
-    public ArchiveObjectMetadata parsed(final String json) {
-        ArchiveObjectMetadata result;
+    public ResolvedFormat parsed(final String json) {
+        ResolvedFormat result;
         try {
             final JsonObject root = toJsonObject(json);
             final JsonObject object = root.getJsonObject("object");
@@ -73,7 +73,7 @@ final class SyslogFormat implements Format {
                 result = new StubArchiveObjectMetadata();
             }
             else {
-                result = new ArchiveObjectMetadataImpl(
+                result = new ResolvedFormatImpl(
                         format,
                         object.getString("bucket"),
                         object.getString("path"),
