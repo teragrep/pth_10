@@ -47,69 +47,68 @@ package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import com.google.gson.JsonParseException;
 import jakarta.json.Json;
-import jakarta.json.JsonArray;
 import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonReader;
 import jakarta.json.JsonStructure;
 import jakarta.json.JsonValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
-import java.util.Objects;
 
-public final class ParsedJson {
+final class UnknownFormat implements Format {
 
-    private final String jsonString;
+    private static final Logger LOGGER = LoggerFactory.getLogger(UnknownFormat.class);
 
-    public ParsedJson(final String jsonString) {
-        this.jsonString = jsonString;
-    }
-
-    public JsonObject toJsonObject() throws IllegalArgumentException {
-        final JsonStructure jsonStructure = toJsonStructure();
-        if (!jsonStructure.getValueType().equals(JsonValue.ValueType.OBJECT)) {
-            throw new IllegalArgumentException("Value <" + jsonString + "> could not be parsed to JSON object");
+    @Override
+    public ArchiveObjectMetadata parsed(final String json) {
+        ArchiveObjectMetadata result;
+        try {
+            final JsonObject root = toJsonObject(json);
+            final JsonObject object = root.getJsonObject("object");
+            final JsonObject timestamp = root.getJsonObject("timestamp");
+            final String format = root.getString("format");
+            if ("rfc5424".equalsIgnoreCase(format)) {
+                result = new StubArchiveObjectMetadata();
+            }
+            else {
+                result = new ArchiveObjectMetadataImpl(
+                        format,
+                        object.getString("bucket"),
+                        object.getString("path"),
+                        object.getString("partition"),
+                        "unknown",
+                        "unknown",
+                        timestamp.getString("path-extracted"),
+                        timestamp.getString("path-extracted-precision"),
+                        timestamp.getString("source")
+                );
+            }
         }
-        return toJsonStructure().asJsonObject();
-    }
-
-    public JsonArray toJsonArray() throws IllegalArgumentException {
-        final JsonStructure jsonStructure = toJsonStructure();
-        if (!jsonStructure.getValueType().equals(JsonValue.ValueType.ARRAY)) {
-            throw new IllegalArgumentException("Value <" + jsonString + "> could not be parsed to JSON array");
+        catch (final RuntimeException e) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Error parsing JSON <{}> message <{}>", json, e.getMessage());
+            }
+            result = new StubArchiveObjectMetadata();
         }
-        return jsonStructure.asJsonArray();
+        return result;
     }
 
-    private JsonStructure toJsonStructure() throws IllegalArgumentException {
+    private JsonObject toJsonObject(final String jsonString) {
+        final JsonStructure structure;
         try (
                 final StringReader reader = new StringReader(jsonString); final JsonReader jsonReader = Json.createReader(reader)
         ) {
-            return jsonReader.read();
+            structure = jsonReader.read();
         }
         catch (final JsonException | JsonParseException | IllegalStateException e) {
             throw new IllegalArgumentException("Failed to read <" + jsonString + "> to JSON: " + e.getMessage(), e);
         }
-    }
 
-    @Override
-    public boolean equals(final Object object) {
-        final boolean rv;
-        if (object == null) {
-            rv = false;
+        if (!structure.getValueType().equals(JsonValue.ValueType.OBJECT)) {
+            throw new IllegalArgumentException("Value <" + jsonString + "> could not be parsed to JSON object");
         }
-        else if (getClass() != object.getClass()) {
-            rv = false;
-        }
-        else {
-            final ParsedJson parsedJson = (ParsedJson) object;
-            rv = Objects.equals(jsonString, parsedJson.jsonString);
-        }
-        return rv;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(jsonString);
+        return structure.asJsonObject();
     }
 }

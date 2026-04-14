@@ -45,26 +45,87 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public interface EventMetadata {
+final class ArchiveObjectMetadataImpl implements ArchiveObjectMetadata {
 
-    public abstract boolean isSyslog();
+    private final String format;
+    private final String bucket;
+    private final String path;
+    private final String partition;
+    private final String epoch;
+    private final String rfc5424Timestamp;
+    private final String pathExtracted;
+    private final String pathExtractedPrecision;
+    private final String source;
 
-    public abstract String format();
+    ArchiveObjectMetadataImpl(
+            final String format,
+            final String bucket,
+            final String path,
+            final String partition,
+            final String epoch,
+            final String rfc5424Timestamp,
+            final String pathExtracted,
+            final String pathExtractedPrecision,
+            final String source
+    ) {
+        this.format = format;
+        this.bucket = bucket;
+        this.path = path;
+        this.partition = partition;
+        this.epoch = epoch;
+        this.rfc5424Timestamp = rfc5424Timestamp;
+        this.pathExtracted = pathExtracted;
+        this.pathExtractedPrecision = pathExtractedPrecision;
+        this.source = source;
+    }
 
-    public abstract String bucket();
+    @Override
+    public String format() {
+        return format;
+    }
 
-    public abstract String path();
+    @Override
+    public String bucket() {
+        return bucket;
+    }
 
-    public abstract String partition();
+    @Override
+    public String path() {
+        return path;
+    }
 
-    public abstract String epoch();
+    @Override
+    public String partition() {
+        return partition;
+    }
 
-    public abstract String rfc5424Timestamp();
+    @Override
+    public String epoch() {
+        return epoch;
+    }
 
-    public abstract String pathExtracted();
+    @Override
+    public String rfc5424Timestamp() {
+        return rfc5424Timestamp;
+    }
 
-    public abstract String pathExtractedPrecision();
+    @Override
+    public String pathExtracted() {
+        return pathExtracted;
+    }
 
-    public abstract String source();
+    @Override
+    public String pathExtractedPrecision() {
+        return pathExtractedPrecision;
+    }
 
+    @Override
+    public String source() {
+        return source;
+    }
+
+    @Override
+    public boolean isStub() {
+        return false;
+    }
 }

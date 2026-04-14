@@ -45,107 +45,86 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import jakarta.json.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
 
-final class SyslogEvent implements EventMetadata {
+final class ResolvedArchiveObjectMetadata implements ArchiveObjectMetadata {
 
-    private final String bucket;
-    private final String path;
-    private final String partition;
-    private final String epoch;
-    private final String rfc5424timestamp;
-    private final String pathExtracted;
-    private final String pathExtractedPrecision;
-    private final String source;
+    private final String json;
+    private final List<Format> archiveObjectMetadataList;
 
-    SyslogEvent(final String json) {
-        this(new ParsedJson(json).toJsonObject());
+    ResolvedArchiveObjectMetadata(final String json) {
+        this(json, List.of(new SyslogFormat(), new UnknownFormat()));
     }
 
-    SyslogEvent(final JsonObject root) {
-        this(root.getJsonObject("object"), root.getJsonObject("timestamp"));
+    ResolvedArchiveObjectMetadata(final String json, final List<Format> archiveObjectMetadataList) {
+        this.json = json;
+        this.archiveObjectMetadataList = archiveObjectMetadataList;
     }
 
-    SyslogEvent(final JsonObject object, final JsonObject timestamp) {
-        this(
-                object.getString("bucket"),
-                object.getString("path"),
-                object.getString("partition"),
-                String.valueOf(timestamp.getJsonNumber("epoch").longValue()),
-                timestamp.getString("rfc5424timestamp"),
-                timestamp.getString("path-extracted"),
-                timestamp.getString("path-extracted-precision"),
-                timestamp.getString("source")
-        );
-    }
-
-    SyslogEvent(
-            final String bucket,
-            final String path,
-            final String partition,
-            final String epoch,
-            final String rfc5424timestamp,
-            final String pathExtracted,
-            final String pathExtractedPrecision,
-            final String source
-    ) {
-        this.bucket = bucket;
-        this.path = path;
-        this.partition = partition;
-        this.epoch = epoch;
-        this.rfc5424timestamp = rfc5424timestamp;
-        this.pathExtracted = pathExtracted;
-        this.pathExtractedPrecision = pathExtractedPrecision;
-        this.source = source;
+    private ArchiveObjectMetadata resolved() {
+        final List<ArchiveObjectMetadata> validResults = new ArrayList<>();
+        for (final Format format : archiveObjectMetadataList) {
+            final ArchiveObjectMetadata result = format.parsed(json);
+            if (!result.isStub()) {
+                validResults.add(result);
+            }
+        }
+        if (validResults.size() != 1) {
+            throw new IllegalStateException(
+                    "Expected one valid archive object metadata format but found <" + validResults.size() + ">"
+            );
+        }
+        return validResults.get(0);
     }
 
     @Override
-    public boolean isSyslog() {
-        return true;
+    public boolean isStub() {
+        return false;
     }
 
     @Override
     public String format() {
-        return "rfc5424";
+        return resolved().format();
     }
 
     @Override
     public String bucket() {
-        return bucket;
+        return resolved().bucket();
     }
 
     @Override
     public String path() {
-        return path;
+        return resolved().path();
     }
 
     @Override
     public String partition() {
-        return partition;
+        return resolved().partition();
     }
 
     @Override
     public String epoch() {
-        return epoch;
+        return resolved().epoch();
     }
 
     @Override
     public String rfc5424Timestamp() {
-        return rfc5424timestamp;
+        return resolved().rfc5424Timestamp();
     }
 
     @Override
     public String pathExtracted() {
-        return pathExtracted;
+        return resolved().pathExtracted();
     }
 
     @Override
     public String pathExtractedPrecision() {
-        return pathExtractedPrecision;
+        return resolved().pathExtractedPrecision();
     }
 
     @Override
     public String source() {
-        return source;
+        return resolved().source();
     }
 }

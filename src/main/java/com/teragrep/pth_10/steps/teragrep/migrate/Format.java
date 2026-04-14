@@ -45,44 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import jakarta.json.JsonObject;
+public interface Format {
 
-final class NonSyslogFormat implements CandidateFormat {
-
-    private final String json;
-
-    NonSyslogFormat(final String json) {
-        this.json = json;
-    }
-
-    @Override
-    public EventMetadata get() {
-        return new NonSyslogEvent(json);
-    }
-
-    @Override
-    public boolean matches() {
-        final boolean rv;
-        final JsonObject root = new ParsedJson(json).toJsonObject();
-        final JsonObject object = root.getJsonObject("object");
-        final JsonObject timestamp = root.getJsonObject("timestamp");
-        final String format = root.getString("format", "");
-
-        if ("rfc5424".equalsIgnoreCase(format)) {
-            rv = false;
-        }
-        else if (object == null || timestamp == null) {
-            rv = false;
-        }
-        else {
-            final boolean hasValidObject = object.containsKey("bucket") && object.containsKey("path")
-                    && object.containsKey("partition");
-
-            final boolean hasValidTimestamp = timestamp.containsKey("path-extracted") && timestamp
-                    .containsKey("path-extracted-precision") && timestamp.containsKey("source")
-                    && !timestamp.containsKey("epoch") && !timestamp.containsKey("rfc5424timestamp");
-            rv = hasValidObject && hasValidTimestamp;
-        }
-        return rv;
-    }
+    public abstract ArchiveObjectMetadata parsed(final String json);
 }

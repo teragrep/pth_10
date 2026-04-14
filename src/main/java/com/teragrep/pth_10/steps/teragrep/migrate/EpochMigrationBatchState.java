@@ -91,12 +91,12 @@ final class EpochMigrationBatchState {
         }
         final long epoch = ts.toInstant().getEpochSecond();
         final String rawString = row.getString(row.fieldIndex("_raw"));
-        final EventMetadata metadata = new EventMetadataFactory(rawString).get();
+        final ArchiveObjectMetadata metadata = new ResolvedArchiveObjectMetadata(rawString);
         final long objectFormatId = resolvedObjectFormats.resolve(metadata.format());
         final String partitionString = row.getString(row.fieldIndex("partition"));
         final long id = Long.parseLong(partitionString);
 
-        if (!metadata.isSyslog() && LOGGER.isInfoEnabled()) {
+        if (!"rfc5424-syslog".equals(metadata.format()) && LOGGER.isInfoEnabled()) {
             LOGGER
                     .info(
                             "Encountered non-syslog row id=<{}> using path extracted time value <{}> with precision of <{}> resulting epoch <{}>",
