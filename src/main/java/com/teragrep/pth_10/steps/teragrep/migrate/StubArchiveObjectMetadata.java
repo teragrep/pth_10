@@ -45,99 +45,55 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import jakarta.json.JsonObject;
-
-final class NonSyslogEvent implements EventMetadata {
-
-    private final String bucket;
-    private final String path;
-    private final String partition;
-    private final String pathExtracted;
-    private final String pathExtractedPrecision;
-    private final String source;
-
-    NonSyslogEvent(final String json) {
-        this(new ParsedJson(json).toJsonObject());
-    }
-
-    NonSyslogEvent(final JsonObject root) {
-        this(root.getJsonObject("object"), root.getJsonObject("timestamp"));
-    }
-
-    NonSyslogEvent(final JsonObject object, final JsonObject timestamp) {
-        this(
-                object.getString("bucket"),
-                object.getString("path"),
-                object.getString("partition"),
-                timestamp.getString("path-extracted"),
-                timestamp.getString("path-extracted-precision"),
-                timestamp.getString("source")
-        );
-    }
-
-    NonSyslogEvent(
-            final String bucket,
-            final String path,
-            final String partition,
-            final String pathExtracted,
-            final String pathExtractedPrecision,
-            final String source
-    ) {
-        this.bucket = bucket;
-        this.path = path;
-        this.partition = partition;
-        this.pathExtracted = pathExtracted;
-        this.pathExtractedPrecision = pathExtractedPrecision;
-        this.source = source;
-    }
-
-    @Override
-    public boolean isSyslog() {
-        return false;
-    }
+public class StubArchiveObjectMetadata implements ArchiveObjectMetadata {
 
     @Override
     public String format() {
-        return "unknown";
+        throw new UnsupportedOperationException("format() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String bucket() {
-        return bucket;
+        throw new UnsupportedOperationException("bucket() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String path() {
-        return path;
+        throw new UnsupportedOperationException("path() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String partition() {
-        return partition;
+        throw new UnsupportedOperationException("partition() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String epoch() {
-        throw new UnsupportedOperationException("epoch() not supported for NonSyslogEvent");
+        throw new UnsupportedOperationException("epoch() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String rfc5424Timestamp() {
-        throw new UnsupportedOperationException("rfc5424Timestamp() not supported for NonSyslogEvent");
+        throw new UnsupportedOperationException("rfc5424Timestamp() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String pathExtracted() {
-        return pathExtracted;
+        throw new UnsupportedOperationException("pathExtracted() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String pathExtractedPrecision() {
-        return pathExtractedPrecision;
+        throw new UnsupportedOperationException("pathExtractedPrecision() not supported for StubArchiveObjectMetadata");
     }
 
     @Override
     public String source() {
-        return source;
+        throw new UnsupportedOperationException("source() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public boolean isStub() {
+        return true;
     }
 }

@@ -57,6 +57,7 @@
     <teragrep.pth_15.version>2.0.0</teragrep.pth_15.version>
     <teragrep.rlp_01.version>4.0.1</teragrep.rlp_01.version>
     <teragrep.rlp_03.version>9.0.0</teragrep.rlp_03.version>
+    <teragrep.stb_01.version>1.0.0</teragrep.stb_01.version>
   </properties>
   <dependencies>
     <dependency>
@@ -152,6 +153,11 @@
       <groupId>com.teragrep</groupId>
       <artifactId>dpf_03</artifactId>
       <version>${teragrep.dpf_03.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.teragrep</groupId>
+      <artifactId>stb_01</artifactId>
+      <version>${teragrep.stb_01.version}</version>
     </dependency>
     <!-- Database Tests -->
     <dependency>

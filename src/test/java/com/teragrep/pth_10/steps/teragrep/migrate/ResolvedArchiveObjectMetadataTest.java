@@ -45,42 +45,6 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
+public final class ResolvedArchiveObjectMetadataTest {
 
-final class EventMetadataFactory implements Supplier<EventMetadata> {
-
-    private final List<CandidateFormat> formats;
-
-    EventMetadataFactory(final String JSONString) {
-        this(Arrays.asList(new SyslogFormat(JSONString), new NonSyslogFormat(JSONString)));
-    }
-
-    EventMetadataFactory(final List<CandidateFormat> formats) {
-        this.formats = formats;
-    }
-
-    @Override
-    public EventMetadata get() {
-        final List<EventMetadata> validEvents = formats
-                .stream()
-                .filter(CandidateFormat::matches)
-                .map(Supplier::get)
-                .collect(Collectors.toList());
-        final EventMetadata rv;
-        if (validEvents.size() == 1) {
-            rv = validEvents.get(0);
-        }
-        else if (validEvents.isEmpty()) {
-            throw new IllegalStateException("No matching format found.");
-        }
-        else {
-            throw new IllegalStateException(
-                    "Multiple matching formats found <" + validEvents.size() + ">, expected 1."
-            );
-        }
-        return rv;
-    }
 }

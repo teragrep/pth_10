@@ -45,45 +45,70 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
+import com.google.gson.JsonParseException;
+import jakarta.json.Json;
+import jakarta.json.JsonException;
 import jakarta.json.JsonObject;
+import jakarta.json.JsonReader;
+import jakarta.json.JsonStructure;
+import jakarta.json.JsonValue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-final class SyslogFormat implements CandidateFormat {
+import java.io.StringReader;
 
-    private final String json;
+final class SyslogFormat implements Format {
 
-    SyslogFormat(final String json) {
-        this.json = json;
-    }
-
-    @Override
-    public EventMetadata get() {
-        return new SyslogEvent(json);
-    }
+    private static final Logger LOGGER = LoggerFactory.getLogger(SyslogFormat.class);
 
     @Override
-    public boolean matches() {
-        final boolean rv;
-        final JsonObject root = new ParsedJson(json).toJsonObject();
-        final String format = root.getString("format", "");
-        final JsonObject object = root.getJsonObject("object");
-        final JsonObject timestamp = root.getJsonObject("timestamp");
-
-        if (!"rfc5424".equalsIgnoreCase(format)) {
-            rv = false;
+    public ArchiveObjectMetadata parsed(final String json) {
+        ArchiveObjectMetadata result;
+        try {
+            final JsonObject root = toJsonObject(json);
+            final JsonObject object = root.getJsonObject("object");
+            final JsonObject timestamp = root.getJsonObject("timestamp");
+            final String format = root.getString("format");
+            if (!"rfc5424".equalsIgnoreCase(format)) {
+                result = new StubArchiveObjectMetadata();
+            }
+            else {
+                result = new ArchiveObjectMetadataImpl(
+                        format,
+                        object.getString("bucket"),
+                        object.getString("path"),
+                        object.getString("partition"),
+                        Long.toString(timestamp.getJsonNumber("epoch").longValue()),
+                        timestamp.getString("rfc5424timestamp"),
+                        timestamp.getString("path-extracted"),
+                        timestamp.getString("path-extracted-precision"),
+                        timestamp.getString("source")
+                );
+            }
         }
-        else if (object == null || timestamp == null) {
-            rv = false;
+        catch (final RuntimeException e) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Error parsing JSON <{}> message <{}>", json, e.getMessage());
+            }
+            result = new StubArchiveObjectMetadata();
         }
-        else {
-            final boolean hasValidObject = object.containsKey("bucket") && object.containsKey("path")
-                    && object.containsKey("partition");
+        return result;
+    }
 
-            final boolean hasValidTimestamp = timestamp.containsKey("epoch") && timestamp
-                    .containsKey("rfc5424timestamp") && timestamp.containsKey("path-extracted")
-                    && timestamp.containsKey("path-extracted-precision") && timestamp.containsKey("source");
-
-            rv = hasValidObject && hasValidTimestamp;
+    private JsonObject toJsonObject(final String jsonString) {
+        final JsonStructure structure;
+        try (
+                final StringReader reader = new StringReader(jsonString); final JsonReader jsonReader = Json.createReader(reader)
+        ) {
+            structure = jsonReader.read();
         }
-        return rv;
+        catch (final JsonException | JsonParseException | IllegalStateException e) {
+            throw new IllegalArgumentException("Failed to read <" + jsonString + "> to JSON: " + e.getMessage(), e);
+        }
+
+        if (!structure.getValueType().equals(JsonValue.ValueType.OBJECT)) {
+            throw new IllegalArgumentException("Value <" + jsonString + "> could not be parsed to JSON object");
+        }
+        return structure.asJsonObject();
     }
 }
