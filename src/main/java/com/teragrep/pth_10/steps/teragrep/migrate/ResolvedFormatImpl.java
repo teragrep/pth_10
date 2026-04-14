@@ -45,86 +45,99 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import java.util.ArrayList;
-import java.util.List;
+final class ResolvedFormatImpl implements ResolvedFormat {
 
-final class ResolvedArchiveObjectMetadata implements ArchiveObjectMetadata {
+    private final String format;
+    private final String bucket;
+    private final String path;
+    private final String partition;
+    private final String epoch;
+    private final String rfc5424Timestamp;
+    private final String pathExtracted;
+    private final String pathExtractedPrecision;
+    private final String source;
 
-    private final String json;
-    private final List<Format> archiveObjectMetadataList;
-
-    ResolvedArchiveObjectMetadata(final String json) {
-        this(json, List.of(new SyslogFormat(), new UnknownFormat()));
+    ResolvedFormatImpl(
+            final String format,
+            final String bucket,
+            final String path,
+            final String partition,
+            final String pathExtracted,
+            final String pathExtractedPrecision,
+            final String source
+    ) {
+        this(format, bucket, path, partition, "unknown", "unknown", pathExtracted, pathExtractedPrecision, source);
     }
 
-    ResolvedArchiveObjectMetadata(final String json, final List<Format> archiveObjectMetadataList) {
-        this.json = json;
-        this.archiveObjectMetadataList = archiveObjectMetadataList;
+    ResolvedFormatImpl(
+            final String format,
+            final String bucket,
+            final String path,
+            final String partition,
+            final String epoch,
+            final String rfc5424Timestamp,
+            final String pathExtracted,
+            final String pathExtractedPrecision,
+            final String source
+    ) {
+        this.format = format;
+        this.bucket = bucket;
+        this.path = path;
+        this.partition = partition;
+        this.epoch = epoch;
+        this.rfc5424Timestamp = rfc5424Timestamp;
+        this.pathExtracted = pathExtracted;
+        this.pathExtractedPrecision = pathExtractedPrecision;
+        this.source = source;
     }
 
-    private ArchiveObjectMetadata resolved() {
-        final List<ArchiveObjectMetadata> validResults = new ArrayList<>();
-        for (final Format format : archiveObjectMetadataList) {
-            final ArchiveObjectMetadata result = format.parsed(json);
-            if (!result.isStub()) {
-                validResults.add(result);
-            }
-        }
-        if (validResults.size() != 1) {
-            throw new IllegalStateException(
-                    "Expected one valid archive object metadata format but found <" + validResults.size() + ">"
-            );
-        }
-        return validResults.get(0);
+    @Override
+    public String format() {
+        return format;
+    }
+
+    @Override
+    public String bucket() {
+        return bucket;
+    }
+
+    @Override
+    public String path() {
+        return path;
+    }
+
+    @Override
+    public String partition() {
+        return partition;
+    }
+
+    @Override
+    public String epoch() {
+        return epoch;
+    }
+
+    @Override
+    public String rfc5424Timestamp() {
+        return rfc5424Timestamp;
+    }
+
+    @Override
+    public String pathExtracted() {
+        return pathExtracted;
+    }
+
+    @Override
+    public String pathExtractedPrecision() {
+        return pathExtractedPrecision;
+    }
+
+    @Override
+    public String source() {
+        return source;
     }
 
     @Override
     public boolean isStub() {
         return false;
-    }
-
-    @Override
-    public String format() {
-        return resolved().format();
-    }
-
-    @Override
-    public String bucket() {
-        return resolved().bucket();
-    }
-
-    @Override
-    public String path() {
-        return resolved().path();
-    }
-
-    @Override
-    public String partition() {
-        return resolved().partition();
-    }
-
-    @Override
-    public String epoch() {
-        return resolved().epoch();
-    }
-
-    @Override
-    public String rfc5424Timestamp() {
-        return resolved().rfc5424Timestamp();
-    }
-
-    @Override
-    public String pathExtracted() {
-        return resolved().pathExtracted();
-    }
-
-    @Override
-    public String pathExtractedPrecision() {
-        return resolved().pathExtractedPrecision();
-    }
-
-    @Override
-    public String source() {
-        return resolved().source();
     }
 }

@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public interface Format {
+public interface ArchiveObjectMetadataFormat {
 
-    public abstract ArchiveObjectMetadata parsed(final String json);
+    public abstract ResolvedFormat parsed(final String json);
 }

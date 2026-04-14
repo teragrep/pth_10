@@ -45,7 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-public class StubArchiveObjectMetadata implements ArchiveObjectMetadata {
+public class StubArchiveObjectMetadata implements ResolvedFormat {
 
     @Override
     public String format() {

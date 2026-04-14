@@ -45,87 +45,32 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-final class ArchiveObjectMetadataImpl implements ArchiveObjectMetadata {
+import java.util.ArrayList;
+import java.util.List;
 
-    private final String format;
-    private final String bucket;
-    private final String path;
-    private final String partition;
-    private final String epoch;
-    private final String rfc5424Timestamp;
-    private final String pathExtracted;
-    private final String pathExtractedPrecision;
-    private final String source;
+final class ArchiveObjectMetadataWithFormat {
 
-    ArchiveObjectMetadataImpl(
-            final String format,
-            final String bucket,
-            final String path,
-            final String partition,
-            final String epoch,
-            final String rfc5424Timestamp,
-            final String pathExtracted,
-            final String pathExtractedPrecision,
-            final String source
-    ) {
-        this.format = format;
-        this.bucket = bucket;
-        this.path = path;
-        this.partition = partition;
-        this.epoch = epoch;
-        this.rfc5424Timestamp = rfc5424Timestamp;
-        this.pathExtracted = pathExtracted;
-        this.pathExtractedPrecision = pathExtractedPrecision;
-        this.source = source;
+    private final String json;
+    private final List<ArchiveObjectMetadataFormat> supportedFormats;
+
+    ArchiveObjectMetadataWithFormat(final String json, final List<ArchiveObjectMetadataFormat> supportedFormats) {
+        this.json = json;
+        this.supportedFormats = supportedFormats;
     }
 
-    @Override
-    public String format() {
-        return format;
-    }
-
-    @Override
-    public String bucket() {
-        return bucket;
-    }
-
-    @Override
-    public String path() {
-        return path;
-    }
-
-    @Override
-    public String partition() {
-        return partition;
-    }
-
-    @Override
-    public String epoch() {
-        return epoch;
-    }
-
-    @Override
-    public String rfc5424Timestamp() {
-        return rfc5424Timestamp;
-    }
-
-    @Override
-    public String pathExtracted() {
-        return pathExtracted;
-    }
-
-    @Override
-    public String pathExtractedPrecision() {
-        return pathExtractedPrecision;
-    }
-
-    @Override
-    public String source() {
-        return source;
-    }
-
-    @Override
-    public boolean isStub() {
-        return false;
+    public ResolvedFormat toResolved() {
+        List<ResolvedFormat> validResolvedResults = new ArrayList<>();
+        for (ArchiveObjectMetadataFormat format : supportedFormats) {
+            final ResolvedFormat resolved = format.parsed(json);
+            if (!resolved.isStub()) {
+                validResolvedResults.add(resolved);
+            }
+        }
+        if (validResolvedResults.size() != 1) {
+            throw new IllegalStateException(
+                    "Expected exactly one valid resolved result but got <" + validResolvedResults.size() + ">"
+            );
+        }
+        return validResolvedResults.get(0);
     }
 }
