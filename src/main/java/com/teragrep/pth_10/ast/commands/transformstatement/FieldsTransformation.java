@@ -78,20 +78,29 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
 
     public Node fieldsTransformationEmitCatalyst(DPLParser.FieldsTransformationContext ctx) {
         this.fieldsStep = new FieldsStep();
-
-        String oper = ctx.getChild(1).getText();
-
-        if ("-".equals(oper)) {
-            StringListNode sln = (StringListNode) visit(ctx.fieldListType());
-            LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
-
-            this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
-            this.fieldsStep.setListOfFields(sln.asList());
+        // if fields command has no arguments
+        if (
+            ctx.fieldListType() == null
+                    || ctx.fieldListType().fieldType() == null || ctx.fieldListType().fieldType().isEmpty()
+                    || ctx.fieldListType().fieldType().get(0).getText().isEmpty()
+        ) {
+            throw new IllegalStateException(
+                    "fields command is missing field names, it requires at least one valid field name."
+            );
         }
         else {
-            StringListNode sln = (StringListNode) visit(ctx.fieldListType());
-            this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
-            this.fieldsStep.setListOfFields(sln.asList());
+            if (ctx.COMMAND_FIELDS_MODE_MINUS() != null) {
+                final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
+                LOGGER.debug("Drop fields: stringListNode=<{}>", sln);
+
+                this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.REMOVE_FIELDS);
+                this.fieldsStep.setListOfFields(sln.asList());
+            }
+            else {
+                final StringListNode sln = (StringListNode) visit(ctx.fieldListType());
+                this.fieldsStep.setMode(AbstractFieldsStep.FieldMode.KEEP_FIELDS);
+                this.fieldsStep.setListOfFields(sln.asList());
+            }
         }
         return new StepNode(fieldsStep);
     }
@@ -113,7 +122,7 @@ public class FieldsTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     public Node visitFieldType(DPLParser.FieldTypeContext ctx) {
-        String sql = ctx.getChild(0).getText();
+        final String sql = ctx.getChild(0).getText();
         return new StringNode(new Token(Type.STRING, sql));
     }
 }

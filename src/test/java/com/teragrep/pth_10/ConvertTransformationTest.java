@@ -960,4 +960,24 @@ public class ConvertTransformationTest {
                         }
                 );
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testConvertFieldsMoreThanOnce() {
+        IllegalArgumentException iae = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        IllegalArgumentException.class,
+                        "index=index_A | convert timeformat=\"%Y-%m-%d'T'%H:%M:%S.%f%z\" mktime(_time) mstime(_time)",
+                        testFile, ds -> {
+                        }
+                );
+        Assertions
+                .assertEquals(
+                        "Convert command allows converting a field with convert functions only once, the column <_time> was used more than once",
+                        iae.getMessage()
+                );
+    }
 }
