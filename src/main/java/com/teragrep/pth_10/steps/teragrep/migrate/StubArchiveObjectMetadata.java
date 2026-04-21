@@ -43,54 +43,57 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.steps.teragrep.connection;
+package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import com.typesafe.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public class StubArchiveObjectMetadata implements ResolvedFormat {
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-/**
- * Provides Connection objects from a static HikariCP datasource.
- * <p>
- * Methods connection() and resetForTesting() are thread locked on the class level
- */
-public final class ConnectionPoolSingleton {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionPoolSingleton.class);
-    private static DataSourceState state = new StubDataSourceState();
-
-    private ConnectionPoolSingleton() {
-        // blocks accidental initialization
+    @Override
+    public String format() {
+        throw new UnsupportedOperationException("format() not supported for StubArchiveObjectMetadata");
     }
 
-    /**
-     * Gets a Connection instance using a given config to instantiate a static connection pool.
-     *
-     * @param config config that is used to configure the connection pool, cannot change after initialization
-     * @return Connection instance form the pool
-     * @throws SQLException          if there is an exception getting an SQL connection from the pool
-     * @throws IllegalStateException if the config is changed after initialization
-     */
-    public static synchronized Connection connection(final Config config) throws SQLException, IllegalStateException {
-        LOGGER.debug("thread entered lock block");
-        if (state.isStub()) {
-            state = new InitializedDataSourceState(config);
-        }
-        else if (!state.config().equals(config)) {
-            throw new IllegalStateException("Datasource was already initialized with a different config");
-        }
-        return state.dataSource().getConnection();
+    @Override
+    public String bucket() {
+        throw new UnsupportedOperationException("bucket() not supported for StubArchiveObjectMetadata");
     }
 
-    // only for testing
-    public static synchronized void resetForTest() {
-        LOGGER.warn("resetForTest() called, this should only happen in a test case");
-        if (!state.isStub()) {
-            state.dataSource().close();
-        }
-        state = new StubDataSourceState();
+    @Override
+    public String path() {
+        throw new UnsupportedOperationException("path() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String partition() {
+        throw new UnsupportedOperationException("partition() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String epoch() {
+        throw new UnsupportedOperationException("epoch() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String rfc5424Timestamp() {
+        throw new UnsupportedOperationException("rfc5424Timestamp() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String pathExtracted() {
+        throw new UnsupportedOperationException("pathExtracted() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String pathExtractedPrecision() {
+        throw new UnsupportedOperationException("pathExtractedPrecision() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String source() {
+        throw new UnsupportedOperationException("source() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public boolean isStub() {
+        return true;
     }
 }

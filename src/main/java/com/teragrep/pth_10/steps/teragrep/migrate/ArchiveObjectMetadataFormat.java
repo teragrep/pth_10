@@ -43,54 +43,9 @@
  * Teragrep, the applicable Commercial License may apply to this file if you as
  * a licensee so wish it.
  */
-package com.teragrep.pth_10.steps.teragrep.connection;
+package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import com.typesafe.config.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public interface ArchiveObjectMetadataFormat {
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
-/**
- * Provides Connection objects from a static HikariCP datasource.
- * <p>
- * Methods connection() and resetForTesting() are thread locked on the class level
- */
-public final class ConnectionPoolSingleton {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionPoolSingleton.class);
-    private static DataSourceState state = new StubDataSourceState();
-
-    private ConnectionPoolSingleton() {
-        // blocks accidental initialization
-    }
-
-    /**
-     * Gets a Connection instance using a given config to instantiate a static connection pool.
-     *
-     * @param config config that is used to configure the connection pool, cannot change after initialization
-     * @return Connection instance form the pool
-     * @throws SQLException          if there is an exception getting an SQL connection from the pool
-     * @throws IllegalStateException if the config is changed after initialization
-     */
-    public static synchronized Connection connection(final Config config) throws SQLException, IllegalStateException {
-        LOGGER.debug("thread entered lock block");
-        if (state.isStub()) {
-            state = new InitializedDataSourceState(config);
-        }
-        else if (!state.config().equals(config)) {
-            throw new IllegalStateException("Datasource was already initialized with a different config");
-        }
-        return state.dataSource().getConnection();
-    }
-
-    // only for testing
-    public static synchronized void resetForTest() {
-        LOGGER.warn("resetForTest() called, this should only happen in a test case");
-        if (!state.isStub()) {
-            state.dataSource().close();
-        }
-        state = new StubDataSourceState();
-    }
+    public abstract ResolvedFormat parsed(final String json);
 }
