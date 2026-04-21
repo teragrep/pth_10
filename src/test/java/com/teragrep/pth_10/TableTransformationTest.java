@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth_10;
 
-import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -155,9 +154,6 @@ public class TableTransformationTest {
                             expectedSchema, ds.schema(),
                             "Batch handler dataset contained an unexpected column arrangement !"
                     );
-
-            ds.toJSON().agg(functions.collect_list(functions.col("value")).as("values")).first();
-            // ds.toJSON();
         });
     }
 
