@@ -48,6 +48,7 @@ package com.teragrep.pth_10;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
@@ -82,6 +83,9 @@ public class TimechartStreamingTest {
     });
 
     private StreamingTestUtil streamingTestUtil;
+    private final Metadata groupByMetadata = new MetadataBuilder()
+            .putBoolean("dpl_internal_isGroupByColumn", true)
+            .build();
 
     @BeforeAll
     void setEnv() {
@@ -113,18 +117,8 @@ public class TimechartStreamingTest {
                         "index=index_A earliest=2020-01-01T00:00:00Z latest=2021-01-01T00:00:00Z | timechart span=1mon count(_raw) as craw by sourcetype",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
-                                    new StructField(
-                                            "_time",
-                                            DataTypes.TimestampType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
-                                    new StructField(
-                                            "sourcetype",
-                                            DataTypes.StringType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
+                                    new StructField("_time", DataTypes.TimestampType, false, groupByMetadata),
+                                    new StructField("sourcetype", DataTypes.StringType, false, groupByMetadata),
                                     new StructField("craw", DataTypes.LongType, false, new MetadataBuilder().build())
                             });
                             Assertions
@@ -152,18 +146,8 @@ public class TimechartStreamingTest {
                         "index=index_A earliest=2020-12-12T00:00:00Z latest=2020-12-12T00:30:00Z | timechart span=1min count(_raw) as craw by sourcetype",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
-                                    new StructField(
-                                            "_time",
-                                            DataTypes.TimestampType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
-                                    new StructField(
-                                            "sourcetype",
-                                            DataTypes.StringType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
+                                    new StructField("_time", DataTypes.TimestampType, false, groupByMetadata),
+                                    new StructField("sourcetype", DataTypes.StringType, false, groupByMetadata),
                                     new StructField("craw", DataTypes.LongType, false, new MetadataBuilder().build())
                             });
                             Assertions
@@ -190,18 +174,8 @@ public class TimechartStreamingTest {
                 .performDPLTest(
                         "index=index_A | timechart span=1min count(_raw) as craw by sourcetype", testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
-                                    new StructField(
-                                            "_time",
-                                            DataTypes.TimestampType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
-                                    new StructField(
-                                            "sourcetype",
-                                            DataTypes.StringType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
+                                    new StructField("_time", DataTypes.TimestampType, false, groupByMetadata),
+                                    new StructField("sourcetype", DataTypes.StringType, false, groupByMetadata),
                                     new StructField("craw", DataTypes.LongType, false, new MetadataBuilder().build())
                             });
                             Assertions
@@ -237,8 +211,8 @@ public class TimechartStreamingTest {
     public void testTimechartSplitBy() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count by host", testFile, ds -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, false, groupByMetadata),
+                    new StructField("host", DataTypes.StringType, false, groupByMetadata),
                     new StructField("count", DataTypes.LongType, false, new MetadataBuilder().build())
             });
             Assertions
@@ -268,7 +242,7 @@ public class TimechartStreamingTest {
     public void testTimechartBasicCount() {
         streamingTestUtil.performDPLTest("index=index_A | timechart count", testFile, ds -> {
             final StructType expectedSchema = new StructType(new StructField[] {
-                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, false, groupByMetadata),
                     new StructField("count", DataTypes.LongType, false, new MetadataBuilder().build())
             });
             Assertions

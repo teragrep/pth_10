@@ -46,6 +46,8 @@
 package com.teragrep.pth_10.steps.timechart;
 
 import org.apache.spark.sql.*;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.MetadataBuilder;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -80,8 +82,7 @@ public final class TimechartStep extends AbstractTimechartStep {
         allGroupBys.addAll(this.divByInsts.stream().map(functions::col).collect(Collectors.toList()));
 
         Seq<Column> seqOfAllGroupBys = JavaConversions.asScalaBuffer(allGroupBys);
-
-        return dataset
+        Dataset<Row> resultDataset = dataset
                 .groupBy(seqOfAllGroupBys)
                 .agg(firstAggCol, seqOfAggColsExceptFirst)
                 .drop("_time")
@@ -89,5 +90,15 @@ public final class TimechartStep extends AbstractTimechartStep {
                 .withColumnRenamed("start", "_time")
                 .drop("window")
                 .orderBy("_time");
+
+        final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
+        resultDataset = resultDataset.withMetadata("_time", metadata);
+        if (divByInsts != null) {
+            for (String groupByColumn : divByInsts) {
+                resultDataset = resultDataset.withMetadata(groupByColumn, metadata);
+            }
+        }
+
+        return resultDataset;
     }
 }

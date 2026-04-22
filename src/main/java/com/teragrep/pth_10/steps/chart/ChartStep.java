@@ -49,6 +49,8 @@ import com.teragrep.functions.dpf_02.AbstractStep;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.MetadataBuilder;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -77,8 +79,12 @@ public final class ChartStep extends AbstractStep {
         final Seq<Column> seqOfExpr = JavaConversions
                 .asScalaBuffer(listOfAggrExpressions.subList(1, listOfAggrExpressions.size()));
         final Seq<Column> seqOfGroupBy = JavaConversions.asScalaBuffer(groupByList);
-
-        return dataset.groupBy(seqOfGroupBy).agg(mainExpr, seqOfExpr);
+        Dataset<Row> resultDataset = dataset.groupBy(seqOfGroupBy).agg(mainExpr, seqOfExpr);
+        final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
+        for (Column groupByColumn : groupByList) {
+            resultDataset = resultDataset.withMetadata(groupByColumn.toString(), metadata);
+        }
+        return resultDataset;
     }
 
     public List<Column> aggrExpressionsList() {
