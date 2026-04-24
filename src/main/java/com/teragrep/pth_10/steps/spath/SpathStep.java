@@ -75,7 +75,7 @@ public final class SpathStep extends AbstractSpathStep {
         final MapType returnType = DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType);
 
         // register udf with SparkSession and get column
-        ss.udf().register("UDF_Spath", new Spath(catCtx.nullValue), returnType);
+        ss.udf().register("UDF_Spath", new Spath(), returnType);
         Column spathExpr = functions
                 .callUDF(
                         "UDF_Spath", // name of UDF
