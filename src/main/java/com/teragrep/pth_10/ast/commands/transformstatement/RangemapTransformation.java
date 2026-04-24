@@ -89,6 +89,14 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_rangemap_attrnParameter(DPLParser.T_rangemap_attrnParameterContext ctx) {
         final String key = ctx.stringType().getText();
+
+        if (ctx.t_rangemap_rangeParameter().GET_RANGE_NUMBER_LEFT() == null) {
+            throw new IllegalArgumentException(
+                    "Invalid range values: <" + ctx.t_rangemap_rangeParameter().getText()
+                            + ">. rangemap command expects numerical range values"
+            );
+        }
+
         String valueLeft = ctx.t_rangemap_rangeParameter().GET_RANGE_NUMBER_LEFT().getText();
         final String valueRight = ctx
                 .t_rangemap_rangeParameter()
@@ -102,7 +110,8 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
         }
         else {
             throw new IllegalArgumentException(
-                    "Invalid range for rangemap command, the range should have both start and end values"
+                    "Invalid range for rangemap command, the range should have both start and end values but found: <"
+                            + valueLeft + ">"
             );
         }
 
