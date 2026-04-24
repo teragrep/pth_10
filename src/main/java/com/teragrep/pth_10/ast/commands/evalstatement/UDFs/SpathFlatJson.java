@@ -45,8 +45,10 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
 import com.teragrep.pth_10.ast.QuotedText;
 import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.UnquotedText;
@@ -57,21 +59,24 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
-final class SpathFlatJson {
+final public class SpathFlatJson {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpathFlatJson.class);
-    private final JsonElement root;
+    private final String input;
 
-
-    public SpathFlatJson(final JsonElement root) {
-        this.root = root;
+    public SpathFlatJson(final String input) {
+        this.input = input;
     }
 
-    Map<String, String> asMap() {
+    public Map<String, String> asMap() throws JsonSyntaxException, ClassCastException {
         final Map<String, String> result;
+        final Gson gson = new Gson();
+        final JsonElement root = gson.fromJson(input, JsonElement.class);
         if (root == null || root.isJsonNull()) {
             result = Collections.emptyMap();
+
         }
         else {
             result = new HashMap<>();
@@ -115,5 +120,24 @@ final class SpathFlatJson {
                 .read();
         final String key = new QuotedText(new TextString(path), "`").read();
         result.put(key, value);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        final boolean isEquals;
+        if (this == o)
+            isEquals = true;
+        else if (o == null || getClass() != o.getClass())
+            isEquals = false;
+        else {
+            final SpathFlatJson spathFlatJson = (SpathFlatJson) o;
+            isEquals = Objects.equals(input, spathFlatJson.input);
+        }
+        return isEquals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(input);
     }
 }

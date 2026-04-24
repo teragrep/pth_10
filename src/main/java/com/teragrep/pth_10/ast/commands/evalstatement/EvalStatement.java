@@ -2725,7 +2725,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // Register and call UDF Spath
         UserDefinedFunction SpathUDF = functions
-                .udf(new Spath(catCtx.nullValue), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType));
+                .udf(new Spath(), DataTypes.createMapType(DataTypes.StringType, DataTypes.StringType));
         SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("SpathUDF", SpathUDF);
 

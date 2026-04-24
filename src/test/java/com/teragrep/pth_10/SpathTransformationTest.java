@@ -1041,4 +1041,32 @@ public class SpathTransformationTest {
                 );
     }
 
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testSpathXmlInvalidInput() {
+        streamingTestUtil
+                .performDPLTest(
+                        "| makeresults count=10 | eval _raw = \"main><sub>Hello</sub><sub>World</sub><main>\" | spath",
+                        XML_DATA_2, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField(
+                                            "_time",
+                                            DataTypes.TimestampType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    ),
+                                    new StructField("_raw", DataTypes.StringType, false, new MetadataBuilder().build())
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
+                        }
+                );
+    }
+
 }

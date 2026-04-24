@@ -46,7 +46,6 @@
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
 import com.google.gson.*;
-import com.teragrep.pth_10.ast.NullValue;
 import org.apache.spark.sql.api.java.UDF4;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,11 +70,7 @@ public final class Spath implements UDF4<String, String, String, String, Map<Str
     private static final Logger LOGGER = LoggerFactory.getLogger(Spath.class);
     private static final long serialVersionUID = 1L;
 
-    private final NullValue nullValue;
-
-    public Spath(NullValue nullValue) {
-        super();
-        this.nullValue = nullValue;
+    public Spath() {
     }
 
     /**
@@ -93,7 +88,7 @@ public final class Spath implements UDF4<String, String, String, String, Map<Str
         Map<String, String> result;
         // try json
         try {
-            result = new SpathJson(input, spathExpr, nameOfInputCol, nameOfOutputCol).asMap();
+            result = new SpathFlatJson(input).asMap();
         }
         catch (JsonSyntaxException | ClassCastException json_fail) {
             LOGGER.warn("Processing failed as JSON, trying XML parsing. Error: <{}>", json_fail.getMessage());

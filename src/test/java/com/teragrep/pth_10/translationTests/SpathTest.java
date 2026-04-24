@@ -110,21 +110,21 @@ public class SpathTest {
 
     @Test
     void testSpathNullJsonInput() {
-        final Spath spath = new Spath(null);
+        final Spath spath = new Spath();
         Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call(null, "test", "test", "test"));
         Assertions.assertTrue(result.isEmpty());
     }
 
     @Test
     void testSpathNullStringJsonInput() {
-        final Spath spath = new Spath(null);
+        final Spath spath = new Spath();
         Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call("null", "test", "test", "test"));
         Assertions.assertTrue(result.isEmpty());
     }
 
     @Test
     void testSpathEmptyStringJsonInput() {
-        final Spath spath = new Spath(null);
+        final Spath spath = new Spath();
         Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call("", "test", "test", "test"));
         Assertions.assertTrue(result.isEmpty());
     }

@@ -67,6 +67,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 public final class SpathXml {
 
@@ -85,7 +86,12 @@ public final class SpathXml {
      * @param inputColumn     name of input column
      * @param outputColumn    name of output column
      */
-    public SpathXml(final String input, final String spathExpression, final String inputColumn, final String outputColumn) {
+    public SpathXml(
+            final String input,
+            final String spathExpression,
+            final String inputColumn,
+            final String outputColumn
+    ) {
         this(input, spathExpression, inputColumn, outputColumn, new NullValue());
     }
 
@@ -208,4 +214,25 @@ public final class SpathXml {
             buildMapFromXmlNodes(child, spacer, map);
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        final boolean isEquals;
+        if (this == o)
+            isEquals = true;
+        else if (o == null || getClass() != o.getClass())
+            isEquals = false;
+        else {
+            final SpathXml spathXmln = (SpathXml) o;
+            isEquals = Objects.equals(input, spathXmln.input)
+                    && Objects.equals(spathExpression, spathXmln.spathExpression) && Objects.equals(inputColumn, spathXmln.inputColumn) && Objects.equals(outputColumn, spathXmln.outputColumn) && Objects.equals(nullValue, spathXmln.nullValue);
+        }
+        return isEquals;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(input, spathExpression, inputColumn, outputColumn, nullValue);
+    }
+
 }
