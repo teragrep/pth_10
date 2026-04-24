@@ -166,7 +166,25 @@ public class RangemapTransformationTest {
         IllegalArgumentException iae = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, "index=* | rangemap", testFile, ds -> {
                 });
-        Assertions.assertEquals("Field parameter is required!", iae.getMessage());
+        Assertions.assertEquals("rangemap command is missing required field parameter", iae.getMessage());
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testRangemapInvalidRange() {
+        IllegalArgumentException iae = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        IllegalArgumentException.class, "index=* | rangemap field=_raw low=0", testFile, ds -> {
+                        }
+                );
+        Assertions
+                .assertEquals(
+                        "Invalid range for rangemap command, the range should have both start and end values but found: <<missing GET_RANGE_NUMBER_LEFT>>",
+                        iae.getMessage()
+                );
     }
 
     @Test
@@ -211,6 +229,26 @@ public class RangemapTransformationTest {
                             }
                             Assertions.assertEquals(2, executedLoops);
                         }
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testRangemapWithInvalidStringRangeValues() {
+        IllegalArgumentException iae = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        IllegalArgumentException.class,
+                        "| makeresults | eval _raw = \"string\" | rangemap field=_raw low=\"string\"-\"string\"",
+                        testFile, ds -> {
+                        }
+                );
+        Assertions
+                .assertEquals(
+                        "Invalid range values: <\"string\">. rangemap command expects numerical range values",
+                        iae.getMessage()
                 );
     }
 }
