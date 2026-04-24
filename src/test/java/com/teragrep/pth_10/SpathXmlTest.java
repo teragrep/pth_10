@@ -97,8 +97,8 @@ public class SpathXmlTest {
 
     }
 
-    @Disabled
     @Test
+    @Disabled("Enable the test after issue#857 pth_10 is fixed")
     void testSpathXmlInputDuplicatekeysWithPath() {
         final String input = "<main><sub><item>Hello</item><item>Hello2</item></sub><sub><item id=\"30\">1</item></sub></main>";
         final String spathExpression = "main.sub.item";

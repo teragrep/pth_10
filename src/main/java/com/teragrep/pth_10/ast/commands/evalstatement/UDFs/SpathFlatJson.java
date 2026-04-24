@@ -66,6 +66,12 @@ final public class SpathFlatJson {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpathFlatJson.class);
     private final String input;
 
+    /**
+     * Returns result of spath as a map Keys wrapped in backticks to escape dots, spark uses them for maps
+     *
+     * @param input json input
+     */
+
     public SpathFlatJson(final String input) {
         this.input = input;
     }
