@@ -50,7 +50,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -58,7 +57,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -68,9 +74,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class EpochMigrationStepTest {
 
@@ -87,28 +93,32 @@ public final class EpochMigrationStepTest {
             new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
     });
     private StreamingTestUtil streamingTestUtil;
-    private final String username = "testuser";
-    private final String password = "testpass";
-    private final String url = "jdbc:h2:mem:test_" + UUID.randomUUID()
-            + ";MODE=MariaDB;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;CASE_INSENSITIVE_IDENTIFIERS=TRUE";
-    private Connection conn;
-    private Map<String, String> opts;
+
+    @Container
+    private final MariaDBContainer<?> mariadb = new MariaDBContainer<>(DockerImageName.parse("mariadb:10.5"))
+            .withPrivilegedMode(false)
+            .withDatabaseName("journaldb")
+            .withUsername("username")
+            .withPassword("test");
 
     @BeforeAll
     void setEnv() {
-        conn = Assertions.assertDoesNotThrow(() -> DriverManager.getConnection(url, username, password));
-        opts = new HashMap<>();
-        opts.put("dpl.pth_06.archive.db.url", url);
-        opts.put("dpl.pth_06.archive.db.username", username);
-        opts.put("dpl.pth_06.archive.db.password", password);
-        opts.put("dpl.archive.db.journaldb.name", "journaldb");
         streamingTestUtil = new StreamingTestUtil(testSchema);
         streamingTestUtil.setEnv();
     }
 
     @BeforeEach
     void setUp() {
-        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
+        Map<String, String> opts = new HashMap<>();
+        opts.put("dpl.pth_06.archive.db.username", mariadb.getUsername());
+        opts.put("dpl.pth_06.archive.db.password", mariadb.getPassword());
+        opts.put("dpl.pth_06.archive.db.url", mariadb.getJdbcUrl());
+
+        final Connection conn = Assertions
+                .assertDoesNotThrow(
+                        () -> DriverManager
+                                .getConnection(mariadb.getJdbcUrl(), mariadb.getUsername(), mariadb.getPassword())
+                );
         Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.logfile").execute());
         Assertions
                 .assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.object_format").execute());
@@ -123,15 +133,14 @@ public final class EpochMigrationStepTest {
             }
         });
         final String insertIDs = "INSERT INTO journaldb.logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
-        final String insertObjectFormats = "INSERT INTO journaldb.object_format (id, name) VALUES (1, 'rfc5452'),(2,'non-rfc5252')";
         Assertions.assertDoesNotThrow(() -> {
-            try (
-                    final PreparedStatement insertLogfilePreparedStatement = conn.prepareStatement(insertIDs); final PreparedStatement insertObjectFormatsPreparedStatement = conn.prepareStatement(insertObjectFormats)
-            ) {
+            try (final PreparedStatement insertLogfilePreparedStatement = conn.prepareStatement(insertIDs)) {
                 Assertions.assertEquals(10, insertLogfilePreparedStatement.executeUpdate());
-                Assertions.assertEquals(2, insertObjectFormatsPreparedStatement.executeUpdate());
             }
         });
+        final Path path = Paths.get("src/test/resources/sql/epoch_migration_procedure.sql");
+        final String createProcedureSQL = Assertions.assertDoesNotThrow(() -> Files.readString(path));
+        Assertions.assertDoesNotThrow(() -> conn.prepareStatement(createProcedureSQL).execute());
         streamingTestUtil.setUp();
         streamingTestUtil.setCustomConfigOptions(opts);
         ConnectionPoolSingleton.resetForTest();
@@ -142,11 +151,6 @@ public final class EpochMigrationStepTest {
         streamingTestUtil.tearDown();
     }
 
-    @AfterAll
-    public void close() {
-        Assertions.assertDoesNotThrow(conn::close);
-    }
-
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
@@ -154,18 +158,20 @@ public final class EpochMigrationStepTest {
     )
     public void testMigrateEpochCommandUpdatesEpochValuesToSQLMetadata() {
         streamingTestUtil.performDPLTest("index=index_A | teragrep exec migrate epoch", testFile, ds -> {
-            final String selectOffsets = "SELECT id, epoch_hour, object_format_id FROM journaldb.logfile ORDER BY id";
+            final String selectOffsets = "SELECT l.id, l.epoch_hour, f.name FROM journaldb.logfile l LEFT JOIN journaldb.object_format f ON l.object_format_id = f.id ORDER BY l.id";
             final List<Long> updatedEpochs = new ArrayList<>();
-            final List<Long> updatedObjectFormatIDs = new ArrayList<>();
+            final List<String> updatedObjectFormats = new ArrayList<>();
             Assertions.assertDoesNotThrow(() -> {
+                final Connection conn = DriverManager
+                        .getConnection(mariadb.getJdbcUrl(), mariadb.getUsername(), mariadb.getPassword());
                 try (final PreparedStatement preparedStatement = conn.prepareStatement(selectOffsets)) {
                     final ResultSet resultSet = preparedStatement.executeQuery();
                     int loops = 0;
                     while (resultSet.next()) {
                         final Long epochHour = resultSet.getObject("epoch_hour", Long.class);
-                        final Long objectFormatId = resultSet.getObject("object_format_id", Long.class);
+                        final String objectFormat = resultSet.getObject("name", String.class);
                         updatedEpochs.add(epochHour);
-                        updatedObjectFormatIDs.add(objectFormatId);
+                        updatedObjectFormats.add(objectFormat);
                         loops++;
                     }
                     Assertions.assertEquals(10, loops);
@@ -177,8 +183,13 @@ public final class EpochMigrationStepTest {
                             1693929600L, 1693933200L, 1693936800L
                     );
             Assertions.assertEquals(expectedEpochs, updatedEpochs);
-            final List<Long> expectedObjectFormatIds = Arrays.asList(1L, 2L);
+            final List<String> expectedObjectFormatIds = Arrays
+                    .asList(
+                            "rfc5424", "rfc5424", "rfc5424", "rfc5424", "rfc5424", "rfc5424", "rfc5424", "rfc5424",
+                            "rfc5424", "rfc5424"
+                    );
             Assertions.assertEquals(expectedEpochs, updatedEpochs);
+            Assertions.assertEquals(expectedObjectFormatIds, updatedObjectFormats);
             // assert only completion message visible in results
             final List<String> resultPrint = ds
                     .select("_raw")

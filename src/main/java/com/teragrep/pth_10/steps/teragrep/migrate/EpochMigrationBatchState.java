@@ -58,28 +58,21 @@ final class EpochMigrationBatchState {
 
     private final Logger LOGGER = LoggerFactory.getLogger(EpochMigrationBatchState.class);
     private final BatchBindStep batch;
-    private final ResolvedObjectFormats resolvedObjectFormats;
     private final long batchSize;
     private final long batchCount;
     private final long acceptedRows;
 
-    EpochMigrationBatchState(
-            final BatchBindStep batch,
-            final ResolvedObjectFormats resolvedObjectFormats,
-            final long batchSize
-    ) {
-        this(batch, resolvedObjectFormats, batchSize, 0, 0);
+    EpochMigrationBatchState(final BatchBindStep batch, final long batchSize) {
+        this(batch, batchSize, 0, 0);
     }
 
     private EpochMigrationBatchState(
             final BatchBindStep batch,
-            final ResolvedObjectFormats resolvedObjectFormats,
             final long batchSize,
             final long batchCount,
             final long acceptedRows
     ) {
         this.batch = batch;
-        this.resolvedObjectFormats = resolvedObjectFormats;
         this.batchSize = batchSize;
         this.batchCount = batchCount;
         this.acceptedRows = acceptedRows;
@@ -95,11 +88,10 @@ final class EpochMigrationBatchState {
         final List<ArchiveObjectMetadataFormat> supportedFormats = List
                 .of(new SyslogArchiveObjectMetadataFormat(), new UnknownArchiveObjectMetadataFormat());
         final ResolvedFormat metadata = new ArchiveObjectMetadataWithFormat(rawString, supportedFormats).toResolved();
-        final long objectFormatId = resolvedObjectFormats.resolve(metadata.format());
         final String partitionString = row.getString(row.fieldIndex("partition"));
         final long id = Long.parseLong(partitionString);
 
-        if (!"rfc5424-syslog".equals(metadata.format()) && LOGGER.isInfoEnabled()) {
+        if (!"rfc5424".equalsIgnoreCase(metadata.format()) && LOGGER.isInfoEnabled()) {
             LOGGER
                     .info(
                             "Encountered non-syslog row id=<{}> using path extracted time value <{}> with precision of <{}> resulting epoch <{}>",
@@ -114,8 +106,7 @@ final class EpochMigrationBatchState {
         }
 
         return new EpochMigrationBatchState(
-                batch.bind(epoch, objectFormatId, id),
-                resolvedObjectFormats,
+                batch.bind(id, epoch, metadata.format()),
                 batchSize,
                 batchCount + 1,
                 acceptedRows + 1
@@ -139,7 +130,7 @@ final class EpochMigrationBatchState {
     }
 
     EpochMigrationBatchState reset(final BatchBindStep newBatch) {
-        return new EpochMigrationBatchState(newBatch, resolvedObjectFormats, batchSize, 0, acceptedRows);
+        return new EpochMigrationBatchState(newBatch, batchSize, 0, acceptedRows);
     }
 
     @Override
@@ -153,16 +144,14 @@ final class EpochMigrationBatchState {
         }
         else {
             final EpochMigrationBatchState that = (EpochMigrationBatchState) o;
-            rv = batchSize == that.batchSize
-                    && batchCount == that.batchCount && acceptedRows == that.acceptedRows && Objects
-                            .equals(batch, that.batch)
-                    && Objects.equals(resolvedObjectFormats, that.resolvedObjectFormats);
+            rv = batchSize == that.batchSize && batchCount == that.batchCount && acceptedRows == that.acceptedRows
+                    && Objects.equals(batch, that.batch);
         }
         return rv;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(batch, resolvedObjectFormats, batchSize, batchCount, acceptedRows);
+        return Objects.hash(batch, batchSize, batchCount, acceptedRows);
     }
 }

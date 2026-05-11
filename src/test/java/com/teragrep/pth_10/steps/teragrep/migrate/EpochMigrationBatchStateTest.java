@@ -113,11 +113,7 @@ public final class EpochMigrationBatchStateTest {
     @Test
     public void testAcceptsValidRow() {
         final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
-        final EpochMigrationBatchState batchState = new EpochMigrationBatchState(
-                baseBatch(ctx),
-                new ResolvedObjectFormats(ctx),
-                1
-        );
+        final EpochMigrationBatchState batchState = new EpochMigrationBatchState(baseBatch(ctx), 1);
         final EpochMigrationBatchState nextBatchState = Assertions
                 .assertDoesNotThrow(() -> batchState.accept(genericResultRow()));
         Assertions.assertTrue(nextBatchState.isFull());
@@ -130,7 +126,6 @@ public final class EpochMigrationBatchStateTest {
         final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
         final EpochMigrationBatchState batchState = new EpochMigrationBatchState(
                 new RecordingBatchBindStep(baseBatch(ctx)),
-                new ResolvedObjectFormats(ctx),
                 1
         );
         Assertions.assertEquals(0, batchState.batch().size());
@@ -139,19 +134,15 @@ public final class EpochMigrationBatchStateTest {
         final RecordingBatchBindStep step = (RecordingBatchBindStep) nextBatchState.batch();
         long expectedEpoch = 1580551994L;
         long expectedLogfileId = 1L;
-        long expectedObjectFormatId = 1L;
-        final List<Long> expectedList = Arrays.asList(expectedEpoch, expectedLogfileId, expectedObjectFormatId);
+        String expectedObjectFormat = "rfc5424";
+        final List<Object> expectedList = Arrays.asList(expectedLogfileId, expectedEpoch, expectedObjectFormat);
         Assertions.assertIterableEquals(expectedList, step.boundValuesList());
     }
 
     @Test
     public void testTotalAcceptedRowsIsIncremented() {
         final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
-        final EpochMigrationBatchState startState = new EpochMigrationBatchState(
-                baseBatch(ctx),
-                new ResolvedObjectFormats(ctx),
-                1
-        );
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch(ctx), 1);
         Assertions.assertEquals(0, startState.totalAccepted());
         final EpochMigrationBatchState firstState = Assertions
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
@@ -164,11 +155,7 @@ public final class EpochMigrationBatchStateTest {
     @Test
     public void testBatchIsFull() {
         final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
-        final EpochMigrationBatchState startState = new EpochMigrationBatchState(
-                baseBatch(ctx),
-                new ResolvedObjectFormats(ctx),
-                2
-        );
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch(ctx), 2);
         final EpochMigrationBatchState firstState = Assertions
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
         Assertions.assertFalse(firstState.isFull());
@@ -181,11 +168,7 @@ public final class EpochMigrationBatchStateTest {
     public void testResetDoesNotAffectTotalAccepted() {
         final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
         final BatchBindStep baseBatch = baseBatch(ctx);
-        final EpochMigrationBatchState startState = new EpochMigrationBatchState(
-                baseBatch,
-                new ResolvedObjectFormats(ctx),
-                1
-        );
+        final EpochMigrationBatchState startState = new EpochMigrationBatchState(baseBatch, 1);
         final EpochMigrationBatchState firstState = Assertions
                 .assertDoesNotThrow(() -> startState.accept(genericResultRow()));
         final EpochMigrationBatchState resetBatch = firstState.reset(baseBatch);

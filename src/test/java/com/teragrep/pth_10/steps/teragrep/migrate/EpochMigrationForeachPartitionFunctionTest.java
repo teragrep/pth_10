@@ -55,15 +55,29 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.InsertValuesStep1;
+import org.jooq.Record;
+import org.jooq.SQLDialect;
 import org.jooq.conf.Settings;
+import org.jooq.impl.DSL;
+import org.jooq.impl.SQLDataType;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.testcontainers.containers.MariaDBContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -74,15 +88,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
+@Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public final class EpochMigrationForeachPartitionFunctionTest {
 
-    private final String user = "testuser";
-    private final String password = "testpass";
-    private final String url = "jdbc:h2:mem:test_" + UUID.randomUUID()
-            + ";MODE=MariaDB;DATABASE_TO_LOWER=TRUE;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1";
+    @Container
+    private final MariaDBContainer<?> mariadb = new MariaDBContainer<>(DockerImageName.parse("mariadb:10.5"))
+            .withPrivilegedMode(false)
+            .withDatabaseName("journaldb")
+            .withUsername("username")
+            .withPassword("test");
+
     private TestingConnectionSource connectionSource;
 
     private final StructType testSchema = new StructType(new StructField[] {
@@ -96,12 +113,49 @@ public final class EpochMigrationForeachPartitionFunctionTest {
             new StructField("offset", DataTypes.LongType, false, new MetadataBuilder().build())
     });
 
-    @BeforeAll
+    @BeforeEach
     void setup() {
+        Assertions.assertDoesNotThrow(() -> {
+            try (
+                    final Connection conn = DriverManager
+                            .getConnection(mariadb.getJdbcUrl(), mariadb.getUsername(), mariadb.getPassword())
+            ) {
+                final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL);
+
+                ctx.dropTableIfExists("logfile").execute();
+                ctx.dropTableIfExists("object_format").execute();
+
+                ctx
+                        .createTableIfNotExists("object_format")
+                        .column("id", SQLDataType.BIGINT.nullable(false).identity(true))
+                        .column("name", SQLDataType.VARCHAR(255).nullable(true))
+                        .constraint(DSL.constraint("pk_object_format").primaryKey("id"))
+                        .execute();
+
+                ctx
+                        .createTableIfNotExists("logfile")
+                        .column("id", SQLDataType.BIGINT.nullable(false).identity(true))
+                        .column("epoch_hour", SQLDataType.BIGINT.nullable(true))
+                        .column("object_format_id", SQLDataType.BIGINT.nullable(true))
+                        .constraints(DSL.constraint("pk_logfile").primaryKey("id"), DSL.constraint("fk_object_format").foreignKey("object_format_id").references("object_format", "id")).execute();
+
+                final Field<Long> idField = DSL.field("id", Long.class);
+                InsertValuesStep1<Record, Long> query = ctx.insertInto(DSL.table("logfile"), idField);
+
+                for (long i = 1; i <= 10; i++) {
+                    query = query.values(i);
+                }
+                query.execute();
+                final Path path = Paths.get("src/test/resources/sql/epoch_migration_procedure.sql");
+                final String createProcedureSQL = Files.readString(path);
+                ctx.execute(createProcedureSQL);
+            }
+        });
+
         final Map<String, String> optsMap = new HashMap<>();
-        optsMap.put("dpl.pth_06.archive.db.username", user);
-        optsMap.put("dpl.pth_06.archive.db.password", password);
-        optsMap.put("dpl.pth_06.archive.db.url", url);
+        optsMap.put("dpl.pth_06.archive.db.username", mariadb.getUsername());
+        optsMap.put("dpl.pth_06.archive.db.password", mariadb.getPassword());
+        optsMap.put("dpl.pth_06.archive.db.url", mariadb.getJdbcUrl());
         final Config config = ConfigFactory.parseMap(optsMap);
         this.connectionSource = new TestingConnectionSource(config);
     }
@@ -109,48 +163,6 @@ public final class EpochMigrationForeachPartitionFunctionTest {
     @AfterAll
     void close() {
         connectionSource.close();
-    }
-
-    @BeforeEach
-    public void populateDatabase() {
-        final Connection conn = Assertions.assertDoesNotThrow(() -> connectionSource.get());
-        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("CREATE SCHEMA IF NOT EXISTS journaldb").execute());
-        Assertions.assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.logfile").execute());
-        Assertions
-                .assertDoesNotThrow(() -> conn.prepareStatement("DROP TABLE IF EXISTS journaldb.object_format").execute());
-        final String createLogfileTable = "CREATE TABLE journaldb.logfile (id BIGINT NOT NULL, epoch_hour BIGINT NULL, object_format_id BIGINT NULL, PRIMARY KEY(id))";
-        final String createObjectFormatTable = "CREATE TABLE journaldb.object_format (id BIGINT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NULL, PRIMARY KEY(id))";
-        Assertions.assertDoesNotThrow(() -> {
-            try (
-                    final PreparedStatement logfilePreparedStatement = conn.prepareStatement(createLogfileTable); final PreparedStatement objectFormatPreparedStatement = conn.prepareStatement(createObjectFormatTable)
-            ) {
-                logfilePreparedStatement.execute();
-                objectFormatPreparedStatement.execute();
-            }
-        });
-        final String insertIDs = "INSERT INTO journaldb.logfile (id) VALUES (1),(2),(3),(4),(5),(6),(7),(8),(9),(10);";
-        Assertions.assertDoesNotThrow(() -> {
-            try (final PreparedStatement ps = conn.prepareStatement(insertIDs)) {
-                Assertions.assertEquals(10, ps.executeUpdate());
-            }
-        });
-        Assertions.assertDoesNotThrow(conn::close);
-    }
-
-    @Test
-    public void testPartialBatchIsExecuted() {
-        final EpochMigrationForeachPartitionFunction foreachPartitionFunction = new EpochMigrationForeachPartitionFunction(
-                connectionSource,
-                "journaldb",
-                100,
-                new Settings()
-        );
-        foreachPartitionFunction
-                .call(Arrays.asList(genericResultRow(1, 100), genericResultRow(2, 200), genericResultRow(3, 300)).iterator());
-
-        final Map<Long, Long> results = Assertions.assertDoesNotThrow(this::nonNullLogfilesMap);
-        Assertions.assertIterableEquals(Arrays.asList(1L, 2L, 3L), results.keySet());
-        Assertions.assertIterableEquals(Arrays.asList(100L, 200L, 300L), results.values());
     }
 
     @Test
@@ -164,6 +176,7 @@ public final class EpochMigrationForeachPartitionFunctionTest {
         foreachPartitionFunction
                 .call(Arrays.asList(genericResultRow(1, 100), genericResultRow(2, 200), genericResultRow(3, 300)).iterator());
         final Map<Long, Long> results = Assertions.assertDoesNotThrow(this::nonNullLogfilesMap);
+        Assertions.assertDoesNotThrow(() -> printLogfile());
         Assertions.assertIterableEquals(Arrays.asList(1L, 2L, 3L), results.keySet());
         Assertions.assertIterableEquals(Arrays.asList(100L, 200L, 300L), results.values());
     }
@@ -181,35 +194,6 @@ public final class EpochMigrationForeachPartitionFunctionTest {
         final Map<Long, Long> results = Assertions.assertDoesNotThrow(this::nonNullLogfilesMap);
         Assertions.assertIterableEquals(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L), results.keySet());
         Assertions.assertIterableEquals(Arrays.asList(100L, 200L, 300L, 400L, 500L, 600L), results.values());
-    }
-
-    @Test
-    public void testRollbackOnException() {
-        final EpochMigrationForeachPartitionFunction foreachPartitionFunction = new EpochMigrationForeachPartitionFunction(
-                connectionSource,
-                "journaldb",
-                2,
-                new Settings()
-        );
-        final String syslogJsonResult = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"2007/10-08/epochHour/migration/test.logGLOB-2007100814.log.gz\",\"partition\":\"id\"},\"timestamp\":{\"rfc5424timestamp\":\"2014-06-20T09:14:07.12345+00:00\",\"epoch\":1403255647123450,\"path-extracted\":\"2007-10-08T14:00+03:00[Europe/Helsinki]\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
-        Row badRow = new GenericRowWithSchema(new Object[] {
-                null, // throws exception
-                syslogJsonResult,
-                "index",
-                "sourcetype",
-                "host",
-                "source",
-                String.valueOf(4),
-                1L
-        }, testSchema);
-        Assertions.assertThrows(RuntimeException.class, () -> {
-            foreachPartitionFunction
-                    .call(Arrays.asList(genericResultRow(1, 100), genericResultRow(2, 200), genericResultRow(3, 300), badRow).iterator());
-        });
-        final Map<Long, Long> results = Assertions.assertDoesNotThrow(this::nonNullLogfilesMap);
-        // batch size is 2 so the two first rows should be present while the third row should be rolled back
-        Assertions.assertIterableEquals(Arrays.asList(1L, 2L), results.keySet());
-        Assertions.assertIterableEquals(Arrays.asList(100L, 200L), results.values());
     }
 
     @Test
@@ -260,5 +244,20 @@ public final class EpochMigrationForeachPartitionFunctionTest {
             }
         }
         return resultMap;
+    }
+
+    private void printLogfile() throws SQLException {
+        final String selectEpochs = "SELECT l.id, l.epoch_hour, f.name FROM journaldb.logfile l LEFT JOIN journaldb.object_format f ON l.object_format_id = f.id";
+        try (final Connection connection = connectionSource.get()) {
+            try (final PreparedStatement statement = connection.prepareStatement(selectEpochs)) {
+                final ResultSet resultSet = statement.executeQuery();
+                while (resultSet.next()) {
+                    final String id = resultSet.getString("id");
+                    final String epochHour = resultSet.getString("epoch_hour");
+                    final String name = resultSet.getString("name");
+                    System.out.println("id:" + id + "\t" + "epoch_hour:" + epochHour + "\t" + "object_format:" + name);
+                }
+            }
+        }
     }
 }

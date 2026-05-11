@@ -50,11 +50,7 @@ import com.teragrep.pth_10.steps.teragrep.connection.LazyConnectionSource;
 import com.typesafe.config.Config;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Row;
-import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
-import org.jooq.Field;
-import org.jooq.Param;
-import org.jooq.Query;
 import org.jooq.SQLDialect;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
@@ -68,7 +64,7 @@ import java.util.Objects;
 
 final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFunction<Row> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(EpochMigrationForeachPartitionFunction.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EpochMigrationForeachPartitionFunction.class);
 
     private final ConnectionSource connectionSource;
     private final String journalDBName;
@@ -99,16 +95,18 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     public void call(final Iterator<Row> iter) {
         try (final Connection conn = connectionSource.get()) {
             final DSLContext ctx = DSL.using(conn, SQLDialect.MYSQL, settings);
+            final EpochMigrationTempTable epochMigrationTempTable = new EpochMigrationTempTable(ctx, journalDBName);
+            epochMigrationTempTable.create();
+
             EpochMigrationBatchState batchState = new EpochMigrationBatchState(
-                    baseBatch(ctx),
-                    new ResolvedObjectFormats(ctx, journalDBName),
+                    epochMigrationTempTable.insertBatch(),
                     batchSize
             );
             while (iter.hasNext()) {
                 batchState = batchState.accept(iter.next());
                 if (batchState.isFull()) {
                     executeBatch(batchState, conn);
-                    batchState = batchState.reset(baseBatch(ctx));
+                    batchState = batchState.reset(epochMigrationTempTable.insertBatch());
                 }
             }
             if (batchState.hasPendingRows()) {
@@ -116,6 +114,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
             }
             final long totalRows = batchState.totalAccepted();
             LOGGER.info("epoch migration for each partition function finished total rows=<{}>", totalRows);
+            epochMigrationTempTable.callMigrationProcedure();
         }
         catch (final SQLException e) {
             throw new RuntimeException("Exception during epoch migration: " + e.getMessage(), e);
@@ -133,22 +132,6 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
             conn.rollback();
             throw new SQLException(e);
         }
-    }
-
-    private BatchBindStep baseBatch(final DSLContext ctx) {
-        final Field<Long> epochField = DSL.field(DSL.name("epoch_hour"), Long.class);
-        final Field<Long> objectFormatField = DSL.field(DSL.name("object_format_id"), Long.class);
-        final Field<Long> idField = DSL.field(DSL.name("id"), Long.class);
-        final Param<Long> epochParam = DSL.param("epoch_hour", Long.class);
-        final Param<Long> objectFormatIdParam = DSL.param("object_format_id", Long.class);
-        final Param<Long> idParam = DSL.param("id", Long.class);
-        final Query baseQuery = ctx
-                .update(DSL.table(DSL.name(journalDBName, "logfile")))
-                .set(epochField, epochParam)
-                .set(objectFormatField, objectFormatIdParam)
-                .where(idField.eq(idParam).and(epochField.isNull().or(objectFormatField.isNull())));
-        LOGGER.trace("epoch migration for each partition function: batch query <{}>", baseQuery);
-        return ctx.batch(baseQuery);
     }
 
     @Override
