@@ -494,6 +494,7 @@
             <!-- dummy files -->
             <exclude>src/test/resources/hdfslist/**</exclude>
             <exclude>src/test/resources/csv/**</exclude>
+            <exclude>src/test/resources/sql/**</exclude>
             <exclude>eclipse-java-formatter.xml</exclude>
             <!-- jsonl test assets -->
             <exclude>src/test/resources/**/*.jsonl</exclude>
