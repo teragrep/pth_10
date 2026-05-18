@@ -124,12 +124,10 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     private void executeBatch(final EpochMigrationBatchState batchState, final Connection conn) throws SQLException {
         try {
             batchState.batch().execute();
-            conn.commit();
             LOGGER.debug("Commited full batch");
         }
         catch (final Exception e) {
             LOGGER.error("Error executing batch with message: <{}>", e.getMessage());
-            conn.rollback();
             throw new SQLException(e);
         }
     }
