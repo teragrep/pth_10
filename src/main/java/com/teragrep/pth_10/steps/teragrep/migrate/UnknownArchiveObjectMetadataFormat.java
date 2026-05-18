@@ -62,7 +62,7 @@ final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataF
     private static final Logger LOGGER = LoggerFactory.getLogger(UnknownArchiveObjectMetadataFormat.class);
 
     @Override
-    public ResolvedFormat parsed(final String json) {
+    public ResolvedFormat resolved(final String json) {
         ResolvedFormat result;
         try {
             final JsonObject root = toJsonObject(json);

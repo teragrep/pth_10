@@ -53,7 +53,7 @@ public final class UnknownArchiveObjectMetadataFormatObjectMetadataTest {
     @Test
     public void testValues() {
         final String nonSyslogJsonString = "{\"epochMigration\":true,\"format\":\"unknown\",\"object\":{\"bucket\":\"bucket\",\"path\":\"path/to/file.gz\",\"partition\":\"part1\"},\"timestamp\":{\"path-extracted\":\"2023-09-05T09:00:00Z\",\"path-extracted-precision\":\"hourly\",\"source\":\"object-path\"}}";
-        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().parsed(nonSyslogJsonString);
+        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().resolved(nonSyslogJsonString);
         Assertions.assertFalse(event.isStub());
         Assertions.assertEquals("unknown", event.format());
         Assertions.assertEquals("bucket", event.bucket());
@@ -69,7 +69,7 @@ public final class UnknownArchiveObjectMetadataFormatObjectMetadataTest {
     @Test
     public void syslogFormatIsStub() {
         final String syslogJsonString = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"path/to/file.gz\",\"partition\":\"part1\"},\"timestamp\":{\"rfc5424timestamp\":\"2023-09-05T09:00:00Z\",\"epoch\":1693904400,\"path-extracted\":\"2023-09-05T09:00:00Z\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
-        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().parsed(syslogJsonString);
+        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().resolved(syslogJsonString);
         Assertions.assertTrue(event.isStub());
         Assertions.assertThrows(UnsupportedOperationException.class, event::format);
         Assertions.assertThrows(UnsupportedOperationException.class, event::bucket);
@@ -84,13 +84,13 @@ public final class UnknownArchiveObjectMetadataFormatObjectMetadataTest {
 
     @Test
     public void testInvalidJsonIsStub() {
-        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().parsed("invalid");
+        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().resolved("invalid");
         Assertions.assertTrue(event.isStub());
     }
 
     @Test
     public void testJSONArrayIsStub() {
-        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().parsed("[\"a\":\"b\"]");
+        final ResolvedFormat event = new UnknownArchiveObjectMetadataFormat().resolved("[\"a\":\"b\"]");
         Assertions.assertTrue(event.isStub());
     }
 }

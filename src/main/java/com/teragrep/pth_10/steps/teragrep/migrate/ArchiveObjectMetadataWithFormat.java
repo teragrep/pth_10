@@ -61,7 +61,7 @@ final class ArchiveObjectMetadataWithFormat {
     public ResolvedFormat toResolved() {
         List<ResolvedFormat> validResolvedResults = new ArrayList<>();
         for (ArchiveObjectMetadataFormat format : supportedFormats) {
-            final ResolvedFormat resolved = format.parsed(json);
+            final ResolvedFormat resolved = format.resolved(json);
             if (!resolved.isStub()) {
                 validResolvedResults.add(resolved);
             }
