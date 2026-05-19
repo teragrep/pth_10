@@ -45,6 +45,8 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
+import java.util.Objects;
+
 final class ResolvedFormatImpl implements ResolvedFormat {
 
     private final String format;
@@ -139,5 +141,31 @@ final class ResolvedFormatImpl implements ResolvedFormat {
     @Override
     public boolean isStub() {
         return false;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final ResolvedFormatImpl that = (ResolvedFormatImpl) o;
+            rv = Objects.equals(format, that.format)
+                    && Objects.equals(bucket, that.bucket) && Objects.equals(path, that.path) && Objects.equals(partition, that.partition) && Objects.equals(epoch, that.epoch) && Objects.equals(rfc5424Timestamp, that.rfc5424Timestamp) && Objects.equals(pathExtracted, that.pathExtracted) && Objects.equals(pathExtractedPrecision, that.pathExtractedPrecision) && Objects.equals(source, that.source);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects
+                .hash(
+                        format, bucket, path, partition, epoch, rfc5424Timestamp, pathExtracted, pathExtractedPrecision,
+                        source
+                );
     }
 }

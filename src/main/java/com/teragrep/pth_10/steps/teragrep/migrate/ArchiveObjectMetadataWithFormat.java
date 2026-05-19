@@ -47,21 +47,24 @@ package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 final class ArchiveObjectMetadataWithFormat {
 
-    private final String json;
     private final List<ArchiveObjectMetadataFormat> supportedFormats;
 
-    ArchiveObjectMetadataWithFormat(final String json, final List<ArchiveObjectMetadataFormat> supportedFormats) {
-        this.json = json;
+    ArchiveObjectMetadataWithFormat(final String json) {
+        this(List.of(new SyslogArchiveObjectMetadataFormat(json), new UnknownArchiveObjectMetadataFormat(json)));
+    }
+
+    ArchiveObjectMetadataWithFormat(final List<ArchiveObjectMetadataFormat> supportedFormats) {
         this.supportedFormats = supportedFormats;
     }
 
     public ResolvedFormat toResolved() {
-        List<ResolvedFormat> validResolvedResults = new ArrayList<>();
+        final List<ResolvedFormat> validResolvedResults = new ArrayList<>();
         for (ArchiveObjectMetadataFormat format : supportedFormats) {
-            final ResolvedFormat resolved = format.resolved(json);
+            final ResolvedFormat resolved = format.resolved();
             if (!resolved.isStub()) {
                 validResolvedResults.add(resolved);
             }
@@ -72,5 +75,26 @@ final class ArchiveObjectMetadataWithFormat {
             );
         }
         return validResolvedResults.get(0);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final ArchiveObjectMetadataWithFormat that = (ArchiveObjectMetadataWithFormat) o;
+            rv = Objects.equals(supportedFormats, that.supportedFormats);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(supportedFormats);
     }
 }

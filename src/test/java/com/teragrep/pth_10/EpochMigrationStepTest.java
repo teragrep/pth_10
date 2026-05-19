@@ -45,7 +45,11 @@
  */
 package com.teragrep.pth_10;
 
+import com.teragrep.pth_10.ast.DPLParserCatalystContext;
 import com.teragrep.pth_10.steps.teragrep.connection.ConnectionPoolSingleton;
+import com.teragrep.pth_10.steps.teragrep.migrate.TeragrepEpochMigrationStep;
+import nl.jqno.equalsverifier.EqualsVerifier;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructField;
@@ -218,5 +222,16 @@ public final class EpochMigrationStepTest {
                 );
         final String expected = "Column '_time' was null, cannot convert to epoch seconds";
         Assertions.assertTrue(exception.getMessage().contains(expected));
+    }
+
+    @Test
+    public void testContract() {
+        final SparkSession sparkSession = streamingTestUtil.getCtx().getSparkSession();
+        EqualsVerifier
+                .forClass(TeragrepEpochMigrationStep.class)
+                .withPrefabValues(DPLParserCatalystContext.class, new DPLParserCatalystContext(sparkSession, "prefab1"), new DPLParserCatalystContext(sparkSession, "prefab2"))
+                // ignore mutable field 'aggregatesUsedBefore' from dpf_02 AbstractStep
+                .withIgnoredFields("LOGGER", "aggregatesUsedBefore")
+                .verify();
     }
 }

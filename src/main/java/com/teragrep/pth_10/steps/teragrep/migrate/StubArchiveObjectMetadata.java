@@ -45,6 +45,8 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
+import java.util.Objects;
+
 public final class StubArchiveObjectMetadata implements ResolvedFormat {
 
     @Override
@@ -95,5 +97,22 @@ public final class StubArchiveObjectMetadata implements ResolvedFormat {
     @Override
     public boolean isStub() {
         return true;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else {
+            rv = getClass() == o.getClass();
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass());
     }
 }

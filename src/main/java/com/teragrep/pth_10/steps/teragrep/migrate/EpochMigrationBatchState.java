@@ -51,7 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.Objects;
 
 final class EpochMigrationBatchState {
@@ -85,9 +84,7 @@ final class EpochMigrationBatchState {
         }
         final long epoch = ts.toInstant().getEpochSecond();
         final String rawString = row.getString(row.fieldIndex("_raw"));
-        final List<ArchiveObjectMetadataFormat> supportedFormats = List
-                .of(new SyslogArchiveObjectMetadataFormat(), new UnknownArchiveObjectMetadataFormat());
-        final ResolvedFormat metadata = new ArchiveObjectMetadataWithFormat(rawString, supportedFormats).toResolved();
+        final ResolvedFormat metadata = new ArchiveObjectMetadataWithFormat(rawString).toResolved();
         final String partitionString = row.getString(row.fieldIndex("partition"));
         final long id = Long.parseLong(partitionString);
 

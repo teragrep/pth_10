@@ -56,13 +56,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.StringReader;
+import java.util.Objects;
 
 final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataFormat {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnknownArchiveObjectMetadataFormat.class);
+    private final String json;
+
+    UnknownArchiveObjectMetadataFormat(final String json) {
+        this.json = json;
+    }
 
     @Override
-    public ResolvedFormat resolved(final String json) {
+    public ResolvedFormat resolved() {
         ResolvedFormat result;
         try {
             final JsonObject root = toJsonObject(json);
@@ -108,5 +114,26 @@ final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataF
             throw new IllegalArgumentException("Value <" + jsonString + "> could not be parsed to JSON object");
         }
         return structure.asJsonObject();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final UnknownArchiveObjectMetadataFormat that = (UnknownArchiveObjectMetadataFormat) o;
+            rv = Objects.equals(json, that.json);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(json);
     }
 }

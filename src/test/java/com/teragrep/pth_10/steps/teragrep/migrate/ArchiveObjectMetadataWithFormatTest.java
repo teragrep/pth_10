@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -55,12 +56,7 @@ public final class ArchiveObjectMetadataWithFormatTest {
     @Test
     public void testSingleMatch() {
         final String syslogJsonString = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"path/to/file.gz\",\"partition\":\"part1\"},\"timestamp\":{\"rfc5424timestamp\":\"2023-09-05T09:00:00Z\",\"epoch\":1693904400,\"path-extracted\":\"2023-09-05T09:00:00Z\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
-        final List<ArchiveObjectMetadataFormat> supportedFormats = List
-                .of(new SyslogArchiveObjectMetadataFormat(), new UnknownArchiveObjectMetadataFormat());
-        final ArchiveObjectMetadataWithFormat aomwf = new ArchiveObjectMetadataWithFormat(
-                syslogJsonString,
-                supportedFormats
-        );
+        final ArchiveObjectMetadataWithFormat aomwf = new ArchiveObjectMetadataWithFormat(syslogJsonString);
         final ResolvedFormat resolved = aomwf.toResolved();
         Assertions.assertFalse(resolved.isStub());
         Assertions.assertEquals("rfc5424", resolved.format());
@@ -69,12 +65,10 @@ public final class ArchiveObjectMetadataWithFormatTest {
     @Test
     public void testMultipleMatchesThrows() {
         final String syslogJsonString = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"path/to/file.gz\",\"partition\":\"part1\"},\"timestamp\":{\"rfc5424timestamp\":\"2023-09-05T09:00:00Z\",\"epoch\":1693904400,\"path-extracted\":\"2023-09-05T09:00:00Z\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
+        // list of two same formats
         final List<ArchiveObjectMetadataFormat> supportedFormats = List
-                .of(new SyslogArchiveObjectMetadataFormat(), new SyslogArchiveObjectMetadataFormat());
-        final ArchiveObjectMetadataWithFormat aomwf = new ArchiveObjectMetadataWithFormat(
-                syslogJsonString,
-                supportedFormats
-        );
+                .of(new SyslogArchiveObjectMetadataFormat(syslogJsonString), new SyslogArchiveObjectMetadataFormat(syslogJsonString));
+        final ArchiveObjectMetadataWithFormat aomwf = new ArchiveObjectMetadataWithFormat(supportedFormats);
         final IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, aomwf::toResolved);
         Assertions.assertEquals("Expected exactly one valid resolved result but got <2>", exception.getMessage());
     }
@@ -82,14 +76,16 @@ public final class ArchiveObjectMetadataWithFormatTest {
     @Test
     public void testNoMatchThrows() {
         final String syslogJsonString = "{\"epochMigration\":true,\"format\":\"rfc5424\",\"object\":{\"bucket\":\"bucket\",\"path\":\"path/to/file.gz\",\"partition\":\"part1\"},\"timestamp\":{\"rfc5424timestamp\":\"2023-09-05T09:00:00Z\",\"epoch\":1693904400,\"path-extracted\":\"2023-09-05T09:00:00Z\",\"path-extracted-precision\":\"hourly\",\"source\":\"syslog\"}}";
+        // list of no matching formats
         final List<ArchiveObjectMetadataFormat> supportedFormats = List
-                .of(new UnknownArchiveObjectMetadataFormat(), new UnknownArchiveObjectMetadataFormat());
-        final ArchiveObjectMetadataWithFormat aomwf = new ArchiveObjectMetadataWithFormat(
-                syslogJsonString,
-                supportedFormats
-        );
+                .of(new UnknownArchiveObjectMetadataFormat(syslogJsonString), new UnknownArchiveObjectMetadataFormat(syslogJsonString));
+        final ArchiveObjectMetadataWithFormat aomwf = new ArchiveObjectMetadataWithFormat(supportedFormats);
         final IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, aomwf::toResolved);
         Assertions.assertEquals("Expected exactly one valid resolved result but got <0>", exception.getMessage());
     }
 
+    @Test
+    public void testContract() {
+        EqualsVerifier.forClass(ArchiveObjectMetadataFormat.class).verify();
+    }
 }

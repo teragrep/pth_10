@@ -58,11 +58,12 @@ import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.UUID;
 
 public final class TeragrepEpochMigrationStep extends AbstractStep {
 
-    private final Logger LOGGER = LoggerFactory.getLogger(TeragrepEpochMigrationStep.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TeragrepEpochMigrationStep.class);
     private final DPLParserCatalystContext catCtx;
     private final Config config;
     private final String journaldbNameConfigItem;
@@ -103,5 +104,28 @@ public final class TeragrepEpochMigrationStep extends AbstractStep {
         streamingQuery.awaitTermination();
         return selectedColumnsDataset;
 
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
+        else {
+            final TeragrepEpochMigrationStep that = (TeragrepEpochMigrationStep) o;
+            rv = Objects.equals(properties, that.properties) && Objects.equals(catCtx, that.catCtx) && Objects
+                    .equals(config, that.config)
+                    && Objects.equals(journaldbNameConfigItem, that.journaldbNameConfigItem);
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(properties, catCtx, config, journaldbNameConfigItem);
     }
 }
