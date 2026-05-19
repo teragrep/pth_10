@@ -48,13 +48,14 @@ package com.teragrep.pth_10.steps.teragrep.connection;
 import com.typesafe.config.Config;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * Provides connections from a static ExecutorDataSourceRegistry initalized from a given Config
+ * Provides connections from a static ExecutorDataSourceRegistry initialized from a given Config
  */
-public final class LazyConnectionSource implements ConnectionSource {
+public final class LazyConnectionSource implements ConnectionSource, Serializable {
 
     private final Config config;
 
