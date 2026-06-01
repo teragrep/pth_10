@@ -61,6 +61,7 @@ import java.util.Objects;
 final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataFormat {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnknownArchiveObjectMetadataFormat.class);
+    private static final StubResolvedFormat stubResolvedFormat = new StubResolvedFormat();
     private final String json;
 
     UnknownArchiveObjectMetadataFormat(final String json) {
@@ -94,7 +95,7 @@ final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataF
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Error parsing JSON <{}> message <{}>", json, e.getMessage());
             }
-            result = new StubResolvedFormat();
+            result = stubResolvedFormat;
         }
         return result;
     }
