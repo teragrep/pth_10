@@ -45,34 +45,74 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import java.util.Objects;
 
-public final class StubArchiveObjectMetadataTest {
+public final class StubResolvedFormat implements ResolvedFormat {
 
-    @Test
-    public void testIsStub() {
-        final StubArchiveObjectMetadata stubArchiveObjectMetadata = new StubArchiveObjectMetadata();
-        Assertions.assertTrue(stubArchiveObjectMetadata.isStub());
+    @Override
+    public String format() {
+        throw new UnsupportedOperationException("format() not supported for StubArchiveObjectMetadata");
     }
 
-    @Test
-    public void methodsThrowUnsupported() {
-        final StubArchiveObjectMetadata stubArchiveObjectMetadata = new StubArchiveObjectMetadata();
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::bucket);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::epoch);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::format);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::path);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::partition);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::pathExtracted);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::pathExtractedPrecision);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::rfc5424Timestamp);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubArchiveObjectMetadata::source);
+    @Override
+    public String bucket() {
+        throw new UnsupportedOperationException("bucket() not supported for StubArchiveObjectMetadata");
     }
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(StubArchiveObjectMetadata.class);
+    @Override
+    public String path() {
+        throw new UnsupportedOperationException("path() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String partition() {
+        throw new UnsupportedOperationException("partition() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String epoch() {
+        throw new UnsupportedOperationException("epoch() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String rfc5424Timestamp() {
+        throw new UnsupportedOperationException("rfc5424Timestamp() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String pathExtracted() {
+        throw new UnsupportedOperationException("pathExtracted() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String pathExtractedPrecision() {
+        throw new UnsupportedOperationException("pathExtractedPrecision() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public String source() {
+        throw new UnsupportedOperationException("source() not supported for StubArchiveObjectMetadata");
+    }
+
+    @Override
+    public boolean isStub() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else {
+            rv = getClass() == o.getClass();
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass());
     }
 }

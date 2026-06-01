@@ -76,7 +76,7 @@ final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataF
             final JsonObject timestamp = root.getJsonObject("timestamp");
             final String format = root.getString("format");
             if ("rfc5424".equalsIgnoreCase(format)) {
-                result = new StubArchiveObjectMetadata();
+                result = new StubResolvedFormat();
             }
             else {
                 result = new ResolvedFormatImpl(
@@ -94,7 +94,7 @@ final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataF
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Error parsing JSON <{}> message <{}>", json, e.getMessage());
             }
-            result = new StubArchiveObjectMetadata();
+            result = new StubResolvedFormat();
         }
         return result;
     }
