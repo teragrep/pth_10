@@ -61,7 +61,7 @@ import java.util.Objects;
 final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataFormat {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UnknownArchiveObjectMetadataFormat.class);
-    private static final StubResolvedFormat stubResolvedFormat = new StubResolvedFormat();
+    private static final ResolvedFormatStub RESOLVED_FORMAT_STUB = new ResolvedFormatStub();
     private final String json;
 
     UnknownArchiveObjectMetadataFormat(final String json) {
@@ -77,7 +77,7 @@ final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataF
             final JsonObject timestamp = root.getJsonObject("timestamp");
             final String format = root.getString("format");
             if ("rfc5424".equalsIgnoreCase(format)) {
-                result = new StubResolvedFormat();
+                result = new ResolvedFormatStub();
             }
             else {
                 result = new ResolvedFormatImpl(
@@ -95,7 +95,7 @@ final class UnknownArchiveObjectMetadataFormat implements ArchiveObjectMetadataF
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Error parsing JSON <{}> message <{}>", json, e.getMessage());
             }
-            result = stubResolvedFormat;
+            result = RESOLVED_FORMAT_STUB;
         }
         return result;
     }

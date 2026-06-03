@@ -46,13 +46,12 @@
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
-import org.jooq.BatchBindStep;
 import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.InsertValuesStep1;
 import org.jooq.Record;
 import org.jooq.SQLDialect;
-import org.jooq.SelectWhereStep;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.junit.jupiter.api.Assertions;
@@ -118,26 +117,35 @@ public final class EpochMigrationTempTableTest {
     }
 
     @Test
-    public void testInsert() {
+    public void testTableQualifiedNaming() {
         final Connection conn = Assertions
                 .assertDoesNotThrow(
                         () -> DriverManager
                                 .getConnection(mariadb.getJdbcUrl(), mariadb.getUsername(), mariadb.getPassword())
                 );
         final DSLContext ctx = DSL.using(conn, SQLDialect.MARIADB);
-        final EpochMigrationTempTable epochMigrationTempTable = new EpochMigrationTempTable(ctx, "journaldb");
-        final BatchBindStep batchBindStep = epochMigrationTempTable.insertBatch();
-        epochMigrationTempTable.create();
-        final BatchBindStep testBatch = batchBindStep.bind(1L, 1L, "test_format");
-        Assertions.assertDoesNotThrow(testBatch::execute);
-        final SelectWhereStep<Record> records = ctx
-                .selectFrom(DSL.table(DSL.name("journaldb", "epoch_migration_temp_table")));
-        for (final Record record : records) {
-            final Object id = record.get("logfile_id");
-            final Object epochHour = record.get("epoch_hour");
-            final Object objectFormat = record.get("object_format");
-            System.out.println(id + " " + epochHour + " " + objectFormat);
-        }
+        final EpochMigrationTempTable epochMigrationTempTable = new EpochMigrationTempTable(ctx, "testName");
+        final Table<Record> expectedTable = DSL.table(DSL.name("testName", "epoch_migration_temp_table"));
+        Assertions.assertEquals(expectedTable, epochMigrationTempTable.table());
+        Assertions.assertDoesNotThrow(conn::close);
+    }
+
+    @Test
+    public void testTableFields() {
+        final Connection conn = Assertions
+                .assertDoesNotThrow(
+                        () -> DriverManager
+                                .getConnection(mariadb.getJdbcUrl(), mariadb.getUsername(), mariadb.getPassword())
+                );
+        final DSLContext ctx = DSL.using(conn, SQLDialect.MARIADB);
+        final EpochMigrationTempTable epochMigrationTempTable = new EpochMigrationTempTable(ctx, "testName");
+        final Field<Long> expectedIdField = DSL.field("logfile_id", Long.class);
+        final Field<Long> expectedEpochField = DSL.field("epoch_hour", Long.class);
+        final Field<Long> expectedFormatField = DSL.field("object_format", Long.class);
+        Assertions.assertEquals(expectedIdField, epochMigrationTempTable.logfileIdField());
+        Assertions.assertEquals(expectedEpochField, epochMigrationTempTable.epochHourField());
+        Assertions.assertEquals(expectedFormatField, epochMigrationTempTable.objectFormatField());
+        Assertions.assertDoesNotThrow(conn::close);
     }
 
     @Test

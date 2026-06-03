@@ -45,58 +45,55 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
+import org.apache.spark.sql.Row;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Timestamp;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 
-public final class StubResolvedFormat implements ResolvedFormat {
+/**
+ * Decorator to map spark Rows from origin Iterator from EpochMigrationForEachBatchFunction into Object arrays that are
+ * ready to be loaded into a jooq Loader API.
+ * <p>
+ * Schema: Object[]{ long id, long epoch, String format }
+ */
+final class EpochMigrationIterator implements Iterator<Object[]> {
 
-    @Override
-    public String format() {
-        throw new UnsupportedOperationException("format() not supported for StubArchiveObjectMetadata");
+    private static final Logger LOGGER = LoggerFactory.getLogger(EpochMigrationIterator.class);
+    private final Iterator<Row> origin;
+
+    EpochMigrationIterator(final Iterator<Row> origin) {
+        this.origin = origin;
     }
 
     @Override
-    public String bucket() {
-        throw new UnsupportedOperationException("bucket() not supported for StubArchiveObjectMetadata");
+    public boolean hasNext() {
+        return origin.hasNext();
     }
 
     @Override
-    public String path() {
-        throw new UnsupportedOperationException("path() not supported for StubArchiveObjectMetadata");
-    }
+    public Object[] next() {
+        if (!hasNext()) {
+            throw new NoSuchElementException();
+        }
+        final Row row = origin.next();
+        final Timestamp ts = row.getTimestamp(row.fieldIndex("_time"));
+        if (ts == null) {
+            throw new RuntimeException("Column '_time' was null, cannot convert to epoch seconds");
+        }
+        final long epoch = ts.toInstant().getEpochSecond();
+        final String rawString = row.getString(row.fieldIndex("_raw"));
+        final ResolvedFormat metadata = new ArchiveObjectMetadataWithFormat(rawString).toResolved();
+        final String partitionString = row.getString(row.fieldIndex("partition"));
+        final long id = Long.parseLong(partitionString);
 
-    @Override
-    public String partition() {
-        throw new UnsupportedOperationException("partition() not supported for StubArchiveObjectMetadata");
-    }
+        return new Object[] {
+                id, epoch, metadata.format()
+        };
 
-    @Override
-    public String epoch() {
-        throw new UnsupportedOperationException("epoch() not supported for StubArchiveObjectMetadata");
-    }
-
-    @Override
-    public String rfc5424Timestamp() {
-        throw new UnsupportedOperationException("rfc5424Timestamp() not supported for StubArchiveObjectMetadata");
-    }
-
-    @Override
-    public String pathExtracted() {
-        throw new UnsupportedOperationException("pathExtracted() not supported for StubArchiveObjectMetadata");
-    }
-
-    @Override
-    public String pathExtractedPrecision() {
-        throw new UnsupportedOperationException("pathExtractedPrecision() not supported for StubArchiveObjectMetadata");
-    }
-
-    @Override
-    public String source() {
-        throw new UnsupportedOperationException("source() not supported for StubArchiveObjectMetadata");
-    }
-
-    @Override
-    public boolean isStub() {
-        return true;
     }
 
     @Override
@@ -105,14 +102,18 @@ public final class StubResolvedFormat implements ResolvedFormat {
         if (o == null) {
             rv = false;
         }
+        else if (getClass() != o.getClass()) {
+            rv = false;
+        }
         else {
-            rv = getClass() == o.getClass();
+            final EpochMigrationIterator that = (EpochMigrationIterator) o;
+            rv = Objects.equals(origin, that.origin);
         }
         return rv;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getClass());
+        return Objects.hashCode(origin);
     }
 }

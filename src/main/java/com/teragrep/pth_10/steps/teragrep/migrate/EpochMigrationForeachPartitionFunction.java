@@ -51,12 +51,14 @@ import com.typesafe.config.Config;
 import org.apache.spark.api.java.function.ForeachPartitionFunction;
 import org.apache.spark.sql.Row;
 import org.jooq.DSLContext;
+import org.jooq.Loader;
 import org.jooq.SQLDialect;
 import org.jooq.conf.Settings;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Iterator;
@@ -68,7 +70,7 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
 
     private final ConnectionSource connectionSource;
     private final String journalDBName;
-    private final long batchSize;
+    private final int batchSize;
     private final Settings settings;
 
     EpochMigrationForeachPartitionFunction(final Config config, final String journalDBName) {
@@ -76,13 +78,13 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
     }
 
     EpochMigrationForeachPartitionFunction(final Config config, final String journalDBName, final Settings settings) {
-        this(new LazyConnectionSource(config), journalDBName, 500L, settings);
+        this(new LazyConnectionSource(config), journalDBName, 500, settings);
     }
 
     EpochMigrationForeachPartitionFunction(
             final ConnectionSource connectionSource,
             final String journalDBName,
-            final long batchSize,
+            final int batchSize,
             final Settings settings
     ) {
         this.connectionSource = connectionSource;
@@ -98,37 +100,26 @@ final class EpochMigrationForeachPartitionFunction implements ForeachPartitionFu
             final EpochMigrationTempTable epochMigrationTempTable = new EpochMigrationTempTable(ctx, journalDBName);
             epochMigrationTempTable.create();
 
-            EpochMigrationBatchState batchState = new EpochMigrationBatchState(
-                    epochMigrationTempTable.insertBatch(),
-                    batchSize
-            );
-            while (iter.hasNext()) {
-                batchState = batchState.accept(iter.next());
-                if (batchState.isFull()) {
-                    executeBatch(batchState, conn);
-                    batchState = batchState.reset(epochMigrationTempTable.insertBatch());
-                }
+            final Loader<?> loaderResult = ctx
+                    .loadInto(epochMigrationTempTable.table())
+                    .batchAfter(batchSize)
+                    .commitEach() // commit after each batch
+                    .loadArrays(new EpochMigrationIterator(iter))
+                    .fields(
+                            epochMigrationTempTable.logfileIdField(), epochMigrationTempTable.epochHourField(),
+                            epochMigrationTempTable.objectFormatField()
+                    )
+                    .execute();
+
+            if (!loaderResult.errors().isEmpty()) {
+                throw new RuntimeException(
+                        "Loader encountered execution errors during migration: <" + loaderResult.errors() + ">"
+                );
             }
-            if (batchState.hasPendingRows()) {
-                executeBatch(batchState, conn);
-            }
-            final long totalRows = batchState.totalAccepted();
-            LOGGER.info("epoch migration for each partition function finished total rows=<{}>", totalRows);
             epochMigrationTempTable.callMigrationProcedure();
         }
-        catch (final SQLException e) {
-            throw new RuntimeException("Exception during epoch migration: " + e.getMessage(), e);
-        }
-    }
-
-    private void executeBatch(final EpochMigrationBatchState batchState, final Connection conn) throws SQLException {
-        try {
-            batchState.batch().execute();
-            LOGGER.debug("Commited full batch");
-        }
-        catch (final Exception e) {
-            LOGGER.error("Error executing batch with message: <{}>", e.getMessage());
-            throw new SQLException(e);
+        catch (IOException | SQLException e) {
+            throw new RuntimeException("Exception during migration: " + e.getMessage(), e);
         }
     }
 

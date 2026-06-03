@@ -86,6 +86,6 @@ public final class ArchiveObjectMetadataWithFormatTest {
 
     @Test
     public void testContract() {
-        EqualsVerifier.forClass(ArchiveObjectMetadataFormat.class).verify();
+        EqualsVerifier.forClass(ArchiveObjectMetadataWithFormat.class).verify();
     }
 }

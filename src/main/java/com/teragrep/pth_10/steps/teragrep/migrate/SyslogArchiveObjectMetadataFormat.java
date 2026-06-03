@@ -76,7 +76,7 @@ final class SyslogArchiveObjectMetadataFormat implements ArchiveObjectMetadataFo
             final JsonObject timestamp = root.getJsonObject("timestamp");
             final String format = root.getString("format");
             if (!"rfc5424".equalsIgnoreCase(format)) {
-                result = new StubResolvedFormat();
+                result = new ResolvedFormatStub();
             }
             else {
                 result = new ResolvedFormatImpl(
@@ -96,7 +96,7 @@ final class SyslogArchiveObjectMetadataFormat implements ArchiveObjectMetadataFo
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug("Error parsing JSON <{}> message <{}>", json, e.getMessage());
             }
-            result = new StubResolvedFormat();
+            result = new ResolvedFormatStub();
         }
         return result;
     }

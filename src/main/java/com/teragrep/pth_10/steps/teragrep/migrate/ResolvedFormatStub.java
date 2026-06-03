@@ -45,39 +45,74 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import java.util.Objects;
 
-public final class ResolvedFormatImplTest {
+public final class ResolvedFormatStub implements ResolvedFormat {
 
-    @Test
-    public void testMethods() {
-        final ResolvedFormatImpl resolvedFormat = new ResolvedFormatImpl(
-                "format",
-                "bucket",
-                "path",
-                "partition",
-                "epoch",
-                "rfc5424Timestamp",
-                "pathExtracted",
-                "pathExtractedPrecision",
-                "source"
-        );
-        Assertions.assertFalse(resolvedFormat.isStub());
-        Assertions.assertEquals("format", resolvedFormat.format());
-        Assertions.assertEquals("bucket", resolvedFormat.bucket());
-        Assertions.assertEquals("path", resolvedFormat.path());
-        Assertions.assertEquals("partition", resolvedFormat.partition());
-        Assertions.assertEquals("epoch", resolvedFormat.epoch());
-        Assertions.assertEquals("rfc5424Timestamp", resolvedFormat.rfc5424Timestamp());
-        Assertions.assertEquals("pathExtracted", resolvedFormat.pathExtracted());
-        Assertions.assertEquals("pathExtractedPrecision", resolvedFormat.pathExtractedPrecision());
-        Assertions.assertEquals("source", resolvedFormat.source());
+    @Override
+    public String format() {
+        throw new UnsupportedOperationException("format() not supported for ResolvedFormatStub");
     }
 
-    @Test
-    public void testContract() {
-        EqualsVerifier.forClass(ResolvedFormatImpl.class).verify();
+    @Override
+    public String bucket() {
+        throw new UnsupportedOperationException("bucket() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public String path() {
+        throw new UnsupportedOperationException("path() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public String partition() {
+        throw new UnsupportedOperationException("partition() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public String epoch() {
+        throw new UnsupportedOperationException("epoch() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public String rfc5424Timestamp() {
+        throw new UnsupportedOperationException("rfc5424Timestamp() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public String pathExtracted() {
+        throw new UnsupportedOperationException("pathExtracted() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public String pathExtractedPrecision() {
+        throw new UnsupportedOperationException("pathExtractedPrecision() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public String source() {
+        throw new UnsupportedOperationException("source() not supported for ResolvedFormatStub");
+    }
+
+    @Override
+    public boolean isStub() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        final boolean rv;
+        if (o == null) {
+            rv = false;
+        }
+        else {
+            rv = getClass() == o.getClass();
+        }
+        return rv;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getClass());
     }
 }

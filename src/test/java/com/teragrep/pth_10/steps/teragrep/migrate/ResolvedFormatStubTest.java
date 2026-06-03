@@ -49,30 +49,30 @@ import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public final class StubResolvedFormatTest {
+public final class ResolvedFormatStubTest {
 
     @Test
     public void testIsStub() {
-        final StubResolvedFormat stubResolvedFormat = new StubResolvedFormat();
-        Assertions.assertTrue(stubResolvedFormat.isStub());
+        final ResolvedFormatStub resolvedFormatStub = new ResolvedFormatStub();
+        Assertions.assertTrue(resolvedFormatStub.isStub());
     }
 
     @Test
     public void methodsThrowUnsupported() {
-        final StubResolvedFormat stubResolvedFormat = new StubResolvedFormat();
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::bucket);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::epoch);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::format);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::path);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::partition);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::pathExtracted);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::pathExtractedPrecision);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::rfc5424Timestamp);
-        Assertions.assertThrows(UnsupportedOperationException.class, stubResolvedFormat::source);
+        final ResolvedFormatStub resolvedFormatStub = new ResolvedFormatStub();
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::bucket);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::epoch);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::format);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::path);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::partition);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::pathExtracted);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::pathExtractedPrecision);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::rfc5424Timestamp);
+        Assertions.assertThrows(UnsupportedOperationException.class, resolvedFormatStub::source);
     }
 
     @Test
     public void testContract() {
-        EqualsVerifier.forClass(StubResolvedFormat.class);
+        EqualsVerifier.forClass(ResolvedFormatStub.class);
     }
 }

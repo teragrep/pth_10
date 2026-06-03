@@ -45,14 +45,12 @@
  */
 package com.teragrep.pth_10.steps.teragrep.migrate;
 
-import org.jooq.BatchBindStep;
 import org.jooq.CreateTableColumnStep;
 import org.jooq.DSLContext;
 import org.jooq.DropTableStep;
 import org.jooq.Field;
 import org.jooq.Name;
-import org.jooq.Param;
-import org.jooq.Query;
+import org.jooq.Table;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 import org.slf4j.Logger;
@@ -70,10 +68,6 @@ final class EpochMigrationTempTable {
     private final Field<Long> logfileIdField;
     private final Field<Long> epochHourField;
     private final Field<String> objectFormatField;
-
-    EpochMigrationTempTable(final DSLContext ctx) {
-        this(ctx, "journaldb");
-    }
 
     EpochMigrationTempTable(final DSLContext ctx, final String journalDBName) {
         this(ctx, journalDBName, "epoch_migration_temp_table");
@@ -106,21 +100,20 @@ final class EpochMigrationTempTable {
         this.objectFormatField = objectFormatField;
     }
 
-    /**
-     * Batch step for inserting values into epoch migration temp table
-     * 
-     * @return BatchBindStep for inserting logfile_id, epoch_hour and object_format into the epoch_migration_temp_table
-     */
-    BatchBindStep insertBatch() {
-        final Param<Long> idParam = DSL.param("logfile_id", Long.class);
-        final Param<Long> epochParam = DSL.param("epoch_hour", Long.class);
-        final Field<String> objectFormatParam = DSL.param("object_format", String.class);
-        final Query baseQuery = ctx
-                .insertInto(DSL.table(DSL.name(journalDBName, tableName)))
-                .set(logfileIdField, idParam)
-                .set(epochHourField, epochParam)
-                .set(objectFormatField, objectFormatParam);
-        return ctx.batch(baseQuery);
+    Table<?> table() {
+        return DSL.table(DSL.name(journalDBName, tableName));
+    }
+
+    Field<Long> logfileIdField() {
+        return logfileIdField;
+    }
+
+    Field<Long> epochHourField() {
+        return epochHourField;
+    }
+
+    Field<String> objectFormatField() {
+        return objectFormatField;
     }
 
     void create() {
