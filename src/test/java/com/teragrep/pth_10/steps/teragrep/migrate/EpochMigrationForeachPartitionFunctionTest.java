@@ -174,11 +174,11 @@ public final class EpochMigrationForeachPartitionFunctionTest {
                 new Settings()
         );
         foreachPartitionFunction
-                .call(Arrays.asList(genericResultRow(1, 100), genericResultRow(2, 200), genericResultRow(3, 300)).iterator());
+                .call(Arrays.asList(genericResultRow(1, 3650), genericResultRow(2, 3650 * 2), genericResultRow(3, 3650 * 3)).iterator());
         final Map<Long, Long> results = Assertions.assertDoesNotThrow(this::nonNullLogfilesMap);
         Assertions.assertDoesNotThrow(() -> printLogfile());
         Assertions.assertIterableEquals(Arrays.asList(1L, 2L, 3L), results.keySet());
-        Assertions.assertIterableEquals(Arrays.asList(100L, 200L, 300L), results.values());
+        Assertions.assertIterableEquals(Arrays.asList(3600L, 3600 * 2L, 3600 * 3L), results.values());
     }
 
     @Test
@@ -190,10 +190,11 @@ public final class EpochMigrationForeachPartitionFunctionTest {
                 new Settings()
         );
         foreachPartitionFunction
-                .call(Arrays.asList(genericResultRow(1, 100), genericResultRow(2, 200), genericResultRow(3, 300), genericResultRow(4, 400), genericResultRow(5, 500), genericResultRow(6, 600)).iterator());
+                .call(Arrays.asList(genericResultRow(1, 3650), genericResultRow(2, 3650 * 2), genericResultRow(3, 3650 * 3), genericResultRow(4, 3650 * 4), genericResultRow(5, 3650 * 5), genericResultRow(6, 3650 * 6)).iterator());
         final Map<Long, Long> results = Assertions.assertDoesNotThrow(this::nonNullLogfilesMap);
         Assertions.assertIterableEquals(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L), results.keySet());
-        Assertions.assertIterableEquals(Arrays.asList(100L, 200L, 300L, 400L, 500L, 600L), results.values());
+        Assertions
+                .assertIterableEquals(Arrays.asList(3600L, 3600 * 2L, 3600 * 3L, 3600 * 4L, 3600 * 5L, 3600 * 6L), results.values());
     }
 
     @Test
