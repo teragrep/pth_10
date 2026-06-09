@@ -85,13 +85,14 @@ final class EpochMigrationIterator implements Iterator<Object[]> {
             throw new RuntimeException("Column '_time' was null, cannot convert to epoch seconds");
         }
         final long epoch = ts.toInstant().getEpochSecond();
+        final long epochHour = epoch - (epoch % 3600);
         final String rawString = row.getString(row.fieldIndex("_raw"));
         final ResolvedFormat metadata = new ArchiveObjectMetadataWithFormat(rawString).toResolved();
         final String partitionString = row.getString(row.fieldIndex("partition"));
         final long id = Long.parseLong(partitionString);
 
         return new Object[] {
-                id, epoch, metadata.format()
+                id, epochHour, metadata.format()
         };
 
     }
