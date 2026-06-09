@@ -89,9 +89,9 @@ public final class InitializedDataSourceStateTest {
 
     private Config defaultConfig() {
         final Properties properties = new Properties();
-        properties.put("dpl.pth_10.bloom.db.username", "testuser");
-        properties.put("dpl.pth_10.bloom.db.password", "testpass");
-        properties.put("dpl.pth_06.bloom.db.url", url);
+        properties.put("dpl.pth_06.archive.db.username", "testuser");
+        properties.put("dpl.pth_06.archive.db.password", "testpass");
+        properties.put("dpl.pth_06.archive.db.url", url);
         return ConfigFactory.parseProperties(properties);
     }
 }

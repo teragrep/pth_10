@@ -107,9 +107,9 @@ public final class ConnectionPoolSingletonTest {
 
     private static Config defaultConfig() {
         final Properties properties = new Properties();
-        properties.put("dpl.pth_10.bloom.db.username", username);
-        properties.put("dpl.pth_10.bloom.db.password", password);
-        properties.put("dpl.pth_06.bloom.db.url", url);
+        properties.put("dpl.pth_06.archive.db.username", username);
+        properties.put("dpl.pth_06.archive.db.password", password);
+        properties.put("dpl.pth_06.archive.db.url", url);
         return ConfigFactory.parseProperties(properties);
     }
 }
