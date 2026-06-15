@@ -153,9 +153,9 @@ public final class EpochMigrationForeachPartitionFunctionTest {
         });
 
         final Map<String, String> optsMap = new HashMap<>();
-        optsMap.put("dpl.pth_06.archive.db.username", mariadb.getUsername());
-        optsMap.put("dpl.pth_06.archive.db.password", mariadb.getPassword());
-        optsMap.put("dpl.pth_06.archive.db.url", mariadb.getJdbcUrl());
+        optsMap.put("dpl.pth_10.archive.db.username", mariadb.getUsername());
+        optsMap.put("dpl.pth_10.archive.db.password", mariadb.getPassword());
+        optsMap.put("dpl.pth_10.archive.db.url", mariadb.getJdbcUrl());
         final Config config = ConfigFactory.parseMap(optsMap);
         this.connectionSource = new TestingConnectionSource(config);
     }
