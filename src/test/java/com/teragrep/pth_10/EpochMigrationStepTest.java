@@ -114,9 +114,9 @@ public final class EpochMigrationStepTest {
     @BeforeEach
     void setUp() {
         Map<String, String> opts = new HashMap<>();
-        opts.put("dpl.pth_06.archive.db.username", mariadb.getUsername());
-        opts.put("dpl.pth_06.archive.db.password", mariadb.getPassword());
-        opts.put("dpl.pth_06.archive.db.url", mariadb.getJdbcUrl());
+        opts.put("dpl.pth_10.archive.db.username", mariadb.getUsername());
+        opts.put("dpl.pth_10.archive.db.password", mariadb.getPassword());
+        opts.put("dpl.pth_10.archive.db.url", mariadb.getJdbcUrl());
 
         final Connection conn = Assertions
                 .assertDoesNotThrow(
