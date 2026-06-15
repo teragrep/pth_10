@@ -48,12 +48,16 @@ package com.teragrep.pth_10.steps.teragrep.connection;
 import com.typesafe.config.Config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 final class DataSourceFromConfig implements Supplier<HikariDataSource> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceFromConfig.class);
 
     private final String sourceName;
     private final Config config;
@@ -90,47 +94,91 @@ final class DataSourceFromConfig implements Supplier<HikariDataSource> {
     }
 
     private String connectionUsername() {
+
+        final String archiveUsernameConfigurationItem = "dpl.pth_10.archive.db.username";
+
+        final String BLOOMDB_USERNAME_CONFIG_ITEM = "dpl.pth_10.bloom.db.username";
+
         final String username;
-        final String archiveUsernameConfigurationItem = "dpl.pth_06.archive.db.username";
         if (config.hasPath(archiveUsernameConfigurationItem)) {
             username = config.getString(archiveUsernameConfigurationItem);
-            if (username == null || username.isEmpty()) {
-                throw new RuntimeException("Database username not set.");
-            }
+
+        }
+        else if (config.hasPath(BLOOMDB_USERNAME_CONFIG_ITEM)) {
+            LOGGER
+                    .warn(
+                            "Using deprecated configuration item <{}>, use <{}> instead", BLOOMDB_USERNAME_CONFIG_ITEM,
+                            archiveUsernameConfigurationItem
+                    );
+            username = config.getString(BLOOMDB_USERNAME_CONFIG_ITEM);
         }
         else {
             throw new RuntimeException("Missing configuration item: '" + archiveUsernameConfigurationItem + "'.");
         }
+
+        if (username == null || username.isEmpty()) {
+            throw new RuntimeException("Database username not set.");
+        }
+
         return username;
     }
 
     private String connectionPassword() {
+
+        final String archivePasswordConfigurationItem = "dpl.pth_10.archive.db.password";
+
+        final String BLOOMDB_PASSWORD_CONFIG_ITEM = "dpl.pth_10.bloom.db.password";
+
         final String password;
-        final String archivePasswordConfigurationItem = "dpl.pth_06.archive.db.password";
         if (config.hasPath(archivePasswordConfigurationItem)) {
             password = config.getString(archivePasswordConfigurationItem);
-            if (password == null) {
-                throw new RuntimeException("Database password not set.");
-            }
+
+        }
+        else if (config.hasPath(BLOOMDB_PASSWORD_CONFIG_ITEM)) {
+            LOGGER
+                    .warn(
+                            "Using deprecated configuration item <{}>, use <{}> instead", BLOOMDB_PASSWORD_CONFIG_ITEM,
+                            archivePasswordConfigurationItem
+                    );
+            password = config.getString(BLOOMDB_PASSWORD_CONFIG_ITEM);
         }
         else {
             throw new RuntimeException("Missing configuration item: '" + archivePasswordConfigurationItem + "'.");
         }
+
+        if (password == null) {
+            throw new RuntimeException("Database password not set.");
+        }
+
         return password;
     }
 
     private String connectionURL() {
+
+        final String archiveDBConfigurationItem = "dpl.pth_10.archive.db.url";
+
+        final String BLOOMDB_URL_CONFIG_ITEM = "dpl.pth_06.bloom.db.url";
+
         final String databaseUrl;
-        final String archiveDBConfigurationItem = "dpl.pth_06.archive.db.url";
         if (config.hasPath(archiveDBConfigurationItem)) {
             databaseUrl = config.getString(archiveDBConfigurationItem);
-            if (databaseUrl == null || databaseUrl.isEmpty()) {
-                throw new RuntimeException("Database url not set.");
-            }
+        }
+        else if (config.hasPath(BLOOMDB_URL_CONFIG_ITEM)) {
+            LOGGER
+                    .warn(
+                            "Using deprecated configuration item <{}>, use <{}> instead", BLOOMDB_URL_CONFIG_ITEM,
+                            archiveDBConfigurationItem
+                    );
+            databaseUrl = config.getString(BLOOMDB_URL_CONFIG_ITEM);
         }
         else {
             throw new RuntimeException("Missing configuration item: '" + archiveDBConfigurationItem + "'.");
         }
+
+        if (databaseUrl == null || databaseUrl.isEmpty()) {
+            throw new RuntimeException("Database url not set.");
+        }
+
         return databaseUrl;
     }
 
