@@ -131,10 +131,12 @@ final public class SpathFlatJson {
     @Override
     public boolean equals(Object o) {
         final boolean isEquals;
-        if (this == o)
+        if (this == o) {
             isEquals = true;
-        else if (o == null || getClass() != o.getClass())
+        }
+        else if (o == null || getClass() != o.getClass()) {
             isEquals = false;
+        }
         else {
             final SpathFlatJson spathFlatJson = (SpathFlatJson) o;
             isEquals = Objects.equals(input, spathFlatJson.input);

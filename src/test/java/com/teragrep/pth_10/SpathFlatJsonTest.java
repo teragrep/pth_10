@@ -92,7 +92,7 @@ public final class SpathFlatJsonTest {
     }
 
     @Test
-    void testSpathNullSpathExpression() {
+    void testSpathSimpleJsonInput() {
         final String input = "{\"a\":\"b\", \"c\":\"d\"}";
         final Map<String, String> result = new SpathFlatJson(input).asMap();
         final Map<String, String> expectedResult = new HashMap<>();

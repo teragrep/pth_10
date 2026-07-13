@@ -72,11 +72,11 @@ import java.util.Objects;
 public final class SpathXml {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SpathXml.class);
-    final String input;
-    final String spathExpression;
-    final String inputColumn;
-    final String outputColumn;
-    final NullValue nullValue;
+    private final String input;
+    private final String spathExpression;
+    private final String inputColumn;
+    private final String outputColumn;
+    private final NullValue nullValue;
 
     /**
      * Returns result of spath as a map Keys wrapped in backticks to escape dots, spark uses them for maps

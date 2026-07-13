@@ -65,7 +65,7 @@ import java.util.Map;
 public class SpathTest {
 
     @Test
-    void testSpathTranslation() {
+    void testSpathOutputParameterWithPath() {
         final String query = "| spath input=_raw output=out path=this.is.a.path";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
@@ -86,7 +86,7 @@ public class SpathTest {
     }
 
     @Test
-    void testSpathTranslation2() {
+    void testSpathAutoExtractionMode() {
         final String query = "| spath";
         final CharStream inputStream = CharStreams.fromString(query);
         final DPLLexer lexer = new DPLLexer(inputStream);
