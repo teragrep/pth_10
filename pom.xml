@@ -580,6 +580,10 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.0.0-M5</version>
         <configuration>
+          <environmentVariables>
+            <TESTCONTAINERS_RYUK_DISABLED>true</TESTCONTAINERS_RYUK_DISABLED>
+            <DOCKER_HOST>unix://${env.XDG_RUNTIME_DIR}/podman/podman.sock</DOCKER_HOST>
+          </environmentVariables>
           <parallel>all</parallel>
           <useUnlimitedThreads>true</useUnlimitedThreads>
           <statelessTestsetReporter implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
