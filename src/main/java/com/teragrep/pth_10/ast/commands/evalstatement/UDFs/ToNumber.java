@@ -45,7 +45,6 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth_10.ast.NullValue;
 import org.apache.spark.sql.api.java.UDF2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,34 +55,32 @@ import java.io.Serializable;
  * UDF for eval method tonumber(numstr, base)<br>
  * Converts a numeric string to a long of base.
  */
-public class Tonumber implements UDF2<String, Integer, Object>, Serializable {
+public final class ToNumber implements UDF2<String, Integer, Double>, Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Tonumber.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ToNumber.class);
     private static final long serialVersionUID = 1L;
-    private final NullValue nullValue;
-
-    public Tonumber(NullValue nullValue) {
-        super();
-        this.nullValue = nullValue;
-    }
 
     @Override
-    public Object call(String numstr, Integer base) throws Exception {
-        Object rv = nullValue.value();
-
+    public Double call(final String numberString, final Integer base) throws Exception {
         if (base < 2 || base > 36) {
             throw new UnsupportedOperationException(
                     "Tonumber: 'base' argument should be an integer value between 2 and 36."
             );
         }
 
-        // try parsing, otherwise return null
+        final double rv;
         try {
-            rv = Long.valueOf(numstr, base);
+            if (base == 10) {
+                rv = Double.parseDouble(numberString);
+            }
+            else {
+                rv = (double) Long.parseLong(numberString, base);
+            }
         }
-        catch (NumberFormatException nfe) {
-            LOGGER.warn("Tonumber: Error parsing, returning 'null'. Details: <{}>", nfe.getMessage());
-            // Could not parse, return null
+        catch (final NumberFormatException exception) {
+            throw new RuntimeException(
+                    "Tonumber: Could not parse String <[" + numberString + "]> to a Number: " + exception.getMessage()
+            );
         }
 
         return rv;

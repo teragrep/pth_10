@@ -2005,31 +2005,22 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodTonumber(DPLParser.EvalMethodTonumberContext ctx) {
-        Node rv = evalMethodTonumberEmitCatalyst(ctx);
-        return rv;
-    }
-
-    private Node evalMethodTonumberEmitCatalyst(DPLParser.EvalMethodTonumberContext ctx) {
-        Node rv = null;
-
-        // tonumber ( numstr , base )
-        // if base is not given, defaults to base-10
-        Column numstrCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        Column baseCol = functions.lit(10);
+        final Column numberStringCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column baseCol;
 
         if (ctx.getChildCount() > 4) {
             baseCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
         }
+        else {
+            baseCol = functions.lit(10);
+        }
 
-        // Register and use UDF toNumber
-        UserDefinedFunction toNumber = functions.udf(new Tonumber(catCtx.nullValue), DataTypes.LongType);
-        SparkSession ss = SparkSession.builder().getOrCreate();
-        ss.udf().register("toNumber", toNumber);
+        final UserDefinedFunction toNumberFunction = functions.udf(new ToNumber(), DataTypes.DoubleType);
+        final SparkSession sparkSession = SparkSession.builder().getOrCreate();
+        sparkSession.udf().register("toNumberFunction", toNumberFunction);
 
-        Column col = functions.callUDF("toNumber", numstrCol, baseCol);
-        rv = new ColumnNode(col);
-
-        return rv;
+        final Column col = functions.callUDF("toNumberFunction", numberStringCol, baseCol);
+        return new ColumnNode(col);
     }
 
     /**
