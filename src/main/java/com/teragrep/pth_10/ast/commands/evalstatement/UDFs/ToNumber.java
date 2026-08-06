@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
+import com.teragrep.pth_10.ast.NullValue;
 import org.apache.spark.sql.api.java.UDF2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,13 +56,22 @@ import java.io.Serializable;
  * UDF for eval method tonumber(numstr, base)<br>
  * Converts a numeric string to a long of base.
  */
-public final class ToNumber implements UDF2<String, Integer, Double>, Serializable {
+public final class ToNumber implements UDF2<String, Integer, Object>, Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ToNumber.class);
     private static final long serialVersionUID = 1L;
+    private final NullValue nullValue;
+
+    public ToNumber(NullValue nullValue) {
+        this.nullValue = nullValue;
+    }
 
     @Override
-    public Double call(final String numberString, final Integer base) throws Exception {
+    public Object call(final String numberString, final Integer base) throws Exception {
+        // null input should result in a null output
+        if (numberString == null || base == null) {
+            return nullValue;
+        }
         if (base < 2 || base > 36) {
             throw new UnsupportedOperationException(
                     "Tonumber: 'base' argument should be an integer value between 2 and 36."
