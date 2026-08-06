@@ -51,6 +51,7 @@ import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -2306,6 +2307,22 @@ public class evalTest {
             Assertions
                     .assertEquals(Collections.singletonList(12.34), resultList, "result list should match the expected list");
         });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalToNumberThrowsExceptionOnNonDecimalBaseDouble() {
+        final String query = "index=index_A | eval a=tonumber(\"12.34\", 2)";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        final StreamingQueryException exception = streamingTestUtil
+                .performThrowingDPLTest(StreamingQueryException.class, query, testFile, res -> {
+                });
+        final String expectedMessage = "Tonumber: Could not parse String <[12.34]> to a Number: For input string: \"12.34\"";
+        Assertions.assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
     // Test eval function acos, acosh, cos, cosh
