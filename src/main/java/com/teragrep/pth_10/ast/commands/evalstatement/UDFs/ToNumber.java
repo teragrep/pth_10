@@ -89,7 +89,9 @@ public final class ToNumber implements UDF2<String, Integer, Object>, Serializab
         }
         catch (final NumberFormatException exception) {
             throw new RuntimeException(
-                    "Tonumber: Could not parse String <[" + numberString + "]> to a Number: " + exception.getMessage()
+                    "Tonumber: Could not parse String <[" + numberString + "]> to a Number using base <[" + base
+                            + "]>, note that only base 10 is supported for fractional values. message:"
+                            + exception.getMessage()
             );
         }
 

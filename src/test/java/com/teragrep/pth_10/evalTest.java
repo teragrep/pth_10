@@ -2321,7 +2321,7 @@ public class evalTest {
         final StreamingQueryException exception = streamingTestUtil
                 .performThrowingDPLTest(StreamingQueryException.class, query, testFile, res -> {
                 });
-        final String expectedMessage = "Tonumber: Could not parse String <[12.34]> to a Number: For input string: \"12.34\"";
+        final String expectedMessage = "Tonumber: Could not parse String <[12.34]> to a Number using base <[2]>, note that only base 10 is supported for fractional values. message:For input string: \"12.34\"";
         Assertions.assertTrue(exception.getMessage().contains(expectedMessage));
     }
 
