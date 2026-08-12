@@ -62,37 +62,44 @@ public final class ToNumber implements UDF2<String, Integer, Object>, Serializab
     private static final long serialVersionUID = 1L;
     private final NullValue nullValue;
 
-    public ToNumber(NullValue nullValue) {
+    public ToNumber(final NullValue nullValue) {
         this.nullValue = nullValue;
     }
 
     @Override
     public Object call(final String numberString, final Integer base) throws Exception {
-        // null input should result in a null output
+
+        Object rv;
+
         if (numberString == null || base == null) {
-            return nullValue;
+            rv = nullValue.value();
         }
-        if (base < 2 || base > 36) {
+        else if (base < 2 || base > 36) {
             throw new UnsupportedOperationException(
                     "Tonumber: 'base' argument should be an integer value between 2 and 36."
             );
         }
-
-        final double rv;
-        try {
-            if (base == 10) {
+        else if (
+            base != 10 && (numberString.contains(".") || numberString.contains("e") || numberString.contains("E"))
+        ) {
+            throw new UnsupportedOperationException("Tonumber: fractional values are only supported for base 10.");
+        }
+        else if (base == 10) {
+            try {
                 rv = Double.parseDouble(numberString);
             }
-            else {
+            catch (final NumberFormatException e) {
+                rv = nullValue.value();
+            }
+
+        }
+        else {
+            try {
                 rv = (double) Long.parseLong(numberString, base);
             }
-        }
-        catch (final NumberFormatException exception) {
-            throw new RuntimeException(
-                    "Tonumber: Could not parse String <[" + numberString + "]> to a Number using base <[" + base
-                            + "]>, note that only base 10 is supported for fractional values. message:"
-                            + exception.getMessage()
-            );
+            catch (final NumberFormatException e) {
+                rv = nullValue.value();
+            }
         }
 
         return rv;
