@@ -2016,7 +2016,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         }
 
         final UserDefinedFunction toNumberFunction = functions
-                .udf(new ToNumber(catCtx.nullValue), DataTypes.DoubleType);
+                .udf(new ToNumber(catCtx.nullValue), DataTypes.StringType);
         final SparkSession sparkSession = SparkSession.builder().getOrCreate();
         sparkSession.udf().register("toNumberFunction", toNumberFunction);
 

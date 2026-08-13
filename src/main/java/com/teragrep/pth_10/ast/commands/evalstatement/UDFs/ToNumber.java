@@ -47,18 +47,17 @@ package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth_10.ast.NullValue;
 import org.apache.spark.sql.api.java.UDF2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * UDF for eval method tonumber(numstr, base)<br>
  * Converts a numeric string to a long of base.
  */
-public final class ToNumber implements UDF2<String, Integer, Object>, Serializable {
+public final class ToNumber implements UDF2<String, Integer, String>, Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ToNumber.class);
     private static final long serialVersionUID = 1L;
     private final NullValue nullValue;
 
@@ -67,26 +66,25 @@ public final class ToNumber implements UDF2<String, Integer, Object>, Serializab
     }
 
     @Override
-    public Object call(final String numberString, final Integer base) throws Exception {
+    public String call(final String numberString, final Integer base) throws Exception {
 
-        Object rv;
+        String rv;
 
         if (numberString == null || base == null) {
             rv = nullValue.value();
         }
         else if (base < 2 || base > 36) {
-            throw new UnsupportedOperationException(
-                    "Tonumber: 'base' argument should be an integer value between 2 and 36."
-            );
+            throw new IllegalArgumentException("'base' argument should be an integer value between 2 and 36.");
         }
         else if (
             base != 10 && (numberString.contains(".") || numberString.contains("e") || numberString.contains("E"))
         ) {
-            throw new UnsupportedOperationException("Tonumber: fractional values are only supported for base 10.");
+            throw new UnsupportedOperationException("fractional values are only supported for base 10.");
         }
         else if (base == 10) {
             try {
-                rv = Double.parseDouble(numberString);
+                final BigDecimal bigDecimal = new BigDecimal(numberString);
+                rv = bigDecimal.stripTrailingZeros().toPlainString();
             }
             catch (final NumberFormatException e) {
                 rv = nullValue.value();
@@ -95,7 +93,7 @@ public final class ToNumber implements UDF2<String, Integer, Object>, Serializab
         }
         else {
             try {
-                rv = (double) Long.parseLong(numberString, base);
+                rv = new BigInteger(numberString, base).toString();
             }
             catch (final NumberFormatException e) {
                 rv = nullValue.value();
@@ -104,5 +102,4 @@ public final class ToNumber implements UDF2<String, Integer, Object>, Serializab
 
         return rv;
     }
-
 }
