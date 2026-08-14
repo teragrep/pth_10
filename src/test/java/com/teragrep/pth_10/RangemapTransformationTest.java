@@ -251,4 +251,22 @@ public class RangemapTransformationTest {
                         iae.getMessage()
                 );
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testRangemapRangeWithMissingRightValue() {
+        IllegalArgumentException iae = this.streamingTestUtil
+                .performThrowingDPLTest(
+                        IllegalArgumentException.class, "index=* | rangemap field=_raw low=0-", testFile, ds -> {
+                        }
+                );
+        Assertions
+                .assertEquals(
+                        "Invalid range for rangemap command, the range should have both start and end values but found: <0->",
+                        iae.getMessage()
+                );
+    }
 }
