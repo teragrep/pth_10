@@ -1951,7 +1951,6 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     private Node evalMethodTostringEmitCatalyst(DPLParser.EvalMethodTostringContext ctx) {
-        Node rv = null;
 
         // Requires at least one argument X (input)
         // If X (input) is a number, Y can be provided (optionally) with arguments "hex", "commas" or "duration"
@@ -1961,40 +1960,44 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // tostring ( X ) --OR-- tostring ( X , Y )
 
-        Column inputCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        String options = null;
-        if (ctx.getChildCount() > 4)
-            options = new UnquotedText(new TextString(ctx.getChild(4).getText())).read();
+        final Column inputCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final String options;
 
-        Column col = null;
-        // Base case without options (Y)
+        if (ctx.getChildCount() > 4) {
+            options = new UnquotedText(new TextString(ctx.getChild(4).getText())).read();
+        }
+        else {
+            options = catCtx.nullValue.value();
+        }
+
+        final Column col;
         if (options == null) {
             col = inputCol;
         }
-        // With options (Y)
+        else if ("hex".equalsIgnoreCase(options)) {
+            col = functions.concat(functions.lit("0x"), functions.hex(inputCol));
+        }
+        else if ("commas".equalsIgnoreCase(options)) {
+            col = functions.format_number(inputCol, 2);
+        }
+        else if ("duration".equalsIgnoreCase(options)) {
+            final Column totalSeconds = functions.round(inputCol.cast(DataTypes.DoubleType)).cast(DataTypes.LongType);
+            final Column hours = totalSeconds.divide(3600).cast(DataTypes.LongType);
+            final Column minutes = totalSeconds.mod(3600).divide(60).cast(DataTypes.LongType);
+            final Column seconds = totalSeconds.mod(60).cast(DataTypes.LongType);
+            final Column formattedDuration = functions.format_string("%02d:%02d:%02d", hours, minutes, seconds);
+            col = functions
+                    .when(inputCol.isNull(), functions.lit(catCtx.nullValue.value()))
+                    .otherwise(formattedDuration);
+        }
         else {
-            // "hex", "commas" or "duration"
-            switch (options.toLowerCase()) {
-                case "hex":
-                    col = functions.concat(functions.lit("0x"), functions.hex(inputCol));
-                    break;
-                case "commas":
-                    col = functions.format_number(inputCol, 2);
-                    break;
-                case "duration":
-                    // input is seconds -> output HH:MM:SS
-                    col = functions.from_unixtime(inputCol, "HH:mm:ss");
-                    break;
-                default:
-                    throw new UnsupportedOperationException(
-                            "Unsupported optional argument supplied: '" + options
-                                    + "'.The argument must be 'hex', 'commas' or 'duration' instead."
-                    );
-            }
+            throw new UnsupportedOperationException(
+                    "Unsupported optional argument supplied: '<[" + options
+                            + "]>'.The argument must be 'hex', 'commas' or 'duration' instead."
+            );
         }
 
-        rv = new ColumnNode(col.cast("string"));
-        return rv;
+        return new ColumnNode(col.cast("string"));
     }
 
     /**
