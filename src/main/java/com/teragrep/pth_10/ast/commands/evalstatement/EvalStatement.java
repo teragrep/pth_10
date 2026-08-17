@@ -1949,7 +1949,6 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     private Node evalMethodTostringEmitCatalyst(DPLParser.EvalMethodTostringContext ctx) {
-        Node rv = null;
 
         // Requires at least one argument X (input)
         // If X (input) is a number, Y can be provided (optionally) with arguments "hex", "commas" or "duration"
@@ -1959,13 +1958,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
         // tostring ( X ) --OR-- tostring ( X , Y )
 
-        Column inputCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        String options = null;
-        if (ctx.getChildCount() > 4)
-            options = new UnquotedText(new TextString(ctx.getChild(4).getText())).read();
+        final Column inputCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final String options;
 
-        Column col = null;
-        // Base case without options (Y)
+        if (ctx.getChildCount() > 4) {
+            options = new UnquotedText(new TextString(ctx.getChild(4).getText())).read();
+        }
+        else {
+            options = catCtx.nullValue.value();
+        }
+
+        final Column col;
         if (options == null) {
             col = inputCol;
         }
@@ -1996,8 +1999,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
             }
         }
 
-        rv = new ColumnNode(col.cast("string"));
-        return rv;
+        return new ColumnNode(col.cast("string"));
     }
 
     /**
