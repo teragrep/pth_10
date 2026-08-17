@@ -2209,7 +2209,6 @@ public class evalTest {
     }
 
     // Test eval method tostring(x,y="duration")
-    // Has to have UTC as SparkSession's timezone
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
