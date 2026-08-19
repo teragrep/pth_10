@@ -2825,8 +2825,8 @@ public class evalTest {
             matches = "true"
     )
     public void parseEvalCidrmatchCatalystTest() {
-        String q = "index=index_A | eval a=cidrmatch(ip, \"192.168.2.0/24\")";
-        String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
+        final String q = "index=index_A | eval a=cidrmatch(\"192.168.2.0/24\", ip)";
+        final String testFile = "src/test/resources/eval_test_ips*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             final StructType expectedSchema = new StructType(new StructField[] {
@@ -2841,17 +2841,17 @@ public class evalTest {
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.BooleanType, true, new MetadataBuilder().build())
             });
-            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            // Get column 'a'
-            Dataset<Row> resA = res.select("a").orderBy("offset");
-            List<Boolean> lst = resA.collectAsList().stream().map(r -> r.getBoolean(0)).collect(Collectors.toList());
-
-            // we should get the same amount of values back as we put in
-            Assertions.assertEquals(3, lst.size());
-            // Compare values to expected
-            List<Boolean> expectedLst = Arrays.asList(true, false, true);
-
-            Assertions.assertEquals(expectedLst, lst);
+            Assertions.assertEquals(expectedSchema, res.schema(), "results schema should match the expected schema");
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Boolean> resultsList = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getBoolean(0))
+                    .collect(Collectors.toList());
+            Assertions
+                    .assertEquals(3, resultsList.size(), "we should get the same amount of results back as we put in");
+            final List<Boolean> expectedLst = Arrays.asList(true, false, true);
+            Assertions.assertEquals(expectedLst, resultsList, "results list should equal the expected list");
         });
     }
 

@@ -54,7 +54,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * User Defined Function for command cidrmatch(ip, subnet)<br>
+ * User Defined Function for command cidrmatch(subnet, ip)<br>
  * <br>
  * Assumes that both ip and subnet are in String format, and returns a boolean.<br>
  * Returns TRUE, if the ip belongs to the subnet given. Otherwise returns FALSE.<br>
@@ -73,14 +73,14 @@ public class Cidrmatch implements UDF2<String, String, Boolean>, Serializable {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public Boolean call(String ip, String subnet) throws Exception {
+    public Boolean call(final String subnetInput, final String ipInput) throws Exception {
 
         // Strip quotes, if any
-        subnet = new UnquotedText(new TextString(subnet)).read();
-        ip = new UnquotedText(new TextString(ip)).read();
+        String subnet = new UnquotedText(new TextString(subnetInput)).read();
+        String ip = new UnquotedText(new TextString(ipInput)).read();
 
         int nMaskBits;
-        InetAddress requiredAdd = null;
+        InetAddress requiredAdd;
 
         // Check for subnet mask length in bits (given after '/' character)
         if (subnet.indexOf('/') > 0) {
@@ -105,7 +105,7 @@ public class Cidrmatch implements UDF2<String, String, Boolean>, Serializable {
         }
 
         // Convert ip string to InetAddress object
-        InetAddress remoteAdd = null;
+        InetAddress remoteAdd;
         try {
             remoteAdd = InetAddress.getByName(ip);
         }

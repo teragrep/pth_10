@@ -1804,21 +1804,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     private Node evalMethodCidrmatchEmitCatalyst(DPLParser.EvalMethodCidrmatchContext ctx) {
-        Node rv = null;
+        final Column subnetCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column ipCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
-        // Get arguments as columns
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        Column yCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
-
-        // Register and use UDF cidrMatch
-        UserDefinedFunction cidrMatch = functions.udf(new Cidrmatch(), DataTypes.BooleanType);
-        SparkSession ss = SparkSession.builder().getOrCreate();
+        final UserDefinedFunction cidrMatch = functions.udf(new Cidrmatch(), DataTypes.BooleanType);
+        final SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("cidrMatch", cidrMatch);
 
-        Column col = functions.callUDF("cidrMatch", xCol, yCol);
+        final Column col = functions.callUDF("cidrMatch", subnetCol, ipCol);
 
-        rv = new ColumnNode(col);
-        return rv;
+        return new ColumnNode(col);
     }
 
     /**
