@@ -94,11 +94,9 @@ public class CatalystVisitorTest {
         String q = "index = \"cpu\" AND sourcetype = \"log:cpu:0\" NOT src";
 
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            //        e = "((`index` LIKE 'cpu' AND `sourcetype` LIKE 'log:cpu:0') AND (NOT `_raw` LIKE '%src%'))";
-            String e = "(RLIKE(index, (?i)^cpu$) AND (RLIKE(sourcetype, (?i)^log:cpu:0) AND (NOT RLIKE(_raw, (?i)^.*\\Qsrc\\E.*))))";
-
-            String result = this.streamingTestUtil.getCtx().getSparkQuery();
-            Assertions.assertEquals(e, result);
+            final String expected = "(RLIKE(index, (?i)^\\Qcpu\\E$) AND (RLIKE(sourcetype, (?i)^log:cpu:0) AND (NOT RLIKE(_raw, (?i)^.*\\Qsrc\\E.*))))";
+            final String result = this.streamingTestUtil.getCtx().getSparkQuery();
+            Assertions.assertEquals(expected, result);
         });
     }
 
@@ -109,9 +107,9 @@ public class CatalystVisitorTest {
     )
     void searchQueryWithOrTest() {
         final String query = "(index!=strawberry sourcetype=example:strawberry:strawberry host=loadbalancer.example.com) OR (index=* host=firewall.example.com earliest=2021-01-26T00:00:00Z latest=2021-04-26T00:00:00Z \"Denied\")";
-        final String expected = "(((NOT RLIKE(index, (?i)^strawberry$)) AND (RLIKE(sourcetype, (?i)^example:strawberry:strawberry) AND RLIKE(host, (?i)^loadbalancer.example.com))) OR (RLIKE(index, (?i)^.*$) AND (((RLIKE(host, (?i)^firewall.example.com) AND (_time >= from_unixtime(1611619200, yyyy-MM-dd HH:mm:ss))) AND (_time < from_unixtime(1619395200, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QDenied\\E.*))))";
+        final String expected = "(((NOT RLIKE(index, (?i)^\\Qstrawberry\\E$)) AND (RLIKE(sourcetype, (?i)^example:strawberry:strawberry) AND RLIKE(host, (?i)^loadbalancer.example.com))) OR (RLIKE(index, (?i)^[^/]*$) AND (((RLIKE(host, (?i)^firewall.example.com) AND (_time >= from_unixtime(1611619200, yyyy-MM-dd HH:mm:ss))) AND (_time < from_unixtime(1619395200, yyyy-MM-dd HH:mm:ss))) AND RLIKE(_raw, (?i)^.*\\QDenied\\E.*))))";
         this.streamingTestUtil.performDPLTest(query, this.testFile, res -> {
-            DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
+            final DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
             Assertions.assertEquals(expected, ctx.getSparkQuery());
         });
     }
@@ -132,13 +130,12 @@ public class CatalystVisitorTest {
                 long latestEpoch = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss")
                         .instantOf("01/01/2030:00:00:00")
                         .getEpochSecond();
-                String e = "(((RLIKE(index, (?i)^cpu$) AND RLIKE(host, (?i)^sc-99-99-14-25)) AND RLIKE(sourcetype, (?i)^log:cpu:0)) AND ((_time >= from_unixtime("
+                final String expected = "(((RLIKE(index, (?i)^\\Qcpu\\E$) AND RLIKE(host, (?i)^sc-99-99-14-25)) AND RLIKE(sourcetype, (?i)^log:cpu:0)) AND ((_time >= from_unixtime("
                         + earliestEpoch + ", yyyy-MM-dd HH:mm:ss)) AND (_time < from_unixtime(" + latestEpoch
                         + ", yyyy-MM-dd HH:mm:ss))))";
-                DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
-                String result = ctx.getSparkQuery();
-                Assertions.assertEquals(e, result);
+                final String result = this.streamingTestUtil.getCtx().getSparkQuery();
+                Assertions.assertEquals(expected, result);
             }
             catch (ParseException e) {
                 Assertions.fail(e.getMessage());
@@ -155,11 +152,9 @@ public class CatalystVisitorTest {
         //LOGGER.info("------ AND ---------");
         String q = "index =\"strawberry\" AND sourcetype =\"example:strawberry:strawberry\"";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String e = "(RLIKE(index, (?i)^strawberry$) AND RLIKE(sourcetype, (?i)^example:strawberry:strawberry))";
-            DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
-
-            String result = ctx.getSparkQuery();
-            Assertions.assertEquals(e, result);
+            final String expected = "(RLIKE(index, (?i)^\\Qstrawberry\\E$) AND RLIKE(sourcetype, (?i)^example:strawberry:strawberry))";
+            final String result = this.streamingTestUtil.getCtx().getSparkQuery();
+            Assertions.assertEquals(expected, result);
         });
     }
 
@@ -172,11 +167,10 @@ public class CatalystVisitorTest {
         //LOGGER.info("------ OR ---------");
         String q = "index != \"strawberry\" OR sourcetype =\"example:strawberry:strawberry\"";
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
-            String e = "((NOT RLIKE(index, (?i)^strawberry$)) OR RLIKE(sourcetype, (?i)^example:strawberry:strawberry))";
-            DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
+            final String expected = "((NOT RLIKE(index, (?i)^\\Qstrawberry\\E$)) OR RLIKE(sourcetype, (?i)^example:strawberry:strawberry))";
+            final String result = this.streamingTestUtil.getCtx().getSparkQuery();
 
-            String result = ctx.getSparkQuery();
-            Assertions.assertEquals(e, result);
+            Assertions.assertEquals(expected, result);
         });
     }
 
@@ -190,13 +184,12 @@ public class CatalystVisitorTest {
         this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
             DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
             long earliest = Assertions.assertDoesNotThrow(() -> tf.instantOf("04/16/2020:10:25:40")).getEpochSecond();
-            String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + earliest
+            final String expected = "(RLIKE(index, (?i)^\\Qcinnamon\\E$) AND (_time >= from_unixtime(" + earliest
                     + ", yyyy-MM-dd HH:mm:ss)))";
-            DPLParserCatalystContext ctx = this.streamingTestUtil.getCtx();
 
-            String result = ctx.getSparkQuery();
             // Check logical part
-            Assertions.assertEquals(e, result);
+            final String result = this.streamingTestUtil.getCtx().getSparkQuery();
+            Assertions.assertEquals(expected, result);
         });
     }
 
@@ -223,15 +216,15 @@ public class CatalystVisitorTest {
                     // check schema
                     Assertions.assertEquals(expectedSchema, res.schema());
 
-                    String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
+                    final String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
                     // check column for archive query i.e. only logical part'
-                    DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
+                    final DPLTimeFormat tf = new DPLTimeFormat("MM/dd/yyyy:HH:mm:ss");
                     long indexEarliestEpoch = Assertions
                             .assertDoesNotThrow(() -> tf.instantOf("04/16/2020:10:25:40"))
                             .getEpochSecond();
-                    String e = "(RLIKE(index, (?i)^cinnamon$) AND (_time >= from_unixtime(" + indexEarliestEpoch
-                            + ", yyyy-MM-dd HH:mm:ss)))";
-                    Assertions.assertEquals(e, logicalPart);
+                    final String expected = "(RLIKE(index, (?i)^\\Qcinnamon\\E$) AND (_time >= from_unixtime("
+                            + indexEarliestEpoch + ", yyyy-MM-dd HH:mm:ss)))";
+                    Assertions.assertEquals(expected, logicalPart);
                 });
     }
 
@@ -260,14 +253,14 @@ public class CatalystVisitorTest {
 
             Assertions.assertEquals(expectedSchema, res.schema());
             // Check result count
-            List<Row> lst = res.collectAsList();
+            final List<Row> lst = res.collectAsList();
             // check result count
             Assertions.assertEquals(1, lst.size());
 
             // get logical part
-            String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
-            String e = "(RLIKE(index, (?i)^index_A$) AND RLIKE(_raw, (?i)^.*\\Q(1)(enTIty)\\E.*))";
-            Assertions.assertEquals(e, logicalPart);
+            final String logicalPart = this.streamingTestUtil.getCtx().getSparkQuery();
+            final String expected = "(RLIKE(index, (?i)^\\Qindex_A\\E$) AND RLIKE(_raw, (?i)^.*\\Q(1)(enTIty)\\E.*))";
+            Assertions.assertEquals(expected, logicalPart);
         });
     }
 
