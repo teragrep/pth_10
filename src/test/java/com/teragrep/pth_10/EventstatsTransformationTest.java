@@ -277,6 +277,10 @@ public class EventstatsTransformationTest {
         RuntimeException e = this.streamingTestUtil
                 .performThrowingDPLTest(RuntimeException.class, query, testFile, ds -> {
                 });
-        Assertions.assertEquals("EventstatsStep did not receive the expected aggregation function(s)", e.getMessage());
+        Assertions
+                .assertEquals(
+                        "eventstats command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>",
+                        e.getMessage()
+                );
     }
 }

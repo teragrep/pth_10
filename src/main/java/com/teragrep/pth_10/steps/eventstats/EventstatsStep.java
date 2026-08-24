@@ -78,7 +78,9 @@ public class EventstatsStep extends AbstractEventstatsStep {
 
         if (this.listOfAggregations.isEmpty()) {
             // throw exception if there were no aggregations
-            throw new RuntimeException("EventstatsStep did not receive the expected aggregation function(s)");
+            throw new RuntimeException(
+                    "eventstats command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>"
+            );
         }
 
         Column mainAgg = listOfAggregations.remove(0);
