@@ -74,7 +74,15 @@ public class EventstatsStep extends AbstractEventstatsStep {
     @Override
     public Dataset<Row> get(Dataset<Row> dataset) throws StreamingQueryException {
         // perform aggregation
-        Dataset<Row> aggDs = null;
+        final Dataset<Row> aggDs;
+
+        if (this.listOfAggregations.isEmpty()) {
+            // throw exception if there were no aggregations
+            throw new IllegalArgumentException(
+                    "eventstats command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>"
+            );
+        }
+
         Column mainAgg = listOfAggregations.remove(0);
         Seq<Column> seqOfAggs = JavaConversions.asScalaBuffer(listOfAggregations);
 
