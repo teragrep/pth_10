@@ -274,8 +274,8 @@ public class EventstatsTransformationTest {
     )
     public void testEventstatsWithoutAggregationFunction() {
         final String query = "index=index_A | eventstats";
-        RuntimeException e = this.streamingTestUtil
-                .performThrowingDPLTest(RuntimeException.class, query, testFile, ds -> {
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
                 });
         Assertions
                 .assertEquals(
