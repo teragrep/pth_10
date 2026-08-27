@@ -66,9 +66,11 @@ public final class StatsStep extends AbstractStatsStep {
             return null;
         }
 
-        if (this.listOfAggregationExpressions.isEmpty()) {
-            // throw exception if there were no aggregations
-            throw new RuntimeException("StatsStep did not receive the necessary aggregation columns!");
+        if (this.listOfAggregationExpressions == null || this.listOfAggregationExpressions.isEmpty()) {
+            // throw exception if there were no aggregations functions
+            throw new IllegalArgumentException(
+                    "stats command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>"
+            );
         }
 
         Column mainExpr = this.listOfAggregationExpressions.get(0);
