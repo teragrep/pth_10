@@ -290,4 +290,21 @@ public class TimechartStreamingTest {
             Assertions.assertEquals("10", listOfCount.get(0));
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testTimechartWithoutAggregationFunction() {
+        final String query = "index=index_A | timechart";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+        Assertions
+                .assertEquals(
+                        "timechart command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>",
+                        e.getMessage()
+                );
+    }
 }
