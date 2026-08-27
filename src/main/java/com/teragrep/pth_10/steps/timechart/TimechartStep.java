@@ -66,8 +66,10 @@ public final class TimechartStep extends AbstractTimechartStep {
             return null;
         }
 
-        if (this.getAggCols() == null || this.getAggCols().isEmpty()) {
-            throw new RuntimeException("Aggregate columns not present in TimechartStep, cannot proceed");
+        if (this.aggCols == null || this.aggCols.isEmpty() || aggCols.get(0) == null) {
+            throw new IllegalArgumentException(
+                    "timechart command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>"
+            );
         }
 
         // .agg has funky arguments; just giving a Seq of columns is no good, first arg needs to be a column
