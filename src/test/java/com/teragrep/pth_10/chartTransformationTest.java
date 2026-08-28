@@ -449,4 +449,21 @@ public class chartTransformationTest {
             Assertions.assertEquals("0", resultList.get(0)); // the one row has the value 0
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testChartWithoutAggregationFunction() {
+        final String query = "index=index_A | chart";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+        Assertions
+                .assertEquals(
+                        "chart command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>",
+                        e.getMessage()
+                );
+    }
 }
