@@ -56,6 +56,7 @@ import org.apache.spark.sql.streaming.OutputMode;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -378,47 +379,51 @@ public class StepList implements VoidFunction2<Dataset<Row>, Long> {
             final long max = catVisitor.getCatalystContext().getDplMaximumLatest();
             final long step = catVisitor.getCatalystContext().getTimeChartSpanSeconds();
 
+            // copy metadata to spans as the original column is replaced by spans
+            final Metadata timeMetadata = batchDF.schema().apply("_time").metadata();
             final Dataset<Row> rangeDs = catVisitor
                     .getCatalystContext()
                     .getSparkSession()
                     .range((min / step) * step, ((max / step) + 1) * step, step)
-                    .select(functions.col("id").cast("timestamp").alias("_range"));
+                    .select(functions.col("id").cast("timestamp").alias("_range"))
+                    .withMetadata("_range", timeMetadata);
             // left join span to data & continue
             batchDF = rangeDs
                     .join(batchDF, rangeDs.col("_range").equalTo(batchDF.col("_time")), "left")
                     .drop("_time")
                     .withColumnRenamed("_range", "_time")
                     .orderBy("_time");
-
             // fill null data with "0" for all types, except for the "_time" column
+            // filling clears metadata, so we copy it to each filled field.
             for (final StructField field : batchDF.schema().fields()) {
                 final String name = field.name();
                 final DataType dataType = field.dataType();
+                final Metadata metadata = field.metadata();
 
                 if (dataType == DataTypes.StringType) {
                     batchDF = batchDF.na().fill("0", new String[] {
                             name
-                    });
+                    }).withMetadata(name, metadata);
                 }
                 else if (dataType == DataTypes.IntegerType) {
                     batchDF = batchDF.na().fill(0, new String[] {
                             name
-                    });
+                    }).withMetadata(name, metadata);
                 }
                 else if (dataType == DataTypes.LongType) {
                     batchDF = batchDF.na().fill(0L, new String[] {
                             name
-                    });
+                    }).withMetadata(name, metadata);
                 }
                 else if (dataType == DataTypes.DoubleType) {
                     batchDF = batchDF.na().fill(0d, new String[] {
                             name
-                    });
+                    }).withMetadata(name, metadata);
                 }
                 else if (dataType == DataTypes.FloatType) {
                     batchDF = batchDF.na().fill(0f, new String[] {
                             name
-                    });
+                    }).withMetadata(name, metadata);
                 }
                 // skip TimestampType
             }

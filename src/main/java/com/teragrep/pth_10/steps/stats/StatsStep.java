@@ -48,6 +48,8 @@ package com.teragrep.pth_10.steps.stats;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.MetadataBuilder;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -78,7 +80,12 @@ public final class StatsStep extends AbstractStatsStep {
         // Check for any group by expressions
         if (!this.listOfGroupBys.isEmpty()) {
             Seq<Column> seqOfGroupBys = JavaConversions.asScalaBuffer(this.listOfGroupBys);
-            return dataset.groupBy(seqOfGroupBys).agg(mainExpr, seqOfAggs);
+            final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
+            Dataset<Row> resultDataset = dataset.groupBy(seqOfGroupBys).agg(mainExpr, seqOfAggs);
+            for (Column groupByColumn : listOfGroupBys) {
+                resultDataset = resultDataset.withMetadata(groupByColumn.toString(), metadata);
+            }
+            return resultDataset;
         }
         else {
             // No group by, just perform a direct aggregation
