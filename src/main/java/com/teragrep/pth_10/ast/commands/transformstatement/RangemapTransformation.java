@@ -80,12 +80,26 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
         if (ctx.fieldType() != null) {
             this.rangemapStep.sourceField = new UnquotedText(new TextString(ctx.fieldType().getText())).read();
         }
+        else {
+            throw new IllegalArgumentException("rangemap command is missing required field parameter");
+        }
         return new NullNode();
     }
 
     @Override
     public Node visitT_rangemap_attrnParameter(DPLParser.T_rangemap_attrnParameterContext ctx) {
         final String key = ctx.stringType().getText();
+
+        if (
+            ctx.t_rangemap_rangeParameter().GET_RANGE_NUMBER_LEFT() == null
+                    || ctx.t_rangemap_rangeParameter().t_rangemap_rangeRightParameter().GET_RANGE_NUMBER_RIGHT() == null
+        ) {
+            throw new IllegalArgumentException(
+                    "Invalid range values: <" + ctx.t_rangemap_rangeParameter().getText()
+                            + ">. rangemap command expects numerical range values"
+            );
+        }
+
         String valueLeft = ctx.t_rangemap_rangeParameter().GET_RANGE_NUMBER_LEFT().getText();
         final String valueRight = ctx
                 .t_rangemap_rangeParameter()
@@ -93,9 +107,15 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
                 .GET_RANGE_NUMBER_RIGHT()
                 .getText();
 
-        // left side of range contains a trailing '-' character which needs to be removed
-        if (valueLeft.endsWith("-")) {
+        // left side of range contains a trailing '-' character which needs to be removed and right side must have a value
+        if (valueLeft.endsWith("-") && !valueRight.contains("missing")) {
             valueLeft = valueLeft.substring(0, valueLeft.length() - 1);
+        }
+        else {
+            throw new IllegalArgumentException(
+                    "Invalid range for rangemap command, the range should have both start and end values but found: <"
+                            + valueLeft + ">"
+            );
         }
 
         this.rangemapStep.attributeRangeMap.put(key, new String[] {
