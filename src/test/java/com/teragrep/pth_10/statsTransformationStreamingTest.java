@@ -47,6 +47,7 @@ package com.teragrep.pth_10;
 
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
@@ -78,6 +79,9 @@ public class statsTransformationStreamingTest {
     });
 
     private StreamingTestUtil streamingTestUtil;
+    private final Metadata groupByMetadata = new MetadataBuilder()
+            .putBoolean("dpl_internal_isGroupByColumn", true)
+            .build();
 
     @BeforeAll
     void setEnv() {
@@ -144,6 +148,20 @@ public class statsTransformationStreamingTest {
     public void testSplittingByTime() {
         streamingTestUtil
                 .performDPLTest("index=index_A | stats avg(offset) AS stats_test_result BY _time", testFile, ds -> {
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField("_time", DataTypes.TimestampType, true, groupByMetadata),
+                            new StructField(
+                                    "stats_test_result",
+                                    DataTypes.DoubleType,
+                                    true,
+                                    new MetadataBuilder().build()
+                            )
+                    });
+                    Assertions
+                            .assertEquals(
+                                    expectedSchema, ds.schema(),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
                     List<String> listOfResult = ds
                             .select("stats_test_result")
                             .collectAsList()
@@ -173,6 +191,20 @@ public class statsTransformationStreamingTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats avg(offset) AS stats_test_result BY sourcetype", testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("sourcetype", DataTypes.StringType, true, groupByMetadata),
+                                    new StructField(
+                                            "stats_test_result",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                             List<String> listOfResult = ds
                                     .select("stats_test_result")
                                     .collectAsList()
@@ -197,6 +229,20 @@ public class statsTransformationStreamingTest {
     public void testSplittingByNumber() {
         streamingTestUtil
                 .performDPLTest("index=index_A | stats avg(offset) AS stats_test_result BY id", testFile, ds -> {
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField("id", DataTypes.LongType, true, groupByMetadata),
+                            new StructField(
+                                    "stats_test_result",
+                                    DataTypes.DoubleType,
+                                    true,
+                                    new MetadataBuilder().build()
+                            )
+                    });
+                    Assertions
+                            .assertEquals(
+                                    expectedSchema, ds.schema(),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
                     List<String> listOfResult = ds
                             .select("stats_test_result")
                             .collectAsList()
@@ -227,6 +273,21 @@ public class statsTransformationStreamingTest {
         streamingTestUtil
                 .performDPLTest(
                         "index=index_A | stats avg(offset) AS stats_test_result BY sourcetype _time", testFile, ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("sourcetype", DataTypes.StringType, true, groupByMetadata),
+                                    new StructField("_time", DataTypes.TimestampType, true, groupByMetadata),
+                                    new StructField(
+                                            "stats_test_result",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                             List<String> listOfResult = ds
                                     .select("stats_test_result")
                                     .collectAsList()
@@ -258,6 +319,20 @@ public class statsTransformationStreamingTest {
                 .performDPLTest(
                         "index=index_A | eval a = offset + 0 | stats avg(offset) AS stats_test_result BY a", testFile,
                         ds -> {
+                            final StructType expectedSchema = new StructType(new StructField[] {
+                                    new StructField("a", DataTypes.StringType, true, groupByMetadata),
+                                    new StructField(
+                                            "stats_test_result",
+                                            DataTypes.DoubleType,
+                                            true,
+                                            new MetadataBuilder().build()
+                                    )
+                            });
+                            Assertions
+                                    .assertEquals(
+                                            expectedSchema, ds.schema(),
+                                            "Batch handler dataset contained an unexpected column arrangement !"
+                                    );
                             List<String> listOfResult = ds
                                     .select("stats_test_result")
                                     .collectAsList()
@@ -282,6 +357,14 @@ public class statsTransformationStreamingTest {
     @Test
     public void statsTransform_Streaming_AggValues_Test() {
         streamingTestUtil.performDPLTest("index=index_A | stats values(offset) AS stats_test_result", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("stats_test_result", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions
+                    .assertEquals(
+                            expectedSchema, ds.schema(),
+                            "Batch handler dataset contained an unexpected column arrangement !"
+                    );
             List<String> listOfResult = ds
                     .select("stats_test_result")
                     .collectAsList()
@@ -303,6 +386,19 @@ public class statsTransformationStreamingTest {
     public void statsTransform_Streaming_AggExactPerc_Test() {
         streamingTestUtil
                 .performDPLTest("index=index_A | stats exactperc50(offset) AS stats_test_result", testFile, ds -> {
+                    final StructType expectedSchema = new StructType(new StructField[] {
+                            new StructField(
+                                    "stats_test_result",
+                                    DataTypes.DoubleType,
+                                    true,
+                                    new MetadataBuilder().build()
+                            )
+                    });
+                    Assertions
+                            .assertEquals(
+                                    expectedSchema, ds.schema(),
+                                    "Batch handler dataset contained an unexpected column arrangement !"
+                            );
                     List<String> listOfResult = ds
                             .select("stats_test_result")
                             .collectAsList()

@@ -48,6 +48,7 @@ package com.teragrep.pth_10;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.MetadataBuilder;
+import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.*;
@@ -77,6 +78,10 @@ public class PredictTransformationTest {
     });
 
     private StreamingTestUtil streamingTestUtil;
+
+    private final Metadata groupByMetadata = new MetadataBuilder()
+            .putBoolean("dpl_internal_isGroupByColumn", true)
+            .build();
 
     @BeforeAll
     void setEnv() {
@@ -115,7 +120,8 @@ public class PredictTransformationTest {
                                             "_time",
                                             DataTypes.TimestampType,
                                             false,
-                                            new MetadataBuilder().build()
+                                            groupByMetadata
+
                                     ),
                                     new StructField("avgo", DataTypes.StringType, true, new MetadataBuilder().build()),
                                     new StructField("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
@@ -157,12 +163,7 @@ public class PredictTransformationTest {
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred future_timespan=10",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
-                                    new StructField(
-                                            "_time",
-                                            DataTypes.TimestampType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
+                                    new StructField("_time", DataTypes.TimestampType, false, groupByMetadata),
                                     new StructField("avgo", DataTypes.StringType, true, new MetadataBuilder().build()),
                                     new StructField("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                                     new StructField(
@@ -203,12 +204,7 @@ public class PredictTransformationTest {
                         "index=* | timechart span=1h avg(offset) as avgo | predict avgo AS pred algorithm=LLT future_timespan=10 ",
                         testFile, ds -> {
                             final StructType expectedSchema = new StructType(new StructField[] {
-                                    new StructField(
-                                            "_time",
-                                            DataTypes.TimestampType,
-                                            false,
-                                            new MetadataBuilder().build()
-                                    ),
+                                    new StructField("_time", DataTypes.TimestampType, false, groupByMetadata),
                                     new StructField("avgo", DataTypes.StringType, true, new MetadataBuilder().build()),
                                     new StructField("pred", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                                     new StructField(
