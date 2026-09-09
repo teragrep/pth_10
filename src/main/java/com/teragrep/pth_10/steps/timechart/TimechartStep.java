@@ -78,8 +78,12 @@ public final class TimechartStep extends AbstractTimechartStep {
                 .asScalaBuffer(this.aggCols.subList(1, this.aggCols.size()));
 
         List<Column> allGroupBys = new ArrayList<>();
-        allGroupBys.add(this.span);
-        allGroupBys.addAll(this.divByInsts.stream().map(functions::col).collect(Collectors.toList()));
+        if(divByInsts != null) {
+            allGroupBys.add(this.span);
+        }
+        if(divByInsts != null){
+            allGroupBys.addAll(this.divByInsts.stream().map(functions::col).collect(Collectors.toList()));
+        }
 
         Seq<Column> seqOfAllGroupBys = JavaConversions.asScalaBuffer(allGroupBys);
         Dataset<Row> resultDataset = dataset
