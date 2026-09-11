@@ -2280,6 +2280,38 @@ public class evalTest {
         });
     }
 
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalToStringDurationsOverADayDoesNotRollOver() {
+        final String query = "index=index_A | eval a=tostring(86401, \"duration\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema(), "Result schema should match the expected schema");
+            final Dataset<Row> resultA = res.select("a").orderBy("a").distinct();
+            final List<String> list = resultA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(1, list.size(), "Result should only have one value");
+            Assertions.assertEquals("24:00:01", list.get(0));
+        });
+    }
+
     // Test eval method tonumber(numstr, base)
     @Test
     @DisabledIfSystemProperty(
