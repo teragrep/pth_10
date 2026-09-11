@@ -2120,7 +2120,6 @@ public class evalTest {
     }
 
     // Test eval method tostring(x,y="duration")
-    // Has to have UTC as SparkSession's timezone
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
@@ -2204,6 +2203,112 @@ public class evalTest {
             Assertions.assertEquals(1, lst.size());
             // Compare values to expected
             Assertions.assertEquals("12,345.68", lst.get(0));
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalToStringDurationWithNullValue() {
+        final String query = "index=index_A | eval a=tostring(null(), \"duration\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            final Dataset<Row> resultA = res.select("a").orderBy("a").distinct();
+            final List<String> list = resultA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(1, list.size(), "Result should only have one value");
+            Assertions.assertNull(list.get(0), "Result should be a null value");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalToStringDurationDecimalValueRounding() {
+        final String query = "index=index_A | eval a=tostring(\"10.5\", \"duration\") | eval b=tostring(\"10.4\", \"duration\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, true, new MetadataBuilder().build()),
+            });
+            Assertions.assertEquals(expectedSchema, res.schema(), "Result schema should match the expected schema");
+            final Dataset<Row> resultA = res.select("a").orderBy("a").distinct();
+            final Dataset<Row> resultB = res.select("b").orderBy("b").distinct();
+            final List<String> resultListA = resultA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            final List<String> resultListB = resultB
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            // Rounding is based on the configured spark rounding mode. The default mode is HALF_UP, where 0.5 rounds to 1
+            Assertions.assertEquals(1, resultListA.size(), "Result a list should only have one value");
+            Assertions.assertEquals(1, resultListA.size(), "Result b list should only have one value");
+            Assertions.assertEquals("00:00:11", resultListA.get(0), "Duration a result should be rounded up to 11");
+            Assertions.assertEquals("00:00:10", resultListB.get(0), "Duration b result should be rounded down to 10");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalToStringDurationsOverADayDoesNotRollOver() {
+        final String query = "index=index_A | eval a=tostring(86401, \"duration\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema(), "Result schema should match the expected schema");
+            final Dataset<Row> resultA = res.select("a").orderBy("a").distinct();
+            final List<String> list = resultA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(1, list.size(), "Result should only have one value");
+            Assertions.assertEquals("24:00:01", list.get(0));
         });
     }
 
