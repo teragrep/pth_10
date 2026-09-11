@@ -1429,13 +1429,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     private Node evalMethodHypotEmitCatalyst(DPLParser.EvalMethodHypotContext ctx) {
-        Node rv = null;
+
+        if (ctx.getChild(4) == null || ctx.getChild(4).getText().contains("\"")) {
+            throw new IllegalArgumentException(
+                    "Invalid input values for hypot() function, numerical values for X and Y are expected."
+            );
+        }
 
         Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
         Column yCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
         Column res = functions.hypot(xCol, yCol);
-        rv = new ColumnNode(res);
+        Node rv = new ColumnNode(res);
 
         return rv;
     }
