@@ -5120,12 +5120,31 @@ public class evalTest {
     }
 
     @Test
+    @Disabled
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
     public void testHypotWithStringInputValues() {
         final String query = "index=index_A | eval a = hypot(\"string1\", \"string2\")";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+        Assertions
+                .assertEquals(
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected.",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotWithMissingInputValues() {
+        final String query = "index=index_A | eval a = hypot()";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
         IllegalArgumentException e = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {

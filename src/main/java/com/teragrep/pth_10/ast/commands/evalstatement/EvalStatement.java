@@ -1430,7 +1430,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     private Node evalMethodHypotEmitCatalyst(DPLParser.EvalMethodHypotContext ctx) {
 
-        if (ctx.getChild(4) == null || ctx.getChild(4).getText().contains("\"")) {
+        if (ctx.getChild(2) == null || ctx.getChild(4) == null) {
             throw new IllegalArgumentException(
                     "Invalid input values for hypot() function, numerical values for X and Y are expected."
             );
