@@ -46,6 +46,7 @@
 package com.teragrep.pth_10.translationTests;
 
 import com.teragrep.pth_10.ast.DPLParserCatalystContext;
+import com.teragrep.pth_10.ast.NullValue;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.Spath;
 import com.teragrep.pth_10.ast.commands.transformstatement.SpathTransformation;
 import com.teragrep.pth_10.steps.spath.SpathStep;
@@ -110,21 +111,21 @@ public class SpathTest {
 
     @Test
     void testSpathNullJsonInput() {
-        final Spath spath = new Spath();
+        final Spath spath = new Spath(new NullValue());
         Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call(null, "test", "test", "test"));
         Assertions.assertTrue(result.isEmpty());
     }
 
     @Test
     void testSpathNullStringJsonInput() {
-        final Spath spath = new Spath();
+        final Spath spath = new Spath(new NullValue());
         Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call("null", "test", "test", "test"));
         Assertions.assertTrue(result.isEmpty());
     }
 
     @Test
     void testSpathEmptyStringJsonInput() {
-        final Spath spath = new Spath();
+        final Spath spath = new Spath(new NullValue());
         Map<String, String> result = Assertions.assertDoesNotThrow(() -> spath.call("", "test", "test", "test"));
         Assertions.assertTrue(result.isEmpty());
     }

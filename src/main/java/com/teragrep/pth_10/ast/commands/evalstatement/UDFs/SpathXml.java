@@ -86,16 +86,8 @@ public final class SpathXml {
      * @param inputColumn     name of input column
      * @param outputColumn    name of output column
      */
-    public SpathXml(
-            final String input,
-            final String spathExpression,
-            final String inputColumn,
-            final String outputColumn
-    ) {
-        this(input, spathExpression, inputColumn, outputColumn, new NullValue());
-    }
 
-    private SpathXml(
+    public SpathXml(
             final String input,
             final String spathExpression,
             final String inputColumn,

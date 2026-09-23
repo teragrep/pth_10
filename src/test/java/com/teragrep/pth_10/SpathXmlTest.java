@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10;
 
+import com.teragrep.pth_10.ast.NullValue;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.SpathXml;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.jupiter.api.Assertions;
@@ -66,8 +67,13 @@ public class SpathXmlTest {
         expectedResult.put("`main.sub1.item1`", "Hello");
         expectedResult.put("`main.sub1.item2`", "Hello2");
         expectedResult.put("`main.sub2.item3`", "1");
-        final Map<String, String> actualResult = new SpathXml(input, spathExpression, inputColumn, outputColumn)
-                .asMap();
+        final Map<String, String> actualResult = new SpathXml(
+                input,
+                spathExpression,
+                inputColumn,
+                outputColumn,
+                new NullValue()
+        ).asMap();
         Assertions.assertEquals(expectedResult, actualResult);
 
     }
@@ -80,8 +86,13 @@ public class SpathXmlTest {
         final String outputColumn = "a";
         final Map<String, String> ExpectedResult = new HashMap<>();
         ExpectedResult.put("`main.item`", "Hello");
-        final Map<String, String> ActualResult = new SpathXml(input, spathExpression, inputColumn, outputColumn)
-                .asMap();
+        final Map<String, String> ActualResult = new SpathXml(
+                input,
+                spathExpression,
+                inputColumn,
+                outputColumn,
+                new NullValue()
+        ).asMap();
         Assertions.assertEquals(ExpectedResult, ActualResult);
 
     }
@@ -92,7 +103,13 @@ public class SpathXmlTest {
         final String spathExpression = "main.sub";
         final String inputColumn = "_raw";
         final String outputColumn = "a";
-        final Map<String, String> result = new SpathXml(input, spathExpression, inputColumn, outputColumn).asMap();
+        final Map<String, String> result = new SpathXml(
+                input,
+                spathExpression,
+                inputColumn,
+                outputColumn,
+                new NullValue()
+        ).asMap();
         Assertions.assertTrue(result.isEmpty());
 
     }
@@ -106,8 +123,13 @@ public class SpathXmlTest {
         final String outputColumn = "a";
         final Map<String, String> expectedResult = new HashMap<>();
         expectedResult.put("`main.sub.item`", "Hello\nHello2\n1");
-        final Map<String, String> actualResult = new SpathXml(input, spathExpression, inputColumn, outputColumn)
-                .asMap();
+        final Map<String, String> actualResult = new SpathXml(
+                input,
+                spathExpression,
+                inputColumn,
+                outputColumn,
+                new NullValue()
+        ).asMap();
         Assertions.assertEquals(expectedResult, actualResult);
 
     }
