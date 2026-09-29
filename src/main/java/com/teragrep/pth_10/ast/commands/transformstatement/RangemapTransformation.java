@@ -91,8 +91,9 @@ public class RangemapTransformation extends DPLParserBaseVisitor<Node> {
         final String key = ctx.stringType().getText();
 
         if (
-            ctx.t_rangemap_rangeParameter().GET_RANGE_NUMBER_LEFT() == null
+            ctx.t_rangemap_rangeParameter() == null || ctx.t_rangemap_rangeParameter().GET_RANGE_NUMBER_LEFT() == null
                     || ctx.t_rangemap_rangeParameter().t_rangemap_rangeRightParameter().GET_RANGE_NUMBER_RIGHT() == null
+                    || ctx.t_rangemap_rangeParameter().t_rangemap_rangeRightParameter() == null
         ) {
             throw new IllegalArgumentException(
                     "Invalid range values: <" + ctx.t_rangemap_rangeParameter().getText()
