@@ -78,7 +78,7 @@ public final class TimechartStep extends AbstractTimechartStep {
                 .asScalaBuffer(this.aggCols.subList(1, this.aggCols.size()));
 
         List<Column> allGroupBys = new ArrayList<>();
-        if (divByInsts != null) {
+        if (span != null) {
             allGroupBys.add(this.span);
         }
         if (divByInsts != null) {
