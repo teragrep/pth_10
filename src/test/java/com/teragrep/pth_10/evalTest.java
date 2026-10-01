@@ -443,6 +443,51 @@ public class evalTest {
 
     @Test
     @DisabledIfSystemProperty(
+            named = "skipSpakrTest",
+            matches = "true"
+    )
+    public void testEvalSubstrCorrectlyTakesAStringLiteral() {
+        String q = "index=index_A | eval n=substr(\"string\", 1, 3)";
+        String testFile = "src/test/resources/eval_test_data1*jsonl";
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            Row row = res.collectAsList().get(0);
+            Assertions.assertEquals("str", row.getString(row.fieldIndex("n")), "Should take the literal as a string");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSpakrTest",
+            matches = "true"
+    )
+    public void testEvalSubstrCorrectlyTakesAStringLiteralWithoutLengthparam() {
+        String q = "index=index_A | eval n=substr(\"string\", -3)";
+        String testFile = "src/test/resources/eval_test_data1*jsonl";
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            Row row = res.collectAsList().get(0);
+            Assertions.assertEquals("ing", row.getString(row.fieldIndex("n")), "Should take the literal as a string");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSpakrTest",
+            matches = "true"
+    )
+    public void testEvalSubstrCorrectlyTakesAStringLiteralsOnBothSidesOfPlus() {
+        String q = "index=index_A | eval n=substr(\"string\", 1, 3) + substr(\"string\", -3)";
+        String testFile = "src/test/resources/eval_test_data1*jsonl";
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            Row row = res.collectAsList().get(0);
+            Assertions.assertEquals("string", row.getString(row.fieldIndex("n")), "Should concatenate both parts");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
