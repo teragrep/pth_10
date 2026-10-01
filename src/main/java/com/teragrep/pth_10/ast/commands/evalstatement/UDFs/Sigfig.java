@@ -54,6 +54,7 @@ import scala.collection.mutable.WrappedArray;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -171,17 +172,18 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                 BigDecimal currentValue = val;
                 int scale = currentValue.scale();
                 int precision = currentValue.precision();
+                System.out.println("Value " + val + " Scale " + scale);
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("scale=<{}> precision=<{}>", scale, precision);
                 }
-
-                if (scale < minScale) {
+                // Update scale only if val not a whole number
+                if (scale > 0 && scale < minScale) {
                     minScale = scale;
+                    System.out.println("new Minscale " + minScale);
                 }
             }
-
-            rv = input.round(new MathContext(minScale)).doubleValue();
+            rv = input.setScale(minScale, RoundingMode.HALF_UP).doubleValue();
         }
         else {
             // No * / + - found
