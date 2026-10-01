@@ -290,20 +290,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     private Node evalMethodSubstrEmitCatalyst(DPLParser.EvalMethodSubstrContext ctx) {
         ColumnNode rv;
-        Column exp;
-        String par1 = visit(ctx.getChild(2)).toString();
-        String par2 = visit(ctx.getChild(4)).toString();
-        // TODO: In spark >=3.5.0 change to use functions.substring() as it supports not
-        //  providing the length argument.
+        Column str = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        Column start = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
+        Column substr;
         if (ctx.evalStatement().size() > 2) {
-            String par3 = visit(ctx.getChild(6)).toString();
-            exp = functions.expr(String.format("substring(%s, %s, %s)", par1, par2, par3));
+            Column length = ((ColumnNode) visit(ctx.getChild(6))).getColumn();
+            substr = functions.substr(str, start, length);
         }
         else {
-            exp = functions.expr(String.format("substring(%s, %s)", par1, par2));
+            substr = functions.substr(str, start);
         }
 
-        rv = new ColumnNode(exp);
+        rv = new ColumnNode(substr);
         return rv;
     }
 
