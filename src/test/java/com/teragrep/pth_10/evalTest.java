@@ -461,7 +461,7 @@ public class evalTest {
             named = "skipSpakrTest",
             matches = "true"
     )
-    public void testEvalSubstrCorrectlyTakesAStringLiteralWithoutLengthparam() {
+    public void testEvalSubstrCorrectlyTakesAStringLiteralWithoutLengthParam() {
         String q = "index=index_A | eval n=substr(\"string\", -3)";
         String testFile = "src/test/resources/eval_test_data1*jsonl";
 
