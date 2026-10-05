@@ -487,6 +487,10 @@ public class evalTest {
     }
 
     @Test
+    @DisabledIfSystemProperty(
+            named = "skipSpakrTest",
+            matches = "true"
+    )
     public void testEvalSubstrCorrectlyTakesColumnValues() {
         String q = "index=index_A | eval n=substr(host, 9, 2)";
         String testFile = "src/test/resources/eval_test_data1*jsonl";
