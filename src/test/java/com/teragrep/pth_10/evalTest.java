@@ -476,13 +476,34 @@ public class evalTest {
             named = "skipSpakrTest",
             matches = "true"
     )
-    public void testEvalSubstrCorrectlyTakesAStringLiteralsOnBothSidesOfPlus() {
+    public void testEvalSubstrCanBeUsedWithPlus() {
         String q = "index=index_A | eval n=substr(\"string\", 1, 3) + substr(\"string\", -3)";
         String testFile = "src/test/resources/eval_test_data1*jsonl";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
             Row row = res.collectAsList().get(0);
             Assertions.assertEquals("string", row.getString(row.fieldIndex("n")), "Should concatenate both parts");
+        });
+    }
+
+    @Test
+    public void testEvalSubstrCorectlyTakesColumnValues() {
+        String q = "index=index_A | eval n=substr(host, 9, 2)";
+        String testFile = "src/test/resources/eval_test_data1*jsonl";
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            List<String> values = res
+                    .select("n")
+                    .distinct()
+                    .orderBy("n")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+
+            List<Object> expectedList = Arrays.asList("01", "02", "03", "04", "05", "06", "07");
+            Assertions.assertEquals(19, res.count(), "Should keep every row");
+            Assertions.assertEquals(expectedList, values, "Should take the two digits of each host name");
         });
     }
 
