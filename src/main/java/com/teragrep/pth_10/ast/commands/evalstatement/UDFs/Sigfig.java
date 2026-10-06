@@ -124,7 +124,6 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
         // + - result should have the same amount of sigfigs as the least precise number of all of the operands
 
         double rv;
-        BigDecimal input = calcRes; //BigDecimal.valueOf(calcRes);
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("calc(result)= <{}>", calcRes);
@@ -157,7 +156,7 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                 }
             }
 
-            rv = input.round(new MathContext(minPrecision)).doubleValue();
+            rv = calcRes.round(new MathContext(minPrecision)).doubleValue();
         }
         // + or -
         else if (plusIndex != -1 || minusIndex != -1) {
@@ -179,7 +178,7 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                     minScale = scale;
                 }
             }
-            rv = input.setScale(minScale, RoundingMode.HALF_UP).doubleValue();
+            rv = calcRes.setScale(minScale, RoundingMode.HALF_UP).doubleValue();
         }
         else {
             // No * / + - found
