@@ -4019,6 +4019,17 @@ public class evalTest {
         });
     }
 
+    @Test
+    public void parseEvalJsonObjectThrowsNotImplemented() {
+        String q = "index=index_A | eval a=json_object(\"name\", \"test_name\")";
+        String testFile = "src/test/resources/eval_test_json*.jsonl";
+
+        UnsupportedOperationException exception = this.streamingTestUtil
+                .performThrowingDPLTest(UnsupportedOperationException.class, q, testFile, ds -> {
+                });
+        Assertions.assertEquals("eval json_object not supported yet", exception.getMessage());
+    }
+
     // Test spath() with JSON
     @Test
     public void parseEvalSpathJSONCatalystTest() {
