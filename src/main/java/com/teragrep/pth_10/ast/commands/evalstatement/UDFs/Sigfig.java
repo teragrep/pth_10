@@ -145,9 +145,8 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                     LOGGER.debug("val=<{}>", val);
                 }
 
-                BigDecimal currentValue = val;
-                int scale = currentValue.scale();
-                int precision = currentValue.precision();
+                int scale = val.scale();
+                int precision = val.precision();
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("scale=<{}> precision=<{}>", scale, precision);
@@ -169,10 +168,8 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                     LOGGER.debug("val=<{}>", val);
                 }
 
-                BigDecimal currentValue = val;
-                int scale = currentValue.scale();
-                int precision = currentValue.precision();
-                System.out.println("Value " + val + " Scale " + scale);
+                int scale = val.scale();
+                int precision = val.precision();
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("scale=<{}> precision=<{}>", scale, precision);
@@ -180,7 +177,6 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                 // Update scale only if val not a whole number
                 if (scale > 0 && scale < minScale) {
                     minScale = scale;
-                    System.out.println("new Minscale " + minScale);
                 }
             }
             rv = input.setScale(minScale, RoundingMode.HALF_UP).doubleValue();
