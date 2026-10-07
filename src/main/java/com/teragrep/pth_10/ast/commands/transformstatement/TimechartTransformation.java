@@ -110,7 +110,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     private Node timechartTransformationEmitCatalyst(DPLParser.TimechartTransformationContext ctx) {
         this.timechartStep = new TimechartStep();
 
-        Column span = null;
+        Column span = createDefaultSpan();
 
         if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty()) {
             LOGGER
@@ -119,45 +119,36 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
                             ctx.t_timechart_binOptParameter().get(0).getText()
                     );
 
-            ColumnNode spanNode = (ColumnNode) visit(ctx.t_timechart_binOptParameter().get(0));
+            final ColumnNode spanNode = (ColumnNode) visit(ctx.t_timechart_binOptParameter().get(0));
             if (spanNode != null) {
                 span = spanNode.getColumn();
             }
         }
 
-        Column funCol = null;
-        List<Column> listOfAggFunCols = new ArrayList<>();
-        List<String> listOfDivideByInst = new ArrayList<>();
+        final List<Column> listOfAggFunCols = new ArrayList<>();
+        final List<String> listOfDivideByInst = new ArrayList<>();
         for (int i = 0; i < ctx.getChildCount(); i++) {
-            ParseTree child = ctx.getChild(i);
-
+            final ParseTree child = ctx.getChild(i);
             if (child instanceof DPLParser.AggregateFunctionContext) {
-                // go through each agg. function
-                DPLParser.AggregateFunctionContext aggFunCtx = (DPLParser.AggregateFunctionContext) child;
-                Node funNode = visit(aggFunCtx);
+                final Node funNode = visit(child);
                 if (funNode != null) {
-                    if (funCol != null) {
-                        listOfAggFunCols.add(funCol);
-                    }
-                    funCol = ((ColumnNode) funNode).getColumn();
+                    final Column column = ((ColumnNode) funNode).getColumn();
+                    listOfAggFunCols.add(column);
                 }
             }
             else if (child instanceof DPLParser.T_timechart_divideByInstructionContext) {
-                String divByInst = ((StringNode) visitT_timechart_divideByInstruction(
+                final String divByInst = visitT_timechart_divideByInstruction(
                         (DPLParser.T_timechart_divideByInstructionContext) child
-                )).toString();
+                ).toString();
                 listOfDivideByInst.add(divByInst);
             }
             else if (child instanceof DPLParser.T_timechart_fieldRenameInstructionContext) {
-                if (funCol != null) {
-                    funCol = funCol.as(visit(child).toString());
+                if (!listOfAggFunCols.isEmpty()) {
+                    final int lastIndex = listOfAggFunCols.size() - 1;
+                    final Column lastAggCol = listOfAggFunCols.get(lastIndex);
+                    listOfAggFunCols.set(lastIndex, lastAggCol.as(visit(child).toString()));
                 }
             }
-        }
-        listOfAggFunCols.add(funCol); // need to add last one; for loop above only adds if there's a new one coming
-
-        if (span == null) {
-            span = createDefaultSpan();
         }
 
         timechartStep.setHdfsPath(this.catVisitor.getHdfsPath());

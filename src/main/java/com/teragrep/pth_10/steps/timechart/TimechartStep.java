@@ -66,7 +66,7 @@ public final class TimechartStep extends AbstractTimechartStep {
             return null;
         }
 
-        if (this.aggCols == null || this.aggCols.isEmpty() || aggCols.get(0) == null) {
+        if (aggCols == null || aggCols.isEmpty()) {
             throw new IllegalArgumentException(
                     "timechart command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>"
             );
