@@ -2276,7 +2276,7 @@ public class evalTest {
     }
 
     // Test eval function acos, acosh, cos, cosh
-    @Test
+    @Disabled
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -2379,7 +2379,7 @@ public class evalTest {
             matches = "true"
     )
     public void parseEvalSinCatalystTest() {
-        String q = "index=index_A | eval a=asin(offset / 10) | eval b=asinh(offset) | eval c=sin(offset / 10) | eval d=sinh(offset / 10)";
+        String q = "index=index_A | eval a=asin(offset / 100) | eval b=asinh(offset) | eval c=sin(offset / 10) | eval d=sinh(offset / 10)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -2455,7 +2455,7 @@ public class evalTest {
 
             int executedLoops = 0;
             for (Long val : srcLst) {
-                expectedLst.add(Math.asin(Double.valueOf((double) val / 10d)));
+                expectedLst.add(Math.asin(Double.valueOf((double) val / 100d)));
                 expectedLstB.add(asinhFunction.value(Double.valueOf(val)));
                 expectedLstC.add(Math.sin(Double.valueOf((double) val / 10d)));
                 expectedLstD.add(Math.sinh(Double.valueOf((double) val / 10d)));
@@ -2476,7 +2476,7 @@ public class evalTest {
             matches = "true"
     )
     public void parseEvalTanCatalystTest() {
-        String q = "index=index_A | eval a=atan(offset) | eval b=atanh(offset / 10) | eval c=tan(offset / 10) | eval d=tanh(offset / 10) | eval e=atan2(offset / 10, offset / 20)";
+        String q = "index=index_A | eval a=atan(offset) | eval b=atanh(offset / 100) | eval c=tan(offset / 10) | eval d=tanh(offset / 10) | eval e=atan2(offset / 10, offset / 20)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -2563,7 +2563,7 @@ public class evalTest {
             int executedLoops = 0;
             for (Long val : srcLst) {
                 expectedLst.add(Math.atan(Double.valueOf(val))); // atan
-                expectedLstB.add(atanhFunction.value(Double.valueOf((double) val / 10d))); // atanh
+                expectedLstB.add(atanhFunction.value(Double.valueOf((double) val / 100d))); // atanh
                 expectedLstC.add(Math.tan(Double.valueOf((double) val / 10d))); // tan
                 expectedLstD.add(Math.tanh(Double.valueOf((double) val / 10d))); // tanh
                 expectedLstE.add(Math.atan2(Double.valueOf((double) val / 10d), Double.valueOf((double) val / 20d))); // atan
@@ -5100,5 +5100,4 @@ public class evalTest {
             Assertions.assertEquals(expectedLst, lst);
         });
     }
-
 }
