@@ -4020,6 +4020,10 @@ public class evalTest {
     }
 
     @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
     public void parseEvalJsonObjectThrowsNotImplemented() {
         String q = "index=index_A | eval a=json_object(\"name\", \"test_name\")";
         String testFile = "src/test/resources/eval_test_json*.jsonl";
