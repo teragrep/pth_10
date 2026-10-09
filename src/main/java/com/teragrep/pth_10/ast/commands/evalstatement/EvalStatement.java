@@ -1083,17 +1083,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodCos(DPLParser.EvalMethodCosContext ctx) {
-        Node rv = evalMethodCosEmitCatalyst(ctx);
+        final Node rv = evalMethodCosEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodCosEmitCatalyst(DPLParser.EvalMethodCosContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column res = functions.cos(xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.cos(xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1106,17 +1105,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodCosh(DPLParser.EvalMethodCoshContext ctx) {
-        Node rv = evalMethodCoshEmitCatalyst(ctx);
+        final Node rv = evalMethodCoshEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodCoshEmitCatalyst(DPLParser.EvalMethodCoshContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column res = functions.cosh(xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.cosh(xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1129,17 +1127,21 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodAcos(DPLParser.EvalMethodAcosContext ctx) {
-        Node rv = evalMethodAcosEmitCatalyst(ctx);
+        final Node rv = evalMethodAcosEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodAcosEmitCatalyst(DPLParser.EvalMethodAcosContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column col = functions.acos(xCol);
-        rv = new ColumnNode(col);
+        final UserDefinedFunction acosUDF = functions.udf(new AcosFunction(), DataTypes.DoubleType);
+        final SparkSession ss = SparkSession.builder().getOrCreate();
+        ss.udf().register("acosUDF", acosUDF);
+
+        final Column res = functions.callUDF("acosUDF", xCol);
+
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1152,22 +1154,20 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodAcosh(DPLParser.EvalMethodAcoshContext ctx) {
-        Node rv = evalMethodAcoshEmitCatalyst(ctx);
+        final Node rv = evalMethodAcoshEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodAcoshEmitCatalyst(DPLParser.EvalMethodAcoshContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        // TODO Spark internal function acosh(x) available in >=3.1.0
-        UserDefinedFunction acoshUDF = functions.udf(new InverseHyperbolicFunction("acosh"), DataTypes.DoubleType);
-        SparkSession ss = SparkSession.builder().getOrCreate();
+        final UserDefinedFunction acoshUDF = functions.udf(new AcoshFunction(), DataTypes.DoubleType);
+        final SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("acoshUDF", acoshUDF);
 
-        Column res = functions.callUDF("acoshUDF", xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.callUDF("acoshUDF", xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1180,17 +1180,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodSin(DPLParser.EvalMethodSinContext ctx) {
-        Node rv = evalMethodSinEmitCatalyst(ctx);
+        final Node rv = evalMethodSinEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodSinEmitCatalyst(DPLParser.EvalMethodSinContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column res = functions.sin(xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.sin(xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1203,17 +1202,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodSinh(DPLParser.EvalMethodSinhContext ctx) {
-        Node rv = evalMethodSinhEmitCatalyst(ctx);
+        final Node rv = evalMethodSinhEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodSinhEmitCatalyst(DPLParser.EvalMethodSinhContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column res = functions.sinh(xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.sinh(xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1226,17 +1224,21 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodAsin(DPLParser.EvalMethodAsinContext ctx) {
-        Node rv = evalMethodAsinEmitCatalyst(ctx);
+        final Node rv = evalMethodAsinEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodAsinEmitCatalyst(DPLParser.EvalMethodAsinContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column col = functions.asin(xCol);
-        rv = new ColumnNode(col);
+        final UserDefinedFunction asinUDF = functions.udf(new AsinFunction(), DataTypes.DoubleType);
+        final SparkSession ss = SparkSession.builder().getOrCreate();
+        ss.udf().register("asinUDF", asinUDF);
+
+        final Column res = functions.callUDF("asinUDF", xCol);
+
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1249,22 +1251,20 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodAsinh(DPLParser.EvalMethodAsinhContext ctx) {
-        Node rv = evalMethodAsinhEmitCatalyst(ctx);
+        final Node rv = evalMethodAsinhEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodAsinhEmitCatalyst(DPLParser.EvalMethodAsinhContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        // TODO Spark internal function asinh(x) available in >=3.1.0
-        UserDefinedFunction asinhUDF = functions.udf(new InverseHyperbolicFunction("asinh"), DataTypes.DoubleType);
-        SparkSession ss = SparkSession.builder().getOrCreate();
+        final UserDefinedFunction asinhUDF = functions.udf(new AsinhFunction(), DataTypes.DoubleType);
+        final SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("asinhUDF", asinhUDF);
 
-        Column res = functions.callUDF("asinhUDF", xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.callUDF("asinhUDF", xCol);
+        final Node rv = new ColumnNode(res);
         return rv;
     }
 
@@ -1276,17 +1276,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodTan(DPLParser.EvalMethodTanContext ctx) {
-        Node rv = evalMethodTanEmitCatalyst(ctx);
+        final Node rv = evalMethodTanEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodTanEmitCatalyst(DPLParser.EvalMethodTanContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column res = functions.tan(xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.tan(xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1299,17 +1298,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodTanh(DPLParser.EvalMethodTanhContext ctx) {
-        Node rv = evalMethodTanhEmitCatalyst(ctx);
+        final Node rv = evalMethodTanhEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodTanhEmitCatalyst(DPLParser.EvalMethodTanhContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column res = functions.tanh(xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.tanh(xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1322,17 +1320,16 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodAtan(DPLParser.EvalMethodAtanContext ctx) {
-        Node rv = evalMethodAtanEmitCatalyst(ctx);
+        final Node rv = evalMethodAtanEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodAtanEmitCatalyst(DPLParser.EvalMethodAtanContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        Column col = functions.atan(xCol);
-        rv = new ColumnNode(col);
+        final Column col = functions.atan(xCol);
+        final Node rv = new ColumnNode(col);
 
         return rv;
     }
@@ -1345,18 +1342,17 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodAtan2(DPLParser.EvalMethodAtan2Context ctx) {
-        Node rv = evalMethodAtan2EmitCatalyst(ctx);
+        final Node rv = evalMethodAtan2EmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodAtan2EmitCatalyst(DPLParser.EvalMethodAtan2Context ctx) {
-        Node rv = null;
 
-        Column yCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        Column xCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
+        final Column yCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
-        Column res = functions.atan2(yCol, xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.atan2(yCol, xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
@@ -1369,22 +1365,20 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitEvalMethodAtanh(DPLParser.EvalMethodAtanhContext ctx) {
-        Node rv = evalMethodAtanhEmitCatalyst(ctx);
+        final Node rv = evalMethodAtanhEmitCatalyst(ctx);
         return rv;
     }
 
     private Node evalMethodAtanhEmitCatalyst(DPLParser.EvalMethodAtanhContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
 
-        // TODO Spark internal function atanh(x) available in >=3.1.0
-        UserDefinedFunction atanhUDF = functions.udf(new InverseHyperbolicFunction("atanh"), DataTypes.DoubleType);
-        SparkSession ss = SparkSession.builder().getOrCreate();
+        final UserDefinedFunction atanhUDF = functions.udf(new AtanhFunction(), DataTypes.DoubleType);
+        final SparkSession ss = SparkSession.builder().getOrCreate();
         ss.udf().register("atanhUDF", atanhUDF);
 
-        Column res = functions.callUDF("atanhUDF", xCol);
-        rv = new ColumnNode(res);
+        final Column res = functions.callUDF("atanhUDF", xCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }
