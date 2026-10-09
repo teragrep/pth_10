@@ -45,10 +45,7 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement;
 
-import com.teragrep.pth_10.ast.DPLParserCatalystContext;
-import com.teragrep.pth_10.ast.QuotedText;
-import com.teragrep.pth_10.ast.TextString;
-import com.teragrep.pth_10.ast.UnquotedText;
+import com.teragrep.pth_10.ast.*;
 import com.teragrep.pth_10.ast.bo.*;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.*;
 import com.teragrep.pth_10.steps.eval.EvalStep;
@@ -2362,9 +2359,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                 listOfFields.add(field);
         }
 
-        Column res = functions.array(JavaConversions.asScalaBuffer(listOfFields));
-
-        rv = new ColumnNode(res);
+        rv = new ColumnNode(new FlattenedStringArrayColumn(listOfFields).column());
         return rv;
     }
 
