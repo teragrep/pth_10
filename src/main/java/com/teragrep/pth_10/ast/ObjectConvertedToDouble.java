@@ -56,9 +56,8 @@ public class ObjectConvertedToDouble {
     }
 
     public Double convertToDouble() {
-        //remove null
-        Double objectAsDouble = null;
 
+        final Double objectAsDouble;
         if (object instanceof Long) {
             objectAsDouble = ((Long) object).doubleValue();
         }
@@ -76,13 +75,14 @@ public class ObjectConvertedToDouble {
                 objectAsDouble = Double.valueOf((String) object);
             }
             catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException("Non-numerical strings are not valid inputs. <" + nfe + " >");
+                throw new IllegalArgumentException(
+                        "Non-numerical strings cannot be converted to Double. <" + nfe + " >"
+                );
             }
         }
         else {
             throw new RuntimeException(
-                    objectAsDouble
-                            + " input value couldn't be converted to Double. Expected Long, Integer, Double, Float or String."
+                    " Input value couldn't be converted to Double. Expected Long, Integer, Double, Float or numerical String."
             );
         }
         return objectAsDouble;

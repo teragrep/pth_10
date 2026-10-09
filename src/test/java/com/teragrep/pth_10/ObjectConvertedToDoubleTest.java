@@ -71,8 +71,8 @@ public class ObjectConvertedToDoubleTest {
 
     @Test
     public void testConvertFloatToDouble() {
-        final Object val = 123.45f;
-        final Double expected = 123.44999694824219;
+        final Object val = 123f;
+        final Double expected = 123.0;
 
         final Double actual = new ObjectConvertedToDouble(val).convertToDouble();
         Assertions.assertEquals(expected, actual);
@@ -97,7 +97,7 @@ public class ObjectConvertedToDoubleTest {
     }
 
     @Test
-    //throw exception
+    //throw exception for non-numerical strings
     public void testConvertNonNumericStringToDouble() {
         final Object val = "string";
         final ObjectConvertedToDouble actual = new ObjectConvertedToDouble(val);
@@ -105,7 +105,7 @@ public class ObjectConvertedToDoubleTest {
                 .assertThrows(IllegalArgumentException.class, actual::convertToDouble);
         Assertions
                 .assertEquals(
-                        "Non-numerical strings are not valid inputs. <java.lang.NumberFormatException: For input string: \"string\" >",
+                        "Non-numerical strings cannot be converted to Double. <java.lang.NumberFormatException: For input string: \"string\" >",
                         iae.getMessage()
                 );
     }

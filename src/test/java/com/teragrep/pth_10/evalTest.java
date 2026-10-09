@@ -2275,14 +2275,13 @@ public class evalTest {
         });
     }
 
-    // Test eval function acos, acosh, cos, cosh
-    @Disabled
+    @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseEvalCosCatalystTest() {
-        String q = "index=index_A | eval a=acos(offset / 10) | eval b=acosh(offset) | eval c=cos(offset / 10) | eval d=cosh(offset / 10)";
+    public void testEvalFunctionAcos() {
+        String q = "index=index_A | eval a=acos(offset / 100)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -2295,91 +2294,109 @@ public class evalTest {
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Without orderBy collectAsList will change the order randomly. Order every column by offset.
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, offsetLst.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+            final org.apache.commons.math3.analysis.function.Acos acosFunction = new org.apache.commons.math3.analysis.function.Acos();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(acosFunction.value(Double.valueOf(val / 100d)));
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionAcosh() {
+        String q = "index=index_A | eval a=acosh(offset) ";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Without orderBy collectAsList will change the order randomly. Order every column by offset.
             // Get column 'a'
             final Dataset<Row> resA = res.select("a").orderBy("offset");
-            final List<Double> lst = resA
+            final List<Double> lstA = resA
                     .collectAsList()
                     .stream()
                     .map(r -> r.getDouble(0))
                     .collect(Collectors.toList());
 
-            // Get column 'b'
-            final Dataset<Row> resB = res.select("b").orderBy("offset");
-            final List<Double> lstB = resB
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // c, cos
-            final Dataset<Row> resC = res.select("c").orderBy("offset");
-            final List<Double> lstC = resC
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // d, cosh
-            final Dataset<Row> resD = res.select("d").orderBy("offset");
-            final List<Double> lstD = resD
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // Get source column
+            // Get offset column
             final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            final List<Long> srcLst = resOffset
+            final List<Long> offsetLst = resOffset
                     .collectAsList()
                     .stream()
                     .map(r -> r.getLong(0))
                     .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            Assertions.assertEquals(19, lst.size());
-            Assertions.assertEquals(19, lstB.size());
-            Assertions.assertEquals(19, lstC.size());
-            Assertions.assertEquals(19, lstD.size());
-            Assertions.assertEquals(19, srcLst.size());
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, offsetLst.size());
+
             // Compare values to expected
             final List<Double> expectedLst = new ArrayList<>();
-            final List<Double> expectedLstB = new ArrayList<>();
-            final List<Double> expectedLstC = new ArrayList<>();
-            final List<Double> expectedLstD = new ArrayList<>();
-
             final org.apache.commons.math3.analysis.function.Acosh acoshFunction = new org.apache.commons.math3.analysis.function.Acosh();
 
             int executedLoops = 0;
-            for (Long val : srcLst) {
-                expectedLst.add(Math.acos(Double.valueOf((double) val / 10d)));
-                expectedLstB.add(acoshFunction.value(Double.valueOf(val)));
-                expectedLstC.add(Math.cos(Double.valueOf((double) val / 10d)));
-                expectedLstD.add(Math.cosh(Double.valueOf((double) val / 10d)));
+            for (Long val : offsetLst) {
+                expectedLst.add(acoshFunction.value(Double.valueOf(val)));
                 executedLoops++;
             }
             Assertions.assertEquals(19, executedLoops);
-            Assertions.assertEquals(expectedLst, lst);
-            Assertions.assertEquals(expectedLstB, lstB);
-            Assertions.assertEquals(expectedLstC, lstC);
-            Assertions.assertEquals(expectedLstD, lstD);
+            Assertions.assertEquals(expectedLst, lstA);
         });
     }
 
-    // Test eval function asin, asinh, sin, sinh
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseEvalSinCatalystTest() {
-        String q = "index=index_A | eval a=asin(offset / 100) | eval b=asinh(offset) | eval c=sin(offset / 10) | eval d=sinh(offset / 10)";
+    public void testEvalFunctionCos() {
+        String q = "index=index_A | eval a=cos(offset / 10)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -2392,91 +2409,553 @@ public class evalTest {
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Without orderBy collectAsList will change the order randomly. Order every column by offset.
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offest column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, offsetLst.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.cos(Double.valueOf((double) val / 10d)));
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionCosh() {
+        String q = "index=index_A | eval a=cosh(offset / 10)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Without orderBy collectAsList will change the order randomly. Order every column by offset.
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, offsetLst.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.cosh(Double.valueOf((double) val / 10d)));
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionAsin() {
+        String q = "index=index_A | eval a=asin(offset / 100)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
             final Dataset<Row> resA = res.select("a").orderBy("offset");
-            final List<Double> lst = resA
+            final List<Double> lstA = resA
                     .collectAsList()
                     .stream()
                     .map(r -> r.getDouble(0))
                     .collect(Collectors.toList());
 
-            // Get column 'b'
-            final Dataset<Row> resB = res.select("b").orderBy("offset");
-            final List<Double> lstB = resB
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // Get column 'c'
-            final Dataset<Row> resC = res.select("c").orderBy("offset");
-            final List<Double> lstC = resC
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // Get column 'd'
-            final Dataset<Row> resD = res.select("d").orderBy("offset");
-            final List<Double> lstD = resD
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // Get source column
+            // Get offset column
             final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            final List<Long> srcLst = resOffset
+            final List<Long> offsetLst = resOffset
                     .collectAsList()
                     .stream()
                     .map(r -> r.getLong(0))
                     .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            Assertions.assertEquals(19, lst.size());
-            Assertions.assertEquals(19, lstB.size());
-            Assertions.assertEquals(19, lstC.size());
-            Assertions.assertEquals(19, lstD.size());
-            Assertions.assertEquals(19, srcLst.size());
+            Assertions.assertEquals(19, lstA.size());
 
             // Compare values to expected
             final List<Double> expectedLst = new ArrayList<>();
-            final List<Double> expectedLstB = new ArrayList<>();
-            final List<Double> expectedLstC = new ArrayList<>();
-            final List<Double> expectedLstD = new ArrayList<>();
-
-            final org.apache.commons.math3.analysis.function.Asinh asinhFunction = new org.apache.commons.math3.analysis.function.Asinh();
 
             int executedLoops = 0;
-            for (Long val : srcLst) {
+            for (Long val : offsetLst) {
                 expectedLst.add(Math.asin(Double.valueOf((double) val / 100d)));
-                expectedLstB.add(asinhFunction.value(Double.valueOf(val)));
-                expectedLstC.add(Math.sin(Double.valueOf((double) val / 10d)));
-                expectedLstD.add(Math.sinh(Double.valueOf((double) val / 10d)));
                 executedLoops++;
             }
             Assertions.assertEquals(19, executedLoops);
-            Assertions.assertEquals(expectedLst, lst);
-            Assertions.assertEquals(expectedLstB, lstB);
-            Assertions.assertEquals(expectedLstC, lstC);
-            Assertions.assertEquals(expectedLstD, lstD);
+            Assertions.assertEquals(expectedLst, lstA);
         });
     }
 
-    // Test eval function tan, tanh, atan, atanh, atan2
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
-    public void parseEvalTanCatalystTest() {
-        String q = "index=index_A | eval a=atan(offset) | eval b=atanh(offset / 100) | eval c=tan(offset / 10) | eval d=tanh(offset / 10) | eval e=atan2(offset / 10, offset / 20)";
+    public void testEvalFunctionAsinh() {
+        String q = "index=index_A | eval a=asinh(offset)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, offsetLst.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+            final org.apache.commons.math3.analysis.function.Asinh asinhFunction = new org.apache.commons.math3.analysis.function.Asinh();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(asinhFunction.value(Double.valueOf(val)));
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionSin() {
+        String q = "index=index_A | eval a=sin(offset / 10)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, offsetLst.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.sin(Double.valueOf((double) val / 10d)));
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionSinh() {
+        String q = "index=index_A | eval a=sinh(offset / 10)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, lstA.size());
+            Assertions.assertEquals(19, offsetLst.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.sinh(Double.valueOf((double) val / 10d)));
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void tetsEvalFunctionAtan() {
+        String q = "index=index_A | eval a=atan(offset)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, offsetLst.size());
+            Assertions.assertEquals(19, lstA.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.atan(Double.valueOf(val))); // atan
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionAtanh() {
+        String q = "index=index_A | eval a=atanh(offset / 100)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, offsetLst.size());
+            Assertions.assertEquals(19, lstA.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+            final org.apache.commons.math3.analysis.function.Atanh atanhFunction = new org.apache.commons.math3.analysis.function.Atanh();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(atanhFunction.value(Double.valueOf((double) val / 100d))); // atanh
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionTan() {
+        String q = "index=index_A | eval a=tan(offset / 10)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, offsetLst.size());
+            Assertions.assertEquals(19, lstA.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.tan(Double.valueOf((double) val / 10d))); // tan
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionTanh() {
+        String q = "index=index_A | eval a=tanh(offset / 10)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
+            // Get column 'a'
+            final Dataset<Row> resA = res.select("a").orderBy("offset");
+            final List<Double> lstA = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            // Get offset column
+            final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
+            final List<Long> offsetLst = resOffset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getLong(0))
+                    .collect(Collectors.toList());
+
+            // we should get the same amount of values back as we put in
+            Assertions.assertEquals(19, offsetLst.size());
+            Assertions.assertEquals(19, lstA.size());
+
+            // Compare values to expected
+            final List<Double> expectedLst = new ArrayList<>();
+
+            int executedLoops = 0;
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.tanh(Double.valueOf((double) val / 10d))); // tanh
+                executedLoops++;
+            }
+            Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalFunctionAtan2() {
+        String q = "index=index_A | eval a=atan2(offset / 10, offset / 20)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -2490,91 +2969,39 @@ public class evalTest {
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("e", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
+
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            // Get column 'a' atan
+            // Get column 'a'
             final Dataset<Row> resA = res.select("a").orderBy("offset");
-            final List<Double> lst = resA
+            final List<Double> lstA = resA
                     .collectAsList()
                     .stream()
                     .map(r -> r.getDouble(0))
                     .collect(Collectors.toList());
 
-            // Get column 'b' atanh
-            final Dataset<Row> resB = res.select("b").orderBy("offset");
-            final List<Double> lstB = resB
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // c tan
-            final Dataset<Row> resC = res.select("c").orderBy("offset");
-            final List<Double> lstC = resC
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // d tanh
-            final Dataset<Row> resD = res.select("d").orderBy("offset");
-            final List<Double> lstD = resD
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // e atan2
-            final Dataset<Row> resE = res.select("e").orderBy("offset");
-            final List<Double> lstE = resE
-                    .collectAsList()
-                    .stream()
-                    .map(r -> r.getDouble(0))
-                    .collect(Collectors.toList());
-
-            // Get source column
+            // Get offset column
             final Dataset<Row> resOffset = res.select("offset").orderBy("offset");
-            final List<Long> srcLst = resOffset
+            final List<Long> offsetLst = resOffset
                     .collectAsList()
                     .stream()
                     .map(r -> r.getLong(0))
                     .collect(Collectors.toList());
 
             // we should get the same amount of values back as we put in
-            Assertions.assertEquals(19, srcLst.size());
-            Assertions.assertEquals(srcLst.size(), lst.size());
-            Assertions.assertEquals(srcLst.size(), lstB.size());
-            Assertions.assertEquals(srcLst.size(), lstC.size());
-            Assertions.assertEquals(srcLst.size(), lstD.size());
-            Assertions.assertEquals(srcLst.size(), lstE.size());
+            Assertions.assertEquals(19, offsetLst.size());
+            Assertions.assertEquals(19, lstA.size());
+
             // Compare values to expected
             final List<Double> expectedLst = new ArrayList<>();
-            final List<Double> expectedLstB = new ArrayList<>();
-            final List<Double> expectedLstC = new ArrayList<>();
-            final List<Double> expectedLstD = new ArrayList<>();
-            final List<Double> expectedLstE = new ArrayList<>();
-
-            final org.apache.commons.math3.analysis.function.Atanh atanhFunction = new org.apache.commons.math3.analysis.function.Atanh();
 
             int executedLoops = 0;
-            for (Long val : srcLst) {
-                expectedLst.add(Math.atan(Double.valueOf(val))); // atan
-                expectedLstB.add(atanhFunction.value(Double.valueOf((double) val / 100d))); // atanh
-                expectedLstC.add(Math.tan(Double.valueOf((double) val / 10d))); // tan
-                expectedLstD.add(Math.tanh(Double.valueOf((double) val / 10d))); // tanh
-                expectedLstE.add(Math.atan2(Double.valueOf((double) val / 10d), Double.valueOf((double) val / 20d))); // atan
+            for (Long val : offsetLst) {
+                expectedLst.add(Math.atan2(Double.valueOf((double) val / 10d), Double.valueOf((double) val / 20d))); // atan2
                 executedLoops++;
             }
             Assertions.assertEquals(19, executedLoops);
-            Assertions.assertEquals(expectedLst, lst);
-            Assertions.assertEquals(expectedLstB, lstB);
-            Assertions.assertEquals(expectedLstC, lstC);
-            Assertions.assertEquals(expectedLstD, lstD);
-            Assertions.assertEquals(expectedLstE, lstE);
+            Assertions.assertEquals(expectedLst, lstA);
         });
     }
 

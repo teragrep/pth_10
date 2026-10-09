@@ -64,14 +64,14 @@ public class AcosFunction implements UDF1<Object, Double>, Serializable {
         // Use Apache Commons function
         final org.apache.commons.math3.analysis.function.Acos acosFunction = new org.apache.commons.math3.analysis.function.Acos();
 
-                if (inputAsDouble >= -1.0 && inputAsDouble <= 1.0) {
-                    return acosFunction.value(inputAsDouble);
-                }
-                else {
-                    throw new IllegalArgumentException(
-                            "Invalid input < " + inputAsDouble + " > , acos() function takes values between the range [-1, 1]."
-                    );
-                }
+        if (inputAsDouble >= -1.0 && inputAsDouble <= 1.0) {
+            return acosFunction.value(inputAsDouble);
+        }
+        else {
+            throw new IllegalArgumentException(
+                    "Invalid input < " + inputAsDouble + " > , acos() function takes values between the range [-1, 1]."
+            );
+        }
 
     }
 }
