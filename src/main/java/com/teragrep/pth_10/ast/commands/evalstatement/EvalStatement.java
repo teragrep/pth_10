@@ -2706,6 +2706,11 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
+    @Override
+    public Node visitEvalMethodJsonObject(DPLParser.EvalMethodJsonObjectContext ctx) {
+        throw new UnsupportedOperationException("eval json_object not supported yet");
+    }
+
     /**
      * spath() eval method Processes the spath/xpath expression and returns the results
      * 
