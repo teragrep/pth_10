@@ -443,7 +443,7 @@ public class evalTest {
 
     @Test
     @DisabledIfSystemProperty(
-            named = "skipSpakrTest",
+            named = "skipSparkTest",
             matches = "true"
     )
     public void testEvalSubstrCorrectlyTakesAStringLiteral() {
@@ -458,7 +458,7 @@ public class evalTest {
 
     @Test
     @DisabledIfSystemProperty(
-            named = "skipSpakrTest",
+            named = "skipSparkTest",
             matches = "true"
     )
     public void testEvalSubstrCorrectlyTakesAStringLiteralWithoutLengthParam() {
@@ -473,7 +473,7 @@ public class evalTest {
 
     @Test
     @DisabledIfSystemProperty(
-            named = "skipSpakrTest",
+            named = "skipSparkTest",
             matches = "true"
     )
     public void testEvalSubstrCanBeUsedWithPlus() {
@@ -488,7 +488,7 @@ public class evalTest {
 
     @Test
     @DisabledIfSystemProperty(
-            named = "skipSpakrTest",
+            named = "skipSparkTest",
             matches = "true"
     )
     public void testEvalSubstrCorrectlyTakesColumnValues() {
