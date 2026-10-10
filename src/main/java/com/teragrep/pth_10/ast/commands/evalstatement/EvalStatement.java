@@ -1985,10 +1985,15 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
                     // input is seconds -> output HH:MM:SS
                     col = functions.from_unixtime(inputCol, "HH:mm:ss");
                     break;
+                case "binary":
+                    col = functions
+                            .when(inputCol.isNull(), functions.lit(catCtx.nullValue.value()))
+                            .otherwise(functions.bin(inputCol));
+                    break;
                 default:
                     throw new UnsupportedOperationException(
                             "Unsupported optional argument supplied: '" + options
-                                    + "'.The argument must be 'hex', 'commas' or 'duration' instead."
+                                    + "'.The argument must be 'hex', 'commas', 'duration' or 'binary' instead."
                     );
             }
         }
