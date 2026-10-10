@@ -47,46 +47,59 @@ package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth_10.ast.NullValue;
 import org.apache.spark.sql.api.java.UDF2;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 /**
  * UDF for eval method tonumber(numstr, base)<br>
  * Converts a numeric string to a long of base.
  */
-public class Tonumber implements UDF2<String, Integer, Object>, Serializable {
+public final class ToNumber implements UDF2<String, Integer, String>, Serializable {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Tonumber.class);
     private static final long serialVersionUID = 1L;
     private final NullValue nullValue;
 
-    public Tonumber(NullValue nullValue) {
-        super();
+    public ToNumber(final NullValue nullValue) {
         this.nullValue = nullValue;
     }
 
     @Override
-    public Object call(String numstr, Integer base) throws Exception {
-        Object rv = nullValue.value();
+    public String call(final String numberString, final Integer base) throws Exception {
 
-        if (base < 2 || base > 36) {
-            throw new UnsupportedOperationException(
-                    "Tonumber: 'base' argument should be an integer value between 2 and 36."
-            );
-        }
+        String rv;
 
-        // try parsing, otherwise return null
-        try {
-            rv = Long.valueOf(numstr, base);
+        if (numberString == null || base == null) {
+            rv = nullValue.value();
         }
-        catch (NumberFormatException nfe) {
-            LOGGER.warn("Tonumber: Error parsing, returning 'null'. Details: <{}>", nfe.getMessage());
-            // Could not parse, return null
+        else if (base < 2 || base > 36) {
+            throw new IllegalArgumentException("'base' argument should be an integer value between 2 and 36.");
+        }
+        else if (
+            base != 10 && (numberString.contains(".") || numberString.contains("e") || numberString.contains("E"))
+        ) {
+            throw new UnsupportedOperationException("fractional values are only supported for base 10.");
+        }
+        else if (base == 10) {
+            try {
+                final BigDecimal bigDecimal = new BigDecimal(numberString);
+                rv = bigDecimal.stripTrailingZeros().toPlainString();
+            }
+            catch (final NumberFormatException e) {
+                rv = nullValue.value();
+            }
+
+        }
+        else {
+            try {
+                rv = new BigInteger(numberString, base).toString();
+            }
+            catch (final NumberFormatException e) {
+                rv = nullValue.value();
+            }
         }
 
         return rv;
     }
-
 }

@@ -51,6 +51,7 @@ import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -2227,17 +2228,17 @@ public class evalTest {
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            // Get column 'a'
+            Assertions.assertEquals(expectedSchema, res.schema());
             Dataset<Row> resA = res.select("a").orderBy("a").distinct();
-            List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
-
-            // we should get one result
-            Assertions.assertEquals(1, lst.size());
-            // Compare values to expected
-            Assertions.assertEquals(164L, lst.get(0));
+            List<String> resultList = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions
+                    .assertEquals(Collections.singletonList("164"), resultList, "result list should match the expected list");
         });
     }
 
@@ -2261,17 +2262,165 @@ public class evalTest {
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("a", DataTypes.LongType, true, new MetadataBuilder().build())
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
-            Assertions.assertEquals(expectedSchema, res.schema()); //check schema
-            // Get column 'a'
-            Dataset<Row> resA = res.select("a").orderBy("a").distinct();
-            List<Long> lst = resA.collectAsList().stream().map(r -> r.getLong(0)).collect(Collectors.toList());
+            Assertions.assertEquals(expectedSchema, res.schema());
+            final Dataset<Row> resA = res.select("a").orderBy("a").distinct();
+            final List<String> resultList = resA
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions
+                    .assertEquals(Collections.singletonList("12345"), resultList, "result list should match the expected list");
+        });
+    }
 
-            // we should get one result
-            Assertions.assertEquals(1, lst.size());
-            // Compare values to expected
-            Assertions.assertEquals(12345L, lst.get(0));
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalToNumberNoBaseHandlesDoubleStringTest() {
+        final String query = "index=index_A | eval a=tonumber(\"12.34\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema());
+            final Dataset<Row> columnADataset = res.select("a").orderBy("a").distinct();
+            final List<String> resultList = columnADataset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions
+                    .assertEquals(Collections.singletonList("12.34"), resultList, "result list should match the expected list");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalToNumberThrowsExceptionOnNonDecimalBaseDouble() {
+        final String query = "index=index_A | eval a=tonumber(\"12.34\", 2)";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        final StreamingQueryException exception = streamingTestUtil
+                .performThrowingDPLTest(StreamingQueryException.class, query, testFile, res -> {
+                });
+        final String expectedMessage = "fractional values are only supported for base 10.";
+        Assertions.assertTrue(exception.getMessage().contains(expectedMessage));
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalToNumberReturnsNullWhenStringFailsToParse() {
+        final String query = "index=index_A | eval a=tonumber(\"test\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema());
+            final Dataset<Row> columnADataset = res.select("a").orderBy("a").distinct();
+            final List<String> resultList = columnADataset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions
+                    .assertEquals(Collections.singletonList(streamingTestUtil.getCtx().nullValue.value()), resultList, "result list should match the expected list");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalToNumberNoBaseHandlesNegativeNumbersTest() {
+        final String query = "index=index_A | eval a=tonumber(\"-12548\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema());
+            final Dataset<Row> columnADataset = res.select("a").orderBy("a").distinct();
+            final List<String> resultList = columnADataset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions
+                    .assertEquals(Collections.singletonList("-12548"), resultList, "result list should match the expected list");
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void evalToNumberNoBaseHandlesScientificNotationTest() {
+        final String query = "index=index_A | eval a=tonumber(\"1e3\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema());
+            final Dataset<Row> columnADataset = res.select("a").orderBy("a").distinct();
+            final List<String> resultList = columnADataset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions
+                    .assertEquals(Collections.singletonList("1000"), resultList, "result list should match the expected list");
         });
     }
 
