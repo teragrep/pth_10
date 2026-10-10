@@ -55,7 +55,32 @@ public class NullNode extends Node {
     }
 
     @Override
+    public Token.Type getNodeType() {
+        throw new UnsupportedOperationException("NullNode does not support getNodeType()");
+    }
+
+    @Override
+    public String toTree() {
+        throw new UnsupportedOperationException("NullNode does not support toTree()");
+    }
+
+    @Override
+    public void addChild(Node child) {
+        throw new UnsupportedOperationException("NullNode does not support addChild()");
+    }
+
+    @Override
     public String toString() {
-        return "";
+        return "NullNode";
+    }
+
+    @Override
+    public String toXMLTree() {
+        throw new UnsupportedOperationException("NullNode does not support toXMLTree()");
+    }
+
+    @Override
+    public boolean isStub() {
+        return true;
     }
 }
