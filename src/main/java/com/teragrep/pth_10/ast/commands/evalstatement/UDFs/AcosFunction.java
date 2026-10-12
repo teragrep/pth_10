@@ -45,31 +45,29 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth_10.ast.ObjectConvertedToDouble;
+import com.teragrep.pth_10.ast.DoubleValue;
 import org.apache.spark.sql.api.java.UDF1;
 
 import java.io.Serializable;
 
-public class AcosFunction implements UDF1<Object, Double>, Serializable {
+public final class AcosFunction implements UDF1<Object, Double>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Override
-    // Take input in as Object, so it can be multiple different types
+    // Take input value as Object, so it can be multiple different types
     public Double call(Object input) throws Exception {
-
-        final ObjectConvertedToDouble object = new ObjectConvertedToDouble(input);
-        final Double inputAsDouble = object.convertToDouble();
+        final Double doubleValue = new DoubleValue(input).value();
 
         // Use Apache Commons function
         final org.apache.commons.math3.analysis.function.Acos acosFunction = new org.apache.commons.math3.analysis.function.Acos();
 
-        if (inputAsDouble >= -1.0 && inputAsDouble <= 1.0) {
-            return acosFunction.value(inputAsDouble);
+        if (doubleValue >= -1.0 && doubleValue <= 1.0) {
+            return acosFunction.value(doubleValue);
         }
         else {
             throw new IllegalArgumentException(
-                    "Invalid input < " + inputAsDouble + " > , acos() function takes values between the range [-1, 1]."
+                    "Invalid input < " + doubleValue + " > , acos() function takes values between the range [-1, 1]."
             );
         }
 

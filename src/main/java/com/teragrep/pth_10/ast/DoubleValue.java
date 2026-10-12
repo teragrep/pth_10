@@ -47,15 +47,15 @@ package com.teragrep.pth_10.ast;
 
 import java.util.Objects;
 
-public class ObjectConvertedToDouble {
+public final class DoubleValue {
 
     private final Object object;
 
-    public ObjectConvertedToDouble(final Object object) {
+    public DoubleValue(final Object object) {
         this.object = object;
     }
 
-    public Double convertToDouble() {
+    public Double value() {
 
         final Double objectAsDouble;
         if (object instanceof Long) {
@@ -96,7 +96,7 @@ public class ObjectConvertedToDouble {
         else if (o == null || getClass() != o.getClass())
             isEquals = false;
         else {
-            final ObjectConvertedToDouble convertedObject = (ObjectConvertedToDouble) o;
+            final DoubleValue convertedObject = (DoubleValue) o;
             isEquals = Objects.equals(object, convertedObject.object);
         }
         return isEquals;

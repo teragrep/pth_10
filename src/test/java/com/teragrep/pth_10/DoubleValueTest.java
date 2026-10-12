@@ -45,64 +45,63 @@
  */
 package com.teragrep.pth_10;
 
-import com.teragrep.pth_10.ast.ObjectConvertedToDouble;
+import com.teragrep.pth_10.ast.DoubleValue;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-public class ObjectConvertedToDoubleTest {
+public class DoubleValueTest {
 
     @Test
     public void testConvertLongToDouble() {
-        final Object val = 111111L;
-        final Double expected = 111111.0;
+        final Object inputValue = 111111L;
+        final Double expectedValue = 111111.0;
 
-        final Double actual = new ObjectConvertedToDouble(val).convertToDouble();
-        Assertions.assertEquals(expected, actual);
+        final Double actualValue = new DoubleValue(inputValue).value();
+        Assertions.assertEquals(expectedValue, actualValue);
     }
 
     @Test
     public void testConvertIntegerToDouble() {
-        final Object val = 123;
-        final Double expected = 123.0;
+        final Object inputValue = 123;
+        final Double expectedValue = 123.0;
 
-        final Double actual = new ObjectConvertedToDouble(val).convertToDouble();
-        Assertions.assertEquals(expected, actual);
+        final Double actualValue = new DoubleValue(inputValue).value();
+        Assertions.assertEquals(expectedValue, actualValue);
     }
 
     @Test
     public void testConvertFloatToDouble() {
-        final Object val = 123f;
-        final Double expected = 123.0;
+        final Object inputValue = 123f;
+        final Double expectedValue = 123.0;
 
-        final Double actual = new ObjectConvertedToDouble(val).convertToDouble();
-        Assertions.assertEquals(expected, actual);
+        final Double actualValue = new DoubleValue(inputValue).value();
+        Assertions.assertEquals(expectedValue, actualValue);
     }
 
     @Test
     public void testConvertDoubleToDouble() {
-        final Object val = 123.4d;
-        final Double expected = 123.4;
+        final Object inputValue = 123.4d;
+        final Double expectedValue = 123.4;
 
-        final Double actual = new ObjectConvertedToDouble(val).convertToDouble();
-        Assertions.assertEquals(expected, actual);
+        final Double actualValue = new DoubleValue(inputValue).value();
+        Assertions.assertEquals(expectedValue, actualValue);
     }
 
     @Test
     public void testConvertStringToDouble() {
-        final Object val = "123";
-        final Double expected = 123.0;
+        final Object inputValue = "123";
+        final Double expectedValue = 123.0;
 
-        final Double actual = new ObjectConvertedToDouble(val).convertToDouble();
-        Assertions.assertEquals(expected, actual);
+        final Double actualValue = new DoubleValue(inputValue).value();
+        Assertions.assertEquals(expectedValue, actualValue);
     }
 
     @Test
-    //throw exception for non-numerical strings
-    public void testConvertNonNumericStringToDouble() {
-        final Object val = "string";
-        final ObjectConvertedToDouble actual = new ObjectConvertedToDouble(val);
+    public void testConvertNonNumericalStringThrowsException() {
+        final Object inputValue = "string";
+        final DoubleValue actualValue = new DoubleValue(inputValue);
         final IllegalArgumentException iae = Assertions
-                .assertThrows(IllegalArgumentException.class, actual::convertToDouble);
+                .assertThrows(IllegalArgumentException.class, actualValue::value);
         Assertions
                 .assertEquals(
                         "Non-numerical strings cannot be converted to Double. <java.lang.NumberFormatException: For input string: \"string\" >",

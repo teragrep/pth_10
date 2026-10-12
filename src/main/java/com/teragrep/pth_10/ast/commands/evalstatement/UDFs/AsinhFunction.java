@@ -45,23 +45,22 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth_10.ast.ObjectConvertedToDouble;
+import com.teragrep.pth_10.ast.DoubleValue;
 import org.apache.spark.sql.api.java.UDF1;
 
 import java.io.Serializable;
 
-public class AsinhFunction implements UDF1<Object, Double>, Serializable {
+public final class AsinhFunction implements UDF1<Object, Double>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Override
-    // Take input in as Object, so it can be multiple different types
+    // Take input value as Object, so it can be multiple different types
     public Double call(Object input) {
-        final ObjectConvertedToDouble object = new ObjectConvertedToDouble(input);
-        final Double inputAsDouble = object.convertToDouble();
+        final Double doubleValue = new DoubleValue(input).value();
 
         final org.apache.commons.math3.analysis.function.Asinh asinhFunction = new org.apache.commons.math3.analysis.function.Asinh();
 
-        return asinhFunction.value(inputAsDouble);
+        return asinhFunction.value(doubleValue);
     }
 }

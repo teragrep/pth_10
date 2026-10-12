@@ -45,30 +45,28 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
-import com.teragrep.pth_10.ast.ObjectConvertedToDouble;
+import com.teragrep.pth_10.ast.DoubleValue;
 import org.apache.spark.sql.api.java.UDF1;
 
 import java.io.Serializable;
 
-public class AsinFunction implements UDF1<Object, Double>, Serializable {
+public final class AsinFunction implements UDF1<Object, Double>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Override
-    // Take input in as Object, so it can be multiple different types
+    // Take input value as Object, so it can be multiple different types
     public Double call(Object input) throws Exception {
-
-        final ObjectConvertedToDouble object = new ObjectConvertedToDouble(input);
-        final Double inputAsDouble = object.convertToDouble();
+        final Double doubleValue = new DoubleValue(input).value();
 
         // Use Apache Commons function
         final org.apache.commons.math3.analysis.function.Asin asinFunction = new org.apache.commons.math3.analysis.function.Asin();
-        if (inputAsDouble >= -1.0 && inputAsDouble <= 1.0) {
-            return asinFunction.value(inputAsDouble);
+        if (doubleValue >= -1.0 && doubleValue <= 1.0) {
+            return asinFunction.value(doubleValue);
         }
         else {
             throw new IllegalArgumentException(
-                    "Invalid input < " + inputAsDouble + " > , asin() function takes values between the range [-1, 1]."
+                    "Invalid input < " + doubleValue + " > , asin() function takes values between the range [-1, 1]."
             );
         }
 
