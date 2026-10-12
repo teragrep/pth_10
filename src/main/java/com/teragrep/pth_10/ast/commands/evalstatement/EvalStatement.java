@@ -289,12 +289,13 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     private Node evalMethodSubstrEmitCatalyst(DPLParser.EvalMethodSubstrContext ctx) {
-        ColumnNode rv;
-        Column str = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        Column start = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
-        Column substr;
-        if (ctx.evalStatement().size() > 2) {
-            Column length = ((ColumnNode) visit(ctx.getChild(6))).getColumn();
+        final List<DPLParser.EvalStatementContext> arguments = ctx.evalStatement();
+        final ColumnNode rv;
+        final Column str = ((ColumnNode) visit(arguments.get(0))).getColumn();
+        final Column start = ((ColumnNode) visit(arguments.get(1))).getColumn();
+        final Column substr;
+        if (arguments.size() > 2) {
+            final Column length = ((ColumnNode) visit(arguments.get(2))).getColumn();
             substr = functions.substr(str, start, length);
         }
         else {
