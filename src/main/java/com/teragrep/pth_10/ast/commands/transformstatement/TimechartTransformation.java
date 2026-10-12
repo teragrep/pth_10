@@ -110,7 +110,7 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     private Node timechartTransformationEmitCatalyst(DPLParser.TimechartTransformationContext ctx) {
         this.timechartStep = new TimechartStep();
 
-        Column span = createDefaultSpan();
+        final Column span;
 
         if (ctx.t_timechart_binOptParameter() != null && !ctx.t_timechart_binOptParameter().isEmpty()) {
             LOGGER
@@ -123,6 +123,12 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
             if (spanNode != null) {
                 span = spanNode.getColumn();
             }
+            else {
+                throw new RuntimeException("spanNode is null, timechart span parameter visit function returned null.");
+            }
+        }
+        else {
+            span = createDefaultSpan();
         }
 
         final List<Column> listOfAggFunCols = new ArrayList<>();
@@ -166,7 +172,6 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
 
         return new StepNode(timechartStep);
 
-        //throw new RuntimeException("Chart transformation operation not supported yet");
     }
 
     /**
