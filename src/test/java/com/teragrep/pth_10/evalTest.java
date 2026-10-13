@@ -1324,7 +1324,7 @@ public class evalTest {
             matches = "true"
     )
     public void parseEvalSigfigCatalystTest() {
-        String q = "index=index_A | eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245)";
+        String q = "index=index_A | eval a=sigfig(1.00 * 1111) | eval b=sigfig(offset - 1.100) | eval c=sigfig(offset * 1.234) | eval d=sigfig(offset / 3.245) | eval e=sigfig(392.0+2.902)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -1340,7 +1340,8 @@ public class evalTest {
                     new StructField("a", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                     new StructField("b", DataTypes.DoubleType, true, new MetadataBuilder().build()),
                     new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build()),
-                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build())
+                    new StructField("d", DataTypes.DoubleType, true, new MetadataBuilder().build()),
+                    new StructField("e", DataTypes.DoubleType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
 
@@ -1377,6 +1378,15 @@ public class evalTest {
                     .map(r -> r.getDouble(0))
                     .collect(Collectors.toList());
 
+            // Get column 'e'
+            final Dataset<Row> resE = res.select("e");
+            final List<Double> lstE = resE
+                    .distinct()
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
             final List<Double> expectedListB = Arrays
                     .asList(
                             -0.1, -0.1, -0.1, -0.1, 0.9, 1.9, 2.9, 3.9, 4.9, 5.9, 6.9, 7.9, 8.9, 9.9, 10.9, 11.9, 12.9,
@@ -1398,11 +1408,14 @@ public class evalTest {
             Assertions.assertEquals(19, lstB.size());
             Assertions.assertEquals(19, lstC.size());
             Assertions.assertEquals(19, lstD.size());
+            Assertions.assertEquals(19, resE.count());
+            Assertions.assertEquals(1, lstE.size());
 
             Assertions.assertEquals(1110d, lstA.get(0));
             Assertions.assertEquals(expectedListB, lstB);
             Assertions.assertEquals(expectedListC, lstC);
             Assertions.assertEquals(expectedListD, lstD);
+            Assertions.assertEquals(394.9d, lstE.get(0));
         });
     }
 
