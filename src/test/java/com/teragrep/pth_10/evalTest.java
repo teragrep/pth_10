@@ -1984,6 +1984,25 @@ public class evalTest {
         });
     }
 
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalCaseTellsArgumentNotInPairs() {
+        final String q = "index=index_A | eval status=case(sourcetype=\"A:X:0\", \"complete\", sourceType=\"b:X:0\", \"failed\", \"nothing\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl";
+        final UnsupportedOperationException unsupportedException = streamingTestUtil
+                .performThrowingDPLTest(UnsupportedOperationException.class, q, testFile, res -> {
+                });
+
+        final String expectedMessage = "The amount of arguments given was invalid. Make sure each condition has a matching value given as an argument.";
+        Assertions
+                .assertEquals(
+                        expectedMessage, unsupportedException.getMessage(), "Should tell that an argument has no pair"
+                );
+    }
+
     // Test eval function validate(x1,y1,x2,y2, ..., xn, yn)
     @Test
     @DisabledIfSystemProperty(
