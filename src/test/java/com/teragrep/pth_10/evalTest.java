@@ -1989,17 +1989,17 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testEvalCaseTellsArgumentNotInPairs() {
+    public void testEvalCaseThrowsExceptionWhenArgumentsAreNotPaired() {
         final String q = "index=index_A | eval status=case(sourcetype=\"A:X:0\", \"complete\", sourceType=\"b:X:0\", \"failed\", \"nothing\")";
         final String testFile = "src/test/resources/eval_test_data1*.jsonl";
-        final UnsupportedOperationException unsupportedException = streamingTestUtil
-                .performThrowingDPLTest(UnsupportedOperationException.class, q, testFile, res -> {
+        final IllegalArgumentException argumentException = streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, q, testFile, res -> {
                 });
 
-        final String expectedMessage = "The amount of arguments given was invalid. Make sure each condition has a matching value given as an argument.";
+        final String expectedMessage = "Invalid number of arguments. Each condition must have a matching value.";
         Assertions
                 .assertEquals(
-                        expectedMessage, unsupportedException.getMessage(), "Should tell that an argument has no pair"
+                        expectedMessage, argumentException.getMessage(), "Should tell that an argument has no pair"
                 );
     }
 
