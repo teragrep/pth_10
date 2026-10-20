@@ -65,7 +65,7 @@ import java.util.List;
  * </p>
  * <p>
  * * / result should have minimum number of significant figures of all of the operands<br>
- * + - result should have the same amount of sigfigs as the least precise number of all of the operands
+ * + - result should be rounded to the same decimal place as the least precise operand
  * </p>
  * 
  * @author eemhu
@@ -76,67 +76,27 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
 
     private static final long serialVersionUID = 1L;
 
-    // Characters used for different arithmetic operations
-    private static final char MULTIPLICATION_CHAR = '*';
-    private static final char DIVISION_CHAR = '/';
-    private static final char ADDITION_CHAR = '+';
-    private static final char SUBTRACTION_CHAR = '-';
-
     @Override
     public Double call(Object calcResAsObject, String calcText, WrappedArray<Object> wrappedArrayOfColObjects)
             throws Exception {
 
-        BigDecimal calcRes = new BigDecimal(calcResAsObject.toString());
-
-        // Get the iterator for WrappedArray
-        Iterator<Object> itr = wrappedArrayOfColObjects.iterator();
-        List<BigDecimal> calculatedCols = new ArrayList<>();
-
-        // Get all objects (numbers) as BigDecimal with the iterator
-        // and put them into calculatedCols java list
-        // BigDecimal retains insignificant digits unlike double
-        while (itr.hasNext()) {
-            Object obj = itr.next();
-
-            if (obj instanceof Long) {
-                calculatedCols.add(BigDecimal.valueOf((Long) obj));
-            }
-            else if (obj instanceof Integer) {
-                calculatedCols.add(BigDecimal.valueOf((Integer) obj));
-            }
-            else if (obj instanceof Float) {
-                calculatedCols.add(BigDecimal.valueOf((Float) obj));
-            }
-            else if (obj instanceof Double) {
-                calculatedCols.add(BigDecimal.valueOf((Double) obj));
-            }
-            else if (obj instanceof String) {
-                calculatedCols.add(new BigDecimal((String) obj));
-            }
-            else {
-                // Throw exception if number was not any of the types tested above
-                throw new RuntimeException("Sigfig: Could not parse field content into java.math.BigDecimal");
-            }
-        }
-
-        // The computation for sigfig is based on the type of calculation that generates the number
-        // * / result should have minimum number of significant figures of all of the operands
-        // + - result should have the same amount of sigfigs as the least precise number of all of the operands
-
-        double rv;
+        final BigDecimal calcRes = new BigDecimal(calcResAsObject.toString());
+        final List<BigDecimal> calculatedCols = calculatedColumns(wrappedArrayOfColObjects);
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("calc(result)= <{}>", calcRes);
             LOGGER.debug("calc(text)= <{}>", calcText);
         }
 
-        int multiIndex = calcText.indexOf(MULTIPLICATION_CHAR);
-        int divIndex = calcText.indexOf(DIVISION_CHAR);
-        int plusIndex = calcText.indexOf(ADDITION_CHAR);
-        int minusIndex = calcText.indexOf(SUBTRACTION_CHAR);
+        final int multiIndex = calcText.indexOf('*');
+        final int divIndex = calcText.indexOf('/');
+        final int plusIndex = calcText.indexOf('+');
+        final int minusIndex = calcText.indexOf('-');
+        final boolean isMultiplicative = multiIndex != -1 || divIndex != -1;
+        final boolean isAdditive = plusIndex != -1 || minusIndex != -1;
+        final double rv;
 
-        // * or /
-        if (multiIndex != -1 || divIndex != -1) {
+        if (isMultiplicative) {
             int minPrecision = Integer.MAX_VALUE;
 
             for (BigDecimal val : calculatedCols) {
@@ -158,8 +118,7 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
 
             rv = calcRes.round(new MathContext(minPrecision)).doubleValue();
         }
-        // + or -
-        else if (plusIndex != -1 || minusIndex != -1) {
+        else if (isAdditive) {
             int minScale = Integer.MAX_VALUE;
 
             for (BigDecimal val : calculatedCols) {
@@ -173,18 +132,49 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("scale=<{}> precision=<{}>", scale, precision);
                 }
-                // Update scale only if val not a whole number
-                if (scale > 0 && scale < minScale) {
+                if (scale < minScale) {
                     minScale = scale;
                 }
             }
             rv = calcRes.setScale(minScale, RoundingMode.HALF_UP).doubleValue();
         }
         else {
-            // No * / + - found
             throw new RuntimeException("Sigfig: Could not determine the type of arithmetic operation");
         }
 
         return rv;
+    }
+
+    private List<BigDecimal> calculatedColumns(WrappedArray<Object> array) {
+        final Iterator<Object> itr = array.iterator();
+        final List<BigDecimal> calculatedCols = new ArrayList<>();
+
+        // Get all objects (numbers) as BigDecimal with the iterator
+        // and put them into calculatedCols java list
+        // BigDecimal retains insignificant digits unlike double
+        while (itr.hasNext()) {
+            final Object obj = itr.next();
+
+            if (obj instanceof Long) {
+                calculatedCols.add(BigDecimal.valueOf((Long) obj));
+            }
+            else if (obj instanceof Integer) {
+                calculatedCols.add(BigDecimal.valueOf((Integer) obj));
+            }
+            else if (obj instanceof Float) {
+                calculatedCols.add(BigDecimal.valueOf((Float) obj));
+            }
+            else if (obj instanceof Double) {
+                calculatedCols.add(BigDecimal.valueOf((Double) obj));
+            }
+            else if (obj instanceof String) {
+                calculatedCols.add(new BigDecimal((String) obj));
+            }
+            else {
+                throw new RuntimeException("Sigfig: Could not parse field content into java.math.BigDecimal");
+            }
+        }
+
+        return calculatedCols;
     }
 }

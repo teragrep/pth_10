@@ -1319,8 +1319,8 @@ public class evalTest {
 
             final List<Double> expectedListB = Arrays
                     .asList(
-                            -0.1, -0.1, -0.1, -0.1, 0.9, 1.9, 2.9, 3.9, 4.9, 5.9, 6.9, 7.9, 8.9, 9.9, 10.9, 11.9, 12.9,
-                            13.9, 14.9
+                            0.0, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0,
+                            14.0, 15.0
                     );
             final List<Double> expectedListC = Arrays
                     .asList(
