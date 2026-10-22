@@ -58,17 +58,8 @@ public final class DoubleValue {
     public Double value() {
 
         final Double objectAsDouble;
-        if (object instanceof Long) {
-            objectAsDouble = ((Long) object).doubleValue();
-        }
-        else if (object instanceof Integer) {
-            objectAsDouble = ((Integer) object).doubleValue();
-        }
-        else if (object instanceof Double) {
-            objectAsDouble = (Double) object;
-        }
-        else if (object instanceof Float) {
-            objectAsDouble = ((Float) object).doubleValue();
+        if (object instanceof Number) {
+            objectAsDouble = ((Number) object).doubleValue();
         }
         else if (object instanceof String) {
             try {
@@ -76,7 +67,8 @@ public final class DoubleValue {
             }
             catch (NumberFormatException nfe) {
                 throw new IllegalArgumentException(
-                        "Non-numerical strings cannot be converted to Double. <" + nfe + " >"
+                        "Non-numerical strings cannot be converted to Double. <" + nfe.getMessage() + " >",
+                        nfe
                 );
             }
         }

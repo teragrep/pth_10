@@ -104,7 +104,7 @@ public class DoubleValueTest {
                 .assertThrows(IllegalArgumentException.class, actualValue::value);
         Assertions
                 .assertEquals(
-                        "Non-numerical strings cannot be converted to Double. <java.lang.NumberFormatException: For input string: \"string\" >",
+                        "Non-numerical strings cannot be converted to Double. <For input string: \"string\" >",
                         iae.getMessage()
                 );
     }

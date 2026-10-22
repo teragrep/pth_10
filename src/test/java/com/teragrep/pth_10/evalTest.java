@@ -2609,6 +2609,7 @@ public class evalTest {
                 executedLoops++;
             }
             Assertions.assertEquals(19, executedLoops);
+            Assertions.assertEquals(expectedLst, lstA);
         });
     }
 
@@ -2729,7 +2730,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void tetsEvalFunctionAtan() {
+    public void testEvalFunctionAtan() {
         String q = "index=index_A | eval a=atan(offset)";
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
