@@ -2054,6 +2054,25 @@ public class evalTest {
         });
     }
 
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalCaseThrowsExceptionWhenArgumentsAreNotPaired() {
+        final String q = "index=index_A | eval status=case(sourcetype=\"A:X:0\", \"complete\", sourceType=\"b:X:0\", \"failed\", \"nothing\")";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl";
+        final IllegalArgumentException argumentException = streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, q, testFile, res -> {
+                });
+
+        final String expectedMessage = "Invalid number of arguments. Each condition must have a matching value.";
+        Assertions
+                .assertEquals(
+                        expectedMessage, argumentException.getMessage(), "Should tell that an argument has no pair"
+                );
+    }
+
     // Test eval function validate(x1,y1,x2,y2, ..., xn, yn)
     @Test
     @DisabledIfSystemProperty(

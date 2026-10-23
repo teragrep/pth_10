@@ -1708,10 +1708,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         Node rv = null;
 
         // case ( x , y , x2 , y2 , x3, y3 , ... )
-
-        if (ctx.getChildCount() % 2 != 0) {
-            throw new UnsupportedOperationException(
-                    "The amount of arguments given was invalid. Make sure each condition has a matching value given as an argument."
+        if (ctx.evalStatement().size() % 2 != 0) {
+            throw new IllegalArgumentException(
+                    "Invalid number of arguments. Each condition must have a matching value."
             );
         }
 
