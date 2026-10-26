@@ -90,8 +90,8 @@ public class FlattenedStringArrayColumnPerformanceTest {
     @CsvSource({
             "1", "100", "1000"
     })
-    public void arrayLengthOfAppendedColumns(final int arrayLength) {
-        final Dataset<Row> dataset = cachedDataset(5000, 16);
+    public void testArrayLengthOfAppendedColumns(final int arrayLength) {
+        final Dataset<Row> dataset = cachedDataset(100000, 16);
         final Column mvField = functions.array_repeat(functions.col("value"), arrayLength);
 
         final Column flattenedColumn = new FlattenedStringArrayColumn(mvField, mvField).column();
@@ -104,8 +104,8 @@ public class FlattenedStringArrayColumnPerformanceTest {
     @CsvSource({
             "8", "128", "1024"
     })
-    public void valueLengthOfAppendedColumns(final int valueLength) {
-        final Dataset<Row> dataset = cachedDataset(5000, valueLength);
+    public void testValueLengthOfAppendedColumns(final int valueLength) {
+        final Dataset<Row> dataset = cachedDataset(500000, valueLength);
         final Column value = functions.col("value");
 
         final Column flattenedColumn = new FlattenedStringArrayColumn(value, value).column();
@@ -115,9 +115,9 @@ public class FlattenedStringArrayColumnPerformanceTest {
 
     @ParameterizedTest
     @CsvSource({
-            "1000", "10000", "50000"
+            "1000", "10000", "50000", "500000"
     })
-    public void rowCountOfTheDataset(final long rowCount) {
+    public void testRowCountOfTheDataset(final long rowCount) {
         final Dataset<Row> dataset = cachedDataset(rowCount, 16);
         final Column value = functions.col("value");
 
@@ -131,8 +131,8 @@ public class FlattenedStringArrayColumnPerformanceTest {
     @CsvSource({
             "2", "5", "10"
     })
-    public void amountOfAppendedColumns(final int columnCount) {
-        final Dataset<Row> dataset = cachedDataset(5000, 16);
+    public void testAmountOfAppendedColumns(final int columnCount) {
+        final Dataset<Row> dataset = cachedDataset(500000, 16);
         final List<Column> columns = new ArrayList<>();
         for (int i = 0; i < columnCount; i++) {
             columns.add(functions.col("value"));
@@ -148,8 +148,8 @@ public class FlattenedStringArrayColumnPerformanceTest {
     @CsvSource({
             "1", "3", "5"
     })
-    public void nestedAppends(final int depth) {
-        final Dataset<Row> dataset = cachedDataset(5000, 16);
+    public void testNestedAppends(final int depth) {
+        final Dataset<Row> dataset = cachedDataset(500000, 16);
         final Column value = functions.col("value");
 
         Column flattenedColumn = value;
@@ -188,7 +188,8 @@ public class FlattenedStringArrayColumnPerformanceTest {
         final long flattenedMillis = medianMillis(dataset, flattenedColumn);
         final long arrayFunctionMillis = medianMillis(dataset, arrayFunctionColumn);
         dataset.unpersist();
-        System.out.printf("%-4s flattened %2d ms arrayFunctions %2d ms%n", name, flattenedMillis, arrayFunctionMillis);
+        System.out
+                .printf("%-24s flattened %6d ms | arrayFunctions %6d ms%n", name, flattenedMillis, arrayFunctionMillis);
     }
 
     private long medianMillis(final Dataset<Row> dataset, final Column column) {
