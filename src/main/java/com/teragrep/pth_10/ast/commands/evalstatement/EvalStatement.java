@@ -1955,7 +1955,9 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         final StringFormatOption option = new StringFormatOption(ctx);
         final ResolvedFormattedString resolvedFormattedString = new ResolvedFormattedString(inputColumn, option);
         final Column result = resolvedFormattedString.asColumn();
-        final Column nullPassthroughColumn = functions.when(inputColumn.isNull(), catCtx.nullValue.value()).otherwise(result);
+        final Column nullPassthroughColumn = functions
+                .when(inputColumn.isNull(), catCtx.nullValue.value())
+                .otherwise(result);
         return new ColumnNode(nullPassthroughColumn);
     }
 

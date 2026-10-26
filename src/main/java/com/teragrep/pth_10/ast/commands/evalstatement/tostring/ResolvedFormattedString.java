@@ -63,7 +63,7 @@ public final class ResolvedFormattedString implements FormattedString {
     public ResolvedFormattedString(final Column inputColumn, final String option) {
         this(
                 option,
-                List.of(new DurationString(inputColumn, option), new GroupedDecimalString(inputColumn, option), new HexadecimalString(inputColumn, option), new PlainString(inputColumn, option))
+                List.of(new DurationString(inputColumn, option), new GroupedDecimalString(inputColumn, option), new HexadecimalString(inputColumn, option), new PlainString(inputColumn, option), new BinaryString(inputColumn, option))
         );
     }
 

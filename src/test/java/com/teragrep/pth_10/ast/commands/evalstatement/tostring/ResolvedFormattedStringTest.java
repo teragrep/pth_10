@@ -59,7 +59,7 @@ public final class ResolvedFormattedStringTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "hex", "commas", "duration", "plain"
+            "hex", "commas", "duration", "plain", "binary"
     })
     public void testValidOptions(final String option) {
         final Column column = functions.lit("test");
