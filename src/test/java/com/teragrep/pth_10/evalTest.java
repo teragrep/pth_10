@@ -2139,7 +2139,7 @@ public class evalTest {
                     new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
                     new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
-                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build())
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // Get column 'a'
@@ -2152,6 +2152,39 @@ public class evalTest {
             List<String> expectedLst = Arrays.asList("true");
 
             Assertions.assertEquals(expectedLst, lst);
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testEvalToStringNullInput() {
+        final String query = "index=index_A | eval a=tostring(null())";
+        final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_raw", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("host", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("offset", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("partition", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("source", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("sourcetype", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema());
+            final Dataset<Row> dataset = res.select("a").orderBy("a").distinct();
+            final List<String> result = dataset
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getString(0))
+                    .collect(Collectors.toList());
+            Assertions.assertEquals(1, result.size());
+            Assertions.assertNull(result.get(0));
         });
     }
 
@@ -2300,7 +2333,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testEvalToStringDurationWithNullValue() {
+    public void testEvalToStringDurationNullValueInputWithOption() {
         final String query = "index=index_A | eval a=tostring(null(), \"duration\")";
         final String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
         streamingTestUtil.performDPLTest(query, testFile, res -> {
