@@ -45,25 +45,10 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.tostring;
 
-import nl.jqno.equalsverifier.EqualsVerifier;
+import com.teragrep.stb_01.Stubable;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.functions;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 
-public final class FormattedStringImplTest {
+public interface FormatResult extends Stubable {
 
-    @Test
-    public void testStubIsFalse() {
-        final FormattedStringImpl test = new FormattedStringImpl(functions.col("test"));
-        Assertions.assertFalse(test.isStub());
-    }
-
-    @Test
-    public void testContract() {
-        EqualsVerifier
-                .forClass(FormattedStringImpl.class)
-                .withPrefabValues(Column.class, functions.lit("first"), functions.lit("second"))
-                .verify();
-    }
+    public abstract Column asColumn();
 }

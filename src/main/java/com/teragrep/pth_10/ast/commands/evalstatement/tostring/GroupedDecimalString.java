@@ -53,31 +53,27 @@ import java.util.Objects;
 /**
  * Formats input with commas. If number includes decimals, the function rounds to nearest two decimal places.
  */
-public final class GroupedDecimalString implements StringRepresentation {
+final class GroupedDecimalString implements ToStringFormat {
 
     private final Column inputColumn;
     private final String option;
-    private final FormattedStringStub stub;
+    private final FormatResultStub stub;
 
-    public GroupedDecimalString(final Column inputColumn, final StringFormatOption stringFormatOption) {
-        this(inputColumn, stringFormatOption.asString());
+    GroupedDecimalString(final Column inputColumn, final String option) {
+        this(inputColumn, option, new FormatResultStub());
     }
 
-    public GroupedDecimalString(final Column inputColumn, final String option) {
-        this(inputColumn, option, new FormattedStringStub());
-    }
-
-    private GroupedDecimalString(final Column inputColumn, final String option, final FormattedStringStub stub) {
+    private GroupedDecimalString(final Column inputColumn, final String option, final FormatResultStub stub) {
         this.inputColumn = inputColumn;
         this.option = option;
         this.stub = stub;
     }
 
     @Override
-    public FormattedString result() {
-        final FormattedString result;
+    public FormatResult result() {
+        final FormatResult result;
         if ("commas".equalsIgnoreCase(option)) {
-            result = new FormattedStringImpl(functions.format_number(inputColumn, 2));
+            result = new FormatResultImpl(functions.format_number(inputColumn, 2));
         }
         else {
             result = stub;

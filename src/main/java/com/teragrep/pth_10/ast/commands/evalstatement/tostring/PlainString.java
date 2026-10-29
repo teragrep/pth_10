@@ -53,27 +53,27 @@ import java.util.Objects;
 /**
  * Casts input column to StringType
  */
-public final class PlainString implements StringRepresentation {
+final class PlainString implements ToStringFormat {
 
     private final Column inputColumn;
     private final String option;
-    private final FormattedStringStub stub;
+    private final FormatResultStub stub;
 
-    public PlainString(final Column inputColumn, final String option) {
-        this(inputColumn, option, new FormattedStringStub());
+    PlainString(final Column inputColumn, final String option) {
+        this(inputColumn, option, new FormatResultStub());
     }
 
-    private PlainString(final Column inputColumn, final String option, final FormattedStringStub stub) {
+    private PlainString(final Column inputColumn, final String option, final FormatResultStub stub) {
         this.inputColumn = inputColumn;
         this.option = option;
         this.stub = stub;
     }
 
     @Override
-    public FormattedString result() {
-        final FormattedString result;
+    public FormatResult result() {
+        final FormatResult result;
         if ("plain".equalsIgnoreCase(option)) {
-            result = new FormattedStringImpl(inputColumn.cast(DataTypes.StringType));
+            result = new FormatResultImpl(inputColumn.cast(DataTypes.StringType));
         }
         else {
             result = stub;

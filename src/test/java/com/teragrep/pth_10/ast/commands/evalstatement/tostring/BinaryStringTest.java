@@ -54,16 +54,24 @@ import org.junit.jupiter.api.Test;
 public final class BinaryStringTest {
 
     @Test
+    public void testResult() {
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new BinaryString(testColumn, "binary").result();
+        final FormatResult expectedResult = new FormatResultImpl(functions.bin(testColumn));
+        Assertions.assertEquals(expectedResult, result);
+    }
+
+    @Test
     public void testValidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new BinaryString(testColumn, "binary").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new BinaryString(testColumn, "binary").result();
         Assertions.assertFalse(result.isStub());
     }
 
     @Test
     public void testInvalidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new BinaryString(testColumn, "").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new BinaryString(testColumn, "").result();
         Assertions.assertTrue(result.isStub());
     }
 

@@ -53,27 +53,27 @@ import java.util.Objects;
 /**
  * Converts input column to hexadecimal
  */
-public final class HexadecimalString implements StringRepresentation {
+final class HexadecimalString implements ToStringFormat {
 
     private final Column inputColumn;
     private final String option;
-    private final FormattedStringStub stub;
+    private final FormatResultStub stub;
 
-    public HexadecimalString(final Column inputColumn, final String option) {
-        this(inputColumn, option, new FormattedStringStub());
+    HexadecimalString(final Column inputColumn, final String option) {
+        this(inputColumn, option, new FormatResultStub());
     }
 
-    private HexadecimalString(final Column inputColumn, final String option, final FormattedStringStub stub) {
+    private HexadecimalString(final Column inputColumn, final String option, final FormatResultStub stub) {
         this.inputColumn = inputColumn;
         this.option = option;
         this.stub = stub;
     }
 
     @Override
-    public FormattedString result() {
-        final FormattedString result;
+    public FormatResult result() {
+        final FormatResult result;
         if ("hex".equalsIgnoreCase(option)) {
-            result = new FormattedStringImpl(functions.concat(functions.lit("0x"), functions.hex(inputColumn)));
+            result = new FormatResultImpl(functions.concat(functions.lit("0x"), functions.hex(inputColumn)));
         }
         else {
             result = stub;

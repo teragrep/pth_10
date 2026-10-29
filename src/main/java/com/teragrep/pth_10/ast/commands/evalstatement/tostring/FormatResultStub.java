@@ -45,10 +45,34 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.tostring;
 
-import com.teragrep.stb_01.Stubable;
 import org.apache.spark.sql.Column;
 
-public interface FormattedString extends Stubable {
+import java.util.Objects;
 
-    public abstract Column asColumn();
+final class FormatResultStub implements FormatResult {
+
+    @Override
+    public Column asColumn() {
+        throw new UnsupportedOperationException("asColumn() not supported for StringRepresentationResultStub");
+    }
+
+    @Override
+    public boolean isStub() {
+        return true;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        boolean isEqual = true;
+        if (o == null || getClass() != o.getClass()) {
+            isEqual = false;
+        }
+        return isEqual;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(getClass().getName());
+    }
+
 }

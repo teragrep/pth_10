@@ -51,32 +51,32 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public final class ResolvedFormattedString implements FormattedString {
+public final class ResolvedFormatResult implements FormatResult {
 
     private final String option;
-    private final List<StringRepresentation> representations;
+    private final List<ToStringFormat> supportedFormats;
 
-    public ResolvedFormattedString(final Column inputColumn, final StringFormatOption stringFormatOption) {
+    public ResolvedFormatResult(final Column inputColumn, final StringFormatOption stringFormatOption) {
         this(inputColumn, stringFormatOption.asString());
     }
 
-    public ResolvedFormattedString(final Column inputColumn, final String option) {
+    public ResolvedFormatResult(final Column inputColumn, final String option) {
         this(
                 option,
                 List.of(new DurationString(inputColumn, option), new GroupedDecimalString(inputColumn, option), new HexadecimalString(inputColumn, option), new PlainString(inputColumn, option), new BinaryString(inputColumn, option))
         );
     }
 
-    public ResolvedFormattedString(final String option, final List<StringRepresentation> representations) {
+    public ResolvedFormatResult(final String option, final List<ToStringFormat> supportedFormats) {
         this.option = option;
-        this.representations = representations;
+        this.supportedFormats = supportedFormats;
     }
 
     @Override
     public Column asColumn() {
-        final List<FormattedString> validResults = representations
+        final List<FormatResult> validResults = supportedFormats
                 .stream()
-                .map(StringRepresentation::result)
+                .map(ToStringFormat::result)
                 .filter(formatted -> !formatted.isStub())
                 .collect(Collectors.toList());
 
@@ -105,14 +105,14 @@ public final class ResolvedFormattedString implements FormattedString {
             isEqual = false;
         }
         else {
-            final ResolvedFormattedString that = (ResolvedFormattedString) o;
-            isEqual = Objects.equals(option, that.option) && Objects.equals(representations, that.representations);
+            final ResolvedFormatResult that = (ResolvedFormatResult) o;
+            isEqual = Objects.equals(option, that.option) && Objects.equals(supportedFormats, that.supportedFormats);
         }
         return isEqual;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(option, representations);
+        return Objects.hash(option, supportedFormats);
     }
 }

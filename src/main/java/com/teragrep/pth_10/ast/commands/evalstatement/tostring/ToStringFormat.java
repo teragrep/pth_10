@@ -45,43 +45,8 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.tostring;
 
-import org.apache.spark.sql.Column;
+public interface ToStringFormat {
 
-import java.util.Objects;
+    public abstract FormatResult result();
 
-public final class FormattedStringImpl implements FormattedString {
-
-    final Column outputColumn;
-
-    public FormattedStringImpl(Column outputColumn) {
-        this.outputColumn = outputColumn;
-    }
-
-    @Override
-    public Column asColumn() {
-        return outputColumn;
-    }
-
-    @Override
-    public boolean isStub() {
-        return false;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        final boolean isEqual;
-        if (o == null || getClass() != o.getClass()) {
-            isEqual = false;
-        }
-        else {
-            final FormattedStringImpl that = (FormattedStringImpl) o;
-            isEqual = Objects.equals(outputColumn, that.outputColumn);
-        }
-        return isEqual;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(outputColumn);
-    }
 }

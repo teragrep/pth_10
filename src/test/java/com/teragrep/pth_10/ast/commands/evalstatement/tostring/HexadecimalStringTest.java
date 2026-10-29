@@ -54,16 +54,26 @@ import org.junit.jupiter.api.Test;
 public final class HexadecimalStringTest {
 
     @Test
+    public void testResult() {
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new HexadecimalString(testColumn, "hex").result();
+        final FormatResult expectedResult = new FormatResultImpl(
+                functions.concat(functions.lit("0x"), functions.hex(testColumn))
+        );
+        Assertions.assertEquals(expectedResult, result);
+    }
+
+    @Test
     public void testValidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new HexadecimalString(testColumn, "hex").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new HexadecimalString(testColumn, "hex").result();
         Assertions.assertFalse(result.isStub());
     }
 
     @Test
     public void testInvalidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new HexadecimalString(testColumn, "").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new HexadecimalString(testColumn, "").result();
         Assertions.assertTrue(result.isStub());
     }
 

@@ -45,34 +45,25 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.tostring;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.Column;
+import org.apache.spark.sql.functions;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
+public final class FormatResultImplTest {
 
-public final class FormattedStringStub implements FormattedString {
-
-    @Override
-    public Column asColumn() {
-        throw new UnsupportedOperationException("asColumn() not supported for StringRepresentationResultStub");
+    @Test
+    public void testStubIsFalse() {
+        final FormatResultImpl test = new FormatResultImpl(functions.col("test"));
+        Assertions.assertFalse(test.isStub());
     }
 
-    @Override
-    public boolean isStub() {
-        return true;
+    @Test
+    public void testContract() {
+        EqualsVerifier
+                .forClass(FormatResultImpl.class)
+                .withPrefabValues(Column.class, functions.lit("first"), functions.lit("second"))
+                .verify();
     }
-
-    @Override
-    public boolean equals(final Object o) {
-        boolean isEqual = true;
-        if (o == null || getClass() != o.getClass()) {
-            isEqual = false;
-        }
-        return isEqual;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(getClass().getName());
-    }
-
 }

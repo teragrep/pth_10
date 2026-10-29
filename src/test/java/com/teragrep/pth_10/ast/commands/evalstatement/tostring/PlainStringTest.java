@@ -48,22 +48,31 @@ package com.teragrep.pth_10.ast.commands.evalstatement.tostring;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public final class PlainStringTest {
 
     @Test
+    public void testResult() {
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new PlainString(testColumn, "plain").result();
+        final FormatResult expectedResult = new FormatResultImpl(testColumn.cast(DataTypes.StringType));
+        Assertions.assertEquals(expectedResult, result);
+    }
+
+    @Test
     public void testValidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new PlainString(testColumn, "plain").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new PlainString(testColumn, "plain").result();
         Assertions.assertFalse(result.isStub());
     }
 
     @Test
     public void testInvalidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new PlainString(testColumn, "").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new PlainString(testColumn, "").result();
         Assertions.assertTrue(result.isStub());
     }
 

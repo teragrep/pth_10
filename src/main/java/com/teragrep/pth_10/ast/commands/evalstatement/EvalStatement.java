@@ -51,7 +51,7 @@ import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.UnquotedText;
 import com.teragrep.pth_10.ast.bo.*;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.*;
-import com.teragrep.pth_10.ast.commands.evalstatement.tostring.ResolvedFormattedString;
+import com.teragrep.pth_10.ast.commands.evalstatement.tostring.ResolvedFormatResult;
 import com.teragrep.pth_10.ast.commands.evalstatement.tostring.StringFormatOption;
 import com.teragrep.pth_10.steps.eval.EvalStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
@@ -1953,7 +1953,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     private Node evalMethodTostringEmitCatalyst(final DPLParser.EvalMethodTostringContext ctx) {
         final Column inputColumn = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
         final StringFormatOption option = new StringFormatOption(ctx);
-        final ResolvedFormattedString resolvedFormattedString = new ResolvedFormattedString(inputColumn, option);
+        final ResolvedFormatResult resolvedFormattedString = new ResolvedFormatResult(inputColumn, option);
         final Column result = resolvedFormattedString.asColumn();
         final Column nullPassthroughColumn = functions
                 .when(inputColumn.isNull(), catCtx.nullValue.value())

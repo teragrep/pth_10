@@ -50,27 +50,27 @@ import org.apache.spark.sql.functions;
 
 import java.util.Objects;
 
-public final class BinaryString implements StringRepresentation {
+final class BinaryString implements ToStringFormat {
 
     private final Column inputColumn;
     private final String option;
-    private final FormattedStringStub stub;
+    private final FormatResultStub stub;
 
-    public BinaryString(final Column inputColumn, final String option) {
-        this(inputColumn, option, new FormattedStringStub());
+    BinaryString(final Column inputColumn, final String option) {
+        this(inputColumn, option, new FormatResultStub());
     }
 
-    private BinaryString(final Column inputColumn, final String option, final FormattedStringStub stub) {
+    private BinaryString(final Column inputColumn, final String option, final FormatResultStub stub) {
         this.inputColumn = inputColumn;
         this.option = option;
         this.stub = stub;
     }
 
     @Override
-    public FormattedString result() {
-        final FormattedString result;
+    public FormatResult result() {
+        final FormatResult result;
         if ("binary".equalsIgnoreCase(option)) {
-            result = new FormattedStringImpl(functions.bin(inputColumn));
+            result = new FormatResultImpl(functions.bin(inputColumn));
         }
         else {
             result = stub;

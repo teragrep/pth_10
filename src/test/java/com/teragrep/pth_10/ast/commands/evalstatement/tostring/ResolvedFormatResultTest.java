@@ -55,7 +55,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
-public final class ResolvedFormattedStringTest {
+public final class ResolvedFormatResultTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
@@ -63,7 +63,7 @@ public final class ResolvedFormattedStringTest {
     })
     public void testValidOptions(final String option) {
         final Column column = functions.lit("test");
-        final ResolvedFormattedString resolvedFormattedString = new ResolvedFormattedString(column, option);
+        final ResolvedFormatResult resolvedFormattedString = new ResolvedFormatResult(column, option);
         Assertions.assertDoesNotThrow(resolvedFormattedString::asColumn);
     }
 
@@ -71,10 +71,10 @@ public final class ResolvedFormattedStringTest {
     public void testMultipleValidFormatsThrowsException() {
         final Column column = functions.lit("test");
         final String option = "duration";
-        final List<StringRepresentation> representations = List
+        final List<ToStringFormat> representations = List
                 .of(new DurationString(column, option), new DurationString(column, option));
         final IllegalStateException exception = Assertions
-                .assertThrows(IllegalStateException.class, () -> new ResolvedFormattedString(option, representations).asColumn());
+                .assertThrows(IllegalStateException.class, () -> new ResolvedFormatResult(option, representations).asColumn());
         final String expectedMessage = "Multiple valid results found for option <duration>";
         Assertions.assertEquals(expectedMessage, exception.getMessage());
     }
@@ -82,7 +82,7 @@ public final class ResolvedFormattedStringTest {
     @Test
     public void testUnsupportedOptionThrowsException() {
         final Column column = functions.lit("test");
-        final ResolvedFormattedString resolvedFormattedString = new ResolvedFormattedString(column, "invalid");
+        final ResolvedFormatResult resolvedFormattedString = new ResolvedFormatResult(column, "invalid");
         final UnsupportedOperationException exception = Assertions
                 .assertThrows(UnsupportedOperationException.class, resolvedFormattedString::asColumn);
         final String expectedMessage = "Unsupported optional argument supplied: '<[invalid]>'.The argument must be 'hex', 'commas' or 'duration' instead.";
@@ -92,12 +92,12 @@ public final class ResolvedFormattedStringTest {
     @Test
     public void testInvalidOptionDoesntCreateStub() {
         final Column column = functions.lit("test");
-        final ResolvedFormattedString resolvedFormattedString = new ResolvedFormattedString(column, "invalid");
+        final ResolvedFormatResult resolvedFormattedString = new ResolvedFormatResult(column, "invalid");
         Assertions.assertFalse(resolvedFormattedString.isStub());
     }
 
     @Test
     public void testContract() {
-        EqualsVerifier.forClass(ResolvedFormattedString.class).verify();
+        EqualsVerifier.forClass(ResolvedFormatResult.class).verify();
     }
 }

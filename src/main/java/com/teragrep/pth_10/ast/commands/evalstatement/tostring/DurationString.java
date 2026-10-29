@@ -54,33 +54,33 @@ import java.util.Objects;
 /**
  * Converts input column to the readable time format HH:MM:SS.
  */
-public final class DurationString implements StringRepresentation {
+final class DurationString implements ToStringFormat {
 
     private final Column inputColumn;
     private final String option;
-    private final FormattedStringStub stub;
+    private final FormatResultStub stub;
 
-    public DurationString(final Column inputColumn, final String option) {
-        this(inputColumn, option, new FormattedStringStub());
+    DurationString(final Column inputColumn, final String option) {
+        this(inputColumn, option, new FormatResultStub());
     }
 
-    private DurationString(final Column inputColumn, final String option, final FormattedStringStub stub) {
+    private DurationString(final Column inputColumn, final String option, final FormatResultStub stub) {
         this.inputColumn = inputColumn;
         this.option = option;
         this.stub = stub;
     }
 
     @Override
-    public FormattedString result() {
+    public FormatResult result() {
         final int secondsInMinute = 60;
         final int secondsInHour = secondsInMinute * 60;
-        final FormattedString result;
+        final FormatResult result;
         if ("duration".equalsIgnoreCase(option)) {
             final Column totalSeconds = functions.round(inputColumn).cast(DataTypes.LongType);
             final Column hours = totalSeconds.divide(secondsInHour).cast(DataTypes.LongType);
             final Column minutes = totalSeconds.mod(secondsInHour).divide(secondsInMinute).cast(DataTypes.LongType);
             final Column seconds = totalSeconds.mod(secondsInMinute);
-            result = new FormattedStringImpl(functions.format_string("%02d:%02d:%02d", hours, minutes, seconds));
+            result = new FormatResultImpl(functions.format_string("%02d:%02d:%02d", hours, minutes, seconds));
         }
         else {
             result = stub;

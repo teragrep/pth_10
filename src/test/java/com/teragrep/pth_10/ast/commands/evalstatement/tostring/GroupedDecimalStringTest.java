@@ -54,16 +54,24 @@ import org.junit.jupiter.api.Test;
 public final class GroupedDecimalStringTest {
 
     @Test
+    public void testResult() {
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new GroupedDecimalString(testColumn, "commas").result();
+        final FormatResult expectedResult = new FormatResultImpl(functions.format_number(testColumn, 2));
+        Assertions.assertEquals(expectedResult, result);
+    }
+
+    @Test
     public void testValidOptionIsNotStub() {
         Column testColumn = functions.col("test");
-        final FormattedString result = new GroupedDecimalString(testColumn, "commas").result();
+        final FormatResult result = new GroupedDecimalString(testColumn, "commas").result();
         Assertions.assertFalse(result.isStub());
     }
 
     @Test
     public void testInvalidOptionIsNotStub() {
         Column testColumn = functions.col("test");
-        final FormattedString result = new GroupedDecimalString(testColumn, "").result();
+        final FormatResult result = new GroupedDecimalString(testColumn, "").result();
         Assertions.assertTrue(result.isStub());
     }
 

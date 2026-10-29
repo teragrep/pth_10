@@ -48,22 +48,40 @@ package com.teragrep.pth_10.ast.commands.evalstatement.tostring;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataTypes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public final class DurationStringTest {
 
     @Test
+    public void testResult() {
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new DurationString(testColumn, "duration").result();
+        final int secondsInMinute = 60;
+        final int secondsInHour = 60 * secondsInMinute;
+        final Column totalSeconds = functions.round(testColumn).cast(DataTypes.LongType);
+        final Column hours = totalSeconds.divide(secondsInHour).cast(DataTypes.LongType);
+        final Column minutes = totalSeconds.mod(secondsInHour).divide(secondsInMinute).cast(DataTypes.LongType);
+        final Column seconds = totalSeconds.mod(secondsInMinute);
+        final FormatResult expectedResult = new FormatResultImpl(
+                functions.format_string("%02d:%02d:%02d", hours, minutes, seconds)
+        );
+        Assertions.assertEquals(expectedResult, result);
+    }
+
+    @Test
     public void testValidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new DurationString(testColumn, "duration").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new DurationString(testColumn, "duration").result();
         Assertions.assertFalse(result.isStub());
+
     }
 
     @Test
     public void testInvalidOptionIsNotStub() {
-        Column testColumn = functions.col("test");
-        final FormattedString result = new DurationString(testColumn, "").result();
+        final Column testColumn = functions.col("test");
+        final FormatResult result = new DurationString(testColumn, "").result();
         Assertions.assertTrue(result.isStub());
     }
 
