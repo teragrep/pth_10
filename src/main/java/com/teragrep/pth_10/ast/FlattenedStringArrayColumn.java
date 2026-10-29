@@ -61,7 +61,7 @@ public final class FlattenedStringArrayColumn {
     }
 
     public FlattenedStringArrayColumn(final List<Column> columns) {
-        this.columns = columns;
+        this.columns = List.copyOf(columns);
     }
 
     public Column column() {
@@ -72,10 +72,7 @@ public final class FlattenedStringArrayColumn {
         final String delimiter = "\u0001"; //start of heading control character
 
         final Column joinedStr = functions.concat_ws(delimiter, columns.toArray(new Column[0]));
-
-        return functions
-                .when(functions.coalesce(joinedStr, functions.lit("")).equalTo(""), functions.array())
-                .otherwise(functions.split(joinedStr, delimiter, -1));
+        return functions.split(joinedStr, delimiter, -1);
     }
 
     @Override

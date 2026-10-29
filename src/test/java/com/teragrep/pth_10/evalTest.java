@@ -3664,7 +3664,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testEvalMvappendCorrectlyGivesEmptyMultivalueFieldForNullsOnly() {
+    public void testEvalMvappendCorrectlyGivesEmptyValueForNullsOnly() {
         String q = "index=index_A | eval a=mvappend(null(), null())";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
         this.streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -3672,7 +3672,8 @@ public class evalTest {
 
             Row row = rows.get(0);
             List<Object> values = row.getList(row.fieldIndex("a"));
-            Assertions.assertTrue(values.isEmpty());
+            final List<Object> expectedList = Collections.singletonList("");
+            Assertions.assertEquals(expectedList, values, "Should give an empty value for nulls");
         });
     }
 
