@@ -51,6 +51,8 @@ import com.teragrep.pth_10.ast.TextString;
 import com.teragrep.pth_10.ast.UnquotedText;
 import com.teragrep.pth_10.ast.bo.*;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.*;
+import com.teragrep.pth_10.ast.commands.evalstatement.tostring.ResolvedFormatResult;
+import com.teragrep.pth_10.ast.commands.evalstatement.tostring.StringFormatOption;
 import com.teragrep.pth_10.steps.eval.EvalStep;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import com.teragrep.pth_03.antlr.DPLParser;
@@ -1948,56 +1950,15 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         return rv;
     }
 
-    private Node evalMethodTostringEmitCatalyst(DPLParser.EvalMethodTostringContext ctx) {
-        Node rv = null;
-
-        // Requires at least one argument X (input)
-        // If X (input) is a number, Y can be provided (optionally) with arguments "hex", "commas" or "duration"
-        // "hex" => Converts X to hexadecimal
-        // "commas" => Formats X with commas. If number includes decimals, the function rounds to nearest two decimal places.
-        // "duration" => Converts seconds X to the readable time format HH:MM:SS.
-
-        // tostring ( X ) --OR-- tostring ( X , Y )
-
-        Column inputCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        String options = null;
-        if (ctx.getChildCount() > 4)
-            options = new UnquotedText(new TextString(ctx.getChild(4).getText())).read();
-
-        Column col = null;
-        // Base case without options (Y)
-        if (options == null) {
-            col = inputCol;
-        }
-        // With options (Y)
-        else {
-            // "hex", "commas" or "duration"
-            switch (options.toLowerCase()) {
-                case "hex":
-                    col = functions.concat(functions.lit("0x"), functions.hex(inputCol));
-                    break;
-                case "commas":
-                    col = functions.format_number(inputCol, 2);
-                    break;
-                case "duration":
-                    // input is seconds -> output HH:MM:SS
-                    col = functions.from_unixtime(inputCol, "HH:mm:ss");
-                    break;
-                case "binary":
-                    col = functions
-                            .when(inputCol.isNull(), functions.lit(catCtx.nullValue.value()))
-                            .otherwise(functions.bin(inputCol));
-                    break;
-                default:
-                    throw new UnsupportedOperationException(
-                            "Unsupported optional argument supplied: '" + options
-                                    + "'.The argument must be 'hex', 'commas', 'duration' or 'binary' instead."
-                    );
-            }
-        }
-
-        rv = new ColumnNode(col.cast("string"));
-        return rv;
+    private Node evalMethodTostringEmitCatalyst(final DPLParser.EvalMethodTostringContext ctx) {
+        final Column inputColumn = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final StringFormatOption option = new StringFormatOption(ctx);
+        final ResolvedFormatResult resolvedFormattedString = new ResolvedFormatResult(inputColumn, option);
+        final Column result = resolvedFormattedString.asColumn();
+        final Column nullPassthroughColumn = functions
+                .when(inputColumn.isNull(), catCtx.nullValue.value())
+                .otherwise(result);
+        return new ColumnNode(nullPassthroughColumn);
     }
 
     /**
