@@ -104,8 +104,8 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                     LOGGER.debug("val=<{}>", val);
                 }
 
-                int scale = val.scale();
-                int precision = val.precision();
+                final int scale = val.scale();
+                final int precision = val.precision();
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("scale=<{}> precision=<{}>", scale, precision);
@@ -126,8 +126,8 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
                     LOGGER.debug("val=<{}>", val);
                 }
 
-                int scale = val.scale();
-                int precision = val.precision();
+                final int scale = val.scale();
+                final int precision = val.precision();
 
                 if (LOGGER.isDebugEnabled()) {
                     LOGGER.debug("scale=<{}> precision=<{}>", scale, precision);
@@ -155,24 +155,7 @@ public class Sigfig implements UDF3<Object, String, WrappedArray<Object>, Double
         while (itr.hasNext()) {
             final Object obj = itr.next();
 
-            if (obj instanceof Long) {
-                calculatedCols.add(BigDecimal.valueOf((Long) obj));
-            }
-            else if (obj instanceof Integer) {
-                calculatedCols.add(BigDecimal.valueOf((Integer) obj));
-            }
-            else if (obj instanceof Float) {
-                calculatedCols.add(BigDecimal.valueOf((Float) obj));
-            }
-            else if (obj instanceof Double) {
-                calculatedCols.add(BigDecimal.valueOf((Double) obj));
-            }
-            else if (obj instanceof String) {
-                calculatedCols.add(new BigDecimal((String) obj));
-            }
-            else {
-                throw new RuntimeException("Sigfig: Could not parse field content into java.math.BigDecimal");
-            }
+            calculatedCols.add(new BigDecimal(obj.toString()));
         }
 
         return calculatedCols;
