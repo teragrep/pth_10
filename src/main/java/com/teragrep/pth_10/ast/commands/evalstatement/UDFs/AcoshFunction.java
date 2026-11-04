@@ -47,22 +47,22 @@ package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth_10.ast.DoubleValue;
 import org.apache.spark.sql.api.java.UDF1;
+import org.apache.commons.math3.analysis.function.Acosh;
 
 import java.io.Serializable;
 
 public final class AcoshFunction implements UDF1<Object, Double>, Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final Acosh acosh = new Acosh();
 
     @Override
     // Take input value as Object, so it can be multiple different types
     public Double call(Object input) throws Exception {
         final Double doubleValue = new DoubleValue(input).value();
 
-        // Use Apache Commons function
-        final org.apache.commons.math3.analysis.function.Acosh acoshFunction = new org.apache.commons.math3.analysis.function.Acosh();
         if (doubleValue >= 1.0) {
-            return acoshFunction.value(doubleValue);
+            return acosh.value(doubleValue);
         }
         else {
             throw new IllegalArgumentException(

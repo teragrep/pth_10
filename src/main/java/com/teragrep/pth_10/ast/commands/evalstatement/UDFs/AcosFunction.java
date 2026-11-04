@@ -47,23 +47,22 @@ package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
 import com.teragrep.pth_10.ast.DoubleValue;
 import org.apache.spark.sql.api.java.UDF1;
+import org.apache.commons.math3.analysis.function.Acos;
 
 import java.io.Serializable;
 
 public final class AcosFunction implements UDF1<Object, Double>, Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final Acos acos = new Acos();
 
     @Override
     // Take input value as Object, so it can be multiple different types
     public Double call(Object input) throws Exception {
         final Double doubleValue = new DoubleValue(input).value();
 
-        // Use Apache Commons function
-        final org.apache.commons.math3.analysis.function.Acos acosFunction = new org.apache.commons.math3.analysis.function.Acos();
-
         if (doubleValue >= -1.0 && doubleValue <= 1.0) {
-            return acosFunction.value(doubleValue);
+            return acos.value(doubleValue);
         }
         else {
             throw new IllegalArgumentException(
