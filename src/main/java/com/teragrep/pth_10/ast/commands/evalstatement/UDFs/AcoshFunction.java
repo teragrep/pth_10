@@ -66,7 +66,7 @@ public final class AcoshFunction implements UDF1<Object, Double>, Serializable {
         }
         else {
             throw new IllegalArgumentException(
-                    "Invalid input < " + doubleValue + " > , acosh() function takes values >= 1."
+                    "Invalid input <[" + doubleValue + "]> , acosh() function takes values >= 1."
             );
         }
 

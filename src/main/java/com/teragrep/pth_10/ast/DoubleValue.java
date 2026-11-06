@@ -67,14 +67,16 @@ public final class DoubleValue {
             }
             catch (NumberFormatException nfe) {
                 throw new IllegalArgumentException(
-                        "Non-numerical strings cannot be converted to Double. <" + nfe.getMessage() + " >",
+                        "Non-numerical string <[" + object + "]> cannot be converted to Double. <" + nfe.getMessage()
+                                + ">",
                         nfe
                 );
             }
         }
         else {
-            throw new RuntimeException(
-                    " Input value couldn't be converted to Double. Expected Long, Integer, Double, Float or numerical String."
+            throw new IllegalArgumentException(
+                    "Input value <[" + object
+                            + "]> couldn't be converted to Double. Expected a Number or a numerical String."
             );
         }
         return objectAsDouble;

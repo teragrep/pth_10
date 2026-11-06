@@ -66,7 +66,7 @@ public final class AsinFunction implements UDF1<Object, Double>, Serializable {
         }
         else {
             throw new IllegalArgumentException(
-                    "Invalid input < " + doubleValue + " > , asin() function takes values between the range [-1, 1]."
+                    "Invalid input <[" + doubleValue + "]> , asin() function takes values between the range [-1, 1]."
             );
         }
 

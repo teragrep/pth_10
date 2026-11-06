@@ -66,7 +66,7 @@ public final class AtanhFunction implements UDF1<Object, Double>, Serializable {
         }
         else {
             throw new IllegalArgumentException(
-                    "Invalid input < " + doubleValue + " > , atanh() function takes values between the range [-1, 1]."
+                    "Invalid input <[" + doubleValue + "]> , atanh() function takes values between the range [-1, 1]."
             );
         }
 

@@ -104,7 +104,33 @@ public class DoubleValueTest {
                 .assertThrows(IllegalArgumentException.class, actualValue::value);
         Assertions
                 .assertEquals(
-                        "Non-numerical strings cannot be converted to Double. <For input string: \"string\" >",
+                        "Non-numerical string <[string]> cannot be converted to Double. <For input string: \"string\">",
+                        iae.getMessage()
+                );
+    }
+
+    @Test
+    public void testConvertInvalidInputBooleanThrowsException() {
+        final Object inputValue = true;
+        final DoubleValue actualValue = new DoubleValue(inputValue);
+        final IllegalArgumentException iae = Assertions
+                .assertThrows(IllegalArgumentException.class, actualValue::value);
+        Assertions
+                .assertEquals(
+                        "Input value <[true]> couldn't be converted to Double. Expected a Number or a numerical String.",
+                        iae.getMessage()
+                );
+    }
+
+    @Test
+    public void testConvertInvalidInputNullThrowsException() {
+        final Object inputValue = null;
+        final DoubleValue actualValue = new DoubleValue(inputValue);
+        final IllegalArgumentException iae = Assertions
+                .assertThrows(IllegalArgumentException.class, actualValue::value);
+        Assertions
+                .assertEquals(
+                        "Input value <[null]> couldn't be converted to Double. Expected a Number or a numerical String.",
                         iae.getMessage()
                 );
     }
