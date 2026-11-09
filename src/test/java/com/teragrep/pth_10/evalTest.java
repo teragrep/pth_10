@@ -5810,7 +5810,7 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testHypotWithInvalidInputValues() {
+    public void testHypotOneInputValueThrowsException() {
         final String query = "index=index_A | eval a = hypot(2)";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
         IllegalArgumentException e = this.streamingTestUtil
@@ -5824,13 +5824,12 @@ public class evalTest {
     }
 
     @Test
-    @Disabled
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testHypotWithStringInputValues() {
-        final String query = "index=index_A | eval a = hypot(\"string1\", \"string2\")";
+    public void testHypotMissingInputValuesThrowsException() {
+        final String query = "index=index_A | eval a = hypot()";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
         IllegalArgumentException e = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
@@ -5847,8 +5846,62 @@ public class evalTest {
             named = "skipSparkTest",
             matches = "true"
     )
-    public void testHypotWithMissingInputValues() {
-        final String query = "index=index_A | eval a = hypot()";
+    public void testHypotWithNumericalStrings() {
+        String q = "| makeresults | eval a = \"2\" | eval b = \"4\" | eval c=hypot(a, b)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            res.show();
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema());
+
+            // Get column 'c'
+            final Dataset<Row> resC = res.select("c");
+            final List<Double> lstC = resC
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, lstC.size());
+            Assertions.assertEquals(4.47213595499958, lstC.get(0));
+
+        });
+    }
+
+    @Test
+    @Disabled("will be enabled after PR #916 is merged")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotWithNonNumericalStringXinputValueThrowsException() {
+        final String query = "index=index_A | eval a = hypot(\"Xstring\", 2)";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+        Assertions
+                .assertEquals(
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected.",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    @Disabled("will be enabled after PR #916 is merged")
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotWithNonNumericalStringYinputValueThrowsException() {
+        final String query = "index=index_A | eval a = hypot(2, \"Ystring\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
         IllegalArgumentException e = this.streamingTestUtil
                 .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
