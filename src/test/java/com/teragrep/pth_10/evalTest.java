@@ -269,7 +269,8 @@ public class evalTest {
     )
     public void parseEvalTrimCatalystTest() {
         String q = "index=index_A | eval a=ltrim(\" \t aabbccdd \") | eval b=ltrim(\"  zZaabcdzz \",\" zZ\") "
-                + "| eval c=rtrim(\"\t abcd  \t\") | eval d=rtrim(\" AbcDeF g\",\"F g\") | eval e=trim(\"\tabcd\t\") | eval f=trim(\"\t zzabcdzz \t\",\"\t zz\")";
+                + "| eval c=rtrim(\"\t abcd  \t\") | eval d=rtrim(\" AbcDeF g\",\"F g\") | eval e=trim(\"\tabcd\t\") | eval f=trim(\"\t zzabcdzz \t\",\"\t zz\")"
+                + "| eval g=trim(\" abcd \") | eval h=rtrim(\" efgh \") | eval i=ltrim(\" ijkl \")";
         String testFile = "src/test/resources/eval_test_data1*.jsonl";
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
@@ -287,7 +288,10 @@ public class evalTest {
                     new StructField("c", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("d", DataTypes.StringType, false, new MetadataBuilder().build()),
                     new StructField("e", DataTypes.StringType, false, new MetadataBuilder().build()),
-                    new StructField("f", DataTypes.StringType, false, new MetadataBuilder().build())
+                    new StructField("f", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("g", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("h", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("i", DataTypes.StringType, false, new MetadataBuilder().build())
             });
             Assertions.assertEquals(expectedSchema, res.schema()); //check schema
             // ltrim()
@@ -317,17 +321,32 @@ public class evalTest {
             Dataset<Row> resF = res.select("f").orderBy("f").distinct();
             List<String> lstF = resF.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
 
+            // Get column 'g'
+            Dataset<Row> resG = res.select("g").orderBy("g").distinct();
+            List<String> lstG = resG.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+
+            // Get column 'h'
+            Dataset<Row> resH = res.select("h").orderBy("h").distinct();
+            List<String> lstH = resH.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+
+            // Get column 'i'
+            Dataset<Row> resI = res.select("i").orderBy("i").distinct();
+            List<String> lstI = resI.collectAsList().stream().map(r -> r.getString(0)).collect(Collectors.toList());
+
             // ltrim()
             Assertions.assertEquals("aabbccdd ", lstA.get(0));
             Assertions.assertEquals("aabcdzz ", lstB.get(0));
+            Assertions.assertEquals("ijkl ", lstI.get(0));
 
             // rtrim()
             Assertions.assertEquals("\t abcd", lstC.get(0));
             Assertions.assertEquals(" AbcDe", lstD.get(0));
+            Assertions.assertEquals(" efgh", lstH.get(0));
 
             // trim()
             Assertions.assertEquals("abcd", lstE.get(0));
             Assertions.assertEquals("abcd", lstF.get(0));
+            Assertions.assertEquals("abcd", lstG.get(0));
         });
     }
 
