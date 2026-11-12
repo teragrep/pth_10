@@ -45,6 +45,7 @@
  */
 package com.teragrep.pth_10.ast.commands.evalstatement.UDFs;
 
+import com.teragrep.pth_10.ast.DoubleValue;
 import org.apache.spark.sql.api.java.UDF2;
 import java.io.Serializable;
 
@@ -54,36 +55,9 @@ public final class HypotFunction implements UDF2<Object, Object, Double>, Serial
 
     @Override
     public Double call(Object xInput, Object yInput) {
-        final Double xDoubleValue = convertObjectToDouble(xInput);
-        final Double yDoubleValue = convertObjectToDouble(yInput);
+            final Double xDoubleValue = new DoubleValue(xInput).value();
+            final Double yDoubleValue = new DoubleValue(yInput).value();
 
         return Math.hypot(xDoubleValue, yDoubleValue);
-    }
-
-    // replace this private method with DoubleValue object once pr #916 is merged
-    private Double convertObjectToDouble(Object object) {
-        Double doubleValue;
-
-        if (object instanceof Number) {
-            doubleValue = ((Number) object).doubleValue();
-        }
-        else if (object instanceof String) {
-            try {
-                doubleValue = Double.valueOf((String) object);
-            }
-            catch (NumberFormatException nfe) {
-                throw new IllegalArgumentException(
-                        "Non-numerical string <[" + object + "]> cannot be converted to Double. <" + nfe.getMessage()
-                                + ">",
-                        nfe
-                );
-            }
-        }
-        else {
-            throw new RuntimeException(
-                    " input value couldn't be converted to Double. Expected Number or numerical String."
-            );
-        }
-        return doubleValue;
     }
 }
