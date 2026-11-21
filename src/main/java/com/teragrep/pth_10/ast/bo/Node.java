@@ -144,4 +144,8 @@ public abstract class Node {
             return this.toString();
         }
     }
+
+    public boolean isStub() {
+        return false;
+    }
 }
