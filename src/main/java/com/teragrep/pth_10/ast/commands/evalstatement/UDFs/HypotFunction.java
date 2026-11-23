@@ -55,9 +55,17 @@ public final class HypotFunction implements UDF2<Object, Object, Double>, Serial
 
     @Override
     public Double call(Object xInput, Object yInput) {
+        try {
             final Double xDoubleValue = new DoubleValue(xInput).value();
             final Double yDoubleValue = new DoubleValue(yInput).value();
 
-        return Math.hypot(xDoubleValue, yDoubleValue);
+            return Math.hypot(xDoubleValue, yDoubleValue);
+        }
+        catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                    "Invalid input values for hypot() function, numerical values for X and Y are expected."
+                            + e.getMessage()
+            );
+        }
     }
 }

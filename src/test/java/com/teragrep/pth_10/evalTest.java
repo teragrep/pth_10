@@ -45,12 +45,14 @@
  */
 package com.teragrep.pth_10;
 
+import com.teragrep.pth_10.ast.RootCause;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.EvalArithmetic;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.EvalOperation;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -5876,7 +5878,6 @@ public class evalTest {
     }
 
     @Test
-    @Disabled("will be enabled after PR #916 is merged")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -5884,18 +5885,18 @@ public class evalTest {
     public void testHypotWithNonNumericalStringXinputValueThrowsException() {
         final String query = "index=index_A | eval a = hypot(\"Xstring\", 2)";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
-        IllegalArgumentException e = this.streamingTestUtil
-                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
-                });
+        String e = new RootCause(
+                this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
+                })
+        ).cause();
         Assertions
                 .assertEquals(
-                        "Invalid input values for hypot() function, numerical values for X and Y are expected.",
-                        e.getMessage()
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected.Non-numerical string <[Xstring]> cannot be converted to Double.",
+                        e
                 );
     }
 
     @Test
-    @Disabled("will be enabled after PR #916 is merged")
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
             matches = "true"
@@ -5903,13 +5904,15 @@ public class evalTest {
     public void testHypotWithNonNumericalStringYinputValueThrowsException() {
         final String query = "index=index_A | eval a = hypot(2, \"Ystring\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
-        IllegalArgumentException e = this.streamingTestUtil
-                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
-                });
+        String e = new RootCause(
+                this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
+                })
+        ).cause();
+
         Assertions
                 .assertEquals(
-                        "Invalid input values for hypot() function, numerical values for X and Y are expected.",
-                        e.getMessage()
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected.Non-numerical string <[Ystring]> cannot be converted to Double.",
+                        e
                 );
     }
 
