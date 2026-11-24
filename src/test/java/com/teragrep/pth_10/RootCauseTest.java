@@ -80,8 +80,7 @@ public class RootCauseTest {
     @Test
     public void testNullInputThrowsException() {
         final RootCause rootCause = new RootCause(null);
-        final IllegalArgumentException iae = Assertions
-                .assertThrows(IllegalArgumentException.class, rootCause::cause);
+        final IllegalArgumentException iae = Assertions.assertThrows(IllegalArgumentException.class, rootCause::cause);
         Assertions.assertEquals("Nothing was thrown", iae.getMessage());
     }
 
