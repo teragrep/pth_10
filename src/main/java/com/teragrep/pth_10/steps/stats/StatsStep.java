@@ -49,7 +49,6 @@ import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.MetadataBuilder;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -57,9 +56,12 @@ import java.util.List;
 
 public final class StatsStep extends AbstractStatsStep {
 
-    public StatsStep(List<Column> listOfAggregationExpressions, List<Column> listOfGroupBys) {
+    private final Metadata metadata;
+
+    public StatsStep(List<Column> listOfAggregationExpressions, List<Column> listOfGroupBys, Metadata metadata) {
         super(listOfAggregationExpressions, listOfGroupBys);
         this.properties.add(CommandProperty.AGGREGATE);
+        this.metadata = metadata;
     }
 
     @Override
@@ -82,7 +84,6 @@ public final class StatsStep extends AbstractStatsStep {
         // Check for any group by expressions
         if (!this.listOfGroupBys.isEmpty()) {
             Seq<Column> seqOfGroupBys = JavaConversions.asScalaBuffer(this.listOfGroupBys);
-            final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
             Dataset<Row> resultDataset = dataset.groupBy(seqOfGroupBys).agg(mainExpr, seqOfAggs);
             for (Column groupByColumn : listOfGroupBys) {
                 resultDataset = resultDataset.withMetadata(groupByColumn.toString(), metadata);
