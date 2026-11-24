@@ -283,6 +283,7 @@ public class TimechartStreamingTest {
                         e.getMessage()
                 );
     }
+
     @Test
     @DisabledIfSystemProperty(
             named = "skipSparkTest",
@@ -297,13 +298,10 @@ public class TimechartStreamingTest {
         streamingTestUtil.performDPLTest("index=index_A | timechart count by host", testFile, ds -> {
             final StructType expectedSchema = new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()), // expect no metadata in _time column
-                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()),     // expect no metadata in column used as "by" column
+                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()), // expect no metadata in column used as "by" column
                     new StructField("count", DataTypes.LongType, false, new MetadataBuilder().build())
             });
-            Assertions
-                    .assertEquals(
-                            expectedSchema, ds.schema()
-                    );
+            Assertions.assertEquals(expectedSchema, ds.schema());
         });
     }
 }
