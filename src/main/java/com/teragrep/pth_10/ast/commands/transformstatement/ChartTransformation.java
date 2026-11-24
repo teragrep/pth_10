@@ -55,8 +55,11 @@ import com.teragrep.pth_10.steps.chart.ChartStep;
 import com.teragrep.pth_10.steps.sort.SortStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
+import com.typesafe.config.Config;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.MetadataBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,8 +158,19 @@ public class ChartTransformation extends DPLParserBaseVisitor<Node> {
                 }
             });
         }
+        final Config config = catCtx.getConfig();
+        final Metadata metadata;
+        if (
+            config == null || !config.hasPath("dpl.pth_10.aggregations.groupby.metadata.enabled")
+                    || config.getBoolean("dpl.pth_10.aggregations.groupby.metadata.enabled")
+        ) {
+            metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
+        }
+        else {
+            metadata = Metadata.empty();
+        }
 
-        chartStep = new ChartStep(listOfExpr, listOfGroupBys);
+        chartStep = new ChartStep(listOfExpr, listOfGroupBys, metadata);
         SortStep sortStep = new SortStep(catCtx, listOfSbc, this.catCtx.getDplRecallSize(), false);
 
         List<AbstractStep> steps = new ArrayList<>();

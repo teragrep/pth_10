@@ -56,10 +56,7 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -449,6 +446,30 @@ public class chartTransformationTest {
 
             Assertions.assertEquals(1, resultList.size()); // only one row of data
             Assertions.assertEquals("0", resultList.get(0)); // the one row has the value 0
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testChartWithDisabledMetadata() {
+        // disable groupBy metadata via configuration value
+        Map<String, String> opts = new HashMap<>();
+        opts.put("dpl.pth_10.aggregations.groupby.metadata.enabled", String.valueOf(false));
+        streamingTestUtil.setCustomConfigOptions(opts);
+
+        String q = "index=* | chart count(_raw), min(offset), max(offset) by index";
+
+        this.streamingTestUtil.performDPLTest(q, this.testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("index", DataTypes.StringType, true, new MetadataBuilder().build()), // expect no group by metadata on "by" field when metadata is disabled
+                    new StructField("count(_raw)", DataTypes.LongType, true, new MetadataBuilder().build()),
+                    new StructField("min(offset)", DataTypes.StringType, true, new MetadataBuilder().build()),
+                    new StructField("max(offset)", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, res.schema());
         });
     }
 

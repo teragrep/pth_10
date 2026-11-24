@@ -50,7 +50,6 @@ import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.MetadataBuilder;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -60,11 +59,17 @@ public final class ChartStep extends AbstractStep {
 
     private final List<Column> listOfAggrExpressions;
     private final List<Column> groupByList;
+    private final Metadata metadata;
 
-    public ChartStep(final List<Column> listOfAggrExpressions, final List<Column> groupByList) {
+    public ChartStep(
+            final List<Column> listOfAggrExpressions,
+            final List<Column> groupByList,
+            Metadata groupByMetadata
+    ) {
         this.listOfAggrExpressions = listOfAggrExpressions;
         this.groupByList = groupByList;
         this.properties.add(CommandProperty.AGGREGATE);
+        this.metadata = groupByMetadata;
     }
 
     @Override
@@ -82,7 +87,6 @@ public final class ChartStep extends AbstractStep {
                 .asScalaBuffer(listOfAggrExpressions.subList(1, listOfAggrExpressions.size()));
         final Seq<Column> seqOfGroupBy = JavaConversions.asScalaBuffer(groupByList);
         Dataset<Row> resultDataset = dataset.groupBy(seqOfGroupBy).agg(mainExpr, seqOfExpr);
-        final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
         for (Column groupByColumn : groupByList) {
             resultDataset = resultDataset.withMetadata(groupByColumn.toString(), metadata);
         }
