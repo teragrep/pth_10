@@ -64,12 +64,12 @@ public final class ChartStep extends AbstractStep {
     public ChartStep(
             final List<Column> listOfAggrExpressions,
             final List<Column> groupByList,
-            Metadata groupByMetadata
+            final Metadata metadata
     ) {
         this.listOfAggrExpressions = listOfAggrExpressions;
         this.groupByList = groupByList;
         this.properties.add(CommandProperty.AGGREGATE);
-        this.metadata = groupByMetadata;
+        this.metadata = metadata;
     }
 
     @Override
