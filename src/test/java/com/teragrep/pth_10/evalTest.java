@@ -5853,7 +5853,6 @@ public class evalTest {
         String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
 
         streamingTestUtil.performDPLTest(q, testFile, res -> {
-            res.show();
             final StructType expectedSchema = new StructType(new StructField[] {
                     new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
                     new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
@@ -5888,10 +5887,10 @@ public class evalTest {
         String e = new RootCause(
                 this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
                 })
-        ).cause();
+        ).message();
         Assertions
                 .assertEquals(
-                        "Invalid input values for hypot() function, numerical values for X and Y are expected.Non-numerical string <[Xstring]> cannot be converted to Double.",
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected. Non-numerical string <[Xstring]> cannot be converted to Double.",
                         e
                 );
     }
@@ -5907,11 +5906,11 @@ public class evalTest {
         String e = new RootCause(
                 this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
                 })
-        ).cause();
+        ).message();
 
         Assertions
                 .assertEquals(
-                        "Invalid input values for hypot() function, numerical values for X and Y are expected.Non-numerical string <[Ystring]> cannot be converted to Double.",
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected. Non-numerical string <[Ystring]> cannot be converted to Double.",
                         e
                 );
     }

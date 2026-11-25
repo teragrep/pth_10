@@ -61,26 +61,27 @@ public class RootCauseTest {
                                 new IllegalArgumentException("Non-numerical strings cannot be converted to Double")
                         )
                 )
-        ).cause();
+        ).message();
         Assertions.assertEquals("Non-numerical strings cannot be converted to Double", e);
     }
 
     @Test
     public void testExtractErrorMessageFromOneException() {
-        final String e = new RootCause(new NumberFormatException("Input values missing")).cause();
+        final String e = new RootCause(new NumberFormatException("Input values missing")).message();
         Assertions.assertEquals("Input values missing", e);
     }
 
     @Test
     public void testNullMessageReturnsExceptionClassName() {
-        final String e = new RootCause(new NullPointerException()).cause();
+        final String e = new RootCause(new NullPointerException()).message();
         Assertions.assertEquals("NullPointerException", e);
     }
 
     @Test
     public void testNullInputThrowsException() {
         final RootCause rootCause = new RootCause(null);
-        final IllegalArgumentException iae = Assertions.assertThrows(IllegalArgumentException.class, rootCause::cause);
+        final IllegalArgumentException iae = Assertions
+                .assertThrows(IllegalArgumentException.class, rootCause::message);
         Assertions.assertEquals("Nothing was thrown", iae.getMessage());
     }
 

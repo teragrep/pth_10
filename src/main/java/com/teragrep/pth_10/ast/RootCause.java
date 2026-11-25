@@ -55,7 +55,7 @@ public final class RootCause {
         this.e = e;
     }
 
-    public String cause() {
+    public String message() {
         Throwable exception = e;
 
         if (exception == null) {
@@ -77,7 +77,7 @@ public final class RootCause {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         final boolean isEquals;
         if (this == o)
             isEquals = true;
