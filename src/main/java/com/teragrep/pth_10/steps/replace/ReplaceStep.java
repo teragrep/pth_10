@@ -82,10 +82,11 @@ public final class ReplaceStep extends AbstractReplaceStep {
         // Apply the replace function to all given fields
         for (String field : this.listOfFields) {
             for (String contentToReplace : this.replacements.keySet()) {
-                Column res = functions
-                        .callUDF("UDF_Replace", functions.col(field), functions.lit(contentToReplace), functions.lit(this.replacements.get(contentToReplace)));
+                final String contentToReplaceWith = this.replacements.get(contentToReplace);
+                final Column res = functions
+                        .callUDF("UDF_Replace", functions.col(field), functions.lit(contentToReplace), functions.lit(contentToReplaceWith));
 
-                dataset = dataset.withColumn(field, res);
+                dataset = dataset.withColumn(field, functions.col(field).cast(DataTypes.StringType)).withColumn(field, res);
             }
         }
 

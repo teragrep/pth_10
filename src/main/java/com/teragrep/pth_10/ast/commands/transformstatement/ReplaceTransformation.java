@@ -95,8 +95,21 @@ public class ReplaceTransformation extends DPLParserBaseVisitor<Node> {
     @Override
     public Node visitT_replace_withInstruction(DPLParser.T_replace_withInstructionContext ctx) {
         // field WITH field
-        String contentToReplace = new UnquotedText(new TextString(ctx.fieldType(0).getText())).read();
-        String replaceWith = new UnquotedText(new TextString(ctx.fieldType(1).getText())).read();
+        final String contentToReplace = new UnquotedText(new TextString(ctx.fieldType(0).getText())).read();
+
+        if (contentToReplace == null || contentToReplace.isEmpty() || ctx.COMMAND_REPLACE_MODE_WITH() == null) {
+            throw new IllegalArgumentException(
+                    "Replace command is missing required arguments, values to replace and values to replace with must be specified."
+            );
+        }
+
+        final String replaceWith = new UnquotedText(new TextString(ctx.fieldType(1).getText())).read();
+
+        if (replaceWith == null || replaceWith.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Replace command is missing required arguments, values to replace and values to replace with must be specified."
+            );
+        }
         replacements.put(contentToReplace, replaceWith);
 
         return new NullNode();
@@ -110,6 +123,9 @@ public class ReplaceTransformation extends DPLParserBaseVisitor<Node> {
      */
     @Override
     public Node visitFieldListType(DPLParser.FieldListTypeContext ctx) {
+        if (ctx.fieldType(0).getText().isEmpty() || ctx.fieldType(0).getText() == null) {
+            throw new IllegalArgumentException("IN clause is missing field names");
+        }
         ctx.fieldType().forEach(c -> listOfFields.add(new UnquotedText(new TextString(c.getText())).read()));
 
         return new NullNode();
