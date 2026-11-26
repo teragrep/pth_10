@@ -55,7 +55,7 @@ public final class RootCause {
         this.e = e;
     }
 
-    public String message() {
+    public Throwable exception() {
         Throwable exception = e;
 
         if (exception == null) {
@@ -65,15 +65,7 @@ public final class RootCause {
             exception = exception.getCause();
         }
 
-        final String message;
-        if (exception.getMessage() == null) {
-            message = exception.getClass().getSimpleName();
-        }
-        else {
-            message = exception.getMessage();
-        }
-
-        return message;
+        return exception;
     }
 
     @Override

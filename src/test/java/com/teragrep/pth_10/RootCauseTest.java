@@ -53,7 +53,7 @@ public class RootCauseTest {
 
     @Test
     public void testExtractRootCauseFromStackedExceptions() {
-        final String e = new RootCause(
+        final Throwable e = new RootCause(
                 new IllegalArgumentException(
                         "Input values missing",
                         new IllegalArgumentException(
@@ -61,27 +61,21 @@ public class RootCauseTest {
                                 new IllegalArgumentException("Non-numerical strings cannot be converted to Double")
                         )
                 )
-        ).message();
-        Assertions.assertEquals("Non-numerical strings cannot be converted to Double", e);
+        ).exception();
+        Assertions.assertEquals("Non-numerical strings cannot be converted to Double", e.getMessage());
     }
 
     @Test
     public void testExtractErrorMessageFromOneException() {
-        final String e = new RootCause(new NumberFormatException("Input values missing")).message();
-        Assertions.assertEquals("Input values missing", e);
-    }
-
-    @Test
-    public void testNullMessageReturnsExceptionClassName() {
-        final String e = new RootCause(new NullPointerException()).message();
-        Assertions.assertEquals("NullPointerException", e);
+        final Throwable e = new RootCause(new NumberFormatException("Input values missing")).exception();
+        Assertions.assertEquals("Input values missing", e.getMessage());
     }
 
     @Test
     public void testNullInputThrowsException() {
         final RootCause rootCause = new RootCause(null);
         final IllegalArgumentException iae = Assertions
-                .assertThrows(IllegalArgumentException.class, rootCause::message);
+                .assertThrows(IllegalArgumentException.class, rootCause::exception);
         Assertions.assertEquals("Nothing was thrown", iae.getMessage());
     }
 

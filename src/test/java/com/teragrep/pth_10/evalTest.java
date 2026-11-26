@@ -5884,14 +5884,14 @@ public class evalTest {
     public void testHypotWithNonNumericalStringXinputValueThrowsException() {
         final String query = "index=index_A | eval a = hypot(\"Xstring\", 2)";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
-        String e = new RootCause(
+        Throwable e = new RootCause(
                 this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
                 })
-        ).message();
+        ).exception();
         Assertions
                 .assertEquals(
                         "Invalid input values for hypot() function, numerical values for X and Y are expected. Non-numerical string <[Xstring]> cannot be converted to Double.",
-                        e
+                        e.getMessage()
                 );
     }
 
@@ -5903,15 +5903,15 @@ public class evalTest {
     public void testHypotWithNonNumericalStringYinputValueThrowsException() {
         final String query = "index=index_A | eval a = hypot(2, \"Ystring\")";
         String testFile = "src/test/resources/eval_test_ips*.jsonl";
-        String e = new RootCause(
+        Throwable e = new RootCause(
                 this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
                 })
-        ).message();
+        ).exception();
 
         Assertions
                 .assertEquals(
                         "Invalid input values for hypot() function, numerical values for X and Y are expected. Non-numerical string <[Ystring]> cannot be converted to Double.",
-                        e
+                        e.getMessage()
                 );
     }
 
