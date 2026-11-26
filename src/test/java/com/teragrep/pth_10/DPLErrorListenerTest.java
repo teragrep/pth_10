@@ -57,11 +57,49 @@ public class DPLErrorListenerTest {
 
     @Test
     public void invalidQueryTest() { // should throw IllegalStateException, no NPEs
-        DPLLexer lexer = new DPLLexer(CharStreams.fromString("| eval a=eval bc]"));
-        DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
+        final DPLLexer lexer = new DPLLexer(CharStreams.fromString("| eval a=eval bc]"));
+        lexer.addErrorListener(new DPLErrorListenerImpl("Lexer", "QueryId"));
+        final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
         parser.addErrorListener(new DPLErrorListenerImpl("Parser", "QueryId"));
 
-        IllegalStateException e = Assertions.assertThrows(IllegalStateException.class, parser::root);
-        Assertions.assertTrue(e.getMessage().contains("Parser failure"));
+        final IllegalStateException e = Assertions.assertThrows(IllegalStateException.class, parser::root);
+        Assertions
+                .assertEquals(
+                        "Parser failure on line 1, column 9 with text: 'eval'\n"
+                                + "Please check that the query is written correctly. Otherwise, please report this error and include the query used and this error.",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    public void lexerFailureTest() {
+        final DPLLexer lexer = new DPLLexer(CharStreams.fromString("| eval a=123 | timetsart"));
+        lexer.addErrorListener(new DPLErrorListenerImpl("Lexer", "QueryId"));
+        final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
+        parser.addErrorListener(new DPLErrorListenerImpl("Parser", "QueryId"));
+
+        final IllegalStateException e = Assertions.assertThrows(IllegalStateException.class, parser::root);
+        Assertions
+                .assertEquals(
+                        "Lexer failure on line 1, column 15 with text: 'timet'\n"
+                                + "Please check that the query is written correctly. Otherwise, please report this error and include the query used and this error.",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    public void parserFailureTest() {
+        final DPLLexer lexer = new DPLLexer(CharStreams.fromString("| eval a=123 | timechart span=1d"));
+        lexer.addErrorListener(new DPLErrorListenerImpl("Lexer", "QueryId"));
+        final DPLParser parser = new DPLParser(new CommonTokenStream(lexer));
+        parser.addErrorListener(new DPLErrorListenerImpl("Parser", "QueryId"));
+
+        final IllegalStateException e = Assertions.assertThrows(IllegalStateException.class, parser::root);
+        Assertions
+                .assertEquals(
+                        "Parser failure on line 1, column 32. End of query is not complete\n"
+                                + "Please check that the query is written correctly. Otherwise, please report this error and include the query used and this error.",
+                        e.getMessage()
+                );
     }
 }
