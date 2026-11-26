@@ -1432,13 +1432,11 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         }
 
         final UserDefinedFunction hypotUDF = functions.udf(new HypotFunction(), DataTypes.DoubleType);
-        final SparkSession ss = SparkSession.builder().getOrCreate();
-        ss.udf().register("hypotUDF", hypotUDF);
 
         final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
         final Column yCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
-        final Column res = functions.callUDF("hypotUDF", xCol, yCol);
+        final Column res = hypotUDF.apply( xCol, yCol);
         final Node rv = new ColumnNode(res);
 
         return rv;
