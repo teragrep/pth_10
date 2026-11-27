@@ -45,11 +45,13 @@
  */
 package com.teragrep.pth_10.executor;
 
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.BaseErrorListener;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.RecognitionException;
-import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.Recognizer;
+import com.teragrep.pth_03.antlr.DPLLexer;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.*;
+import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.misc.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Used to listen for errors in DPL queries. Overrides empty functions from BaseErrorListener.
@@ -75,15 +77,39 @@ public final class DPLErrorListenerImpl extends BaseErrorListener {
             String msg,
             RecognitionException e
     ) {
-        if (e == null) {
+        final Token offendingToken = (Token) offendingSymbol;
+        final String offendingText;
+
+        if (e instanceof LexerNoViableAltException) {
+            final LexerNoViableAltException lexerException = (LexerNoViableAltException) e;
+            offendingText = " with text: '" + lexerException
+                    .getInputStream()
+                    .getText(Interval.of(lexerException.getStartIndex(), lexerException.getInputStream().index()))
+                    + "'";
+        }
+        else if (offendingToken != null && offendingToken.getType() == DPLLexer.EOF) {
+            offendingText = ". End of query is not complete";
+        }
+        else if (offendingToken != null && offendingToken.getText() != null) {
+            offendingText = " with text: '" + offendingToken.getText() + "'";
+        }
+        else {
+            offendingText = " in unknown token";
+        }
+
+        if (e == null || e.getMessage() == null) {
             LOGGER.error("queryId <{}> Got an exception from <{}>, no message", queryName, listenedTo);
         }
         else {
             LOGGER.error("queryId <{}> Got an exception from <{}> : <[{}]>", queryName, listenedTo, e.getMessage(), e);
         }
+
         throw new IllegalStateException(
-                listenedTo + " failure on line " + line + ", column " + charPositionInLine + " due to " + msg + "\n"
-                        + "Please check that the query is written correctly. Otherwise, please report this error and include the query used and this error."
+                String
+                        .format(
+                                "%s failure on line %s, column %s%s\nPlease check that the query is written correctly. Otherwise, please report this error and include the query used and this error.",
+                                listenedTo, line, charPositionInLine, offendingText
+                        )
         );
     }
 }
