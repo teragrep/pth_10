@@ -1134,17 +1134,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     private Node evalMethodAcosEmitCatalyst(DPLParser.EvalMethodAcosContext ctx) {
 
+        if (ctx.getChild(2).getText() == null || ctx.getChild(2).getText().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "acos() function is missing required input, it takes values between the range [-1, 1]."
+            );
+        }
+
         final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-
         final UserDefinedFunction acosUDF = functions.udf(new AcosFunction(), DataTypes.DoubleType);
-        final SparkSession ss = SparkSession.builder().getOrCreate();
-        ss.udf().register("acosUDF", acosUDF);
 
-        final Column res = functions.callUDF("acosUDF", xCol);
+        final Column res = acosUDF.apply(xCol);
 
-        final Node rv = new ColumnNode(res);
-
-        return rv;
+        return new ColumnNode(res);
     }
 
     /**
