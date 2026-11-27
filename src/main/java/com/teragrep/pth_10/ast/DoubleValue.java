@@ -67,9 +67,7 @@ public final class DoubleValue {
             }
             catch (NumberFormatException nfe) {
                 throw new IllegalArgumentException(
-                        "Non-numerical string <[" + object + "]> cannot be converted to Double. <" + nfe.getMessage()
-                                + ">",
-                        nfe
+                        "Non-numerical string <[" + object + "]> cannot be converted to Double."
                 );
             }
         }

@@ -102,11 +102,7 @@ public class DoubleValueTest {
         final DoubleValue actualValue = new DoubleValue(inputValue);
         final IllegalArgumentException iae = Assertions
                 .assertThrows(IllegalArgumentException.class, actualValue::value);
-        Assertions
-                .assertEquals(
-                        "Non-numerical string <[string]> cannot be converted to Double. <For input string: \"string\">",
-                        iae.getMessage()
-                );
+        Assertions.assertEquals("Non-numerical string <[string]> cannot be converted to Double.", iae.getMessage());
     }
 
     @Test

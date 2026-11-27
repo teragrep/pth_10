@@ -1424,13 +1424,20 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
     }
 
     private Node evalMethodHypotEmitCatalyst(DPLParser.EvalMethodHypotContext ctx) {
-        Node rv = null;
 
-        Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-        Column yCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
+        if (ctx.getChild(2) == null || ctx.getChild(4) == null) {
+            throw new IllegalArgumentException(
+                    "Invalid input values for hypot() function, numerical values for X and Y are expected."
+            );
+        }
 
-        Column res = functions.hypot(xCol, yCol);
-        rv = new ColumnNode(res);
+        final UserDefinedFunction hypotUDF = functions.udf(new HypotFunction(), DataTypes.DoubleType);
+
+        final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
+        final Column yCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
+
+        final Column res = hypotUDF.apply(xCol, yCol);
+        final Node rv = new ColumnNode(res);
 
         return rv;
     }

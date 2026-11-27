@@ -45,12 +45,14 @@
  */
 package com.teragrep.pth_10;
 
+import com.teragrep.pth_10.ast.RootCause;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.EvalArithmetic;
 import com.teragrep.pth_10.ast.commands.evalstatement.UDFs.EvalOperation;
 import com.teragrep.pth_03.antlr.DPLLexer;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.types.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
@@ -5804,4 +5806,113 @@ public class evalTest {
             Assertions.assertEquals(expectedLst, lst);
         });
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotOneInputValueThrowsException() {
+        final String query = "index=index_A | eval a = hypot(2)";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+        Assertions
+                .assertEquals(
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected.",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotMissingInputValuesThrowsException() {
+        final String query = "index=index_A | eval a = hypot()";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+        Assertions
+                .assertEquals(
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected.",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotWithNumericalStrings() {
+        String q = "| makeresults | eval a = \"2\" | eval b = \"4\" | eval c=hypot(a, b)";
+        String testFile = "src/test/resources/eval_test_data1*.jsonl"; // * to make the path into a directory path
+
+        streamingTestUtil.performDPLTest(q, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("a", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("b", DataTypes.StringType, false, new MetadataBuilder().build()),
+                    new StructField("c", DataTypes.DoubleType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema());
+
+            // Get column 'c'
+            final Dataset<Row> resC = res.select("c");
+            final List<Double> lstC = resC
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getDouble(0))
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, lstC.size());
+            Assertions.assertEquals(4.47213595499958, lstC.get(0));
+
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotWithNonNumericalStringXinputValueThrowsException() {
+        final String query = "index=index_A | eval a = hypot(\"Xstring\", 2)";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        Throwable e = new RootCause(
+                this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
+                })
+        ).exception();
+        Assertions
+                .assertEquals(
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected. Non-numerical string <[Xstring]> cannot be converted to Double.",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testHypotWithNonNumericalStringYinputValueThrowsException() {
+        final String query = "index=index_A | eval a = hypot(2, \"Ystring\")";
+        String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        Throwable e = new RootCause(
+                this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
+                })
+        ).exception();
+
+        Assertions
+                .assertEquals(
+                        "Invalid input values for hypot() function, numerical values for X and Y are expected. Non-numerical string <[Ystring]> cannot be converted to Double.",
+                        e.getMessage()
+                );
+    }
+
 }
