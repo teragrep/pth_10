@@ -234,4 +234,49 @@ public class ReplaceTransformationTest {
                         }
                 );
     }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testReplaceNumericalStrings() {
+        final String query = "| makeresults | eval value = 21 | replace 21 WITH 22 IN value";
+        streamingTestUtil.performDPLTest(query, testFile, res -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, true, new MetadataBuilder().build()),
+                    new StructField("value", DataTypes.StringType, true, new MetadataBuilder().build())
+            });
+
+            Assertions.assertEquals(expectedSchema, res.schema());
+
+            final List<String> valueLst = res
+                    .select("value")
+                    .collectAsList()
+                    .stream()
+                    .map(r -> r.getAs(0).toString())
+                    .collect(Collectors.toList());
+
+            Assertions.assertEquals(1, valueLst.size());
+            Assertions.assertEquals("22", valueLst.get(0));
+
+        });
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testReplaceCommandWithMissingParametersThrowsException() {
+        final String query = "| makeresults | eval value = 21 | replace";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+        Assertions
+                .assertEquals(
+                        "Replace command is missing required arguments, values to replace and values to replace with must be specified.",
+                        e.getMessage()
+                );
+    }
 }
