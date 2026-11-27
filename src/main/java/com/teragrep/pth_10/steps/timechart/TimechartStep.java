@@ -47,7 +47,6 @@ package com.teragrep.pth_10.steps.timechart;
 
 import org.apache.spark.sql.*;
 import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.MetadataBuilder;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -57,8 +56,11 @@ import java.util.stream.Collectors;
 
 public final class TimechartStep extends AbstractTimechartStep {
 
-    public TimechartStep() {
+    private final Metadata metadata;
+
+    public TimechartStep(final Metadata metadata) {
         super();
+        this.metadata = metadata;
         this.properties.add(CommandProperty.AGGREGATE);
     }
 
@@ -97,7 +99,6 @@ public final class TimechartStep extends AbstractTimechartStep {
                 .drop("window")
                 .orderBy("_time");
 
-        final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
         resultDataset = resultDataset.withMetadata("_time", metadata);
         if (divByInsts != null) {
             for (String groupByColumn : divByInsts) {

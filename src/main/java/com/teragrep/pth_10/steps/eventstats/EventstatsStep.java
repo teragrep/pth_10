@@ -51,7 +51,6 @@ import org.apache.spark.sql.streaming.StreamingQuery;
 import org.apache.spark.sql.streaming.StreamingQueryException;
 import org.apache.spark.sql.streaming.Trigger;
 import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,9 +66,11 @@ import java.util.stream.Collectors;
 public class EventstatsStep extends AbstractEventstatsStep {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EventstatsStep.class);
+    private final Metadata metadata;
 
-    public EventstatsStep() {
+    public EventstatsStep(Metadata metadata) {
         super();
+        this.metadata = metadata;
         this.properties.add(CommandProperty.AGGREGATE);
     }
 
@@ -146,7 +147,6 @@ public class EventstatsStep extends AbstractEventstatsStep {
         assert savedDs != null : "Dataset read from file sink was null";
 
         if (byInstruction != null) {
-            final Metadata metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
             resultDs = savedDs.join(aggDs, byInstruction).withMetadata(byInstruction, metadata);
         }
         else {

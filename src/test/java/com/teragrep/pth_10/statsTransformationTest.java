@@ -46,14 +46,14 @@
 package com.teragrep.pth_10;
 
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -920,5 +920,30 @@ public class statsTransformationTest {
                         "stats command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>",
                         e.getMessage()
                 );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testStatsWithDisabledMetadata() {
+        // disable groupBy metadata via configuration value
+        Map<String, String> opts = new HashMap<>();
+        opts.put("dpl.pth_10.aggregations.groupby.metadata.enabled", String.valueOf(false));
+        streamingTestUtil.setCustomConfigOptions(opts);
+        streamingTestUtil
+                .performDPLTest("index=index_A | stats avg(offset) AS avg_offset BY sourcetype,host", testFile, ds -> {
+                    Assertions.assertEquals("[sourcetype, host, avg_offset]", Arrays.toString(ds.columns()));
+
+                    final int expectedColumns = ds.schema().size();
+                    int columns = 0;
+                    // none of the columns in the resulting dataset should contain any metadata, even though 'by' was used in query
+                    for (StructField field : ds.schema().fields()) {
+                        Assertions.assertEquals(Metadata.empty(), field.metadata());
+                        columns++;
+                    }
+                    Assertions.assertEquals(expectedColumns, columns);
+                });
     }
 }

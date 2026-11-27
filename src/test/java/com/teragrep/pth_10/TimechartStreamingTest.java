@@ -56,7 +56,9 @@ import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -280,5 +282,26 @@ public class TimechartStreamingTest {
                         "timechart command is missing the expected aggregation functions, one or more aggregation functions MUST be specified in this format: <aggregationFunction(field)>",
                         e.getMessage()
                 );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testTimechartWithDisabledMetadata() {
+        // disable groupBy metadata via configuration value
+        Map<String, String> opts = new HashMap<>();
+        opts.put("dpl.pth_10.aggregations.groupby.metadata.enabled", String.valueOf(false));
+        streamingTestUtil.setCustomConfigOptions(opts);
+
+        streamingTestUtil.performDPLTest("index=index_A | timechart count by host", testFile, ds -> {
+            final StructType expectedSchema = new StructType(new StructField[] {
+                    new StructField("_time", DataTypes.TimestampType, false, new MetadataBuilder().build()), // expect no metadata in _time column
+                    new StructField("host", DataTypes.StringType, false, new MetadataBuilder().build()), // expect no metadata in column used as "by" column
+                    new StructField("count", DataTypes.LongType, false, new MetadataBuilder().build())
+            });
+            Assertions.assertEquals(expectedSchema, ds.schema());
+        });
     }
 }

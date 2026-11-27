@@ -53,8 +53,11 @@ import com.teragrep.pth_10.steps.timechart.TimechartStep;
 import com.teragrep.pth_03.antlr.DPLParser;
 import com.teragrep.pth_03.antlr.DPLParserBaseVisitor;
 import com.teragrep.pth_03.shaded.org.antlr.v4.runtime.tree.ParseTree;
+import com.typesafe.config.Config;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.MetadataBuilder;
 import org.apache.spark.unsafe.types.CalendarInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,7 +111,19 @@ public class TimechartTransformation extends DPLParserBaseVisitor<Node> {
     }
 
     private Node timechartTransformationEmitCatalyst(DPLParser.TimechartTransformationContext ctx) {
-        this.timechartStep = new TimechartStep();
+
+        final Config config = catCtx.getConfig();
+        final Metadata metadata;
+        if (
+            config == null || !config.hasPath("dpl.pth_10.aggregations.groupby.metadata.enabled")
+                    || config.getBoolean("dpl.pth_10.aggregations.groupby.metadata.enabled")
+        ) {
+            metadata = new MetadataBuilder().putBoolean("dpl_internal_isGroupByColumn", true).build();
+        }
+        else {
+            metadata = Metadata.empty();
+        }
+        this.timechartStep = new TimechartStep(metadata);
 
         final Column span;
 
