@@ -5915,4 +5915,43 @@ public class evalTest {
                 );
     }
 
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testAcosInvalidInputThrowsException() {
+        final String query = "index=index_A | eval a = acos(2)";
+        final String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        Throwable e = new RootCause(
+                this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
+                })
+        ).exception();
+
+        Assertions
+                .assertEquals(
+                        "Invalid input <[2.0]> , acos() function takes values between the range [-1, 1].",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testAcosInvalidINputThrowsException() {
+        final String query = "index=index_A | eval a = acos()";
+        final String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+
+        Assertions
+                .assertEquals(
+                        "acos() function is missing required input, it takes values between the range [-1, 1].",
+                        e.getMessage()
+                );
+    }
+
 }
