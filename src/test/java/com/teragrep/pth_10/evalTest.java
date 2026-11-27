@@ -5915,4 +5915,43 @@ public class evalTest {
                 );
     }
 
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testAtanhInvalidInputThrowsException() {
+        final String query = "index=index_A | eval a = atanh(2)";
+        final String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        final Throwable e = new RootCause(
+                this.streamingTestUtil.performThrowingDPLTest(StreamingQueryException.class, query, testFile, ds -> {
+                })
+        ).exception();
+
+        Assertions
+                .assertEquals(
+                        "Invalid input <[2.0]> , atanh() function takes values between the range [-1, 1].",
+                        e.getMessage()
+                );
+    }
+
+    @Test
+    @DisabledIfSystemProperty(
+            named = "skipSparkTest",
+            matches = "true"
+    )
+    public void testAtanhMissingInputThrowsException() {
+        final String query = "index=index_A | eval a = atanh()";
+        final String testFile = "src/test/resources/eval_test_ips*.jsonl";
+        final IllegalArgumentException e = this.streamingTestUtil
+                .performThrowingDPLTest(IllegalArgumentException.class, query, testFile, ds -> {
+                });
+
+        Assertions
+                .assertEquals(
+                        "atanh() function is missing required input, it takes values between the range [-1, 1].",
+                        e.getMessage()
+                );
+    }
+
 }

@@ -1372,16 +1372,18 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
 
     private Node evalMethodAtanhEmitCatalyst(DPLParser.EvalMethodAtanhContext ctx) {
 
+        if (ctx.getChild(2).getText() == null || ctx.getChild(2).getText().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "atanh() function is missing required input, it takes values between the range [-1, 1]."
+            );
+        }
+
         final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
-
         final UserDefinedFunction atanhUDF = functions.udf(new AtanhFunction(), DataTypes.DoubleType);
-        final SparkSession ss = SparkSession.builder().getOrCreate();
-        ss.udf().register("atanhUDF", atanhUDF);
 
-        final Column res = functions.callUDF("atanhUDF", xCol);
-        final Node rv = new ColumnNode(res);
+        final Column res = atanhUDF.apply(xCol);
 
-        return rv;
+        return new ColumnNode(res);
     }
 
     /**
