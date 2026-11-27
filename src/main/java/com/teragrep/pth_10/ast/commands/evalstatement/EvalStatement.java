@@ -1436,7 +1436,7 @@ public class EvalStatement extends DPLParserBaseVisitor<Node> {
         final Column xCol = ((ColumnNode) visit(ctx.getChild(2))).getColumn();
         final Column yCol = ((ColumnNode) visit(ctx.getChild(4))).getColumn();
 
-        final Column res = hypotUDF.apply( xCol, yCol);
+        final Column res = hypotUDF.apply(xCol, yCol);
         final Node rv = new ColumnNode(res);
 
         return rv;

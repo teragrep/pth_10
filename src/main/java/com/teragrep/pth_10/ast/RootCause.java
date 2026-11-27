@@ -61,7 +61,7 @@ public final class RootCause {
         if (exception == null) {
             throw new IllegalArgumentException("Nothing was thrown");
         }
-        while (exception.getCause() != null && exception.getCause() != exception) {
+        while (exception.getCause() != null) {
             exception = exception.getCause();
         }
 
